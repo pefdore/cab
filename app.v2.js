@@ -2170,18 +2170,20 @@ function renderRecentVLForAdd() {
 
     container.innerHTML = vlList.slice(0, 8).map(v => {
         const vlDate = v.lastVLDate;
+        const vlDateStr = vlDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
         const nextDate = v.nextQuarter;
-        const nextQuarterStr = `Q${Math.ceil((nextDate.getMonth() + 1) / 3)} ${nextDate.getFullYear()}`;
+        const nextQuarterStr = nextDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
         
         return `
             <div class="recent-vl-item">
                 <div class="vl-patient-info">
                     <div class="patient">${v.patientName}</div>
-                    <div class="vl-date">Dernière: ${vlDate.toLocaleDateString('fr-FR')}</div>
+                    <div class="vl-date">${vlDateStr}</div>
                 </div>
                 <div class="vl-status-info">
+                    <div class="vl-count">${v.vlThisYear}/4</div>
                     <div class="vl-next-date ${v.canCote ? 'can-cote' : ''}">
-                        ${v.canCote ? '✓ Possible' : nextQuarterStr}
+                        ${v.canCote ? '✓' : nextQuarterStr}
                     </div>
                 </div>
             </div>
