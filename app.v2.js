@@ -1317,17 +1317,21 @@ function renderComptaSummary() {
     const totalRecettes = cabinetRecettes.reduce((sum, r) => sum + r.amount, 0);
     const balance = totalRecettes - totalDepenses;
     
-    // Cabinet page
-    document.getElementById('totalDepenses').textContent = `${totalDepenses.toFixed(2)}€`;
-    document.getElementById('totalRecettes').textContent = `${totalRecettes.toFixed(2)}€`;
-    document.getElementById('balanceCabinet').textContent = `${balance.toFixed(2)}€`;
-    document.getElementById('balanceCabinet').style.color = balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    console.log('[COMPTAB] Totals - Depenses:', totalDepenses, 'Recettes:', totalRecettes, 'Balance:', balance);
     
     // Dashboard - Cabinet mode
-    document.getElementById('dashTotalDepenses').textContent = `${totalDepenses.toFixed(2)}€`;
-    document.getElementById('dashTotalRecettes').textContent = `${totalRecettes.toFixed(2)}€`;
-    document.getElementById('dashBalance').textContent = `${balance.toFixed(2)}€`;
-    document.getElementById('dashBalance').style.color = balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    const elDashTotalRecettes = document.getElementById('dashTotalRecettes');
+    const elDashTotalDepenses = document.getElementById('dashTotalDepenses');
+    const elDashBalance = document.getElementById('dashBalance');
+    
+    console.log('[COMPTAB] Elements found - dashTotalRecettes:', !!elDashTotalRecettes, 'dashTotalDepenses:', !!elDashTotalDepenses, 'dashBalance:', !!elDashBalance);
+    
+    if (elDashTotalRecettes) elDashTotalRecettes.textContent = `${totalRecettes.toFixed(2)}€`;
+    if (elDashTotalDepenses) elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
+    if (elDashBalance) {
+        elDashBalance.textContent = `${balance.toFixed(2)}€`;
+        elDashBalance.style.color = balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    }
     
     // Moyennes
     const nbDepenses = cabinetDepenses.length;
