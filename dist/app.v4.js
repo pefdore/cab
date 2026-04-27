@@ -78,14 +78,10 @@ async function onAuthSuccess() {
     setDefaultDate();
     populateCotationSelect();
     
-    // Setup event listeners BEFORE switching view
+    // Setup event listeners
     setupEventListeners();
     
-    // CRITICAL: Switch to dashboard view BEFORE loading data
-    // This ensures DOM elements are visible for rendering
-    switchView('dashboard');
-    
-    // Load user data (async)
+    // Load user data (async) - sans basculer sur dashboard encore
     loadUserProfile();
     loadUserSettings();
     
@@ -104,10 +100,8 @@ async function onAuthSuccess() {
         console.error('[AUTH] loadPatients error:', e);
     }
     
-    // Now render with dashboard view active
-    renderEntries();
-    renderCharts();
-    updateStats();
+    // NOW switch to dashboard and render - data is ready
+    switchView('dashboard');
     
     console.log('[AUTH] App fully initialized');
 }
