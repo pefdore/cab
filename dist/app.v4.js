@@ -1340,18 +1340,22 @@ function renderComptaSummary() {
     
     console.log('[COMPTAB] Totals - Depenses:', totalDepenses, 'Recettes:', totalRecettes, 'Balance:', balance);
     
-    // Dashboard - Cabinet mode
-    const elDashTotalRecettes = document.getElementById('dashTotalRecettes');
-    const elDashTotalDepenses = document.getElementById('dashTotalDepenses');
-    const elDashBalance = document.getElementById('dashBalance');
+// Dashboard - Cabinet mode (using unique IDs)
+    const elDashTotalRecettes = document.getElementById('dash-cab-recettes');
+    const elDashTotalDepenses = document.getElementById('dash-cab-depenses');
+    const elDashBalance = document.getElementById('dash-cab-balance');
     
-    console.log('[COMPTAB] Elements found - dashTotalRecettes:', !!elDashTotalRecettes, 'dashTotalDepenses:', !!elDashTotalDepenses, 'dashBalance:', !!elDashBalance);
+    console.log('[COMPTAB] Dashboard elements found:', !!elDashTotalRecettes, !!elDashTotalDepenses, !!elDashBalance);
     
-    // DEBUG: Force inline styles
-if (elDashTotalRecettes) {
+    if (elDashTotalRecettes) {
         elDashTotalRecettes.textContent = `${totalRecettes.toFixed(2)}€`;
-        elDashTotalRecettes.style.display = 'inline-block';
-        console.log('[COMPTAB] Set dashTotalRecettes to:', elDashTotalRecettes.textContent);
+    }
+    if (elDashTotalDepenses) {
+        elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
+    }
+    if (elDashBalance) {
+        elDashBalance.textContent = `${balance.toFixed(2)}€`;
+        elDashBalance.style.color = balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
     }
     if (elDashTotalDepenses) {
         elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
