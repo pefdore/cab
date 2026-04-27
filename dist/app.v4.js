@@ -73,15 +73,19 @@ async function onAuthSuccess() {
     if (loginScreen) loginScreen.style.display = 'none';
     if (appContainer) appContainer.style.display = 'flex';
     
-    // Initialiser l'UI immédiatement
+    // Initialize UI first
     updateMonthDisplay();
     setDefaultDate();
     populateCotationSelect();
     
-    // Setup les eventListeners AVANT de charger les données
+    // Setup event listeners BEFORE switching view
     setupEventListeners();
     
-    // Charger les données utilisateur (async)
+    // CRITICAL: Switch to dashboard view BEFORE loading data
+    // This ensures DOM elements are visible for rendering
+    switchView('dashboard');
+    
+    // Load user data (async)
     loadUserProfile();
     loadUserSettings();
     
@@ -100,14 +104,10 @@ async function onAuthSuccess() {
         console.error('[AUTH] loadPatients error:', e);
     }
     
+    // Now render with dashboard view active
     renderEntries();
     renderCharts();
     updateStats();
-    
-    // Ensure dashboard is shown after login
-    setTimeout(() => {
-        switchView('dashboard');
-    }, 50);
     
     console.log('[AUTH] App fully initialized');
 }
