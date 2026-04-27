@@ -322,7 +322,7 @@ h2 {
     display: block;
 }
 
-.dashboard-content[style*="display: none"] {
+.dashboard-content.hidden {
     display: none !important;
 }
 

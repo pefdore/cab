@@ -440,24 +440,21 @@ function switchDashboardMode(mode) {
     
     if (mode === 'cotation') {
         if (cotationDash) {
-            cotationDash.style.display = 'block';
+            cotationDash.classList.remove('hidden');
             console.log('[DASH] Showing cotation-dashboard');
         }
         if (cabinetDash) {
-            cabinetDash.style.display = 'none';
+            cabinetDash.classList.add('hidden');
             console.log('[DASH] Hiding cabinet-dashboard');
         }
     } else {
         if (cotationDash) {
-            cotationDash.style.display = 'none';
+            cotationDash.classList.add('hidden');
             console.log('[DASH] Hiding cotation-dashboard');
         }
         if (cabinetDash) {
-            cabinetDash.style.display = 'block';
+            cabinetDash.classList.remove('hidden');
             console.log('[DASH] Showing cabinet-dashboard');
-            
-            // Force reflow
-            void cabinetDash.offsetWidth;
             
             loadCabinetData();
         }
@@ -1347,39 +1344,14 @@ function renderComptaSummary() {
     
     console.log('[COMPTAB] Dashboard elements found:', !!elDashTotalRecettes, !!elDashTotalDepenses, !!elDashBalance);
     
-    if (elDashTotalRecettes) {
+if (elDashTotalRecettes) {
         elDashTotalRecettes.textContent = `${totalRecettes.toFixed(2)}€`;
-        elDashTotalRecettes.style.cssText = 'color: #10b981 !important; font-weight: bold !important; font-size: 20px !important;';
     }
     if (elDashTotalDepenses) {
         elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
-        elDashTotalDepenses.style.cssText = 'color: #ef4444 !important; font-weight: bold !important; font-size: 20px !important;';
     }
     if (elDashBalance) {
         elDashBalance.textContent = `${balance.toFixed(2)}€`;
-        elDashBalance.style.cssText = 'color: ' + (balance >= 0 ? '#10b981' : '#ef4444') + ' !important; font-weight: bold !important; font-size: 20px !important;';
-    }
-    if (elDashTotalDepenses) {
-        elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
-        elDashTotalDepenses.style.display = 'inline-block';
-        console.log('[COMPTAB] Set dashTotalDepenses to:', elDashTotalDepenses.textContent);
-    }
-    if (elDashBalance) {
-        elDashBalance.textContent = `${balance.toFixed(2)}€`;
-        elDashBalance.style.display = 'inline-block';
-        console.log('[COMPTAB] Set dashBalance to:', elDashBalance.textContent);
-    }
-    if (elDashTotalDepenses) {
-        elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
-        elDashTotalDepenses.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; background: #ef4444; color: white; padding: 15px 30px; font-size: 28px; font-weight: bold; border-radius: 8px;';
-        console.log('[COMPTAB] Set dashTotalDepenses to:', elDashTotalDepenses.textContent);
-    }
-    if (elDashBalance) {
-        elDashBalance.textContent = `${balance.toFixed(2)}€`;
-        elDashBalance.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; background: ' + (balance >= 0 ? '#10b981' : '#ef4444') + '; color: white; padding: 15px 30px; font-size: 28px; font-weight: bold; border-radius: 8px;';
-        console.log('[COMPTAB] Set dashBalance to:', elDashBalance.textContent);
-        elDashBalance.style.fontWeight = 'bold';
-        elDashBalance.style.fontSize = '24px';
     }
     
     // Moyennes
