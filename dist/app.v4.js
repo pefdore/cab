@@ -1160,6 +1160,7 @@ function switchView(viewName) {
     } else if (viewName === 'cabinet') {
         loadCabinetData();
     } else if (viewName === 'add') {
+        renderEntries();
         loadVLHistory().then(() => renderRecentVLForAdd());
     } else if (viewName === 'cabinet') {
         loadCabinetData();
