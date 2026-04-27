@@ -819,10 +819,10 @@ function renderRecentVLForAdd() {
     const now = new Date();
 const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-        const recentVL = vlOnly
-            .filter(v => new Date(v.vlDate) > ninetyDaysAgo)
-        .sort((a, b) => new Date(b.vlDate) - new Date(a.vlDate))
-        .slice(0, 10);
+const recentVL = vlOnly
+            .filter(v => new Date(v.date) > ninetyDaysAgo)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 10);
 
     if (recentVL.length === 0) {
         container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucune VL récente (plus de 90 jours)</p>';
@@ -830,7 +830,7 @@ const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
     }
 
     container.innerHTML = recentVL.map(v => {
-        const vlDate = new Date(v.vlDate);
+        const vlDate = new Date(v.date);
         const daysAgo = Math.floor((now - vlDate) / (24 * 60 * 60 * 1000));
         const isSafe = daysAgo >= 21;
 
