@@ -1344,15 +1344,23 @@ function renderComptaSummary() {
     
     console.log('[COMPTAB] Totals - Depenses:', totalDepenses, 'Recettes:', totalRecettes, 'Balance:', balance);
     
-    // Force show with alert!
-    alert('CA BINGO: Depenses=' + totalDepenses + '€ Recettes=' + totalRecettes + '€ Balance=' + balance + '€');
-    
     // Dashboard - Cabinet mode
     const elDashTotalRecettes = document.getElementById('dashTotalRecettes');
     const elDashTotalDepenses = document.getElementById('dashTotalDepenses');
     const elDashBalance = document.getElementById('dashBalance');
     
     console.log('[COMPTAB] Elements found - dashTotalRecettes:', !!elDashTotalRecettes, 'dashTotalDepenses:', !!elDashTotalDepenses, 'dashBalance:', !!elDashBalance);
+    
+    // DEBUG: Force inline styles
+    if (elDashTotalRecettes) {
+        elDashTotalRecettes.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; min-height: 50px; padding: 20px; font-size: 24px; font-weight: bold;';
+    }
+    if (elDashTotalDepenses) {
+        elDashTotalDepenses.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; min-height: 50px; padding: 20px; font-size: 24px; font-weight: bold;';
+    }
+    if (elDashBalance) {
+        elDashBalance.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; min-height: 50px; padding: 20px; font-size: 24px; font-weight: bold;';
+    }
     
     if (elDashTotalRecettes) {
         elDashTotalRecettes.textContent = `${totalRecettes.toFixed(2)}€`;
