@@ -104,6 +104,11 @@ async function onAuthSuccess() {
     renderCharts();
     updateStats();
     
+    // Ensure dashboard is shown after login
+    setTimeout(() => {
+        switchView('dashboard');
+    }, 50);
+    
     console.log('[AUTH] App fully initialized');
 }
 
