@@ -1349,13 +1349,18 @@ function renderComptaSummary() {
     
     if (elDashTotalRecettes) {
         elDashTotalRecettes.textContent = `${totalRecettes.toFixed(2)}€`;
+        elDashTotalRecettes.style.color = '#10b981';
+        elDashTotalRecettes.style.fontWeight = 'bold';
     }
     if (elDashTotalDepenses) {
         elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
+        elDashTotalDepenses.style.color = '#ef4444';
+        elDashTotalDepenses.style.fontWeight = 'bold';
     }
     if (elDashBalance) {
         elDashBalance.textContent = `${balance.toFixed(2)}€`;
-        elDashBalance.style.color = balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+        elDashBalance.style.color = balance >= 0 ? '#10b981' : '#ef4444';
+        elDashBalance.style.fontWeight = 'bold';
     }
     if (elDashTotalDepenses) {
         elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
