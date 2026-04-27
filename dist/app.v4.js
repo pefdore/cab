@@ -805,6 +805,21 @@ function checkVLAlert(patientId) {
     if (vlAlert) vlAlert.style.display = 'none';
 }
 
+function getNextQuarterDate(lastVLDate) {
+    const d = new Date(lastVLDate);
+    const month = d.getMonth();
+    const year = d.getFullYear();
+    
+    let nextQuarterMonth;
+    if (month <= 2) nextQuarterMonth = 3;
+    else if (month <= 5) nextQuarterMonth = 6;
+    else if (month <= 8) nextQuarterMonth = 9;
+    else nextQuarterMonth = 0;
+    
+    let nextYear = nextQuarterMonth === 0 ? year + 1 : year;
+    return new Date(nextYear, nextQuarterMonth, 1);
+}
+
 function renderRecentVLForAdd() {
     const container = document.getElementById('recentVLList');
     if (!container) return;
@@ -817,9 +832,9 @@ function renderRecentVLForAdd() {
     }
 
     const now = new Date();
-const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-const recentVL = vlOnly
+    const recentVL = vlOnly
             .filter(v => new Date(v.date) > ninetyDaysAgo)
         .sort((a, b) => new Date(b.date) - new Date(a.date))
             .slice(0, 10);
@@ -831,16 +846,17 @@ const recentVL = vlOnly
 
     container.innerHTML = recentVL.map(v => {
         const vlDate = new Date(v.date);
-        const daysAgo = Math.floor((now - vlDate) / (24 * 60 * 60 * 1000));
-        const isSafe = daysAgo >= 21;
+        const nextDate = getNextQuarterDate(v.date);
+        const daysUntil = Math.ceil((nextDate - now) / (24 * 60 * 60 * 1000));
+        const isEligible = daysUntil <= 0;
 
         return `
             <div class="recent-vl-item">
                 <div>
                     <div class="patient">${v.patientName}</div>
-                    <div class="vl-date">${vlDate.toLocaleDateString('fr-FR')}</div>
+                    <div class="vl-date">Prochaine: ${nextDate.toLocaleDateString('fr-FR')}</div>
                 </div>
-                <div class="days-ago ${isSafe ? 'safe' : ''}">${daysAgo} jours</div>
+                <div class="days-ago ${isEligible ? 'safe' : ''}">${isEligible ? 'OK' : daysUntil + ' j'}</div>
             </div>
         `;
     }).join('');
