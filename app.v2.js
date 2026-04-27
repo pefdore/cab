@@ -1655,10 +1655,10 @@ function renderCharts() {
     
     const donutContainer = document.getElementById('donutChart');
     const legendContainer = document.getElementById('donutLegend');
+    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
     
     if (donutContainer && Object.keys(locationData).length > 0) {
         const total = Object.values(locationData).reduce((a, b) => a + b, 0);
-        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
         let gradient = '';
         let cumulative = 0;
         
