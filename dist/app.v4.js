@@ -436,13 +436,25 @@ function switchDashboardMode(mode) {
     const cotationDash = document.getElementById('cotation-dashboard');
     const cabinetDash = document.getElementById('cabinet-dashboard');
     
+    console.log('[DASH] switchDashboardMode:', mode, 'cotationDash:', !!cotationDash, 'cabinetDash:', !!cabinetDash);
+    
     if (mode === 'cotation') {
-        if (cotationDash) cotationDash.style.display = 'block';
-        if (cabinetDash) cabinetDash.style.display = 'none';
+        if (cotationDash) {
+            cotationDash.style.display = 'block';
+            console.log('[DASH] Showing cotation-dashboard');
+        }
+        if (cabinetDash) {
+            cabinetDash.style.display = 'none';
+            console.log('[DASH] Hiding cabinet-dashboard');
+        }
     } else {
-        if (cotationDash) cotationDash.style.display = 'none';
+        if (cotationDash) {
+            cotationDash.style.display = 'none';
+            console.log('[DASH] Hiding cotation-dashboard');
+        }
         if (cabinetDash) {
             cabinetDash.style.display = 'block';
+            console.log('[DASH] Showing cabinet-dashboard');
             loadCabinetData();
         }
     }
@@ -1309,6 +1321,12 @@ function renderComptaSummary() {
     console.log('[COMPTAB] renderComptaSummary called');
     console.log('[COMPTAB] cabinetDepenses:', cabinetDepenses?.length || 0);
     console.log('[COMPTAB] cabinetRecettes:', cabinetRecettes?.length || 0);
+    
+    // Check if cabinet-dashboard is visible
+    const cabinetDash = document.getElementById('cabinet-dashboard');
+    console.log('[COMPTAB] cabinet-dashboard element:', !!cabinetDash);
+    console.log('[COMPTAB] cabinet-dashboard display:', cabinetDash?.style.display);
+    console.log('[COMPTAB] cabinet-dashboard computed:', cabinetDash ? window.getComputedStyle(cabinetDash).display : 'N/A');
     
     if (!cabinetDepenses) cabinetDepenses = [];
     if (!cabinetRecettes) cabinetRecettes = [];
