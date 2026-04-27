@@ -2552,7 +2552,13 @@ h2 {
         font-size: 0.9375rem;
     }
     
-    /* ========== COMPACT HISTORY LIST ========== */
+    /* ========== COMPACT HISTORY LIST - ALWAYS USE ========== */
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
     .history-item-compact {
         display: flex;
         align-items: center;

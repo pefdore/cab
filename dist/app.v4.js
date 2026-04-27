@@ -826,42 +826,35 @@ function renderHistory() {
 }
 
 function downloadPDF(id) {
+    console.log('[DOWNLOAD] Looking for PDF with id:', id);
     const record = history.find(h => h.id === id);
+    console.log('[DOWNLOAD] Found record:', record);
+    
     if (!record) {
         alert('Document non trouvé');
         return;
     }
     
     const pdfData = record.pdfData || record.pdf_data;
+    console.log('[DOWNLOAD] pdfData exists:', !!pdfData);
+    console.log('[DOWNLOAD] pdfData type:', typeof pdfData);
+    console.log('[DOWNLOAD] pdfData length:', pdfData?.length);
+    
     if (!pdfData) {
-        alert('PDF non disponible');
+        alert('PDF non disponible. Générez d\'abord une nouvelle feuille.');
         return;
     }
     
-    // More reliable download method for base64 data URLs
     const monthName = record.monthName || record.monthKey || 'document';
     const fileName = 'honoraires-' + monthName + '.pdf';
     
     try {
-        // Create a link and use click with proper event dispatch
         const link = document.createElement('a');
         link.href = pdfData;
         link.download = fileName;
-        link.style.display = 'none';
         document.body.appendChild(link);
-        
-        // Use dispatchEvent for better cross-browser compatibility
-        const clickEvent = new MouseEvent('click', {
-            view: window,
-            bubbles: true,
-            cancelable: false
-        });
-        link.dispatchEvent(clickEvent);
-        
-        // Clean up after a short delay
-        setTimeout(() => {
-            document.body.removeChild(link);
-        }, 100);
+        link.click();
+        document.body.removeChild(link);
     } catch (error) {
         console.error('Erreur téléchargement PDF:', error);
         alert('Erreur lors du téléchargement: ' + error.message);

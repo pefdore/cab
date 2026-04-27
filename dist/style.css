@@ -2640,33 +2640,26 @@ h2 {
         color: white;
     }
     
-    /* ========== HISTORY - POLISHED ========== */
+    /* ========== COMPACT HISTORY LIST - ALWAYS USE ========== */
     .history-list {
-        gap: var(--mobile-gap);
-    }
-    
-    .history-item {
-        padding: 20px;
+        display: flex;
         flex-direction: column;
-        gap: 16px;
-        border-radius: var(--mobile-radius);
+        gap: 12px;
+    }
+    
+    .history-item-compact {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
         background: var(--color-bg-elevated);
-        box-shadow: var(--shadow-sm);
+        border-radius: 12px;
         border: 1px solid var(--color-border-subtle);
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        transition: all 0.2s ease;
     }
     
-    .history-item:active {
-        transform: scale(0.99);
-    }
-    
-    .history-month {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--color-text);
-    }
-    
-    .history-stats {
+    .history-item-compact:hover {
+        border-color: var(--color-primary-light);
         font-size: 0.8125rem;
         color: var(--color-text-secondary);
     }
