@@ -855,8 +855,7 @@ h2 {
     border-radius: 20px;
     font-size: var(--text-xs);
     font-weight: 500;
-    background: var(--color-primary) !important;
-    color: white !important;
+    color: white;
 }
 
 .location-badge.small {
