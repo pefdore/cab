@@ -816,6 +816,49 @@ h2 {
     background: var(--color-success);
 }
 
+.recent-vl-item.compact {
+    padding: 6px 8px;
+    font-size: 11px;
+}
+
+.recent-vl-item.compact .vl-patient {
+    font-weight: 600;
+    flex: 1;
+    min-width: 80px;
+}
+
+.recent-vl-item.compact .vl-dates {
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    flex: 2;
+    text-align: center;
+}
+
+.recent-vl-item.compact .vl-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: var(--color-text-muted);
+    color: white;
+    min-width: 28px;
+    text-align: center;
+}
+
+.recent-vl-item.compact .vl-badge.eligible {
+    background: var(--color-success);
+}
+
+.location-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+    font-size: 9px;
+    font-weight: 500;
+    margin-left: 4px;
+}
+
 /* ========== ENTRIES TABLE - DESKTOP ========== */
 .entries-section {
     margin-top: 32px;

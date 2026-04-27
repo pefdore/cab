@@ -682,11 +682,13 @@ function handlePatientSearch(e) {
         const lastLocation = lastEntry?.location || '';
         const lastCotation = lastEntry?.cotation || '';
         const lastAmount = lastEntry?.amount || '';
+        const locationColor = getLocationColor(lastLocation);
+        const locationBadge = lastLocation ? `<span class="location-badge" style="background:${locationColor}">${lastLocation}</span>` : '';
         
         return `
             <div class="autocomplete-item" data-name="${p.name}" data-location="${lastLocation}" data-cotation="${lastCotation}" data-amount="${lastAmount}">
                 <div class="autocomplete-patient-name">${p.name}</div>
-                <div class="autocomplete-patient-info">${passageCount} passage${passageCount !== 1 ? 's' : ''} · Dernier: ${lastDate}</div>
+                <div class="autocomplete-patient-info">${passageCount} passage${passageCount !== 1 ? 's' : ''} · Dernier: ${lastDate}${locationBadge ? ' · ' + locationBadge : ''}</div>
             </div>
         `;
     }).join('');
@@ -732,6 +734,17 @@ function handlePatientSearch(e) {
     });
     
     dropdown.classList.add('active');
+}
+
+function getLocationColor(location) {
+    const colors = {
+        'Médecine': '#0ea5e9',
+        'SSR': '#8b5cf6',
+        'Lilias RdC': '#10b981',
+        'Lilas 1er étage': '#f59e0b',
+        'Tamaris': '#ec4899'
+    };
+    return colors[location] || '#6366f1';
 }
 
 function renderSettingsCotationList() {
@@ -897,12 +910,10 @@ function renderRecentVLForAdd() {
         const isEligible = daysUntil <= 0;
 
         return `
-            <div class="recent-vl-item">
-                <div>
-                    <div class="patient">${v.patientName}</div>
-                    <div class="vl-date">Dernière: ${vlDate.toLocaleDateString('fr-FR')} · Prochaine: ${nextDate.toLocaleDateString('fr-FR')}</div>
-                </div>
-                <div class="days-ago ${isEligible ? 'safe' : ''}">${isEligible ? 'OK' : daysUntil + ' j'}</div>
+            <div class="recent-vl-item compact">
+                <span class="vl-patient">${v.patientName}</span>
+                <span class="vl-dates">${vlDate.toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})} → ${nextDate.toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})}</span>
+                <span class="vl-badge ${isEligible ? 'eligible' : ''}">${isEligible ? '✓' : daysUntil}</span>
             </div>
         `;
     }).join('');
