@@ -681,9 +681,10 @@ function handlePatientSearch(e) {
         const lastDate = lastEntry ? new Date(lastEntry.date).toLocaleDateString('fr-FR') : '-';
         const lastLocation = lastEntry?.location || '';
         const lastCotation = lastEntry?.cotation || '';
+        const lastAmount = lastEntry?.amount || '';
         
         return `
-            <div class="autocomplete-item" data-name="${p.name}" data-location="${lastLocation}" data-cotation="${lastCotation}">
+            <div class="autocomplete-item" data-name="${p.name}" data-location="${lastLocation}" data-cotation="${lastCotation}" data-amount="${lastAmount}">
                 <div class="autocomplete-patient-name">${p.name}</div>
                 <div class="autocomplete-patient-info">${passageCount} passage${passageCount !== 1 ? 's' : ''} · Dernier: ${lastDate}</div>
             </div>
@@ -695,23 +696,33 @@ function handlePatientSearch(e) {
             const name = item.dataset.name;
             const location = item.dataset.location;
             const cotation = item.dataset.cotation;
+            const amount = item.dataset.amount;
             
             document.getElementById('patientName').value = name;
             
             if (location) {
-                const locationSelect = document.getElementById('location');
+                const locationSelect = document.getElementById('visitLocation');
                 if (locationSelect) locationSelect.value = location;
             }
             
             if (cotation) {
                 const cotationSelect = document.getElementById('cotation');
                 if (cotationSelect) {
-                    const opt = Array.from(cotationSelect.options).find(o => o.value.startsWith(cotation + '|'));
-                    if (opt) cotationSelect.value = opt.value;
-                    const amountDisplay = document.getElementById('amountDisplay');
-                    if (amountDisplay && opt) {
-                        const amount = opt.value.split('|')[1];
-                        amountDisplay.textContent = parseFloat(amount).toFixed(2) + '€';
+                    let opt = Array.from(cotationSelect.options).find(o => o.value.startsWith(cotation + '|'));
+                    if (!opt && amount) {
+                        const newOpt = document.createElement('option');
+                        newOpt.value = cotation + '|' + amount;
+                        newOpt.textContent = cotation + ' - ' + parseFloat(amount).toFixed(2) + '€';
+                        cotationSelect.appendChild(newOpt);
+                        opt = newOpt;
+                    }
+                    if (opt) {
+                        cotationSelect.value = opt.value;
+                        const amountDisplay = document.getElementById('amountDisplay');
+                        if (amountDisplay) {
+                            const amt = opt.value.split('|')[1];
+                            amountDisplay.textContent = parseFloat(amt).toFixed(2) + '€';
+                        }
                     }
                 }
             }
