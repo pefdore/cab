@@ -1132,6 +1132,16 @@ h2 {
     background: var(--color-primary-subtle);
 }
 
+.autocomplete-patient-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.autocomplete-patient-info {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
 /* VL Status Info in Add view */
 .vl-status-info {
     display: flex;

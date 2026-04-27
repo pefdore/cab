@@ -674,13 +674,48 @@ function handlePatientSearch(e) {
         return;
     }
     
-    dropdown.innerHTML = matches.map(p => 
-        `<div class="autocomplete-item" data-name="${p.name}">${p.name}</div>`
-    ).join('');
+    dropdown.innerHTML = matches.map(p => {
+        const patientEntries = entries.filter(en => en.patientId === p.id);
+        const passageCount = patientEntries.length;
+        const lastEntry = patientEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        const lastDate = lastEntry ? new Date(lastEntry.date).toLocaleDateString('fr-FR') : '-';
+        const lastLocation = lastEntry?.location || '';
+        const lastCotation = lastEntry?.cotation || '';
+        
+        return `
+            <div class="autocomplete-item" data-name="${p.name}" data-location="${lastLocation}" data-cotation="${lastCotation}">
+                <div class="autocomplete-patient-name">${p.name}</div>
+                <div class="autocomplete-patient-info">${passageCount} passage${passageCount !== 1 ? 's' : ''} · Dernier: ${lastDate}</div>
+            </div>
+        `;
+    }).join('');
     
     dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
         item.addEventListener('click', () => {
-            document.getElementById('patientName').value = item.dataset.name;
+            const name = item.dataset.name;
+            const location = item.dataset.location;
+            const cotation = item.dataset.cotation;
+            
+            document.getElementById('patientName').value = name;
+            
+            if (location) {
+                const locationSelect = document.getElementById('location');
+                if (locationSelect) locationSelect.value = location;
+            }
+            
+            if (cotation) {
+                const cotationSelect = document.getElementById('cotation');
+                if (cotationSelect) {
+                    const opt = Array.from(cotationSelect.options).find(o => o.value.startsWith(cotation + '|'));
+                    if (opt) cotationSelect.value = opt.value;
+                    const amountDisplay = document.getElementById('amountDisplay');
+                    if (amountDisplay && opt) {
+                        const amount = opt.value.split('|')[1];
+                        amountDisplay.textContent = parseFloat(amount).toFixed(2) + '€';
+                    }
+                }
+            }
+            
             dropdown.classList.remove('active');
         });
     });
@@ -854,7 +889,7 @@ function renderRecentVLForAdd() {
             <div class="recent-vl-item">
                 <div>
                     <div class="patient">${v.patientName}</div>
-                    <div class="vl-date">Prochaine: ${nextDate.toLocaleDateString('fr-FR')}</div>
+                    <div class="vl-date">Dernière: ${vlDate.toLocaleDateString('fr-FR')} · Prochaine: ${nextDate.toLocaleDateString('fr-FR')}</div>
                 </div>
                 <div class="days-ago ${isEligible ? 'safe' : ''}">${isEligible ? 'OK' : daysUntil + ' j'}</div>
             </div>
