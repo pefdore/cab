@@ -1610,27 +1610,6 @@ async function generatePDF() {
         const monthDisplay = document.getElementById('currentMonthAdd')?.textContent || 'N/A';
         const monthKey = currentMonthAdd.getFullYear() + '-' + String(currentMonthAdd.getMonth() + 1).padStart(2, '0');
         
-        const doc = new jsPDF();
-        
-        doc.setFontSize(18);
-        doc.text('Feuille de cotation', 105, 20, { align: 'center' });
-        
-        doc.setFontSize(12);
-        doc.text('Mois: ' + monthDisplay, 10, 35);
-        doc.text('Date: ' + new Date().toLocaleDateString('fr-FR'), 10, 42);
-        
-        doc.setFontSize(10);
-        let y = 55;
-        doc.text('#', 10, y);
-        doc.text('Date', 20, y);
-        doc.text('Patient', 45, y);
-        doc.text('Cotation', 130, y);
-        doc.text('Montant', 175, y);
-        
-        y += 5;
-        doc.line(10, y, 200, y);
-        y += 8;
-        
         const monthEntries = entries.filter(e => {
             if (!e.date || !e.monthKey) return false;
             const [year, month] = e.monthKey.split('-');
@@ -1639,21 +1618,216 @@ async function generatePDF() {
             return parseInt(month) === entryMonth && parseInt(year) === entryYear;
         });
         
-        monthEntries.forEach((e, i) => {
-            doc.text(String(i + 1), 10, y);
-            doc.text(e.date || '', 20, y);
-            doc.text((e.patientName || '').substring(0, 30), 45, y);
-            doc.text(e.cotation || '', 130, y);
-            doc.text((e.amount || '0') + '€', 175, y);
+        const doc = new jsPDF();
+        
+        const locations = {
+            'Médecine': { name: 'MÉDECINE', ehpad: false },
+            'SSR': { name: 'SSR', ehpad: false },
+            'Lilias RdC': { name: 'LILIAS RdC', ehpad: true },
+            'Lilas 1er étage': { name: 'LILAS 1er étage', ehpad: true },
+            'Tamaris': { name: 'TAMARIS', ehpad: true }
+        };
+        
+        const medicoSSR = monthEntries.filter(e => !locations[e.location]?.ehpad);
+        const ehpad = monthEntries.filter(e => locations[e.location]?.ehpad);
+        
+        // ========== PAGE 1: MÉDECIN SSR ==========
+        doc.addPage();
+        doc.setFillColor(240, 244, 252);
+        doc.rect(0, 0, 210, 40, 'F');
+        
+        doc.setFontSize(24);
+        doc.setTextColor(30, 41, 59);
+        doc.text('HONORAIRES', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(16);
+        doc.text(monthDisplay.toUpperCase(), 105, 32, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.setTextColor(99, 102, 241);
+        doc.text('MÉDECIN / SSR', 15, 55);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(71, 85, 105);
+        
+        let y = 70;
+        doc.setFontSize(11);
+        
+        const medicoByCotation = {};
+        medicoSSR.forEach(e => {
+            if (!medicoByCotation[e.cotation]) {
+                medicoByCotation[e.cotation] = { count: 0, amount: 0 };
+            }
+            medicoByCotation[e.cotation].count++;
+            medicoByCotation[e.cotation].amount += parseFloat(e.amount) || 0;
+        });
+        
+        const sortedMedico = Object.entries(medicoByCotation).sort((a, b) => b[1].amount - a[1].amount);
+        
+        doc.setFillColor(249, 250, 251);
+        doc.rect(15, y - 6, 180, 10, 'F');
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text('Acte', 20, y);
+        doc.text('Nombre', 110, y);
+        doc.text('Montant', 170, y);
+        
+        y += 10;
+        doc.setTextColor(30, 41, 59);
+        
+        sortedMedico.forEach(([cotation, data]) => {
+            doc.text(cotation, 20, y);
+            doc.text(String(data.count), 110, y);
+            doc.text(data.amount.toFixed(2) + ' €', 170, y);
+            y += 8;
+        });
+        
+        y += 5;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(15, y, 195, y);
+        y += 10;
+        
+        doc.setFontSize(12);
+        doc.setTextColor(99, 102, 241);
+        doc.text('TOTAL MÉDECIN / SSR', 20, y);
+        const totalMedico = medicoSSR.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+        doc.text(totalMedico.toFixed(2) + ' €', 170, y);
+        doc.text('(' + medicoSSR.length + ' actes)', 100, y);
+        
+        // ========== PAGE 2: EHPAD ==========
+        doc.addPage();
+        doc.setFillColor(240, 244, 252);
+        doc.rect(0, 0, 210, 40, 'F');
+        
+        doc.setFontSize(24);
+        doc.setTextColor(30, 41, 59);
+        doc.text('HONORAIRES', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(16);
+        doc.text(monthDisplay.toUpperCase(), 105, 32, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.setTextColor(99, 102, 241);
+        doc.text('EHPAD', 15, 55);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(71, 85, 105);
+        
+        y = 70;
+        
+        const ehpadByLocation = {};
+        ehpad.forEach(e => {
+            const loc = locations[e.location]?.name || e.location;
+            if (!ehpadByLocation[loc]) {
+                ehpadByLocation[loc] = {};
+            }
+            if (!ehpadByLocation[loc][e.cotation]) {
+                ehpadByLocation[loc][e.cotation] = { count: 0, amount: 0 };
+            }
+            ehpadByLocation[loc][e.cotation].count++;
+            ehpadByLocation[loc][e.cotation].amount += parseFloat(e.amount) || 0;
+        });
+        
+        const sortedLocations = Object.keys(ehpadByLocation).sort();
+        
+        sortedLocations.forEach(locName => {
+            doc.setFontSize(12);
+            doc.setTextColor(30, 41, 59);
+            doc.text(locName, 20, y);
+            y += 8;
+            
+            doc.setFillColor(249, 250, 251);
+            doc.rect(15, y - 6, 180, 10, 'F');
+            doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
+            doc.text('Acte', 20, y);
+            doc.text('Nombre', 110, y);
+            doc.text('Montant', 170, y);
+            
+            y += 10;
+            doc.setTextColor(30, 41, 59);
+            
+            const sortedCotations = Object.entries(ehpadByLocation[locName]).sort((a, b) => b[1].amount - a[1].amount);
+            
+            sortedCotations.forEach(([cotation, data]) => {
+                doc.text(cotation, 20, y);
+                doc.text(String(data.count), 110, y);
+                doc.text(data.amount.toFixed(2) + ' €', 170, y);
+                y += 8;
+            });
+            
+            y += 5;
+        });
+        
+        y += 5;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(15, y, 195, y);
+        y += 10;
+        
+        doc.setFontSize(12);
+        doc.setTextColor(99, 102, 241);
+        doc.text('TOTAL EHPAD', 20, y);
+        const totalEhpad = ehpad.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+        doc.text(totalEhpad.toFixed(2) + ' €', 170, y);
+        doc.text('(' + ehpad.length + ' actes)', 100, y);
+        
+        // ========== PAGE 3+: LISTE COMPLÈTE ==========
+        doc.addPage();
+        doc.setFillColor(240, 244, 252);
+        doc.rect(0, 0, 210, 40, 'F');
+        
+        doc.setFontSize(24);
+        doc.setTextColor(30, 41, 59);
+        doc.text('LISTE DES PATIENTS', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(16);
+        doc.text(monthDisplay.toUpperCase(), 105, 32, { align: 'center' });
+        
+        y = 55;
+        
+        doc.setFillColor(249, 250, 251);
+        doc.rect(15, y - 6, 180, 10, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text('Date', 20, y);
+        doc.text('Patient', 50, y);
+        doc.text('Lieu', 110, y);
+        doc.text('Acte', 140, y);
+        doc.text('Montant', 175, y);
+        
+        y += 10;
+        
+        const sortedEntries = [...monthEntries].sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        sortedEntries.forEach((e, i) => {
+            if (y > 270) {
+                doc.addPage();
+                y = 30;
+            }
+            
+            doc.setTextColor(30, 41, 59);
+            doc.setFontSize(9);
+            doc.text(e.date || '-', 20, y);
+            doc.text((e.patientName || '').substring(0, 25), 50, y);
+            doc.text((e.location || '').substring(0, 12), 110, y);
+            doc.text(e.cotation || '', 140, y);
+            doc.text((e.amount || '0') + ' €', 175, y);
+            
             y += 7;
         });
         
-        const totalAmount = monthEntries.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-        y += 5;
-        doc.setFontSize(12);
-        doc.text('Total: ' + totalAmount.toFixed(2) + '€', 10, y);
-        doc.text('Nombre de passages: ' + monthEntries.length, 120, y);
+        y += 10;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(15, y, 195, y);
+        y += 10;
         
+        doc.setFontSize(11);
+        doc.setTextColor(99, 102, 241);
+        doc.text('TOTAL GÉNÉRAL', 20, y);
+        const totalAmount = monthEntries.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+        doc.text(totalAmount.toFixed(2) + ' €', 170, y);
+        
+        // Save to database
         const pdfBase64 = doc.output('datauristring');
         
         const { data: savedRecord, error: saveError } = await supabaseClient
