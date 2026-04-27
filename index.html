@@ -299,6 +299,65 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     <h3>Passages récents</h3>
                     <div class="recent-list" id="recentList"></div>
                 </div>
+                
+                <!-- Cabinet Dashboard (in dashboard view) -->
+                <div id="cabinet-dashboard" class="dashboard-content" style="display: none;">
+                    <div class="compta-summary">
+                        <div class="compta-card income">
+                            <span class="compta-label">Recettes</span>
+                            <span class="compta-value" id="dashTotalRecettes">0€</span>
+                        </div>
+                        <div class="compta-card expense">
+                            <span class="compta-label">Dépenses</span>
+                            <span class="compta-value" id="dashTotalDepenses">0€</span>
+                        </div>
+                        <div class="compta-card balance">
+                            <span class="compta-label">Balance</span>
+                            <span class="compta-value" id="dashBalance">0€</span>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Évolution mensuelle (12 derniers mois)</h3>
+                        <div class="bar-chart" id="evolutionChart"></div>
+                    </div>
+                    
+                    <div class="charts-row">
+                        <div class="chart-card small">
+                            <h3>Répartition dépenses</h3>
+                            <div class="donut-chart" id="depensesPieChart"></div>
+                        </div>
+                        
+                        <div class="chart-card small">
+                            <h3>Top catégories</h3>
+                            <div id="topCategories"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-row">
+                        <div class="mini-stat">
+                            <span class="mini-label">Moy. mensuelle dépenses</span>
+                            <span class="mini-value" id="avgDepenses">0€</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-label">Moy. mensuelle recettes</span>
+                            <span class="mini-value" id="avgRecettes">0€</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-label">Nombre de dépenses</span>
+                            <span class="mini-value" id="nbDepenses">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-section">
+                        <h3>5 dernières dépenses</h3>
+                        <div id="dashRecentDepenses" class="recent-list"></div>
+                    </div>
+                    <div class="recent-section">
+                        <h3>5 dernières recettes</h3>
+                        <div id="dashRecentRecettes" class="recent-list"></div>
+                    </div>
+                </div>
             </section>
 
             <!-- Add View -->
@@ -465,70 +524,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                         </table>
                     </div>
                     <div id="noEntries" class="no-entries">Aucun passage ce mois</div>
-                </div>
-                </div>
-                
-                <!-- Cabinet Dashboard (Shared) -->
-                <div id="cabinet-dashboard" class="dashboard-content" style="display: none;">
-                    <div class="compta-summary">
-                        <div class="compta-card income">
-                            <span class="compta-label">Recettes</span>
-                            <span class="compta-value" id="dashTotalRecettes">0€</span>
-                        </div>
-                        <div class="compta-card expense">
-                            <span class="compta-label">Dépenses</span>
-                            <span class="compta-value" id="dashTotalDepenses">0€</span>
-                        </div>
-                        <div class="compta-card balance">
-                            <span class="compta-label">Balance</span>
-                            <span class="compta-value" id="dashBalance">0€</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Evolution Mensuelle -->
-                    <div class="chart-card">
-                        <h3>Évolution mensuelle (12 derniers mois)</h3>
-                        <div class="bar-chart" id="evolutionChart"></div>
-                    </div>
-                    
-                    <div class="charts-row">
-                        <!-- Répartition dépenses -->
-                        <div class="chart-card small">
-                            <h3>Répartition dépenses</h3>
-                            <div class="donut-chart" id="depensesPieChart"></div>
-                        </div>
-                        
-                        <!-- Top catégories -->
-                        <div class="chart-card small">
-                            <h3>Top catégories</h3>
-                            <div id="topCategories"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Moyennes -->
-                    <div class="stats-row">
-                        <div class="mini-stat">
-                            <span class="mini-label">Moy. mensuelle dépenses</span>
-                            <span class="mini-value" id="avgDepenses">0€</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-label">Moy. mensuelle recettes</span>
-                            <span class="mini-value" id="avgRecettes">0€</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-label">Nombre de dépenses</span>
-                            <span class="mini-value" id="nbDepenses">0</span>
-                        </div>
-                    </div>
-                    
-                    <div class="recent-section">
-                        <h3>5 dernières dépenses</h3>
-                        <div id="dashRecentDepenses" class="recent-list"></div>
-                    </div>
-                    <div class="recent-section">
-                        <h3>5 dernières recettes</h3>
-                        <div id="dashRecentRecettes" class="recent-list"></div>
-                    </div>
                 </div>
             </section>
 
