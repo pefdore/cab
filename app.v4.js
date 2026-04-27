@@ -2422,6 +2422,8 @@ window.handleLoginClick = function() {
 };
 
 window.doLogin = doLogin;
+window.downloadPDF = downloadPDF;
+window.deletePDF = deletePDF;
 
 // Initialize auth on page load
 if (document.readyState === 'loading') {
