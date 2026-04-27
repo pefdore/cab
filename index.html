@@ -27,17 +27,52 @@
                 <p>Gestion des facturations EHPAD</p>
             </div>
             
-            <form id="login-form" class="login-form">
+<form id="login-form" class="login-form">
                 <div class="form-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" required placeholder="votre@email.com">
+                    <label>Email</label>
+                    <input type="email" id="login-email" placeholder="votre@email.com" required>
                 </div>
                 <div class="form-group">
-                    <label for="login-password">Mot de passe</label>
-                    <input type="password" id="login-password" required placeholder="••••••••">
+                    <label>Mot de passe</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn-primary">Se connecter</button>
+                <button type="button" class="btn-primary" id="loginBtn">Se connecter</button>
+                <p style="text-align:center;margin-top:15px;">
+                    Pas de compte? <a href="#" onclick="toggleForm('register')">S'inscrire</a>
+                </p>
             </form>
+
+<script>
+function attemptLogin() {
+    console.log('[MOBILE] Login button clicked');
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    console.log('[MOBILE] Email:', email);
+    console.log('[MOBILE] Password length:', password ? password.length : 0);
+    if (window.doLogin) {
+        window.doLogin(email, password);
+    } else if (typeof doLogin === 'function') {
+        doLogin(email, password);
+    }
+}
+window.handleLoginClick = attemptLogin;
+document.getElementById('loginBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    attemptLogin();
+});
+document.getElementById('login-password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        attemptLogin();
+    }
+});
+document.getElementById('login-email').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('login-password').focus();
+    }
+});
+</script>
             
             <div class="login-toggle" id="login-toggle">
                 <button type="button" id="show-register" class="btn-link">
@@ -117,12 +152,6 @@
                     </svg>
                     Documents
                 </a>
-                <a href="#" class="nav-item" data-view="vl">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    Suivi VL
-                </a>
                 <a href="#" class="nav-item" data-view="cabinet">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -164,6 +193,25 @@
 
             <!-- Dashboard View -->
             <section id="view-dashboard" class="view active">
+                <!-- Mode Switcher -->
+                <div class="dashboard-switcher">
+                    <button class="switch-btn active" data-mode="cotation" onclick="switchDashboardMode('cotation')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                        </svg>
+                        Cotation
+                    </button>
+                    <button class="switch-btn" data-mode="cabinet" onclick="switchDashboardMode('cabinet')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        Cabinet
+                    </button>
+                </div>
+                
+                <!-- Cotation Dashboard -->
+                <div id="cotation-dashboard" class="dashboard-content">
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
@@ -418,6 +466,70 @@
                     </div>
                     <div id="noEntries" class="no-entries">Aucun passage ce mois</div>
                 </div>
+                </div>
+                
+                <!-- Cabinet Dashboard (Shared) -->
+                <div id="cabinet-dashboard" class="dashboard-content" style="display: none;">
+                    <div class="compta-summary">
+                        <div class="compta-card income">
+                            <span class="compta-label">Recettes</span>
+                            <span class="compta-value" id="dashTotalRecettes">0€</span>
+                        </div>
+                        <div class="compta-card expense">
+                            <span class="compta-label">Dépenses</span>
+                            <span class="compta-value" id="dashTotalDepenses">0€</span>
+                        </div>
+                        <div class="compta-card balance">
+                            <span class="compta-label">Balance</span>
+                            <span class="compta-value" id="dashBalance">0€</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Evolution Mensuelle -->
+                    <div class="chart-card">
+                        <h3>Évolution mensuelle (12 derniers mois)</h3>
+                        <div class="bar-chart" id="evolutionChart"></div>
+                    </div>
+                    
+                    <div class="charts-row">
+                        <!-- Répartition dépenses -->
+                        <div class="chart-card small">
+                            <h3>Répartition dépenses</h3>
+                            <div class="donut-chart" id="depensesPieChart"></div>
+                        </div>
+                        
+                        <!-- Top catégories -->
+                        <div class="chart-card small">
+                            <h3>Top catégories</h3>
+                            <div id="topCategories"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Moyennes -->
+                    <div class="stats-row">
+                        <div class="mini-stat">
+                            <span class="mini-label">Moy. mensuelle dépenses</span>
+                            <span class="mini-value" id="avgDepenses">0€</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-label">Moy. mensuelle recettes</span>
+                            <span class="mini-value" id="avgRecettes">0€</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-label">Nombre de dépenses</span>
+                            <span class="mini-value" id="nbDepenses">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-section">
+                        <h3>5 dernières dépenses</h3>
+                        <div id="dashRecentDepenses" class="recent-list"></div>
+                    </div>
+                    <div class="recent-section">
+                        <h3>5 dernières recettes</h3>
+                        <div id="dashRecentRecettes" class="recent-list"></div>
+                    </div>
+                </div>
             </section>
 
             <!-- History View -->
@@ -434,33 +546,6 @@
                 </div>
                 <div class="history-list" id="historyList"></div>
                 <div id="noHistory" class="no-entries">Aucune feuille générée</div>
-            </section>
-
-            <!-- VL View -->
-            <section id="view-vl" class="view">
-                <div class="section-header">
-                    <h2>Suivi des VL</h2>
-                </div>
-                <div class="vl-rules-card">
-                    <h3>Règles de cotation VL / VSP</h3>
-                    <ul class="vl-rules-list">
-                        <li><strong>VL (Visite Longue)</strong> : 60€ - <strong>VL+MD</strong> : 70€</li>
-                        <li><strong>Bénéficiaires</strong> : Patients ALD 80+, patho neurodégénératives (Alzheimer, Parkinson, SEP), nouveaux patients ALD/>80 ans</li>
-                        <li><strong>Fréquence</strong> : 4 fois/an (1x par trimestre civil) pour patients ALD 80+ ou neurodégénératifs</li>
-                        <li><strong>Première contact</strong> : Code IMT (une seule fois) - nouveau médecin traitant patient ALD ou >80 ans</li>
-                        <li><strong>Soins palliatifs</strong> : Utiliser code <strong>VSP</strong> (pas de limite)</li>
-                    </ul>
-                </div>
-                <div class="vl-alert" id="vlAlert" style="display: none;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                    <span id="vlAlertText"></span>
-                </div>
-                <h3>Historique des VL</h3>
-                <div class="vl-list" id="vlList"></div>
-                <div id="noVl" class="no-entries">Aucun patient avec VL enregistré</div>
             </section>
 
             <!-- Settings View -->
@@ -524,24 +609,81 @@
 
             <!-- Cabinet View -->
             <section id="view-cabinet" class="view">
-                <h2>Gestion du Cabinet</h2>
+                <h2>Comptabilité Cabinet</h2>
                 
                 <div class="cabinet-tabs">
-                    <button class="cabinet-tab active" data-tab="depenses">Dépenses</button>
-                    <button class="cabinet-tab" data-tab="documents">Documents</button>
+                    <button class="cabinet-tab active" data-tab="comptabilite">Résumé</button>
+                    <button class="cabinet-tab" data-tab="depenses">Dépenses</button>
+                    <button class="cabinet-tab" data-tab="recettes">Recettes</button>
                 </div>
                 
-                <div id="cabinet-depenses" class="cabinet-tab-content active">
+                <!-- Résumé -->
+                <div id="cabinet-comptabilite" class="cabinet-tab-content active">
+                    <div class="compta-summary">
+                        <div class="compta-card income">
+                            <span class="compta-label">Recettes</span>
+                            <span class="compta-value" id="totalRecettes">0€</span>
+                        </div>
+                        <div class="compta-card expense">
+                            <span class="compta-label">Dépenses</span>
+                            <span class="compta-value" id="totalDepenses">0€</span>
+                        </div>
+                        <div class="compta-card balance">
+                            <span class="compta-label">Balance</span>
+                            <span class="compta-value" id="balanceCabinet">0€</span>
+                        </div>
+                    </div>
+                    
+                    <div class="compta-categories">
+                        <h3>Répartition des dépenses</h3>
+                        <div id="depensesParCategorie" class="categories-grid"></div>
+                    </div>
+                    
+                    <div class="compta-mois">
+                        <h3>Évolution mensuelle</h3>
+                        <div class="mois-selector">
+                            <button id="prevMoisCompta">&lt;</button>
+                            <span id="currentMoisCompta">2026</span>
+                            <button id="nextMoisCompta">&gt;</button>
+                        </div>
+                        <div id="evolutionMensuelle" class="evolution-grid"></div>
+                    </div>
+                </div>
+                
+                <!-- Dépenses -->
+                <div id="cabinet-depenses" class="cabinet-tab-content">
                     <div class="section-header">
-                        <h3>Suivi des dépenses</h3>
-                        <button id="addDepenseBtn" class="add-btn">
+                        <h3>Dépenses</h3>
+                        <button id="addDepenseBtn" class="add-btn" onclick="document.getElementById('depensesForm').style.display = document.getElementById('depensesForm').style.display === 'none' ? 'block' : 'none'">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                             </svg>
-                            Ajouter une dépense
+                            Ajouter
                         </button>
                     </div>
+                    
                     <div class="depenses-form" id="depensesForm" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Catégorie</label>
+                                <select id="depenseCategory">
+                                    <option value="masse_salariale">Masse salariale</option>
+                                    <option value="urssaf">URSSAF</option>
+                                    <option value="logiciel">Logiciel</option>
+                                    <option value="services">Services</option>
+                                    <option value="charges">Charges (EDF, eau, assurance)</option>
+                                    <option value="consommables">Consommables</option>
+                                    <option value="materiel">Matériel</option>
+                                    <option value="reception">Réception/Représentation</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sous-catégorie</label>
+                                <select id="depenseSousCategorie">
+                                    <option value="">Sélectionner...</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Description</label>
@@ -552,44 +694,57 @@
                                 <input type="number" id="depenseAmount" placeholder="0.00" step="0.01">
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Catégorie</label>
-                                <select id="depenseCategory">
-                                    <option value="fournitures">Fournitures</option>
-                                    <option value="equipement">Équipement</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="services">Services</option>
-                                    <option value="autre">Autre</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Date</label>
-                                <input type="date" id="depenseDate">
-                            </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="depenseDate">
                         </div>
                         <button id="saveDepenseBtn" class="btn-primary">Enregistrer</button>
                     </div>
-                    <div class="depenses-summary">
-                        <div class="stat-card">
-                            <span class="stat-label">Total dépenses</span>
-                            <span class="stat-value" id="totalDepenses">0€</span>
-                        </div>
-                    </div>
+                    
                     <div class="depenses-list" id="depensesList"></div>
                 </div>
                 
-                <div id="cabinet-documents" class="cabinet-tab-content">
+                <!-- Recettes -->
+                <div id="cabinet-recettes" class="cabinet-tab-content">
                     <div class="section-header">
-                        <h3>Documents du cabinet</h3>
-                        <button id="addDocumentBtn" class="add-btn">
+                        <h3>Recettes</h3>
+                        <button id="addRecetteBtn" class="add-btn" onclick="document.getElementById('recettesForm').style.display = document.getElementById('recettesForm').style.display === 'none' ? 'block' : 'none'">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                             </svg>
-                            Ajouter un document
+                            Ajouter
                         </button>
                     </div>
-                    <div class="documents-list" id="documentsList"></div>
+                    
+                    <div class="recettes-form" id="recettesForm" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Catégorie</label>
+                                <select id="recetteCategory">
+                                    <option value="honoraires">Honoraires</option>
+                                    <option value="remboursements">Remboursements</option>
+                                    <option value="autres">Autres recettes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <input type="text" id="recetteDescription" placeholder="Description">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Montant</label>
+                                <input type="number" id="recetteAmount" placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="recetteDate">
+                            </div>
+                        </div>
+                        <button id="saveRecetteBtn" class="btn-primary">Enregistrer</button>
+                    </div>
+                    
+                    <div class="recettes-list" id="recettesList"></div>
                 </div>
             </section>
         </main>
@@ -599,7 +754,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="app.v4.js?v=32" defer></script>
+    <script src="app.v4.js?v=41" defer></script>
     <script>
       window.jspdfReady = function() {
         window.jsPDF = window.jspdf.jsPDF;

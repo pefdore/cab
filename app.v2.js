@@ -64,32 +64,47 @@ async function checkExistingSession() {
 }
 
 async function onAuthSuccess() {
-    console.log('[AUTH] Connexion réussie, user:', currentUser?.email);
+    console.log('[AUTH] Connexion réussie, user:', currentUser?.email, 'id:', currentUser?.id);
     
     // Masquer écran login, afficher app
     const loginScreen = document.getElementById('login-screen');
     const appContainer = document.getElementById('app-container');
     
     if (loginScreen) loginScreen.style.display = 'none';
-    if (appContainer) appContainer.style.display = 'block';
+    if (appContainer) appContainer.style.display = 'flex';
     
     // Initialiser l'UI immédiatement
     updateMonthDisplay();
     setDefaultDate();
     populateCotationSelect();
     
+    // Setup les eventListeners AVANT de charger les données
+    setupEventListeners();
+    
     // Charger les données utilisateur (async)
     loadUserProfile();
     loadUserSettings();
-    await loadData();
-    await loadPatients();
+    
+    try {
+        console.log('[AUTH] Calling loadData...');
+        await loadData();
+        console.log('[AUTH] loadData completed, entries:', entries.length);
+    } catch (e) {
+        console.error('[AUTH] loadData error:', e);
+    }
+    
+    try {
+        await loadPatients();
+        console.log('[AUTH] loadPatients completed, patients:', patients.length);
+    } catch (e) {
+        console.error('[AUTH] loadPatients error:', e);
+    }
     
     renderEntries();
     renderCharts();
     updateStats();
     
-    // Setup les eventListeners pour l'app
-    setupEventListeners();
+    console.log('[AUTH] App fully initialized');
 }
 
 function onAuthLogout() {
@@ -111,6 +126,8 @@ function onAuthLogout() {
 // --- Fonctions d'authentification ---
 async function doLogin(email, password) {
     console.log('[AUTH] Tentative de connexion:', email);
+    console.log('[AUTH] supabaseClient defined:', !!supabaseClient);
+    console.log('[AUTH] supabaseClient:', supabaseClient);
     
     // Récupérer depuis le form si pas fournis
     if (!email) email = document.getElementById('login-email')?.value;
@@ -121,8 +138,13 @@ async function doLogin(email, password) {
         return;
     }
     
+    if (!supabaseClient) {
+        showError('Erreur: client Supabase non initialisé. Rafraîchissez la page.');
+        return;
+    }
+    
     try {
-        const button = document.querySelector('#login-form button[type="submit"]');
+        const button = document.querySelector('#loginBtn');
         if (button) {
             button.disabled = true;
             button.textContent = 'Connexion...';
@@ -149,7 +171,7 @@ async function doLogin(email, password) {
         console.error('[AUTH] Exception login:', e);
         showError('Erreur de connexion: ' + e.message);
     } finally {
-        const button = document.querySelector('#login-form button[type="submit"]');
+        const button = document.querySelector('#loginBtn');
         if (button) {
             button.disabled = false;
             button.textContent = 'Se connecter';
@@ -351,27 +373,409 @@ let selectedPatientId = null;
 // COTATIONS config
 const COTATIONS = {
     'EHPAD': {
-        'CH': 25,
-        'CS': 26,
-        'CSP': 30,
-        'CNPSY': 30,
-        'CNP': 26,
-        'APS': 26,
-        'AP': 26,
-        'VU': 26,
-        'VPP': 26,
-        'VS': 30,
+        'G': 30,
+        'VG': 30,
+        'VG+MD': 40,
+        'VG+MU': 52.6,
+        'ALQP003': 69.12,
         'VL': 60,
         'VL+MD': 70,
-        'VSP': 55,
-        'IMT': 26,
-        'Forfait': 20
+        'VG+MD+MSH': 63,
+        'VG+MD+2IK': 41.22
     }
+};
+
+// Cabinet accounting categories
+const CABINET_CATEGORIES = {
+    'masse_salariale': {
+        label: 'Masse salariale',
+        sous: ['Nadine salaire net', 'Nadine prime net', 'Cécilia salaire net', 'Cécilia prime net', 'Anne Cécile salaire net', 'Anne Cécile prime net', 'Femme de ménage 1 net', 'Femme de ménage 2 net']
+    },
+    'urssaf': {
+        label: 'URSSAF',
+        sous: ['URSSAF']
+    },
+    'logiciel': {
+        label: 'Logiciel',
+        sous: ['Axisanté', 'CGM', 'AxiMessage', 'Vidal', 'Télétransmission', 'KelDoc', 'DOCTOLIB']
+    },
+    'services': {
+        label: 'Services',
+        sous: ['Semaphors', 'BNP Lease Group', 'Leascom', 'Acor', 'Orange', 'Compta\'Com', 'Séché healthcare', 'BNP', 'SCPA', 'OPCO EP', 'SCP ODY', 'KEYYO', 'APICEM', 'ONET sécurité', 'PST 35', 'HC-LEX']
+    },
+    'charges': {
+        label: 'Charges',
+        sous: ['Electricité', 'Eau', 'ASSURANCE MMA', 'DGFIP', 'CFE']
+    },
+    'consommables': {
+        label: 'Consommables',
+        sous: ['Azote', 'Draps d\'examens', 'Papiers mains', 'Savons', 'SHA', 'Masques', 'Papiers pour impressions', 'Cartouches d\'encre', 'Fournitures diverses', 'Papier ECG', 'Pharmacie', 'CADHOC', 'Café']
+    },
+    'materiel': {
+        label: 'Matériel',
+        sous: ['Lecteurs CV', 'Imprimante', 'Ordinateur']
+    },
+    'reception': {
+        label: 'Réception/Représentation',
+        sous: ['Cadeaux', 'Repas']
+    }
+};
+
+const RECETTE_CATEGORIES = {
+    'honoraires': { label: 'Honoraires', sous: ['Consultations', 'Visites', 'Actes techniques'] },
+    'remboursements': { label: 'Remboursements', sous: ['Assurance', 'CPAM', 'Mutuelle'] },
+    'autres': { label: 'Autres recettes', sous: ['Subventions', 'Dons', 'Autres'] }
 };
 
 const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
 
-// Legacy compatibility - fonctions minimales
+function switchDashboardMode(mode) {
+    document.querySelectorAll('.switch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    
+    const cotationDash = document.getElementById('cotation-dashboard');
+    const cabinetDash = document.getElementById('cabinet-dashboard');
+    
+    if (mode === 'cotation') {
+        if (cotationDash) cotationDash.style.display = 'block';
+        if (cabinetDash) cabinetDash.style.display = 'none';
+    } else {
+        if (cotationDash) cotationDash.style.display = 'none';
+        if (cabinetDash) {
+            cabinetDash.style.display = 'block';
+            loadCabinetData();
+        }
+    }
+}
+
+window.switchDashboardMode = switchDashboardMode;
+
+// --- Month management ---
+let currentMonthAdd = new Date();
+
+function updateMonthDisplay() {
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const display = document.getElementById('currentMonthAdd');
+    if (display) {
+        display.textContent = monthNames[currentMonthAdd.getMonth()] + ' ' + currentMonthAdd.getFullYear();
+    }
+}
+
+function changeMonth(delta) {
+    currentMonthAdd.setMonth(currentMonthAdd.getMonth() + delta);
+    updateMonthDisplay();
+    renderEntries();
+}
+
+function setDefaultDate() {
+    const dateInput = document.getElementById('visitDate');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+}
+
+function populateCotationSelect() {
+    const select = document.getElementById('cotation');
+    if (!select) return;
+    
+    // Default cotations
+    const cotations = [
+        { key: 'CS', amount: 26.50 },
+        { key: 'CS+MD', amount: 31.50 },
+        { key: 'CC', amount: 23.00 },
+        { key: 'CC+MD', amount: 28.00 },
+        { key: 'CNPSY', amount: 54.00 },
+        { key: 'CNP', amount: 46.00 },
+        { key: 'VL', amount: 60.00 },
+        { key: 'VL+MD', amount: 70.00 },
+        { key: 'AMC', amount: 30.00 },
+        { key: 'AMI', amount: 26.50 },
+        { key: 'DI', amount: 30.00 },
+        { key: 'FP', amount: 26.50 },
+        { key: 'VSP', amount: 60.00 },
+        { key: 'IMT', amount: 36.00 }
+    ];
+    
+    select.innerHTML = '<option value="">Sélectionner...</option>';
+    cotations.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.key + '|' + c.amount;
+        opt.textContent = c.key + ' - ' + c.amount.toFixed(2) + '€';
+        select.appendChild(opt);
+    });
+}
+
+function setupMobileMonthSelector() {
+    // Mobile month selector - no special setup needed for now
+}
+
+async function saveCustomCotation() {
+    const key = document.getElementById('customCotationKey').value;
+    const amount = document.getElementById('customCotationAmount').value;
+    
+    if (!key || !amount) {
+        alert('Veuillez entrer une clé et un montant');
+        return;
+    }
+    
+    // Save to user settings (as JSON string)
+    const currentSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = currentSettings.customCotations || [];
+    customCotations.push({ key, amount: parseFloat(amount) });
+    currentSettings.customCotations = customCotations;
+    localStorage.setItem('userSettings', JSON.stringify(currentSettings));
+    
+    // Refresh cotation select
+    populateCotationSelect();
+    
+    document.getElementById('customCotationKey').value = '';
+    document.getElementById('customCotationAmount').value = '';
+    document.getElementById('customCotation').style.display = 'none';
+}
+
+async function addNewCotationFromSettings() {
+    const key = document.getElementById('newCotationKey').value;
+    const amount = document.getElementById('newCotationAmount').value;
+    
+    if (!key || !amount) {
+        alert('Veuillez entrer une clé et un montant');
+        return;
+    }
+    
+    const currentSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = currentSettings.customCotations || [];
+    customCotations.push({ key, amount: parseFloat(amount) });
+    currentSettings.customCotations = customCotations;
+    localStorage.setItem('userSettings', JSON.stringify(currentSettings));
+    
+    renderSettingsCotationList();
+    populateCotationSelect();
+    
+    document.getElementById('newCotationKey').value = '';
+    document.getElementById('newCotationAmount').value = '';
+}
+
+async function handleSubmit(e) {
+    e.preventDefault();
+    
+    const patientName = document.getElementById('patientName').value;
+    const date = document.getElementById('visitDate').value;
+    const location = document.getElementById('visitLocation').value;
+    const cotationValue = document.getElementById('cotation').value;
+    
+    if (!patientName || !date || !location || !cotationValue) {
+        alert('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    const [cotation, amount] = cotationValue.split('|');
+    
+    // Get or create patient
+    let patientId = patients.find(p => p.name.toLowerCase() === patientName.toLowerCase())?.id;
+    
+    if (!patientId) {
+        // Create new patient
+        const { data: newPatient, error: patientError } = await supabaseClient
+            .from('patients')
+            .insert([{ user_id: currentUser.id, name: patientName }])
+            .select()
+            .single();
+        
+        if (patientError) {
+            alert('Erreur patient: ' + patientError.message);
+            return;
+        }
+        patientId = newPatient.id;
+    }
+    
+    // Get month key
+    const dateObj = new Date(date);
+    const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Create passage
+    const { error } = await supabaseClient
+        .from('passages')
+        .insert([{
+            user_id: currentUser.id,
+            patient_id: patientId,
+            date: date,
+            location: location,
+            cotation: cotation,
+            amount: parseFloat(amount),
+            month_key: monthKey
+        }]);
+    
+    if (error) {
+        alert('Erreur: ' + error.message);
+        return;
+    }
+    
+    // Reset form
+    document.getElementById('patientName').value = '';
+    document.getElementById('visitDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('cotation').value = '';
+    document.getElementById('amountDisplay').textContent = '0€';
+    
+    // Reload data
+    await loadData();
+    await loadPatients();
+    renderEntries();
+    updateStats();
+    renderCharts();
+    
+    alert('Passage enregistré!');
+}
+
+function handleLocationChange() {
+    // Location change handler - could add logic here
+}
+
+function handleCotationChange() {
+    const select = document.getElementById('cotation');
+    const amountDisplay = document.getElementById('amountDisplay');
+    
+    if (select && amountDisplay) {
+        const value = select.value;
+        if (value) {
+            const amount = value.split('|')[1];
+            amountDisplay.textContent = parseFloat(amount).toFixed(2) + '€';
+        } else {
+            amountDisplay.textContent = '0€';
+        }
+    }
+}
+
+function handlePatientSearch(e) {
+    const query = e.target.value.toLowerCase();
+    const dropdown = document.getElementById('autocomplete-dropdown');
+    
+    if (query.length < 2) {
+        dropdown.classList.remove('active');
+        return;
+    }
+    
+    const matches = patients.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
+    
+    if (matches.length === 0) {
+        dropdown.classList.remove('active');
+        return;
+    }
+    
+    dropdown.innerHTML = matches.map(p => 
+        `<div class="autocomplete-item" data-name="${p.name}">${p.name}</div>`
+    ).join('');
+    
+    dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.getElementById('patientName').value = item.dataset.name;
+            dropdown.classList.remove('active');
+        });
+    });
+    
+    dropdown.classList.add('active');
+}
+
+function renderSettingsCotationList() {
+    const container = document.getElementById('settingsCotationList');
+    if (!container) return;
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = settings.customCotations || [];
+    
+    if (customCotations.length === 0) {
+        container.innerHTML = '<p style="color: var(--color-text-secondary);">Aucune cotation personnalisée</p>';
+        return;
+    }
+    
+    container.innerHTML = customCotations.map((c, i) => `
+        <div class="cotation-item">
+            <span>${c.key}</span>
+            <span>${c.amount.toFixed(2)}€</span>
+            <button onclick="deleteCotation(${i})" style="color: var(--color-danger);">Supprimer</button>
+        </div>
+    `).join('');
+}
+
+function deleteCotation(index) {
+    if (!confirm('Supprimer cette cotation?')) return;
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = settings.customCotations || [];
+    customCotations.splice(index, 1);
+    settings.customCotations = customCotations;
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    
+    renderSettingsCotationList();
+    populateCotationSelect();
+}
+
+function renderHistory() {
+    const container = document.getElementById('historyList');
+    const noHistory = document.getElementById('noHistory');
+    
+    if (!container) return;
+    
+    if (history.length === 0) {
+        container.innerHTML = '';
+        if (noHistory) noHistory.style.display = 'block';
+        return;
+    }
+    
+    if (noHistory) noHistory.style.display = 'none';
+    
+    container.innerHTML = history.map(h => `
+        <div class="history-item">
+            <div class="history-info">
+                <span class="history-title">${h.month}</span>
+                <span class="history-date">${new Date(h.generated_at).toLocaleDateString('fr-FR')}</span>
+            </div>
+            <div class="history-actions">
+                <button onclick="viewPDF('${h.id}')">Voir</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderLogoPreview() {
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    
+    const logoImg = document.getElementById('logoImage');
+    const logoPlaceholder = document.getElementById('logoPlaceholder');
+    const logoPreview = document.getElementById('logoPreview');
+    const removeLogoBtn = document.getElementById('removeLogoBtn');
+    
+    if (settings.logo) {
+        if (logoImg) {
+            logoImg.src = settings.logo;
+            logoImg.style.display = 'block';
+        }
+        if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+        if (removeLogoBtn) removeLogoBtn.style.display = 'inline-block';
+    } else {
+        if (logoImg) logoImg.style.display = 'none';
+        if (logoPlaceholder) logoPlaceholder.style.display = 'block';
+        if (removeLogoBtn) removeLogoBtn.style.display = 'none';
+    }
+    
+    const sigImg = document.getElementById('signatureImage');
+    const sigPlaceholder = document.getElementById('signaturePlaceholder');
+    const removeSigBtn = document.getElementById('removeSignatureBtn');
+    
+    if (settings.signature) {
+        if (sigImg) {
+            sigImg.src = settings.signature;
+            sigImg.style.display = 'block';
+        }
+        if (sigPlaceholder) sigPlaceholder.style.display = 'none';
+        if (removeSigBtn) removeSigBtn.style.display = 'inline-block';
+    } else {
+        if (sigImg) sigImg.style.display = 'none';
+        if (sigPlaceholder) sigPlaceholder.style.display = 'block';
+        if (removeSigBtn) removeSigBtn.style.display = 'none';
+    }
+}
+
 function init() {
     console.log('App initialized');
     updateMonthDisplay();
@@ -431,6 +835,8 @@ const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 }
 
 async function loadPatients() {
+    console.log('[DATA] loadPatients called');
+    
     try {
         const { data: patientsData, error } = await supabaseClient
             .from('patients')
@@ -438,9 +844,9 @@ async function loadPatients() {
             .eq('user_id', currentUser.id)
             .order('name', { ascending: true });
 
+        console.log('[DATA] Patients loaded:', patientsData?.length || 0, error);
         if (error) {
             console.error('Erreur patients:', error);
-            throw error;
         }
 
         if (patientsData) {
@@ -479,8 +885,16 @@ async function loadPatients() {
 }
 
 async function loadData() {
+    console.log('[DATA] loadData called, currentUser:', currentUser?.email, 'id:', currentUser?.id);
+    console.log('[DATA] supabaseClient:', supabaseClient ? 'OK' : 'NULL');
+    
     if (!currentUser) {
         console.log('[DATA] No user logged in, skipping data load');
+        return;
+    }
+    
+    if (!supabaseClient) {
+        console.error('[DATA] ERROR: supabaseClient is null!');
         return;
     }
     
@@ -488,21 +902,23 @@ async function loadData() {
         // Only load data from last 2 years to speed up
         const twoYearsAgo = new Date();
         twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+        const twoYearsAgoStr = twoYearsAgo.toISOString().split('T')[0];
 
         console.log('=== LOAD DATA ===');
         console.log('User ID:', currentUser?.id);
-        console.log('User ID matches DB:', currentUser?.id === 'fa155f5d-8dbb-4f76-885a-39a1095e1e8b');
+        console.log('Date filter (>=):', twoYearsAgoStr);
 
         const { data: passages, error: passagesError } = await supabaseClient
             .from('passages')
             .select('*, patients(name)')
             .eq('user_id', currentUser.id)
-            .gte('date', twoYearsAgo.toISOString().split('T')[0])
+            .gte('date', twoYearsAgoStr)
             .order('date', { ascending: false });
 
-        console.log('Passages loaded:', passages?.length || 0, passagesError);
+        console.log('Raw Supabase response - passages:', passages, 'error:', passagesError);
+        console.log('Passages loaded:', passages?.length || 0);
         if (passagesError) {
-            console.log('Table passages error:', passagesError);
+            console.error('Table passages error:', passagesError);
         } else if (passages) {
             entries = passages.map(p => ({
                 id: p.id,
@@ -514,6 +930,9 @@ async function loadData() {
                 amount: p.amount,
                 monthKey: p.month_key
             }));
+            console.log('[DATA] Entries loaded:', entries.length);
+        } else {
+            console.log('[DATA] No passages found for user');
         }
         
         // Load only last 12 months of history
@@ -622,9 +1041,27 @@ function setupEventListeners() {
     document.getElementById('addDepenseBtn')?.addEventListener('click', () => {
         const form = document.getElementById('depensesForm');
         form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        updateSousCategoriesDepense();
     });
-    
     document.getElementById('saveDepenseBtn')?.addEventListener('click', saveDepense);
+    
+    // Recettes
+    document.getElementById('addRecetteBtn')?.addEventListener('click', () => {
+        const form = document.getElementById('recettesForm');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    });
+    document.getElementById('saveRecetteBtn')?.addEventListener('click', saveRecette);
+    
+    // Cabinet tabs
+    document.querySelectorAll('.cabinet-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabName = this.dataset.tab;
+            document.querySelectorAll('.cabinet-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.cabinet-tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('cabinet-' + tabName)?.classList.add('active');
+        });
+    });
 }
 
 function handleLogoUpload(e) {
@@ -668,7 +1105,6 @@ function switchView(viewName) {
         'dashboard': 'Dashboard',
         'add': 'Ajouter',
         'history': 'Documents',
-        'vl': 'Suivi VL',
         'cabinet': 'Cabinet',
         'settings': 'Paramètres'
     };
@@ -709,8 +1145,8 @@ function switchView(viewName) {
             }
             overlay.classList.add('active');
         }
-    } else if (viewName === 'vl') {
-        loadVLHistory().then(() => renderVLList());
+    } else if (viewName === 'cabinet') {
+        loadCabinetData();
     } else if (viewName === 'add') {
         loadVLHistory().then(() => renderRecentVLForAdd());
     } else if (viewName === 'cabinet') {
@@ -720,74 +1156,596 @@ function switchView(viewName) {
 
 // ===== CABINET FUNCTIONS =====
 let cabinetDepenses = [];
+let cabinetRecettes = [];
+let currentMoisCompta = new Date().getFullYear();
+
+function toggleDepenseForm() {
+    const form = document.getElementById('depensesForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    updateSousCategoriesDepense();
+}
+
+function toggleRecetteForm() {
+    const form = document.getElementById('recettesForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+window.toggleDepenseForm = toggleDepenseForm;
+window.toggleRecetteForm = toggleRecetteForm;
 
 async function loadCabinetData() {
-    if (currentProfile?.role === 'secretaire') {
-        // Secretary can see all
+    // Load data for all authenticated users
+    if (currentUser) {
+        console.log('Loading cabinet data for user:', currentUser.id);
         await loadDepenses();
-        await loadDocuments();
-    } else if (currentProfile?.role === 'medecin_installe') {
-        // Doctor can see their own
-        await loadDepenses();
-        await loadDocuments();
+        await loadRecettes();
+        renderComptaSummary();
     }
-    // medecin_remplacant doesn't have cabinet access
 }
 
 async function loadDepenses() {
     try {
+        console.log('Loading depenses for user:', currentUser?.id);
         const { data, error } = await supabaseClient
             .from('cabinet_depenses')
             .select('*')
             .order('date', { ascending: false });
         
+        console.log('Depenses loaded:', data, error);
         if (data) {
             cabinetDepenses = data;
             renderDepenses();
+            updateSousCategoriesDepense();
         }
     } catch (error) {
         console.error('Erreur loadDepenses:', error);
     }
 }
 
+async function loadRecettes() {
+    try {
+        console.log('Loading recettes for user:', currentUser?.id);
+        const { data, error } = await supabaseClient
+            .from('cabinet_recettes')
+            .select('*')
+            .order('date', { ascending: false });
+        
+        console.log('Recettes loaded:', data, error);
+        if (data) {
+            cabinetRecettes = data;
+            renderRecettes();
+        }
+    } catch (error) {
+        console.error('Erreur loadRecettes:', error);
+    }
+}
+
+function updateSousCategoriesDepense() {
+    const categorySelect = document.getElementById('depenseCategory');
+    const sousCategorySelect = document.getElementById('depenseSousCategorie');
+    
+    if (!categorySelect || !sousCategorySelect) return;
+    
+    categorySelect.addEventListener('change', function() {
+        const categorie = CABINET_CATEGORIES[this.value];
+        sousCategorySelect.innerHTML = '<option value="">Sélectionner...</option>';
+        if (categorie && categorie.sous) {
+            categorie.sous.forEach(sous => {
+                const option = document.createElement('option');
+                option.value = sous;
+                option.textContent = sous;
+                sousCategorySelect.appendChild(option);
+            });
+        }
+    });
+}
+
 function renderDepenses() {
     const container = document.getElementById('depensesList');
-    const totalEl = document.getElementById('totalDepenses');
-    
     if (!container) return;
-    
-    const total = cabinetDepenses.reduce((sum, d) => sum + d.amount, 0);
-    if (totalEl) totalEl.textContent = `${total.toFixed(2)}€`;
     
     if (cabinetDepenses.length === 0) {
         container.innerHTML = '<div class="no-entries">Aucune dépense enregistrée</div>';
         return;
     }
     
-    container.innerHTML = cabinetDepenses.map(d => `
-        <div class="depense-item">
-            <div>
-                <span class="description">${d.description}</span>
-                <span class="category">${d.category}</span>
+    container.innerHTML = cabinetDepenses.map(d => {
+        const cat = CABINET_CATEGORIES[d.category];
+        const catLabel = cat ? cat.label : d.category;
+        const dateStr = d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '-';
+        return `
+            <div class="depense-item">
+                <div>
+                    <span class="date-small">${dateStr}</span>
+                    <span class="description">${d.description || d.sous_categorie || '-'}</span>
+                    <span class="category">${catLabel}</span>
+                </div>
+                <div class="depense-right">
+                    <span class="amount">-${d.amount.toFixed(2)}€</span>
+                    <button class="delete-btn-small" onclick="deleteDepense(${d.id})" title="Supprimer">✕</button>
+                </div>
             </div>
-            <span class="amount">-${d.amount.toFixed(2)}€</span>
+        `;
+    }).join('');
+}
+
+function renderRecettes() {
+    const container = document.getElementById('recettesList');
+    if (!container) return;
+    
+    if (cabinetRecettes.length === 0) {
+        container.innerHTML = '<div class="no-entries">Aucune recette enregistrée</div>';
+        return;
+    }
+    
+    container.innerHTML = cabinetRecettes.map(r => {
+        const cat = RECETTE_CATEGORIES[r.category];
+        const catLabel = cat ? cat.label : r.category;
+        const dateStr = r.date ? new Date(r.date).toLocaleDateString('fr-FR') : '-';
+        return `
+            <div class="depense-item income">
+                <div>
+                    <span class="date-small">${dateStr}</span>
+                    <span class="description">${r.description || '-'}</span>
+                    <span class="category">${catLabel}</span>
+                </div>
+                <div class="depense-right">
+                    <span class="amount">+${r.amount.toFixed(2)}€</span>
+                    <button class="delete-btn-small" onclick="deleteRecette(${r.id})" title="Supprimer">✕</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderComptaSummary() {
+    const totalDepenses = cabinetDepenses.reduce((sum, d) => sum + d.amount, 0);
+    const totalRecettes = cabinetRecettes.reduce((sum, r) => sum + r.amount, 0);
+    const balance = totalRecettes - totalDepenses;
+    
+    // Cabinet page
+    document.getElementById('totalDepenses').textContent = `${totalDepenses.toFixed(2)}€`;
+    document.getElementById('totalRecettes').textContent = `${totalRecettes.toFixed(2)}€`;
+    document.getElementById('balanceCabinet').textContent = `${balance.toFixed(2)}€`;
+    document.getElementById('balanceCabinet').style.color = balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    
+    // Dashboard - Cabinet mode
+    document.getElementById('dashTotalDepenses').textContent = `${totalDepenses.toFixed(2)}€`;
+    document.getElementById('dashTotalRecettes').textContent = `${totalRecettes.toFixed(2)}€`;
+    document.getElementById('dashBalance').textContent = `${balance.toFixed(2)}€`;
+    document.getElementById('dashBalance').style.color = balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    
+    // Moyennes
+    const nbDepenses = cabinetDepenses.length;
+    const avgDepenses = nbDepenses > 0 ? totalDepenses / nbDepenses : 0;
+    const avgRecettes = cabinetRecettes.length > 0 ? totalRecettes / cabinetRecettes.length : 0;
+    document.getElementById('avgDepenses').textContent = `${avgDepenses.toFixed(2)}€`;
+    document.getElementById('avgRecettes').textContent = `${avgRecettes.toFixed(2)}€`;
+    document.getElementById('nbDepenses').textContent = nbDepenses;
+    
+    // Dépenses par catégorie
+    const depensesParCat = {};
+    cabinetDepenses.forEach(d => {
+        const cat = CABINET_CATEGORIES[d.category];
+        const catLabel = cat ? cat.label : d.category;
+        depensesParCat[catLabel] = (depensesParCat[catLabel] || 0) + d.amount;
+    });
+    
+    // Top catégories triées
+    const sortedCats = Object.entries(depensesParCat).sort((a, b) => b[1] - a[1]);
+    const topCatContainer = document.getElementById('topCategories');
+    if (topCatContainer && totalDepenses > 0) {
+        topCatContainer.innerHTML = sortedCats.slice(0, 5).map(([cat, amount]) => {
+            const pct = ((amount / totalDepenses) * 100).toFixed(1);
+            return `<div class="top-cat-item"><span class="top-cat-name">${cat}</span><span class="top-cat-pct">${pct}%</span></div>`;
+        }).join('');
+    }
+    
+    // Donut Chart - Répartition dépenses
+    const donutContainer = document.getElementById('depensesPieChart');
+    if (donutContainer && totalDepenses > 0) {
+        let gradient = '';
+        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+        let cumulative = 0;
+        sortedCats.slice(0, 6).forEach(([cat, amount], i) => {
+            const pct = (amount / totalDepenses) * 100;
+            const end = cumulative + pct;
+            gradient += `${colors[i % colors.length]} ${cumulative}% ${end}%, `;
+            cumulative = end;
+        });
+        gradient += `#e5e7eb ${cumulative}% 100%`;
+        donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
+    }
+    
+    // Evoluton mensuelle - Bar chart (12 derniers mois)
+    const monthlyData = {};
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = d.toLocaleDateString('fr-FR', { month: 'short' });
+        monthlyData[key] = { label: monthLabel, depenses: 0, recettes: 0 };
+    }
+    
+    cabinetDepenses.forEach(d => {
+        const key = d.date ? d.date.substring(0, 7) : null;
+        if (key && monthlyData[key]) monthlyData[key].depenses += d.amount;
+    });
+    cabinetRecettes.forEach(r => {
+        const key = r.date ? r.date.substring(0, 7) : null;
+        if (key && monthlyData[key]) monthlyData[key].recettes += r.amount;
+    });
+    
+    const monthlyValues = Object.values(monthlyData);
+    const maxValue = Math.max(...monthlyValues.map(m => Math.max(m.depenses, m.recettes)), 1);
+    
+    const barContainer = document.getElementById('evolutionChart');
+    if (barContainer) {
+        barContainer.innerHTML = monthlyValues.map(m => {
+            const depHeight = (m.depenses / maxValue) * 100;
+            const recHeight = (m.recettes / maxValue) * 100;
+            return `
+                <div class="bar-group">
+                    <div class="bar-wrapper">
+                        <div class="bar expense" style="height: ${depHeight}%"></div>
+                        <div class="bar income" style="height: ${recHeight}%"></div>
+                    </div>
+                    <span class="bar-label">${m.label}</span>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // Dashboard - catégories
+    const dashCatContainer = document.getElementById('dashDepensesParCategorie');
+    if (dashCatContainer) {
+        dashCatContainer.innerHTML = sortedCats.slice(0, 5).map(([cat, amount]) => `
+            <div class="category-item">
+                <span class="cat-label">${cat}</span>
+                <span class="cat-amount">${amount.toFixed(2)}€</span>
+            </div>
+        `).join('') || '<div class="no-entries">Aucune dépense</div>';
+    }
+    
+    // Dashboard - Recent depenses
+    const recentDepContainer = document.getElementById('dashRecentDepenses');
+    if (recentDepContainer) {
+        recentDepContainer.innerHTML = cabinetDepenses.slice(0, 5).map(d => `
+            <div class="recent-item">
+                <span>${d.description || d.sous_categorie || '-'}</span>
+                <span class="amount">-${d.amount.toFixed(2)}€</span>
+            </div>
+        `).join('') || '<div class="no-entries">Aucune</div>';
+    }
+    
+    // Dashboard - Recent recettes
+    const recentRecContainer = document.getElementById('dashRecentRecettes');
+    if (recentRecContainer) {
+        recentRecContainer.innerHTML = cabinetRecettes.slice(0, 5).map(r => `
+            <div class="recent-item">
+                <span>${r.description || '-'}</span>
+                <span class="amount" style="color:var(--color-success)">+${r.amount.toFixed(2)}€</span>
+            </div>
+        `).join('') || '<div class="no-entries">Aucune</div>';
+    }
+}
+
+// ===== MISSING FUNCTIONS =====
+
+function generatePDF() {
+    alert('Génération PDF en cours...');
+    // Basic PDF generation placeholder
+    const { jsPDF } = window.jsPDF;
+    if (!jsPDF) {
+        alert('Erreur: jsPDF non chargé');
+        return;
+    }
+    
+    const doc = new jsPDF();
+    doc.text('Feuille de cotation', 10, 10);
+    doc.text('Mois: ' + document.getElementById('currentMonthAdd')?.textContent, 10, 20);
+    doc.text('Generated: ' + new Date().toLocaleDateString('fr-FR'), 10, 30);
+    
+    // Add entries
+    let y = 50;
+    entries.slice(0, 20).forEach((e, i) => {
+        doc.text(`${i+1}. ${e.date} - ${e.patientName} - ${e.cotation} - ${e.amount}€`, 10, y);
+        y += 7;
+    });
+    
+    doc.save('cotation-' + new Date().toISOString().split('T')[0] + '.pdf');
+}
+
+// VL History (already declared above)
+
+async function loadVLHistory() {
+    if (!currentUser) return;
+    
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    
+    const { data } = await supabaseClient
+        .from('passages')
+        .select('*, patients(name)')
+        .eq('user_id', currentUser.id)
+        .in('cotation', ['VL', 'VL+MD'])
+        .gte('date', oneYearAgo.toISOString().split('T')[0])
+        .order('date', { ascending: false });
+    
+    if (data) {
+        vlHistory = data.map(p => ({
+            patientId: p.patient_id,
+            patientName: p.patients?.name,
+            date: p.date,
+            cotation: p.cotation
+        }));
+    }
+}
+
+function updateStats() {
+    const currentMonth = currentMonthAdd.getMonth();
+    const currentYear = currentMonthAdd.getFullYear();
+    
+    const monthEntries = entries.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+    
+    const totalPatients = new Set(monthEntries.map(e => e.patientId)).size;
+    const totalAmount = monthEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const totalVisits = monthEntries.length;
+    const avgPerDay = totalVisits > 0 ? totalAmount / Math.max(new Date().getDate(), 1) : 0;
+    
+    const el = (id) => document.getElementById(id);
+    if (el('totalPatients')) el('totalPatients').textContent = totalPatients;
+    if (el('totalAmount')) el('totalAmount').textContent = totalAmount.toFixed(2) + '€';
+    if (el('totalVisits')) el('totalVisits').textContent = totalVisits;
+    if (el('avgPerDay')) el('avgPerDay').textContent = avgPerDay.toFixed(2) + '€';
+    
+    console.log('[STATS] Updated:', { totalPatients, totalAmount, totalVisits });
+}
+
+function renderEntries() {
+    const tbody = document.getElementById('entriesBody');
+    if (!tbody) return;
+    
+    const currentMonth = currentMonthAdd.getMonth();
+    const currentYear = currentMonthAdd.getFullYear();
+    
+    const monthEntries = entries.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (monthEntries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Aucun passage ce mois</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = monthEntries.map(e => `
+        <tr>
+            <td>${e.date}</td>
+            <td>${e.patientName}</td>
+            <td>${e.location}</td>
+            <td>${e.cotation}</td>
+            <td>${(e.amount || 0).toFixed(2)}€</td>
+            <td><button onclick="deleteEntry('${e.id}')" style="color:red;">×</button></td>
+        </tr>
+    `).join('');
+}
+
+async function deleteEntry(id) {
+    if (!confirm('Supprimer ce passage?')) return;
+    
+    const { error } = await supabaseClient.from('passages').delete().eq('id', id);
+    if (error) {
+        alert('Erreur: ' + error.message);
+        return;
+    }
+    
+    await loadData();
+    renderEntries();
+    updateStats();
+    renderCharts();
+}
+
+function renderCharts() {
+    // Monthly chart
+    const monthlyData = {};
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[key] = 0;
+    }
+    
+    entries.forEach(e => {
+        const key = e.monthKey;
+        if (monthlyData[key] !== undefined) {
+            monthlyData[key] += e.amount || 0;
+        }
+    });
+    
+    const barsContainer = document.getElementById('monthlyChartBars');
+    const labelsContainer = document.getElementById('monthlyChartLabels');
+    
+    if (barsContainer) {
+        const maxVal = Math.max(...Object.values(monthlyData), 1);
+        barsContainer.innerHTML = Object.entries(monthlyData).map(([key, val]) => {
+            const height = (val / maxVal) * 100;
+            return `<div class="chart-bar" style="height: ${height}%" title="${key}: ${val.toFixed(2)}€"></div>`;
+        }).join('');
+    }
+    
+    if (labelsContainer) {
+        const monthNames = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+        labelsContainer.innerHTML = Object.keys(monthlyData).map(key => {
+            const m = parseInt(key.split('-')[1]) - 1;
+            return `<span>${monthNames[m]}</span>`;
+        }).join('');
+    }
+    
+    // Visits chart
+    const visitsData = {};
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        visitsData[key] = 0;
+    }
+    
+    entries.forEach(e => {
+        const key = e.monthKey;
+        if (visitsData[key] !== undefined) {
+            visitsData[key]++;
+        }
+    });
+    
+    const visitsBars = document.getElementById('visitsChartBars');
+    const visitsLabels = document.getElementById('visitsChartLabels');
+    
+    if (visitsBars) {
+        const maxVal = Math.max(...Object.values(visitsData), 1);
+        visitsBars.innerHTML = Object.entries(visitsData).map(([key, val]) => {
+            const height = (val / maxVal) * 100;
+            return `<div class="chart-bar" style="height: ${height}%" title="${key}: ${val} visites"></div>`;
+        }).join('');
+    }
+    
+    if (visitsLabels && labelsContainer) {
+        visitsLabels.innerHTML = labelsContainer.innerHTML;
+    }
+    
+    // Donut chart by location
+    const locationData = {};
+    entries.forEach(e => {
+        const loc = e.location || 'Autre';
+        locationData[loc] = (locationData[loc] || 0) + (e.amount || 0);
+    });
+    
+    const donutContainer = document.getElementById('donutChart');
+    const legendContainer = document.getElementById('donutLegend');
+    
+    if (donutContainer && Object.keys(locationData).length > 0) {
+        const total = Object.values(locationData).reduce((a, b) => a + b, 0);
+        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+        let gradient = '';
+        let cumulative = 0;
+        
+        Object.entries(locationData).forEach(([loc, val], i) => {
+            const pct = (val / total) * 100;
+            const end = cumulative + pct;
+            gradient += `${colors[i % colors.length]} ${cumulative}% ${end}%, `;
+            cumulative = end;
+        });
+        
+        gradient += `#e5e7eb ${cumulative}% 100%`;
+        donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
+    }
+    
+    if (legendContainer) {
+        legendContainer.innerHTML = Object.entries(locationData).map(([loc, val]) => 
+            `<div class="legend-item"><span class="legend-color" style="background:${colors[Object.keys(locationData).indexOf(loc) % colors.length]}"></span>${loc}</div>`
+        ).join('');
+    }
+    
+    // Cotation chart
+    const cotationData = {};
+    entries.forEach(e => {
+        const c = e.cotation || 'Autre';
+        cotationData[c] = (cotationData[c] || 0) + 1;
+    });
+    
+    const cotationBars = document.getElementById('cotationChartBars');
+    const cotationLabels = document.getElementById('cotationChartLabels');
+    
+    if (cotationBars) {
+        const sorted = Object.entries(cotationData).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        const maxVal = Math.max(...sorted.map(([k, v]) => v), 1);
+        
+        cotationBars.innerHTML = sorted.map(([c, count]) => {
+            const height = (count / maxVal) * 100;
+            return `<div class="chart-bar" style="height: ${height}%" title="${c}: ${count}"></div>`;
+        }).join('');
+    }
+    
+    if (cotationLabels) {
+        const sorted = Object.entries(cotationData).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        cotationLabels.innerHTML = sorted.map(([c]) => `<span>${c}</span>`).join('');
+    }
+}
+
+function renderRecentList() {
+    const container = document.getElementById('recentList');
+    if (!container) return;
+    
+    const recent = entries.slice(0, 10);
+    
+    if (recent.length === 0) {
+        container.innerHTML = '<div class="no-entries">Aucun passage récent</div>';
+        return;
+    }
+    
+    container.innerHTML = recent.map(e => `
+        <div class="recent-item">
+            <div class="recent-info">
+                <span class="recent-patient">${e.patientName}</span>
+                <span class="recent-date">${e.date} - ${e.location}</span>
+            </div>
+            <span class="recent-amount">${(e.amount || 0).toFixed(2)}€</span>
         </div>
     `).join('');
 }
 
+// Cabinet functions
 async function saveDepense() {
     const description = document.getElementById('depenseDescription').value;
     const amount = parseFloat(document.getElementById('depenseAmount').value);
     const category = document.getElementById('depenseCategory').value;
+    const sousCategorie = document.getElementById('depenseSousCategorie').value;
     const date = document.getElementById('depenseDate').value || new Date().toISOString().split('T')[0];
     
-    if (!description || !amount) {
-        alert('Veuillez remplir tous les champs');
+    if (!amount) {
+        alert('Veuillez entrer un montant');
         return;
     }
     
     const { error } = await supabaseClient
         .from('cabinet_depenses')
+        .insert([{
+            user_id: currentUser.id,
+            description,
+            amount,
+            category,
+            sous_categorie: sousCategorie,
+            date
+        }]);
+    
+    if (error) {
+        alert('Erreur: ' + error.message);
+        return;
+    }
+    
+    document.getElementById('depenseDescription').value = '';
+    document.getElementById('depenseAmount').value = '';
+    document.getElementById('depensesForm').style.display = 'none';
+    
+    await loadCabinetData();
+    renderComptaSummary();
+}
+
+async function saveRecette() {
+    const description = document.getElementById('recetteDescription').value;
+    const amount = parseFloat(document.getElementById('recetteAmount').value);
+    const category = document.getElementById('recetteCategory').value;
+    const date = document.getElementById('recetteDate').value || new Date().toISOString().split('T')[0];
+    
+    if (!amount) {
+        alert('Veuillez entrer un montant');
+        return;
+    }
+    
+    const { error } = await supabaseClient
+        .from('cabinet_recettes')
         .insert([{
             user_id: currentUser.id,
             description,
@@ -801,1543 +1759,207 @@ async function saveDepense() {
         return;
     }
     
-    document.getElementById('depenseDescription').value = '';
-    document.getElementById('depenseAmount').value = '';
-    document.getElementById('depensesForm').style.display = 'none';
+    document.getElementById('recetteDescription').value = '';
+    document.getElementById('recetteAmount').value = '';
+    document.getElementById('recettesForm').style.display = 'none';
     
-    await loadDepenses();
+    await loadCabinetData();
+    renderComptaSummary();
 }
 
-let cabinetDocuments = [];
+async function deleteDepense(id) {
+    if (!confirm('Supprimer cette dépense ?')) return;
+    
+    const { error } = await supabaseClient
+        .from('cabinet_depenses')
+        .delete()
+        .eq('id', id);
+    
+    if (error) {
+        alert('Erreur: ' + error.message);
+        return;
+    }
+    
+    await loadCabinetData();
+    renderComptaSummary();
+}
 
-async function loadDocuments() {
+async function deleteRecette(id) {
+    if (!confirm('Supprimer cette recette ?')) return;
+    
+    const { error } = await supabaseClient
+        .from('cabinet_recettes')
+        .delete()
+        .eq('id', id);
+    
+    if (error) {
+        alert('Erreur: ' + error.message);
+        return;
+    }
+    
+    await loadCabinetData();
+    renderComptaSummary();
+}
+
+// CABINET_CATEGORIES is already defined above (line 389)
+
+function updateSousCategoriesDepense() {
+    const category = document.getElementById('depenseCategory')?.value;
+    const sousCatSelect = document.getElementById('depenseSousCategorie');
+    
+    if (!sousCatSelect || !category) return;
+    
+    const cat = CABINET_CATEGORIES[category];
+    if (cat && cat.sous) {
+        sousCatSelect.innerHTML = '<option value="">Sélectionner...</option>' + 
+            cat.sous.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+}
+
+function renderCabinetDepenses() {
+    const container = document.getElementById('depensesList');
+    if (!container) return;
+    
+    if (cabinetDepenses.length === 0) {
+        container.innerHTML = '<div class="no-entries">Aucune dépense</div>';
+        return;
+    }
+    
+    container.innerHTML = cabinetDepenses.map(d => `
+        <div class="depense-item">
+            <div class="depense-info">
+                <span class="depense-cat">${CABINET_CATEGORIES[d.category]?.label || d.category}</span>
+                <span class="depense-desc">${d.description || d.sous_categorie || '-'}</span>
+                <span class="depense-date">${d.date}</span>
+            </div>
+            <span class="depense-amount">-${d.amount.toFixed(2)}€</span>
+            <button onclick="deleteDepense('${d.id}')" style="color:red;">×</button>
+        </div>
+    `).join('');
+}
+
+function renderCabinetRecettes() {
+    const container = document.getElementById('recettesList');
+    if (!container) return;
+    
+    if (cabinetRecettes.length === 0) {
+        container.innerHTML = '<div class="no-entries">Aucune recette</div>';
+        return;
+    }
+    
+    container.innerHTML = cabinetRecettes.map(r => `
+        <div class="recette-item">
+            <div class="recette-info">
+                <span class="recette-cat">${r.category}</span>
+                <span class="recette-desc">${r.description || '-'}</span>
+                <span class="recette-date">${r.date}</span>
+            </div>
+            <span class="recette-amount" style="color:var(--color-success)">+${r.amount.toFixed(2)}€</span>
+            <button onclick="deleteRecette('${r.id}')" style="color:red;">×</button>
+        </div>
+    `).join('');
+}
+
+// Settings functions
+async function loadUserProfile() {
+    console.log('[PROFILE] Loading user profile');
     try {
         const { data, error } = await supabaseClient
-            .from('cabinet_documents')
+            .from('profiles')
             .select('*')
-            .order('created_at', { ascending: false });
+            .eq('id', currentUser.id)
+            .single();
+        
+        if (error) {
+            console.log('[PROFILE] No profile found, creating default');
+            currentProfile = { role: 'medecin_installe' };
+            return;
+        }
+        
+        currentProfile = data;
+        console.log('[PROFILE] Loaded:', currentProfile);
+    } catch (e) {
+        console.error('[PROFILE] Error:', e);
+        currentProfile = { role: 'medecin_installe' };
+    }
+}
+
+async function loadUserSettings() {
+    console.log('[SETTINGS] Loading user settings');
+    try {
+        const { data } = await supabaseClient
+            .from('user_settings')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .single();
         
         if (data) {
-            cabinetDocuments = data;
-            renderDocuments();
+            window.userSettings = data;
+            console.log('[SETTINGS] Loaded');
         }
-    } catch (error) {
-        console.error('Erreur loadDocuments:', error);
-    }
-}
-
-function renderDocuments() {
-    const container = document.getElementById('documentsList');
-    
-    if (!container) return;
-    
-    if (cabinetDocuments.length === 0) {
-        container.innerHTML = '<div class="no-entries">Aucun document enregistré</div>';
-        return;
-    }
-    
-    container.innerHTML = cabinetDocuments.map(d => `
-        <div class="document-item">
-            <div>
-                <span class="description">${d.title}</span>
-                <span class="type">${d.type}</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-function renderRecentList() {
-    const container = document.getElementById('recentList');
-    if (!container) return;
-    
-    const monthKey = getCurrentMonthKey();
-    const monthEntries = entries.filter(e => e.monthKey === monthKey).slice(0, 5);
-    
-    if (monthEntries.length === 0) {
-        container.innerHTML = '<div class="no-entries">Aucun passage ce mois-ci</div>';
-        return;
-    }
-    
-    container.innerHTML = monthEntries.map(entry => `
-        <div class="recent-item">
-            <div>
-                <div class="patient">${entry.patientName}</div>
-                <div class="info">
-                    <span class="location-badge ${getLocationClass(entry.location)}">${entry.location}</span>
-                    <span class="cotation-badge">${entry.cotation}</span>
-                </div>
-            </div>
-            <div class="amount">${entry.amount.toFixed(2)}€</div>
-        </div>
-    `).join('');
-}
-
-function renderCharts() {
-    const monthKey = getCurrentMonthKey();
-    const monthEntries = entries.filter(e => e.monthKey === monthKey);
-    
-    const currentYear = new Date().getFullYear();
-    const yearEntries = entries.filter(e => e.monthKey.startsWith(String(currentYear)));
-
-    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-    
-    // Create all 12 months for current year
-    const months = [];
-    for (let m = 1; m <= 12; m++) {
-        const key = `${currentYear}-${String(m).padStart(2, '0')}`;
-        const monthData = yearEntries.filter(e => e.monthKey === key);
-        months.push({
-            key,
-            amount: monthData.reduce((sum, e) => sum + e.amount, 0),
-            count: monthData.length,
-            name: monthNames[m - 1]
-        });
-    }
-
-    // Monthly revenue chart
-    const monthlyBars = document.getElementById('monthlyChartBars');
-    const monthlyLabels = document.getElementById('monthlyChartLabels');
-    if (monthlyBars && monthlyLabels) {
-        const maxAmount = Math.max(...months.map(m => m.amount), 1);
-        monthlyBars.innerHTML = months.map(m =>
-            `<div class="chart-bar revenue" style="height: ${(m.amount / maxAmount) * 100}%">
-                <span class="bar-value">${m.amount.toFixed(0)}€</span>
-            </div>`
-        ).join('');
-        monthlyLabels.innerHTML = months.map(m =>
-            `<span class="chart-label">${m.name}</span>`
-        ).join('');
-    }
-
-    // Visits chart
-    const visitsChartBars = document.getElementById('visitsChartBars');
-    const visitsChartLabels = document.getElementById('visitsChartLabels');
-    if (visitsChartBars && visitsChartLabels) {
-        const maxVisits = Math.max(...months.map(m => m.count), 1);
-        visitsChartBars.innerHTML = months.map(m =>
-            `<div class="chart-bar visits" style="height: ${(m.count / maxVisits) * 100}%">
-                <span class="bar-value">${m.count}</span>
-            </div>`
-        ).join('');
-        visitsChartLabels.innerHTML = months.map(m =>
-            `<span class="chart-label">${m.name}</span>`
-        ).join('');
-}
-
-    // Cotation chart
-    const cotationBars = document.getElementById('cotationChartBars');
-    const cotationLabels = document.getElementById('cotationChartLabels');
-    if (cotationBars && cotationLabels) {
-        const byCotation = {};
-        monthEntries.forEach(e => {
-            byCotation[e.cotation] = (byCotation[e.cotation] || 0) + 1;
-        });
-        const sortedCotations = Object.entries(byCotation).sort((a, b) => b[1] - a[1]).slice(0, 6);
-        if (sortedCotations.length > 0) {
-            const maxCotation = Math.max(...sortedCotations.map(c => c[1]), 1);
-            cotationBars.innerHTML = sortedCotations.map(([c, count]) => 
-                `<div class="chart-bar" style="height: ${(count / maxCotation) * 100}%">
-                    <span class="bar-value">${count}</span>
-                </div>`
-            ).join('');
-            cotationLabels.innerHTML = sortedCotations.map(([c]) => 
-                `<span class="chart-label">${c}</span>`
-            ).join('');
-        } else {
-            cotationBars.innerHTML = '';
-            cotationLabels.innerHTML = '<span class="chart-label">-</span>';
-        }
-    }
-    
-    // Donut chart - Repartition by location
-    const donutChart = document.getElementById('donutChart');
-    const donutLegend = document.getElementById('donutLegend');
-    
-    if (donutChart && donutLegend) {
-        const byLocation = {};
-        monthEntries.forEach(e => {
-            byLocation[e.location] = (byLocation[e.location] || 0) + 1;
-        });
-        
-        const colors = {
-            'Médecine': '#4F46E5',
-            'SSR': '#8b5cf6',
-            'Lilias RdC': '#10b981',
-            'Lilas 1er étage': '#f59e0b',
-            'Tamaris': '#ec4899'
-        };
-        
-        const total = Object.values(byLocation).reduce((a, b) => a + b, 0) || 1;
-        let currentAngle = 0;
-        
-        const gradientParts = Object.entries(byLocation).map(([loc, count]) => {
-            const percentage = (count / total) * 100;
-            const startAngle = currentAngle;
-            currentAngle += percentage;
-            return `${colors[loc] || '#94a3b8'} ${startAngle}% ${currentAngle}%`;
-        });
-        
-        donutChart.style.background = `conic-gradient(${gradientParts.join(', ')})`;
-        
-        // Add total in center
-        donutChart.dataset.total = total + ' actes';
-        
-        donutLegend.innerHTML = Object.entries(byLocation).map(([loc, count]) => {
-            const percentage = ((count / total) * 100).toFixed(0);
-            return `
-            <div class="legend-item">
-                <span class="legend-dot" style="background: ${colors[loc] || '#94a3b8'}"></span>
-                ${loc}
-                <strong>${count} (${percentage}%)</strong>
-            </div>
-        `;
-        }).join('');
-}
-}
-
-function renderSettingsCotationList() {
-    const container = document.getElementById('settingsCotationList');
-    const cotations = COTATIONS['EHPAD'];
-    
-    container.innerHTML = Object.entries(cotations).map(([key, value]) => `
-        <div class="settings-cotation-item" data-key="${key}">
-            <span class="cotation-key">${key}</span>
-            <input type="number" class="cotation-amount" value="${value}" step="0.01" onchange="updateCotationPrice('${key}', this.value)">
-            <span>€</span>
-            <button class="delete-cotation" onclick="deleteCotation('${key}')" title="Supprimer">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
-            </button>
-        </div>
-    `).join('');
-}
-
-function updateCotationPrice(key, newPrice) {
-    const price = parseFloat(newPrice);
-    if (isNaN(price) || price <= 0) {
-        alert('Montant invalide');
-        renderSettingsCotationList();
-        return;
-    }
-    COTATIONS['EHPAD'][key] = price;
-    
-    // Update select if open
-    handleLocationChange();
-}
-
-function deleteCotation(key) {
-    if (!confirm(`Supprimer la cotation ${key} ?`)) return;
-    
-    delete COTATIONS['EHPAD'][key];
-    handleLocationChange();
-    renderSettingsCotationList();
-}
-
-function addNewCotationFromSettings() {
-    const key = document.getElementById('newCotationKey').value.trim().toUpperCase();
-    const amount = parseFloat(document.getElementById('newCotationAmount').value);
-    
-    if (!key || isNaN(amount) || amount <= 0) {
-        alert('Veuillez entrer une clé et un montant valide');
-        return;
-    }
-    
-    if (COTATIONS['EHPAD'][key]) {
-        alert('Cette cotation existe déjà');
-        return;
-    }
-    
-    COTATIONS['EHPAD'][key] = amount;
-    handleLocationChange();
-    renderSettingsCotationList();
-    
-    document.getElementById('newCotationKey').value = '';
-    document.getElementById('newCotationAmount').value = '';
-}
-
-function setDefaultDate() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('visitDate').value = today;
-}
-
-function updateMonthDisplay() {
-    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    const monthStr = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-    const currentMonthEl = document.getElementById('currentMonth');
-    const currentMonthAddEl = document.getElementById('currentMonthAdd');
-    if (currentMonthEl) currentMonthEl.textContent = monthStr;
-    if (currentMonthAddEl) currentMonthAddEl.textContent = monthStr;
-}
-
-function updateMobileMonthDisplay() {
-    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    const monthStr = `${monthNames[currentDate.getMonth()]}`;
-    const mobileMonthEl = document.getElementById('mobileCurrentMonth');
-    if (mobileMonthEl) mobileMonthEl.textContent = monthStr;
-}
-
-function setupMobileMonthSelector() {
-    const mobilePrev = document.getElementById('mobilePrevMonth');
-    const mobileNext = document.getElementById('mobileNextMonth');
-    if (mobilePrev) {
-        mobilePrev.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            changeMonth(-1);
-        });
-    }
-    if (mobileNext) {
-        mobileNext.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            changeMonth(1);
-        });
-    }
-
-    const mobileBackBtn = document.getElementById('mobileBackBtn');
-    if (mobileBackBtn) {
-        mobileBackBtn.addEventListener('click', () => {
-            switchView('dashboard');
-        });
-    }
-}
-
-function changeMonth(delta) {
-    console.log('changeMonth called with delta:', delta, 'currentDate before:', currentDate.toISOString());
-    currentDate.setMonth(currentDate.getMonth() + delta);
-    console.log('currentDate after:', currentDate.toISOString());
-    updateMonthDisplay();
-    updateMobileMonthDisplay();
-    renderEntries();
-    renderCharts();
-    updateStats();
-}
-
-function getCurrentMonthKey() {
-    return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function populateCotationSelect() {
-    handleLocationChange();
-}
-
-function handleLocationChange() {
-    const location = document.getElementById('visitLocation').value;
-    const cotationSelect = document.getElementById('cotation');
-    const customCotationDiv = document.getElementById('customCotation');
-    
-    cotationSelect.innerHTML = '<option value="">Sélectionner...</option>';
-    customCotationDiv.style.display = 'none';
-    
-    if (!location) {
-        handleCotationChange();
-        return;
-    }
-    
-    // Médecine et SSR = toujours G
-    if (location === 'Médecine' || location === 'SSR') {
-        const option = document.createElement('option');
-        option.value = 'G';
-        option.textContent = 'G - 30€';
-        option.dataset.amount = 30;
-        option.selected = true;
-        cotationSelect.appendChild(option);
-        handleCotationChange();
-        return;
-    }
-    
-    // EHPAD = toutes les cotations + option nouvelle
-    const cotations = COTATIONS['EHPAD'];
-    for (const [key, value] of Object.entries(cotations)) {
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = `${key} - ${value}€`;
-        option.dataset.amount = value;
-        cotationSelect.appendChild(option);
-    }
-    
-    // Option nouvelle cotation
-    const newOption = document.createElement('option');
-    newOption.value = '__new__';
-    newOption.textContent = '+ Nouvelle cotation...';
-    cotationSelect.appendChild(newOption);
-    
-    handleCotationChange();
-}
-
-function handleCotationChange() {
-    const select = document.getElementById('cotation');
-    const selectedOption = select.options[select.selectedIndex];
-    const customCotationDiv = document.getElementById('customCotation');
-    const vlAlert = document.getElementById('vlAlert');
-    
-    if (selectedOption.value === '__new__') {
-        customCotationDiv.style.display = 'flex';
-        const amountDisplay = document.getElementById('amountDisplay');
-        if (amountDisplay) amountDisplay.textContent = '0€';
-        if (vlAlert) vlAlert.style.display = 'none';
-        return;
-    }
-    
-    customCotationDiv.style.display = 'none';
-    const amount = selectedOption.dataset.amount || '0';
-    const amountDisplay2 = document.getElementById('amountDisplay');
-    if (amountDisplay2) amountDisplay2.textContent = `${amount}€`;
-    
-    // Reset alert style
-    if (vlAlert) {
-        vlAlert.style.background = '#FEF3C7';
-        vlAlert.style.borderColor = '#F59E0B';
-        vlAlert.style.color = '#92400E';
-    }
-    
-    // Check VL/VSP/IMT conditions
-    if (VL_COTATIONS.includes(selectedOption.value) && selectedPatientId) {
-        checkVLAlert(selectedPatientId);
-    } else if (vlAlert) {
-        vlAlert.style.display = 'none';
-    }
-}
-
-function saveCustomCotation() {
-    const key = document.getElementById('customCotationKey').value.trim().toUpperCase();
-    const amount = parseFloat(document.getElementById('customCotationAmount').value);
-    
-    if (!key || isNaN(amount) || amount <= 0) {
-        alert('Veuillez entrer une clé et un montant valide');
-        return;
-    }
-    
-    // Ajouter la nouvelle cotation
-    COTATIONS['EHPAD'][key] = amount;
-    
-    // Ajouter au select
-    const cotationSelect = document.getElementById('cotation');
-    const newOption = document.createElement('option');
-    newOption.value = key;
-    newOption.textContent = `${key} - ${amount}€`;
-    newOption.dataset.amount = amount;
-    
-    // Insérer avant l'option "Nouvelle cotation"
-    const newOptionEl = Array.from(cotationSelect.options).find(o => o.value === '__new__');
-    if (newOptionEl) {
-        cotationSelect.insertBefore(newOption, newOptionEl);
-    } else {
-        cotationSelect.appendChild(newOption);
-    }
-    
-    // Sélectionner la nouvelle cotation
-    cotationSelect.value = key;
-    
-    // Masquer les inputs et mettre à jour le montant
-    document.getElementById('customCotation').style.display = 'none';
-    document.getElementById('customCotationKey').value = '';
-    document.getElementById('customCotationAmount').value = '';
-    const amountDisplay3 = document.getElementById('amountDisplay');
-    if (amountDisplay3) amountDisplay3.textContent = `${amount}€`;
-}
-
-function handlePatientSearch(e) {
-    const query = e.target.value.toUpperCase().trim();
-    const dropdown = document.getElementById('autocomplete-dropdown');
-    
-    if (query.length < 2) {
-        dropdown.classList.remove('active');
-        selectedPatientId = null;
-        return;
-    }
-    
-    const matches = patients.filter(p => 
-        p.name.toUpperCase().includes(query)
-    ).slice(0, 5);
-    
-    if (matches.length === 0) {
-        dropdown.classList.remove('active');
-        selectedPatientId = null;
-        return;
-    }
-    
-    dropdown.innerHTML = matches.map(p => {
-        const lastVisitFormatted = p.last_visit ? new Date(p.last_visit).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Jamais';
-        return `
-        <div class="autocomplete-item" data-id="${p.id}" data-name="${p.name}">
-            <div class="patient-name">${p.name}</div>
-            <div class="patient-info">
-                <span>Dernière visite: ${lastVisitFormatted}</span>
-                <span>${p.visit_count || 0} passages</span>
-            </div>
-        </div>
-    `}).join('');
-    
-    dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
-        item.addEventListener('click', () => selectPatient(item.dataset.id, item.dataset.name));
-    });
-    
-    dropdown.classList.add('active');
-}
-
-async function selectPatient(patientId, patientName) {
-    const input = document.getElementById('patientName');
-    input.value = patientName;
-    selectedPatientId = parseInt(patientId);
-    document.getElementById('autocomplete-dropdown').classList.remove('active');
-    
-    const { data: lastVisit } = await supabaseClient
-        .from('passages')
-        .select('location, cotation')
-        .eq('patient_id', patientId)
-        .order('date', { ascending: false })
-        .limit(1)
-        .single();
-    
-    if (lastVisit) {
-        document.getElementById('visitLocation').value = lastVisit.location;
-        handleLocationChange();
-        
-        // Si Médecine ou SSR, forcer G sinon utiliser la dernière cotation
-        setTimeout(() => {
-            if (lastVisit.location === 'Médecine' || lastVisit.location === 'SSR') {
-                document.getElementById('cotation').value = 'G';
-            } else {
-                document.getElementById('cotation').value = lastVisit.cotation;
-            }
-            handleCotationChange();
-        }, 50);
-    }
-    
-    // Check VL/VSP/IMT alert if one is currently selected
-    const cotationSelect = document.getElementById('cotation');
-    if (VL_COTATIONS.includes(cotationSelect.value)) {
-        checkVLAlert(selectedPatientId);
-    }
-}
-
-function formatPatientName(input) {
-    const parts = input.trim().split(/\s+/);
-    if (parts.length < 2) return input;
-    
-    const lastName = parts[0].toUpperCase();
-    const firstName = parts.slice(1).map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase()).join(' ');
-    
-    return `${lastName} ${firstName}`;
-}
-
-async function handleSubmit(e) {
-    e.preventDefault();
-    
-    let patientName = formatPatientName(document.getElementById('patientName').value);
-    
-    let patientId = selectedPatientId;
-    
-    if (!patientId) {
-        const existing = patients.find(p => p.name.toUpperCase() === patientName.toUpperCase());
-        if (existing) {
-            patientId = existing.id;
-        } else {
-            // Determiner l'user_id pour le patient: si remplacant, utiliser le medecin remplace
-            const patientUserId = currentProfile?.role === 'medecin_remplacant' && currentProfile?.remplace_medecin_id
-                ? currentProfile.remplace_medecin_id
-                : currentUser.id;
-            
-            const { data: newPatient, error } = await supabaseClient
-                .from('patients')
-                .insert([{ name: patientName, user_id: patientUserId }])
-                .select()
-                .single();
-            
-            if (error) {
-                alert('Erreur: ' + error.message);
-                return;
-            }
-            
-            patientId = newPatient.id;
-            patients.push(newPatient);
-        }
-    }
-    
-    const cotationValue = document.getElementById('cotation').value;
-    
-    if (VL_COTATIONS.includes(cotationValue) && patientId) {
-        const vlCheck = canCoteVL(patientId, cotationValue);
-        if (!vlCheck.canCote) {
-            alert(vlCheck.message);
-            return;
-        }
-    }
-    
-    // Determiner l'user_id: si remplacant, utiliser le medecin remplace
-    const userId = currentProfile?.role === 'medecin_remplacant' && currentProfile?.remplace_medecin_id
-        ? currentProfile.remplace_medecin_id
-        : currentUser.id;
-    
-    const entry = {
-        patient_id: patientId,
-        user_id: userId,
-        date: document.getElementById('visitDate').value,
-        location: document.getElementById('visitLocation').value,
-        cotation: cotationValue,
-        amount: parseFloat(document.getElementById('amountDisplay').textContent.replace('€', '')) || 0,
-        month_key: getMonthKeyFromDate(document.getElementById('visitDate').value)
-    };
-    
-    const { data, error } = await supabaseClient
-        .from('passages')
-        .insert([entry])
-        .select()
-        .single();
-    
-    if (error) {
-        alert('Erreur: ' + error.message);
-        return;
-    }
-    
-    entries.unshift({
-        id: data.id,
-        patientId: data.patient_id,
-        patientName: patientName,
-        date: data.date,
-        location: data.location,
-        cotation: data.cotation,
-        amount: data.amount,
-        monthKey: data.month_key
-    });
-    
-    renderEntries();
-    renderCharts();
-    updateStats();
-    
-    document.getElementById('entryForm').reset();
-    setDefaultDate();
-    selectedPatientId = null;
-    populateCotationSelect();
-    const amountDisplay4 = document.getElementById('amountDisplay');
-    if (amountDisplay4) amountDisplay4.textContent = '0€';
-}
-
-function getMonthKeyFromDate(dateStr) {
-    const date = new Date(dateStr);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
-
-async function deleteEntry(id) {
-    const { error } = await supabaseClient
-        .from('passages')
-        .delete()
-        .eq('id', id);
-    
-    if (error) {
-        alert('Erreur: ' + error.message);
-        return;
-    }
-    
-    entries = entries.filter(e => e.id !== id);
-    renderEntries();
-    renderCharts();
-    updateStats();
-}
-
-function renderEntries() {
-    const monthKey = getCurrentMonthKey();
-    const monthEntries = entries.filter(e => e.monthKey === monthKey);
-    
-    const tbody = document.getElementById('entriesBody');
-    const noEntries = document.getElementById('noEntries');
-    
-    if (monthEntries.length === 0) {
-        tbody.innerHTML = '';
-        noEntries.style.display = 'block';
-        return;
-    }
-    
-    noEntries.style.display = 'none';
-    monthEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    tbody.innerHTML = monthEntries.map(entry => {
-        const locationClass = getLocationClass(entry.location);
-        const dateFormatted = formatDate(entry.date);
-        
-        return `
-            <tr>
-                <td>${dateFormatted}</td>
-                <td>${entry.patientName}</td>
-                <td><span class="location-badge ${locationClass}">${entry.location}</span></td>
-                <td><span class="cotation-badge">${entry.cotation}</span></td>
-                <td class="amount-cell">${entry.amount.toFixed(2)}€</td>
-                <td>
-                    <button class="delete-btn" onclick="deleteEntry(${entry.id})" title="Supprimer">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                    </button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function getLocationClass(location) {
-    if (location === 'Médecine' || location === 'SSR') return 'Médecin';
-    if (location.includes('Lilias')) return 'Lilias';
-    if (location.includes('Lilas')) return 'Lilas';
-    if (location === 'Tamaris') return 'Tamaris';
-    return '';
-}
-
-function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-function updateStats() {
-    const monthKey = getCurrentMonthKey();
-    const monthEntries = entries.filter(e => e.monthKey === monthKey);
-    
-    const totalPatients = new Set(monthEntries.map(e => e.patientId)).size;
-    
-    // Only apply 10% deduction to Médecine and SSR
-    const medecinSSRAmount = monthEntries
-        .filter(e => e.location === 'Médecine' || e.location === 'SSR')
-        .reduce((sum, e) => sum + e.amount, 0);
-    const ehpadAmount = monthEntries
-        .filter(e => e.location !== 'Médecine' && e.location !== 'SSR')
-        .reduce((sum, e) => sum + e.amount, 0);
-    const grossAmount = medecinSSRAmount + ehpadAmount;
-    const retainedAmount = medecinSSRAmount * 0.1;
-    const netAmount = ehpadAmount + (medecinSSRAmount * 0.9);
-    
-    const totalVisits = monthEntries.length;
-    
-    const uniqueDays = new Set(monthEntries.map(e => e.date)).size;
-    const avgPerDay = uniqueDays > 0 ? netAmount / uniqueDays : 0;
-    const avgPerPatient = totalPatients > 0 ? netAmount / totalPatients : 0;
-    const avgPerVisit = totalVisits > 0 ? netAmount / totalVisits : 0;
-    
-    // Stats by location
-    const byLocation = {};
-    monthEntries.forEach(e => {
-        byLocation[e.location] = (byLocation[e.location] || 0) + 1;
-    });
-    const topLocation = Object.entries(byLocation).sort((a, b) => b[1] - a[1])[0];
-    
-    const totalPatientsEl = document.getElementById('totalPatients');
-    const totalAmountEl = document.getElementById('totalAmount');
-    const totalVisitsEl = document.getElementById('totalVisits');
-    const avgPerDayEl = document.getElementById('avgPerDay');
-    
-    if (totalPatientsEl) totalPatientsEl.textContent = totalPatients;
-    if (totalAmountEl) totalAmountEl.textContent = `${netAmount.toFixed(2)}€`;
-    if (totalVisitsEl) totalVisitsEl.textContent = totalVisits;
-    if (avgPerDayEl) avgPerDayEl.textContent = `${avgPerDay.toFixed(2)}€`;
-    
-    // Add more stats to additional elements
-    const existingExtraStats = document.getElementById('extraStats');
-    if (existingExtraStats) {
-        existingExtraStats.innerHTML = `
-            <div class="stat-card mini">
-                <span class="stat-label">Brut</span>
-                <span class="stat-value">${grossAmount.toFixed(2)}€</span>
-            </div>
-            <div class="stat-card mini">
-                <span class="stat-label">Retenue 10%</span>
-                <span class="stat-value danger">-${retainedAmount.toFixed(2)}€</span>
-            </div>
-            <div class="stat-card mini">
-                <span class="stat-label">Moy/patient</span>
-                <span class="stat-value">${avgPerPatient.toFixed(2)}€</span>
-            </div>
-            <div class="stat-card mini">
-                <span class="stat-label">Moy/visite</span>
-                <span class="stat-value">${avgPerVisit.toFixed(2)}€</span>
-            </div>
-            <div class="stat-card mini">
-                <span class="stat-label">Top lieu</span>
-                <span class="stat-value">${topLocation ? topLocation[0] : '-'}</span>
-            </div>
-            <div class="stat-card mini">
-                <span class="stat-label">Jours actifs</span>
-                <span class="stat-value">${uniqueDays}</span>
-            </div>
-        `;
-    }
-}
-
-function generatePDF() {
-    try {
-        const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
-        if (!jsPDF) {
-            console.error('jsPDF not found', window.jspdf);
-            alert('Erreur: jsPDF non chargé');
-            return;
-        }
-        
-        const monthKey = getCurrentMonthKey();
-        const monthEntries = entries.filter(e => e.monthKey === monthKey);
-        
-        if (monthEntries.length === 0) {
-            alert('Aucun passage enregistré ce mois-ci');
-            return;
-        }
-        
-        const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-        const monthNum = parseInt(monthKey.split('-')[1]);
-        const year = monthKey.split('-')[0];
-        const monthName = monthNames[monthNum - 1];
-        
-const doc = new jsPDF();
-        doc.setFont('helvetica', 'bold');
-    
-    // ===== PAGE 1: MÉDECINE - SSR =====
-    const medecineSSR = monthEntries.filter(e => e.location === 'Médecine' || e.location === 'SSR');
-    
-    // Header
-    if (settings.logo) {
-        try {
-            doc.addImage(settings.logo, 'JPEG', 15, 5, 25, 25);
-        } catch (e) {
-            console.warn('Could not add logo:', e);
-        }
-    }
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CENTRE HOSPITALIER SAINT JEAN', 105, 15, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE', 105, 22, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('HONORAIRES MÉDICAUX', 105, 32, { align: 'center' });
-    doc.text('EN SERVICES DE MÉDECINE - SSR', 105, 39, { align: 'center' });
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('RÉFÉRENCES :', 14, 50);
-    doc.text('Application de la loi 2021-502 du 26 avril 2021 (notamment l\'article 19)', 14, 55);
-    doc.text('Application des articles L 6146-2 et L 6146-41 du Code de la santé publique', 14, 60);
-    
-    doc.text('Les honoraires sont fixés à 100% de la valeur de l\'acte conventionné.', 14, 68);
-    doc.text('Sur ces honoraires est due à l\'établissement une redevance de 10% pour participation aux frais', 14, 73);
-    doc.text('de structure, de personnel et d\'équipements hospitaliers de l\'établissement.', 14, 78);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('DÉSIGNATION :', 14, 88);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Docteur DORE Pierre-François', 14, 93);
-    doc.text('Médecin généraliste, autorisé à exercer dans l\'établissement.', 14, 98);
-    doc.text('CCM BETTON IBAN FR7615589351100287012394050', 14, 103);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', 14, 113);
-    doc.setFont('helvetica', 'normal');
-    doc.text(monthName, 80, 113);
-    
-    // Table header
-    let yPos = 125;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Nombre', 20, yPos);
-    doc.text('Actes', 50, yPos);
-    doc.text('Prix', 90, yPos);
-    doc.text('Montant', 130, yPos);
-    doc.line(15, yPos + 2, 160, yPos + 2);
-    
-    yPos += 10;
-    doc.setFont('helvetica', 'normal');
-    
-    // Count cotations for Médecine/SSR
-    let medCount = { G: 0, VG: 0, MPA: 0 };
-    medecineSSR.forEach(e => {
-        if (e.cotation === 'G') medCount.G++;
-    });
-    
-    doc.text(medCount.G.toString(), 20, yPos);
-    doc.text('G', 50, yPos);
-    doc.text('30,00 €', 90, yPos);
-    doc.text((medCount.G * 30).toFixed(2).replace('.', ',') + ' €', 130, yPos);
-    yPos += 7;
-    
-    doc.text('0', 20, yPos);
-    doc.text('VG', 50, yPos);
-    doc.text('40,00 €', 90, yPos);
-    doc.text('0', 130, yPos);
-    yPos += 7;
-    
-    doc.text('0', 20, yPos);
-    doc.text('MPA', 50, yPos);
-    doc.text('5,00 €', 90, yPos);
-    doc.text('0', 130, yPos);
-    yPos += 15;
-    
-    const medTotal = medCount.G * 30;
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('Montant total', 20, yPos);
-    doc.text(medTotal.toFixed(2).replace('.', ','), 130, yPos);
-    yPos += 7;
-    
-    doc.text('Retenue 10%', 20, yPos);
-    doc.text((medTotal * 0.1).toFixed(2).replace('.', ','), 130, yPos);
-    yPos += 7;
-    
-    doc.text('Montant à verser', 20, yPos);
-    doc.setFont('helvetica', 'normal');
-    doc.text((medTotal * 0.9).toFixed(2).replace('.', ','), 130, yPos);
-    
-    // Footer page 1
-    yPos += 20;
-    doc.setFont('helvetica', 'italic');
-    doc.text('Arrêt le présent mémoire à la somme de : ' + (medTotal * 0.9).toFixed(2).replace('.', ',') + ' €', 14, yPos);
-    
-    yPos += 15;
-    const today = new Date();
-    const monthNamesFr = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-    doc.setFont('helvetica', 'normal');
-    doc.text('La Guerche de Bretagne, le ' + today.getDate() + ' ' + monthNamesFr[today.getMonth()] + ' ' + today.getFullYear(), 14, yPos);
-    
-    yPos += 15;
-doc.setFont('helvetica', 'bold');
-    doc.text('Docteur DORE', 14, yPos);
-    yPos += 10;
-    doc.line(14, yPos, 80, yPos);
-    
-    if (settings.signature) {
-        try {
-            doc.addImage(settings.signature, 'JPEG', 14, yPos + 8, 40, 20);
-        } catch (e) {
-            console.warn('Could not add signature:', e);
-        }
-    }
-    
-    doc.setFontSize(8);
-    doc.text('Signature', 35, yPos + 35);
-    
-    // ===== PAGE 2: EHPAD =====
-    doc.addPage();
-    
-    const ehpad = monthEntries.filter(e => e.location !== 'Médecine' && e.location !== 'SSR');
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CENTRE HOSPITALIER SAINT JEAN', 105, 15, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE', 105, 22, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('HONORAIRES MÉDICAUX', 105, 32, { align: 'center' });
-    doc.text('EN ÉTABLISSEMENTS POUR PERSONNES ÂGÉES (EHPAD)', 105, 39, { align: 'center' });
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('RÉFÉRENCES :', 14, 50);
-    doc.text('Convention médicale - Tarifs applies aux actes en EHPAD', 14, 55);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('DÉSIGNATION :', 14, 65);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Docteur DORE Pierre-François', 14, 70);
-    doc.text('Médecin généraliste intervenant en EHPAD', 14, 75);
-    doc.text('CCM BETTON IBAN FR7615589351100287012394050', 14, 80);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', 14, 90);
-    doc.setFont('helvetica', 'normal');
-    doc.text(monthName, 80, 90);
-    
-    // EHPAD table
-    yPos = 102;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Nombre', 20, yPos);
-    doc.text('Actes', 50, yPos);
-    doc.text('Prix', 90, yPos);
-    doc.text('Montant', 130, yPos);
-    doc.line(15, yPos + 2, 160, yPos + 2);
-    
-    yPos += 10;
-    doc.setFont('helvetica', 'normal');
-    
-    const ehpadCotations = {};
-    ehpad.forEach(e => {
-        ehpadCotations[e.cotation] = (ehpadCotations[e.cotation] || 0) + 1;
-    });
-    
-    let ehpadTotal = 0;
-    Object.entries(ehpadCotations).forEach(([cot, count]) => {
-        const price = COTATIONS['EHPAD'][cot] || 0;
-        const subtotal = count * price;
-        ehpadTotal += subtotal;
-        doc.text(count.toString(), 20, yPos);
-        doc.text(cot, 50, yPos);
-        doc.text(price.toFixed(2).replace('.', ',') + ' €', 90, yPos);
-        doc.text(subtotal.toFixed(2).replace('.', ',') + ' €', 130, yPos);
-        yPos += 7;
-    });
-    
-    yPos += 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Montant total EHPAD', 20, yPos);
-    doc.setFont('helvetica', 'normal');
-    doc.text(ehpadTotal.toFixed(2).replace('.', ',') + ' €', 130, yPos);
-    
-    // Footer EHPAD
-    yPos += 20;
-    doc.setFont('helvetica', 'italic');
-    doc.text('Arrêt le présent mémoire à la somme de : ' + ehpadTotal.toFixed(2).replace('.', ',') + ' €', 14, yPos);
-    
-    yPos += 15;
-    doc.setFont('helvetica', 'normal');
-    doc.text('La Guerche de Bretagne, le ' + today.getDate() + ' ' + monthNamesFr[today.getMonth()] + ' ' + today.getFullYear(), 14, yPos);
-    
-    yPos += 15;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Docteur DORE', 14, yPos);
-    yPos += 10;
-    doc.line(14, yPos, 80, yPos);
-    
-    if (settings.signature) {
-        try {
-            doc.addImage(settings.signature, 'JPEG', 14, yPos + 8, 40, 20);
-        } catch (e) {
-            console.warn('Could not add signature:', e);
-        }
-    }
-    
-    doc.setFontSize(8);
-    doc.text('Signature', 35, yPos + 35);
-    
-    // ===== PAGE 3: DETAIL DES PASSAGES =====
-    doc.addPage();
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('DÉTAIL DES PASSAGES', 105, 15, { align: 'center' });
-    doc.text(monthName + ' ' + year, 105, 22, { align: 'center' });
-    
-    // Sort entries by date
-    const sortedEntries = [...monthEntries].sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    yPos = 35;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Date', 15, yPos);
-    doc.text('Patient', 45, yPos);
-    doc.text('Lieu', 100, yPos);
-    doc.text('Cotation', 140, yPos);
-    doc.text('Montant', 175, yPos);
-    yPos += 3;
-    doc.line(15, yPos, 190, yPos);
-    yPos += 5;
-    
-    doc.setFont('helvetica', 'normal');
-    
-    sortedEntries.forEach(entry => {
-        if (yPos > 270) {
-            doc.addPage();
-            yPos = 20;
-        }
-        
-        const dateFormatted = entry.date.split('-').reverse().join('/');
-        const patientName = entry.patientName.length > 20 ? entry.patientName.substring(0, 18) + '...' : entry.patientName;
-        const location = entry.location.length > 15 ? entry.location.substring(0, 13) + '...' : entry.location;
-        
-        doc.text(dateFormatted, 15, yPos);
-        doc.text(patientName, 45, yPos);
-        doc.text(location, 100, yPos);
-        doc.text(entry.cotation, 140, yPos);
-        doc.text(entry.amount.toFixed(2).replace('.', ',') + ' €', 175, yPos);
-        yPos += 6;
-    });
-    
-    // Total
-    yPos += 3;
-    doc.line(15, yPos, 190, yPos);
-    yPos += 6;
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL:', 140, yPos);
-    doc.text(monthEntries.reduce((s, e) => s + e.amount, 0).toFixed(2).replace('.', ',') + ' €', 175, yPos);
-    
-    // Summary by location
-    yPos += 15;
-    doc.setFont('helvetica', 'bold');
-    doc.text('RÉCAPITULATIF PAR LIEU:', 15, yPos);
-    yPos += 8;
-    doc.setFont('helvetica', 'normal');
-    
-    const locSummary = {};
-    monthEntries.forEach(e => {
-        locSummary[e.location] = (locSummary[e.location] || 0) + e.amount;
-    });
-    
-    Object.entries(locSummary).forEach(([loc, amount]) => {
-        doc.text(loc + ': ' + amount.toFixed(2).replace('.', ',') + ' €', 20, yPos);
-        yPos += 5;
-    });
-    
-    // Summary by cotation
-    yPos += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.text('RÉCAPITULATIF PAR COTATION:', 15, yPos);
-    yPos += 8;
-    doc.setFont('helvetica', 'normal');
-    
-    const cotSummary = {};
-    monthEntries.forEach(e => {
-        cotSummary[e.cotation] = (cotSummary[e.cotation] || 0) + e.amount;
-    });
-    
-    Object.entries(cotSummary).sort((a, b) => b[1] - a[1]).forEach(([cot, amount]) => {
-        doc.text(cot + ': ' + amount.toFixed(2).replace('.', ',') + ' €', 20, yPos);
-        yPos += 5;
-    });
-    
-    const grandTotal = monthEntries.reduce((sum, e) => sum + e.amount, 0);
-        const pdfBase64 = doc.output('datauristring');
-        
-        saveHistory(monthKey, `${monthName} ${year}`, grandTotal, monthEntries.length, pdfBase64);
-    } catch (err) {
-        console.error('Erreur PDF:', err);
-        alert('Erreur lors de la génération du PDF: ' + err.message);
-    }
-}
-
-async function saveHistory(monthKey, monthName, totalAmount, totalVisits, pdfBase64) {
-    const historyItem = {
-        month_key: monthKey,
-        month_name: monthName,
-        total_amount: totalAmount,
-        total_visits: totalVisits,
-        pdf_data: pdfBase64,
-        generated_at: new Date().toISOString()
-    };
-    
-    const { data, error } = await supabaseClient
-        .from('comptabilite')
-        .insert([historyItem])
-        .select();
-    
-    if (error) {
-        alert('Erreur: ' + error.message);
-        return;
-    }
-    
-    if (data && data[0]) {
-        history.unshift({
-            id: data[0].id,
-            monthKey: data[0].month_key,
-            monthName: data[0].month_name,
-            totalAmount: data[0].total_amount,
-            totalVisits: data[0].total_visits,
-            pdfData: data[0].pdf_data,
-            generatedAt: data[0].generated_at
-        });
-    }
-    
-    renderHistory();
-    alert('Feuille générée avec succès!');
-}
-
-function renderHistory() {
-    const historyList = document.getElementById('historyList');
-    const noHistory = document.getElementById('noHistory');
-    
-    if (history.length === 0) {
-        historyList.innerHTML = '';
-        noHistory.style.display = 'block';
-        return;
-    }
-    
-    noHistory.style.display = 'none';
-    
-    historyList.innerHTML = history.map((item, index) => `
-        <div class="history-item">
-            <div class="history-info">
-                <span class="history-month">${item.monthName}</span>
-                <span class="history-stats">${item.totalVisits} passages - Total: ${item.totalAmount.toFixed(2)}€</span>
-            </div>
-            <div class="history-actions">
-                ${item.pdfData ? `<button class="history-btn view-btn" onclick="viewHistoryPdfByIndex(${index})">Voir PDF</button>` : ''}
-                <button class="history-btn delete-history-btn" onclick="deleteHistory(${item.id})">Supprimer</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function viewHistoryPdfByIndex(index) {
-    const item = history[index];
-    if (item && item.pdfData) {
-        window.open(item.pdfData, '_blank');
-    }
-}
-
-function viewHistoryPdf(pdfData) {
-    if (pdfData) {
-        window.open(pdfData, '_blank');
-    }
-}
-
-async function deleteHistory(id) {
-    if (!confirm('Supprimer cette feuille ?')) return;
-    
-    const { error } = await supabaseClient
-        .from('comptabilite')
-        .delete()
-        .eq('id', id);
-    
-    if (error) {
-        alert('Erreur: ' + error.message);
-        return;
-    }
-    
-    history = history.filter(h => h.id !== id);
-    renderHistory();
-}
-
-// ========== VL TRACKING FUNCTIONS ==========
-async function loadVLHistory() {
-    if (!currentUser) return;
-    try {
-        const { data, error } = await supabaseClient
-            .from('passages')
-            .select('*, patients(name)')
-            .eq('user_id', currentUser.id)
-            .in('cotation', ['VL', 'VL+MD', 'VSP', 'IMT'])
-            .order('date', { ascending: false });
-        
-        if (!error && data) {
-            vlHistory = data.map(p => ({
-                id: p.id,
-                patientId: p.patient_id,
-                patientName: p.patients?.name || 'Inconnu',
-                vlDate: p.date,
-                cotation: p.cotation
-            }));
-        }
-        console.log('[VL] Historique chargé:', vlHistory.length);
     } catch (e) {
-        console.error('[VL] Erreur chargement:', e);
+        console.log('[SETTINGS] No settings found');
     }
 }
 
-function renderVLList() {
-    const container = document.getElementById('vlList');
-    if (!container) {
-        console.log('[VL] Container vlList non trouvé');
-        return;
-    }
+async function saveSetting(key, value) {
+    if (!currentUser) return;
     
-    // Grouper les VL par patient
-    const patientVLs = {};
-    vlHistory.forEach(v => {
-        if (!patientVLs[v.patientId]) {
-            patientVLs[v.patientId] = {
-                name: v.patientName,
-                vlDates: []
-            };
-        }
-        patientVLs[v.patientId].vlDates.push({
-            date: v.vlDate,
-            cotation: v.cotation
-        });
-    });
+    const existing = await supabaseClient
+        .from('user_settings')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .single();
     
-    if (Object.keys(patientVLs).length === 0) {
-        container.innerHTML = '<div class="no-entries">Aucun patient avec VL enregistré</div>';
-        return;
-    }
-    
-    container.innerHTML = Object.entries(patientVLs).map(([patientId, data]) => {
-        // Trier les dates par ordre décroissant
-        data.vlDates.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        const lastVL = data.vlDates[0];
-        const lastVLDate = new Date(lastVL.date);
-        const nextPossible = new Date(lastVLDate);
-        nextPossible.setDate(nextPossible.getDate() + 90); // 90 jours après
-        
-        const now = new Date();
-        const canCote = now >= nextPossible;
-        const daysUntil = Math.ceil((nextPossible - now) / (1000 * 60 * 60 * 24));
-        
-        const lastVLFormatted = lastVLDate.toLocaleDateString('fr-FR');
-        const nextPossibleFormatted = nextPossible.toLocaleDateString('fr-FR');
-        
-        // Compter les VL cette année
-        const currentYear = new Date().getFullYear();
-        const vlThisYear = data.vlDates.filter(v => 
-            new Date(v.date).getFullYear() === currentYear && 
-            (v.cotation === 'VL' || v.cotation === 'VL+MD')
-        ).length;
-        
-        return `
-            <div class="vl-patient-card">
-                <div class="vl-patient-name">${data.name}</div>
-                <div class="vl-details">
-                    <div class="vl-info">
-                        <span class="vl-label">Dernière VL:</span>
-                        <span class="vl-value">${lastVLFormatted} (${lastVL.cotation})</span>
-                    </div>
-                    <div class="vl-info">
-                        <span class="vl-label">Prochaine possible:</span>
-                        <span class="vl-value ${canCote ? 'can-cote' : ''}">${nextPossibleFormatted}</span>
-                    </div>
-                    <div class="vl-info">
-                        <span class="vl-label">VL cette année:</span>
-                        <span class="vl-value">${vlThisYear}/4</span>
-                    </div>
-                    ${!canCote ? `<div class="vl-wait">Dans ${daysUntil} jours</div>` : '<div class="vl-ready">✓ Cotation possible</div>'}
-                </div>
-                <div class="vl-history">
-                    ${data.vlDates.slice(0, 5).map(v => `
-                        <span class="vl-badge">${v.cotation} - ${new Date(v.date).toLocaleDateString('fr-FR', {month:'2-digit', year:'2-digit'})}</span>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function getNextQuarterStart(currentDate) {
-    const month = currentDate.getMonth();
-    const year = currentDate.getFullYear();
-    
-    // Q1: Jan-Mar, Q2: Apr-Jun, Q3: Jul-Sep, Q4: Oct-Dec
-    if (month >= 0 && month <= 2) return new Date(year, 3, 1); // Q2
-    if (month >= 3 && month <= 5) return new Date(year, 6, 1); // Q3
-    if (month >= 6 && month <= 8) return new Date(year, 9, 1); // Q4
-    if (month >= 9 && month <= 11) return new Date(year + 1, 0, 1); // Q1 next year
-    return new Date(year, 3, 1);
-}
-
-function renderRecentVLForAdd() {
-    const container = document.getElementById('recentVLList');
-    if (!container) return;
-
-    const vlOnly = vlHistory.filter(v => v.cotation === 'VL' || v.cotation === 'VL+MD');
-
-    if (vlOnly.length === 0) {
-        container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucune VL récente</p>';
-        return;
-    }
-
-    // Grouper par patient pour calculer les dates de prochain trimestre
-    const patientLastVL = {};
-    vlOnly.forEach(v => {
-        if (!patientLastVL[v.patientId] || new Date(v.vlDate) > new Date(patientLastVL[v.patientId].vlDate)) {
-            patientLastVL[v.patientId] = v;
-        }
-    });
-
-    const now = new Date();
-    const currentYear = now.getFullYear();
-
-    const vlList = Object.values(patientLastVL).map(v => {
-        const lastVLDate = new Date(v.vlDate);
-        const nextQuarter = getNextQuarterStart(lastVLDate);
-        const canCote = now >= nextQuarter;
-        const daysUntil = Math.ceil((nextQuarter - now) / (1000 * 60 * 60 * 24));
-        
-        // Compter les VL cette année
-        const vlThisYear = vlOnly.filter(p => 
-            p.patientId === v.patientId && 
-            new Date(p.vlDate).getFullYear() === currentYear
-        ).length;
-
-        return {
-            ...v,
-            lastVLDate,
-            nextQuarter,
-            canCote,
-            daysUntil,
-            vlThisYear
-        };
-    }).sort((a, b) => {
-        // Trier: d'abord ceux qui peuvent coter, puis par date
-        if (a.canCote && !b.canCote) return -1;
-        if (!a.canCote && b.canCote) return 1;
-        return a.nextQuarter - b.nextQuarter;
-    });
-
-    container.innerHTML = vlList.slice(0, 8).map(v => {
-        const vlDate = v.lastVLDate;
-        const vlDateStr = vlDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-        const nextDate = v.nextQuarter;
-        const nextQuarterStr = nextDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-        
-        return `
-            <div class="recent-vl-item">
-                <div class="vl-patient-info">
-                    <div class="patient">${v.patientName}</div>
-                    <div class="vl-date">${vlDateStr}</div>
-                </div>
-                <div class="vl-status-info">
-                    <div class="vl-count">${v.vlThisYear}/4</div>
-                    <div class="vl-next-date ${v.canCote ? 'can-cote' : ''}">
-                        ${v.canCote ? '✓' : nextQuarterStr}
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function checkVLAlert(patientId) {
-    const patientVLs = vlHistory.filter(v => v.patientId === patientId);
-    const vlOnly = patientVLs.filter(v => v.cotation === 'VL' || v.cotation === 'VL+MD');
-    
-    if (vlOnly.length === 0) {
-        const vlAlert = document.getElementById('vlAlert');
-        if (vlAlert) vlAlert.style.display = 'none';
-        return;
-    }
-    
-    // Trier par date décroissante
-    vlOnly.sort((a, b) => new Date(b.vlDate) - new Date(a.vlDate));
-    
-    const lastVL = vlOnly[0];
-    const lastVLDate = new Date(lastVL.vlDate);
-    const nextPossible = new Date(lastVLDate);
-    nextPossible.setDate(nextPossible.getDate() + 90);
-    
-    const now = new Date();
-    const canCote = now >= nextPossible;
-    
-    const vlAlert = document.getElementById('vlAlert');
-    const vlAlertText = document.getElementById('vlAlertText');
-    
-    if (!canCote && vlAlert && vlAlertText) {
-        const daysUntil = Math.ceil((nextPossible - now) / (1000 * 60 * 60 * 24));
-        vlAlert.style.display = 'flex';
-        vlAlert.style.background = '#FEF3C7';
-        vlAlert.style.borderColor = '#F59E0B';
-        vlAlert.style.color = '#92400E';
-        vlAlertText.textContent = `VL possible le ${nextPossible.toLocaleDateString('fr-FR')} (dans ${daysUntil} jours)`;
-    } else if (vlAlert) {
-        vlAlert.style.display = 'none';
+    if (existing.data) {
+        await supabaseClient
+            .from('user_settings')
+            .update({ [key]: value })
+            .eq('user_id', currentUser.id);
+    } else {
+        await supabaseClient
+            .from('user_settings')
+            .insert({ user_id: currentUser.id, [key]: value });
     }
 }
 
-// ========== END VL TRACKING ==========
+async function handleLogoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async () => {
+        await saveSetting('logo', reader.result);
+        renderLogoPreview();
+    };
+    reader.readAsDataURL(file);
+}
 
-function startApp() {
-    console.log('[APP] Démarrage...');
+async function handleSignatureUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
     
-    // Setup les listeners d'authentification
-    setupAuthListeners();
-    
-    // Initialiser Supabase et l'auth
+    const reader = new FileReader();
+    reader.onload = async () => {
+        await saveSetting('signature', reader.result);
+        renderLogoPreview();
+    };
+    reader.readAsDataURL(file);
+}
+
+// Expose login functions globally for mobile
+window.handleLoginClick = function() {
+    console.log('[AUTH] handleLoginClick called');
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    doLogin(email, password);
+};
+
+window.doLogin = doLogin;
+
+// Initialize auth on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuth);
+} else {
     initAuth();
 }
-
-// Démarrer l'app quand le DOM est prêt
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
-} else {
-    startApp();
-}
-
-// ========== VL POPUP ==========
-function showVLPopup(patientId, patientName) {
-    const patientVLs = vlHistory.filter(v => v.patientId === patientId && (v.cotation === 'VL' || v.cotation === 'VL+MD'));
-    patientVLs.sort((a, b) => new Date(b.vlDate) - new Date(a.vlDate));
-    
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const vlThisYear = patientVLs.filter(v => new Date(v.vlDate).getFullYear() === currentYear).length;
-    
-    // Calculer les prochains trimestres
-    const quarters = [];
-    for (let y = currentYear; y <= currentYear + 1; y++) {
-        for (let q = 1; q <= 4; q++) {
-            const qStart = new Date(y, (q - 1) * 3, 1);
-            if (qStart > now) quarters.push({ quarter: `Q${q} ${y}`, date: qStart });
-        }
-    }
-    
-    // Trouver le prochain trimestre disponible
-    let nextAvailable = null;
-    for (const q of quarters) {
-        const vlInQuarter = patientVLs.filter(v => {
-            const vDate = new Date(v.vlDate);
-            return vDate.getFullYear() === q.date.getFullYear() && 
-                   Math.ceil((vDate.getMonth() + 1) / 3) === Math.ceil((q.date.getMonth() + 1) / 3);
-        });
-        if (vlInQuarter.length === 0 && !nextAvailable) {
-            nextAvailable = q;
-            break;
-        }
-    }
-    
-    const historyHtml = patientVLs.slice(0, 5).map(v => `
-        <div class="vl-popup-history-item">
-            <span class="vl-popup-cotation">${v.cotation}</span>
-            <span class="vl-popup-date">${new Date(v.vlDate).toLocaleDateString('fr-FR')}</span>
-        </div>
-    `).join('');
-    
-    const popup = document.createElement('div');
-    popup.className = 'vl-popup-overlay';
-    popup.innerHTML = `
-        <div class="vl-popup">
-            <div class="vl-popup-header">
-                <h3>${patientName}</h3>
-                <button class="vl-popup-close" onclick="this.closest('.vl-popup-overlay').remove()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="vl-popup-content">
-                <div class="vl-popup-summary">
-                    <div class="vl-popup-stat">
-                        <span class="vl-popup-stat-value">${vlThisYear}</span>
-                        <span class="vl-popup-stat-label">VL cette année</span>
-                    </div>
-                    <div class="vl-popup-stat">
-                        <span class="vl-popup-stat-value">${patientVLs.length}</span>
-                        <span class="vl-popup-stat-label">Total VL</span>
-                    </div>
-                </div>
-                ${nextAvailable ? `
-                    <div class="vl-popup-next">
-                        <span class="vl-popup-label">Prochain trimestre disponible:</span>
-                        <span class="vl-popup-next-date">${nextAvailable.quarter}</span>
-                    </div>
-                ` : ''}
-                <div class="vl-popup-rules">
-                    <h4>Règles de cotation VL / VSP:</h4>
-                    <ul>
-                        <li><strong>VL</strong> (Visite Longue) : 60€ - <strong>VL+MD</strong> : 70€</li>
-                        <li><strong>Bénéficiaires</strong> : Patients ALD 80+, patho neurodégénératives (Alzheimer, Parkinson, SEP), nouveaux patients ALD/>80 ans</li>
-                        <li><strong>Fréquence</strong> : 4 fois/an (1x par trimestre civil) pour patients ALD 80+ ou neurodégénératifs</li>
-                        <li><strong>Première contact</strong> : Code IMT (une seule fois) - nouveau médecin traitant patient ALD ou >80 ans</li>
-                        <li><strong>Soins palliatifs</strong> : Utiliser code VSP (pas de limite)</li>
-                    </ul>
-                </div>
-                <div class="vl-popup-history">
-                    <h4>Historique:</h4>
-                    ${historyHtml || '<p>Aucune VL enregistrée</p>'}
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(popup);
-    
-    popup.addEventListener('click', (e) => {
-        if (e.target === popup) popup.remove();
-    });
-}
-
-window.showVLPopup = showVLPopup;
-
-// ========== END VL POPUP ==========

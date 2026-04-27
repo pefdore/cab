@@ -282,6 +282,204 @@ h2 {
     margin-bottom: 36px;
 }
 
+/* ===== DASHBOARD SWITCHER ===== */
+.dashboard-switcher {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 4px;
+    background: var(--color-bg-muted);
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.switch-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.switch-btn:hover {
+    color: var(--color-text);
+}
+
+.switch-btn.active {
+    background: var(--color-bg-elevated);
+    color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.dashboard-content {
+    display: block;
+}
+
+.dashboard-content[style*="display: none"] {
+    display: none !important;
+}
+
+/* ===== CABINET DASHBOARD CHARTS ===== */
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.chart-card {
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: 20px;
+}
+
+.chart-card.small {
+    min-height: 200px;
+}
+
+.chart-card h3 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--color-text);
+}
+
+/* Bar Chart */
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 150px;
+    gap: 4px;
+    padding-top: 10px;
+}
+
+.bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.bar-wrapper {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 2px;
+}
+
+.bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.3s;
+}
+
+.bar.income {
+    background: linear-gradient(180deg, #10b981, #34d399);
+}
+
+.bar.expense {
+    background: linear-gradient(180deg, #ef4444, #f87171);
+}
+
+.bar-label {
+    font-size: 0.625rem;
+    color: var(--color-text-tertiary);
+    margin-top: 4px;
+}
+
+/* Donut Chart */
+.donut-chart {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    position: relative;
+    margin: 0 auto;
+    background: conic-gradient(var(--color-primary) 0% 25%, var(--color-success) 25% 50%, var(--color-warning) 50% 70%, var(--color-danger) 70% 85%, var(--color-text-tertiary) 85% 100%);
+}
+
+.donut-chart::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    background: var(--color-bg-elevated);
+    border-radius: 50%;
+}
+
+/* Top Categories */
+#topCategories {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.top-cat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--color-bg-muted);
+    border-radius: 8px;
+}
+
+.top-cat-name {
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.top-cat-pct {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-danger);
+}
+
+/* Mini Stats Row */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.mini-stat {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+}
+
+.mini-label {
+    display: block;
+    font-size: 0.625rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mini-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
 /* ===== STATS GRID ===== */
 .stats-grid {
     display: grid;
@@ -1323,6 +1521,43 @@ h2 {
     
     * {
         box-sizing: border-box;
+    }
+    
+    /* Login Form - Mobile */
+    .login-form {
+        padding: 24px 20px;
+        border-radius: 16px;
+        gap: 16px;
+        max-width: 100%;
+    }
+    
+    .login-form .form-group input {
+        padding: 16px;
+        font-size: 16px;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .login-form .btn-primary {
+        padding: 16px;
+        font-size: 16px;
+        min-height: 50px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        user-select: none;
+    }
+    
+    /* Dashboard Switcher - Mobile */
+    .dashboard-switcher {
+        width: 100%;
+        margin-bottom: 16px;
+    }
+    
+    .switch-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 12px 10px;
+        font-size: 0.8125rem;
     }
     
     html, body {
@@ -2608,28 +2843,78 @@ h2 {
     
     /* Cabinet tabs mobile */
     .cabinet-tabs {
-        gap: 8px;
-        margin-bottom: 20px;
+        gap: 6px;
+        margin-bottom: 16px;
+        padding: 4px;
+        background: var(--color-bg-muted);
+        border-radius: 12px;
     }
     
     .cabinet-tab {
         flex: 1;
-        padding: 12px 16px;
-        font-size: 0.8125rem;
+        padding: 10px 8px;
+        font-size: 0.75rem;
+        border-radius: 10px;
+    }
+    
+    .compta-summary {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .compta-card {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 14px 16px;
+    }
+    
+    .compta-value {
+        font-size: 1.125rem;
+    }
+    
+    .depenses-form, .recettes-form {
+        padding: 14px;
         border-radius: 12px;
     }
     
-    .depenses-form {
-        padding: 20px;
-        border-radius: 16px;
-    }
-    
     .depenses-summary {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
     
-    .depenses-list {
-        gap: 10px;
+    .depenses-list, .recettes-list {
+        gap: 6px;
+    }
+    
+    .depense-item {
+        padding: 8px 10px;
+        flex-direction: row;
+        gap: 8px;
+    }
+    
+    .depense-item > div:first-child {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .depense-right {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .depense-item .description {
+        font-size: 0.8125rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .depense-item .amount {
+        font-size: 0.8125rem;
+    }
+    
+    .evolution-grid {
+        grid-template-columns: 1fr;
     }
     
     /* ========== MOBILE LOGOUT & VIEWS - POLISHED ========== */
@@ -2732,7 +3017,39 @@ h2 {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 99999;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.login-container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    pointer-events: auto;
+    position: relative;
+    z-index: 100000;
+}
+
+.login-form {
+    pointer-events: auto;
+}
+
+.login-form button,
+.login-form input,
+.login-form a {
+    pointer-events: auto;
+    touch-action: manipulation;
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        padding: 24px 20px;
+        border-radius: 16px;
+    }
 }
 
 .login-container {
@@ -2804,6 +3121,13 @@ h2 {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    background: var(--color-bg-elevated);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    margin: auto;
 }
 
 .login-form .form-group {
@@ -2819,11 +3143,13 @@ h2 {
 }
 
 .login-form .form-group input {
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
+    padding: 14px 16px;
+    border: 2px solid var(--color-border);
+    border-radius: 10px;
     font-size: 16px;
     font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .login-form .form-group input:focus {
@@ -2843,6 +3169,10 @@ h2 {
     cursor: pointer;
     margin-top: 10px;
     font-family: inherit;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
 }
 
 .login-form .btn-primary:hover {
@@ -2971,7 +3301,197 @@ h2 {
     margin-bottom: 20px;
 }
 
-.depenses-list, .documents-list {
+/* Compta Summary Cards */
+.compta-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.compta-card {
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.compta-card.income {
+    background: var(--color-success-bg);
+    border: 1px solid var(--color-success-border);
+}
+
+.compta-card.expense {
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+}
+
+.compta-card.balance {
+    background: var(--color-primary-subtle);
+    border: 1px solid var(--color-primary-light);
+}
+
+.compta-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.compta-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.compta-card.income .compta-value { color: var(--color-success); }
+.compta-card.expense .compta-value { color: var(--color-danger); }
+.compta-card.balance .compta-value { color: var(--color-primary); }
+
+/* Categories Grid */
+.compta-categories, .compta-mois {
+    margin-bottom: 24px;
+}
+
+.compta-categories h3, .compta-mois h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+}
+
+.categories-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--color-bg-muted);
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.category-item .cat-label {
+    font-weight: 500;
+}
+
+.category-item .cat-amount {
+    font-weight: 600;
+    color: var(--color-danger);
+}
+
+/* Month Selector */
+.mois-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.mois-selector button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-elevated);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.mois-selector span {
+    font-size: 1rem;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: center;
+}
+
+/* Evolution Grid */
+.evolution-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.evolution-item {
+    padding: 12px;
+    background: var(--color-bg-elevated);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.evolution-item .month {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.evolution-item .recettes {
+    color: var(--color-success);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.evolution-item .depenses {
+    color: var(--color-danger);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Form improvements */
+.depenses-form, .recettes-form {
+    background: var(--color-bg-elevated);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: 1px solid var(--color-border);
+}
+
+.depense-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.depense-right .date, .depense-right .date-small {
+    font-size: 0.6875rem;
+    color: var(--color-text-tertiary);
+}
+
+.date-small {
+    font-size: 0.6875rem;
+    color: var(--color-text-tertiary);
+    display: block;
+    margin-bottom: 2px;
+}
+
+.delete-btn-small {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    cursor: pointer;
+    font-size: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn-small:hover {
+    background: var(--color-danger);
+    color: white;
+}
+
+.depense-item.income .amount {
+    color: var(--color-success);
+}
+
+.depenses-list, .recettes-list, .documents-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -2981,28 +3501,35 @@ h2 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 16px;
+    padding: 10px 12px;
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
-    border-radius: 10px;
+    border-radius: 8px;
+    gap: 10px;
 }
 
 .depense-item .description {
     font-weight: 500;
+    font-size: 0.875rem;
 }
 
 .depense-item .category {
-    font-size: 12px;
+    font-size: 0.625rem;
     color: var(--color-text-secondary);
     background: var(--color-bg-muted);
-    padding: 2px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
-    margin-left: 8px;
+    margin-left: 6px;
 }
 
 .depense-item .amount {
     font-weight: 600;
+    font-size: 0.875rem;
     color: var(--color-danger);
+}
+
+.depense-item .date-small {
+    font-size: 0.625rem;
 }
 
 .depenses-form {
