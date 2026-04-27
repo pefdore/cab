@@ -1482,6 +1482,8 @@ async function loadVLHistory() {
 }
 
 function updateStats() {
+    console.log('[STATS] updateStats called, entries:', entries?.length || 0);
+    
     const currentMonth = currentMonthAdd.getMonth();
     const currentYear = currentMonthAdd.getFullYear();
     
@@ -1490,14 +1492,22 @@ function updateStats() {
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
     
+    console.log('[STATS] Month entries:', monthEntries.length);
+    
     const totalPatients = new Set(monthEntries.map(e => e.patientId)).size;
     const totalAmount = monthEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
     const totalVisits = monthEntries.length;
     const avgPerDay = totalVisits > 0 ? totalAmount / Math.max(new Date().getDate(), 1) : 0;
     
     const el = (id) => document.getElementById(id);
-    if (el('totalPatients')) el('totalPatients').textContent = totalPatients;
-    if (el('totalAmount')) el('totalAmount').textContent = totalAmount.toFixed(2) + '€';
+    if (el('totalPatients')) {
+        el('totalPatients').textContent = totalPatients;
+        console.log('[STATS] Set totalPatients:', totalPatients);
+    }
+    if (el('totalAmount')) {
+        el('totalAmount').textContent = totalAmount.toFixed(2) + '€';
+        console.log('[STATS] Set totalAmount:', totalAmount);
+    }
     if (el('totalVisits')) el('totalVisits').textContent = totalVisits;
     if (el('avgPerDay')) el('avgPerDay').textContent = avgPerDay.toFixed(2) + '€';
     
@@ -1505,16 +1515,25 @@ function updateStats() {
 }
 
 function renderEntries() {
+    console.log('[ENTRIES] renderEntries called, entries:', entries?.length || 0, 'currentMonth:', currentMonthAdd.getMonth());
+    
     const tbody = document.getElementById('entriesBody');
-    if (!tbody) return;
+    if (!tbody) {
+        console.log('[ENTRIES] tbody not found!');
+        return;
+    }
     
     const currentMonth = currentMonthAdd.getMonth();
     const currentYear = currentMonthAdd.getFullYear();
+    
+    console.log('[ENTRIES] Filtering for month:', currentMonth, 'year:', currentYear);
     
     const monthEntries = entries.filter(e => {
         const d = new Date(e.date);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    console.log('[ENTRIES] Found entries for month:', monthEntries.length);
     
     if (monthEntries.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Aucun passage ce mois</td></tr>';
