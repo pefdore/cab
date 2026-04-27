@@ -456,6 +456,11 @@ function switchDashboardMode(mode) {
             cabinetDash.style.display = 'block';
             console.log('[DASH] Showing cabinet-dashboard');
             loadCabinetData();
+            
+            // Delay rendering to ensure DOM is ready
+            setTimeout(() => {
+                renderComptaSummary();
+            }, 200);
         }
     }
 }
