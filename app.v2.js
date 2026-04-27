@@ -1344,6 +1344,9 @@ function renderComptaSummary() {
     
     console.log('[COMPTAB] Totals - Depenses:', totalDepenses, 'Recettes:', totalRecettes, 'Balance:', balance);
     
+    // Force show with alert!
+    alert('CA BINGO: Depenses=' + totalDepenses + '€ Recettes=' + totalRecettes + '€ Balance=' + balance + '€');
+    
     // Dashboard - Cabinet mode
     const elDashTotalRecettes = document.getElementById('dashTotalRecettes');
     const elDashTotalDepenses = document.getElementById('dashTotalDepenses');
