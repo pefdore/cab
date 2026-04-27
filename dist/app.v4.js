@@ -1183,6 +1183,7 @@ async function loadCabinetData() {
 }
 
 async function loadDepenses() {
+    console.log('[COMPTAB] loadDepenses called, user:', currentUser?.id);
     try {
         console.log('Loading depenses for user:', currentUser?.id);
         const { data, error } = await supabaseClient
@@ -1190,7 +1191,10 @@ async function loadDepenses() {
             .select('*')
             .order('date', { ascending: false });
         
-        console.log('Depenses loaded:', data, error);
+        console.log('[COMPTAB] Depenses loaded:', data?.length || 0, error);
+        if (error) {
+            console.error('[COMPTAB] Depenses error:', error);
+        }
         if (data) {
             cabinetDepenses = data;
             renderDepenses();
@@ -1202,6 +1206,7 @@ async function loadDepenses() {
 }
 
 async function loadRecettes() {
+    console.log('[COMPTAB] loadRecettes called, user:', currentUser?.id);
     try {
         console.log('Loading recettes for user:', currentUser?.id);
         const { data, error } = await supabaseClient
@@ -1209,7 +1214,10 @@ async function loadRecettes() {
             .select('*')
             .order('date', { ascending: false });
         
-        console.log('Recettes loaded:', data, error);
+        console.log('[COMPTAB] Recettes loaded:', data?.length || 0, error);
+        if (error) {
+            console.error('[COMPTAB] Recettes error:', error);
+        }
         if (data) {
             cabinetRecettes = data;
             renderRecettes();
@@ -1298,6 +1306,13 @@ function renderRecettes() {
 }
 
 function renderComptaSummary() {
+    console.log('[COMPTAB] renderComptaSummary called');
+    console.log('[COMPTAB] cabinetDepenses:', cabinetDepenses?.length || 0);
+    console.log('[COMPTAB] cabinetRecettes:', cabinetRecettes?.length || 0);
+    
+    if (!cabinetDepenses) cabinetDepenses = [];
+    if (!cabinetRecettes) cabinetRecettes = [];
+    
     const totalDepenses = cabinetDepenses.reduce((sum, d) => sum + d.amount, 0);
     const totalRecettes = cabinetRecettes.reduce((sum, r) => sum + r.amount, 0);
     const balance = totalRecettes - totalDepenses;
