@@ -820,13 +820,81 @@ function renderHistory() {
 
 function downloadPDF(id) {
     const record = history.find(h => h.id === id);
-    if (!record) return;
+    if (!record) {
+        alert('Document non trouvé');
+        return;
+    }
     
     const pdfData = record.pdfData || record.pdf_data;
     if (!pdfData) {
-        alert('PDF non trouvé'); 
+        alert('PDF non disponible');
         return;
     }
+    
+    // Open PDF in new tab for download
+    const monthName = record.monthName || record.monthKey || 'document';
+    const link = document.createElement('a');
+    link.href = pdfData;
+    link.target = '_blank';
+    link.download = 'honoraires-' + monthName + '.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function deletePDF(id) {
+    if (!confirm('Voulez-vous vraiment supprimer cette feuille de cotation?')) return;
+    
+    supabaseClient
+        .from('comptabilite')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+            if (error) {
+                alert('Erreur lors de la suppression: ' + error.message);
+                return;
+            }
+            
+            history = history.filter(h => h.id !== id);
+            renderHistory();
+        });
+}
+
+function renderHistory() {
+    const container = document.getElementById('historyList');
+    const noHistory = document.getElementById('noHistory');
+    
+    if (!container) return;
+    
+    if (history.length === 0) {
+        container.innerHTML = '';
+        if (noHistory) noHistory.style.display = 'block';
+        return;
+    }
+    
+    if (noHistory) noHistory.style.display = 'none';
+    
+    container.innerHTML = history.map(h => `
+        <div class="history-item-compact">
+            <div class="history-item-left">
+                <span class="history-month-compact">${h.monthName || h.monthKey}</span>
+                <span class="history-date-compact">${new Date(h.generatedAt || h.generated_at).toLocaleDateString('fr-FR')}</span>
+            </div>
+            <div class="history-item-right">
+                <span class="history-amount-compact">${(h.totalAmount || h.total_amount || 0).toFixed(2)}€</span>
+                <span class="history-count-compact">${h.totalVisits || h.total_visits || 0} actes</span>
+            </div>
+            <div class="history-actions-compact">
+                <button class="btn-icon" onclick="downloadPDF('${h.id}')" title="Télécharger">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button class="btn-icon btn-icon-danger" onclick="deletePDF('${h.id}')" title="Supprimer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
     
     const link = document.createElement('a');
     link.href = pdfData;
