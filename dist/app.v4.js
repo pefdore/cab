@@ -1327,12 +1327,17 @@ function renderComptaSummary() {
     console.log('[COMPTAB] cabinet-dashboard element:', !!cabinetDash);
     console.log('[COMPTAB] cabinet-dashboard display:', cabinetDash?.style.display);
     console.log('[COMPTAB] cabinet-dashboard computed:', cabinetDash ? window.getComputedStyle(cabinetDash).display : 'N/A');
+    console.log('[COMPTAB] cabinet-dashboard innerHTML length:', cabinetDash?.innerHTML?.length);
     
-    // Force visible for debugging
+    // Force rebuild HTML content
     if (cabinetDash) {
         cabinetDash.style.border = '3px solid red';
         cabinetDash.style.padding = '20px';
         cabinetDash.style.backgroundColor = '#fff';
+        cabinetDash.style.color = 'black';
+        
+        // Force innerHTML refresh
+        cabinetDash.innerHTML = cabinetDash.innerHTML;
     }
     
     if (!cabinetDepenses) cabinetDepenses = [];
@@ -1353,30 +1358,19 @@ function renderComptaSummary() {
     
     // DEBUG: Force inline styles
     if (elDashTotalRecettes) {
-        elDashTotalRecettes.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; min-height: 50px; padding: 20px; font-size: 24px; font-weight: bold;';
-    }
-    if (elDashTotalDepenses) {
-        elDashTotalDepenses.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; min-height: 50px; padding: 20px; font-size: 24px; font-weight: bold;';
-    }
-    if (elDashBalance) {
-        elDashBalance.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; min-height: 50px; padding: 20px; font-size: 24px; font-weight: bold;';
-    }
-    
-    if (elDashTotalRecettes) {
         elDashTotalRecettes.textContent = `${totalRecettes.toFixed(2)}€`;
-        elDashTotalRecettes.style.backgroundColor = '#10b981';
-        elDashTotalRecettes.style.color = 'white';
-        elDashTotalRecettes.style.padding = '10px';
+        elDashTotalRecettes.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; background: #10b981; color: white; padding: 15px 30px; font-size: 28px; font-weight: bold; border-radius: 8px;';
+        console.log('[COMPTAB] Set dashTotalRecettes to:', elDashTotalRecettes.textContent);
     }
     if (elDashTotalDepenses) {
         elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
-        elDashTotalDepenses.style.backgroundColor = '#ef4444';
-        elDashTotalDepenses.style.color = 'white';
-        elDashTotalDepenses.style.padding = '10px';
+        elDashTotalDepenses.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; background: #ef4444; color: white; padding: 15px 30px; font-size: 28px; font-weight: bold; border-radius: 8px;';
+        console.log('[COMPTAB] Set dashTotalDepenses to:', elDashTotalDepenses.textContent);
     }
     if (elDashBalance) {
         elDashBalance.textContent = `${balance.toFixed(2)}€`;
-        elDashBalance.style.color = balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+        elDashBalance.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; background: ' + (balance >= 0 ? '#10b981' : '#ef4444') + '; color: white; padding: 15px 30px; font-size: 28px; font-weight: bold; border-radius: 8px;';
+        console.log('[COMPTAB] Set dashBalance to:', elDashBalance.textContent);
         elDashBalance.style.fontWeight = 'bold';
         elDashBalance.style.fontSize = '24px';
     }
