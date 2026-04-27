@@ -747,16 +747,29 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="app.v4.js?v=41" defer></script>
+    <script src="app.v4.js?v=45" defer></script>
     <script>
-      window.jspdfReady = function() {
-        window.jsPDF = window.jspdf.jsPDF;
-      };
-      if (window.jspdf && window.jspdf.jsPDF) {
-        window.jsPDF = window.jspdf.jsPDF;
+      // Wait for jsPDF to load and expose it properly
+      function checkJsPDF() {
+        if (window.jspdf && window.jspdf.jsPDF) {
+          window.jsPDF = window.jspdf.jsPDF;
+          console.log('[PDF] jsPDF loaded and exposed');
+        }
       }
+      
+      // Check immediately
+      checkJsPDF();
+      
+      // Also check when window loads
+      window.addEventListener('load', checkJsPDF);
+      
+      // Poll every 500ms for up to 10 seconds
+      let attempts = 0;
+      const poll = setInterval(() => {
+        checkJsPDF();
+        attempts++;
+        if (attempts >= 20) clearInterval(poll);
+      }, 500);
     </script>
     <script>
       if ('serviceWorker' in navigator) {

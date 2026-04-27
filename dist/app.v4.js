@@ -1067,6 +1067,8 @@ function setupEventListeners() {
     document.getElementById('prevMonthAdd')?.addEventListener('click', () => changeMonth(-1));
     document.getElementById('nextMonthAdd')?.addEventListener('click', () => changeMonth(1));
     document.getElementById('generatePdfBtn')?.addEventListener('click', generatePDF);
+    const pdfBtn = document.getElementById('generatePdfBtn');
+    if (pdfBtn) pdfBtn.disabled = false;
     document.getElementById('addNewCotation').addEventListener('click', addNewCotationFromSettings);
     
     const patientInput = document.getElementById('patientName');
@@ -1554,27 +1556,61 @@ if (elDashTotalRecettes) {
 // ===== MISSING FUNCTIONS =====
 
 function generatePDF() {
-    alert('Génération PDF en cours...');
-    // Basic PDF generation placeholder
-    const { jsPDF } = window.jsPDF;
+    console.log('[PDF] Starting generation...');
+    console.log('[PDF] window.jspdf:', window.jspdf);
+    console.log('[PDF] window.jsPDF:', window.jsPDF);
+    
+    let jsPDF = null;
+    if (window.jspdf && window.jspdf.jsPDF) {
+        jsPDF = window.jspdf.jsPDF;
+    } else if (window.jsPDF) {
+        jsPDF = window.jsPDF;
+    }
+    
     if (!jsPDF) {
-        alert('Erreur: jsPDF non chargé');
+        alert('Erreur: jsPDF non chargé. Attendez 2-3 secondes puis réessayez.');
         return;
     }
     
-    const doc = new jsPDF();
-    doc.text('Feuille de cotation', 10, 10);
-    doc.text('Mois: ' + document.getElementById('currentMonthAdd')?.textContent, 10, 20);
-    doc.text('Generated: ' + new Date().toLocaleDateString('fr-FR'), 10, 30);
-    
-    // Add entries
-    let y = 50;
-    entries.slice(0, 20).forEach((e, i) => {
-        doc.text(`${i+1}. ${e.date} - ${e.patientName} - ${e.cotation} - ${e.amount}€`, 10, y);
-        y += 7;
-    });
-    
-    doc.save('cotation-' + new Date().toISOString().split('T')[0] + '.pdf');
+    try {
+        console.log('[PDF] Creating document...');
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text('Feuille de cotation', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.text('Mois: ' + (document.getElementById('currentMonthAdd')?.textContent || 'N/A'), 10, 35);
+        doc.text('Date: ' + new Date().toLocaleDateString('fr-FR'), 10, 42);
+        
+        doc.setFontSize(10);
+        let y = 55;
+        doc.text('#', 10, y);
+        doc.text('Date', 20, y);
+        doc.text('Patient', 45, y);
+        doc.text('Cotation', 130, y);
+        doc.text('Montant', 175, y);
+        
+        y += 5;
+        doc.line(10, y, 200, y);
+        y += 8;
+        
+        entries.slice(0, 25).forEach((e, i) => {
+            doc.text(String(i + 1), 10, y);
+            doc.text(e.date || '', 20, y);
+            doc.text((e.patientName || '').substring(0, 30), 45, y);
+            doc.text(e.cotation || '', 130, y);
+            doc.text((e.amount || '0') + '€', 175, y);
+            y += 7;
+        });
+        
+        console.log('[PDF] Saving...');
+        doc.save('cotation-' + new Date().toISOString().split('T')[0] + '.pdf');
+        console.log('[PDF] Done!');
+    } catch (err) {
+        console.error('[PDF] Error:', err);
+        alert('Erreur lors de la génération: ' + err.message);
+    }
 }
 
 // VL History (already declared above)

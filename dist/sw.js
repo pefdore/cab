@@ -1,8 +1,8 @@
-const CACHE_NAME = 'cotation-v6';
+const CACHE_NAME = 'cotation-v7';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/app.v4.js?v=5',
+  '/app.v4.js?v=45',
   '/style.css',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
