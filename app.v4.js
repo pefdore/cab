@@ -802,15 +802,34 @@ function downloadPDF(id) {
         return;
     }
     
-    // Open PDF in new tab for download
+    // More reliable download method for base64 data URLs
     const monthName = record.monthName || record.monthKey || 'document';
-    const link = document.createElement('a');
-    link.href = pdfData;
-    link.target = '_blank';
-    link.download = 'honoraires-' + monthName + '.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const fileName = 'honoraires-' + monthName + '.pdf';
+    
+    try {
+        // Create a link and use click with proper event dispatch
+        const link = document.createElement('a');
+        link.href = pdfData;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // Use dispatchEvent for better cross-browser compatibility
+        const clickEvent = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: false
+        });
+        link.dispatchEvent(clickEvent);
+        
+        // Clean up after a short delay
+        setTimeout(() => {
+            document.body.removeChild(link);
+        }, 100);
+    } catch (error) {
+        console.error('Erreur téléchargement PDF:', error);
+        alert('Erreur lors du téléchargement: ' + error.message);
+    }
 }
 
 function deletePDF(id) {
@@ -865,30 +884,6 @@ function renderHistory() {
             </div>
         </div>
     `).join('');
-}
-    
-    const link = document.createElement('a');
-    link.href = pdfData;
-    link.download = 'cotation-' + (record.monthKey || record.monthName || 'document') + '.pdf';
-    link.click();
-}
-
-function deletePDF(id) {
-    if (!confirm('Voulez-vous vraiment supprimer cette feuille de cotation?')) return;
-    
-    supabaseClient
-        .from('comptabilite')
-        .delete()
-        .eq('id', id)
-        .then(({ error }) => {
-            if (error) {
-                alert('Erreur lors de la suppression: ' + error.message);
-                return;
-            }
-            
-            history = history.filter(h => h.id !== id);
-            renderHistory();
-        });
 }
 
 function renderLogoPreview() {

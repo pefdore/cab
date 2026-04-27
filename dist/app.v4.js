@@ -804,15 +804,22 @@ function renderHistory() {
     if (noHistory) noHistory.style.display = 'none';
     
     container.innerHTML = history.map(h => `
-        <div class="history-item">
-            <div class="history-info">
-                <span class="history-title">${h.monthName || h.monthKey}</span>
-                <span class="history-date">${new Date(h.generatedAt || h.generated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                <span class="history-total">${(h.totalAmount || h.total_amount || 0).toFixed(2)}€ · ${h.totalVisits || h.total_visits || 0} passages</span>
+        <div class="history-item-compact">
+            <div class="history-item-left">
+                <span class="history-month-compact">${h.monthName || h.monthKey}</span>
+                <span class="history-date-compact">${new Date(h.generatedAt || h.generated_at).toLocaleDateString('fr-FR')}</span>
             </div>
-            <div class="history-actions">
-                <button class="btn-download" onclick="downloadPDF('${h.id}')">Télécharger</button>
-                <button class="btn-delete" onclick="deletePDF('${h.id}')">Supprimer</button>
+            <div class="history-item-right">
+                <span class="history-amount-compact">${(h.totalAmount || h.total_amount || 0).toFixed(2)}€</span>
+                <span class="history-count-compact">${h.totalVisits || h.total_visits || 0} actes</span>
+            </div>
+            <div class="history-actions-compact">
+                <button class="btn-icon" onclick="downloadPDF('${h.id}')" title="Télécharger">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button class="btn-icon btn-icon-danger" onclick="deletePDF('${h.id}')" title="Supprimer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
             </div>
         </div>
     `).join('');
@@ -831,15 +838,34 @@ function downloadPDF(id) {
         return;
     }
     
-    // Open PDF in new tab for download
+    // More reliable download method for base64 data URLs
     const monthName = record.monthName || record.monthKey || 'document';
-    const link = document.createElement('a');
-    link.href = pdfData;
-    link.target = '_blank';
-    link.download = 'honoraires-' + monthName + '.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const fileName = 'honoraires-' + monthName + '.pdf';
+    
+    try {
+        // Create a link and use click with proper event dispatch
+        const link = document.createElement('a');
+        link.href = pdfData;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // Use dispatchEvent for better cross-browser compatibility
+        const clickEvent = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: false
+        });
+        link.dispatchEvent(clickEvent);
+        
+        // Clean up after a short delay
+        setTimeout(() => {
+            document.body.removeChild(link);
+        }, 100);
+    } catch (error) {
+        console.error('Erreur téléchargement PDF:', error);
+        alert('Erreur lors du téléchargement: ' + error.message);
+    }
 }
 
 function deletePDF(id) {
@@ -894,30 +920,6 @@ function renderHistory() {
             </div>
         </div>
     `).join('');
-}
-    
-    const link = document.createElement('a');
-    link.href = pdfData;
-    link.download = 'cotation-' + (record.monthKey || record.monthName || 'document') + '.pdf';
-    link.click();
-}
-
-function deletePDF(id) {
-    if (!confirm('Voulez-vous vraiment supprimer cette feuille de cotation?')) return;
-    
-    supabaseClient
-        .from('comptabilite')
-        .delete()
-        .eq('id', id)
-        .then(({ error }) => {
-            if (error) {
-                alert('Erreur lors de la suppression: ' + error.message);
-                return;
-            }
-            
-            history = history.filter(h => h.id !== id);
-            renderHistory();
-        });
 }
 
 function renderLogoPreview() {
