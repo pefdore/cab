@@ -1654,16 +1654,19 @@ function renderEntries() {
         return;
     }
     
-    tbody.innerHTML = monthEntries.map(e => `
+    tbody.innerHTML = monthEntries.map(e => {
+        const locColor = getLocationColor(e.location);
+        const locationBadge = e.location ? `<span class="location-badge small" style="background:${locColor}">${e.location}</span>` : e.location;
+        return `
         <tr>
             <td>${e.date}</td>
             <td>${e.patientName}</td>
-            <td>${e.location}</td>
+            <td>${locationBadge}</td>
             <td>${e.cotation}</td>
             <td>${(e.amount || 0).toFixed(2)}€</td>
             <td><button onclick="deleteEntry('${e.id}')" style="color:red;">×</button></td>
         </tr>
-    `).join('');
+    `;}).join('');
 }
 
 async function deleteEntry(id) {

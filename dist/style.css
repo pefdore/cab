@@ -851,12 +851,18 @@ h2 {
 
 .location-badge {
     display: inline-block;
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: white;
-    font-size: 9px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: var(--text-xs);
     font-weight: 500;
-    margin-left: 4px;
+    background: var(--color-primary) !important;
+    color: white !important;
+}
+
+.location-badge.small {
+    padding: 2px 8px;
+    font-size: 10px;
+    border-radius: 10px;
 }
 
 /* ========== ENTRIES TABLE - DESKTOP ========== */

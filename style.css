@@ -859,6 +859,12 @@ h2 {
     color: white !important;
 }
 
+.location-badge.small {
+    padding: 2px 8px;
+    font-size: 10px;
+    border-radius: 10px;
+}
+
 /* ========== ENTRIES TABLE - DESKTOP ========== */
 .entries-section {
     margin-top: 32px;
