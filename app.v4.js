@@ -789,35 +789,6 @@ function deleteCotation(index) {
     populateCotationSelect();
 }
 
-function renderHistory() {
-    const container = document.getElementById('historyList');
-    const noHistory = document.getElementById('noHistory');
-    
-    if (!container) return;
-    
-    if (history.length === 0) {
-        container.innerHTML = '';
-        if (noHistory) noHistory.style.display = 'block';
-        return;
-    }
-    
-    if (noHistory) noHistory.style.display = 'none';
-    
-    container.innerHTML = history.map(h => `
-        <div class="history-item">
-            <div class="history-info">
-                <span class="history-title">${h.monthName || h.monthKey}</span>
-                <span class="history-date">${new Date(h.generatedAt || h.generated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                <span class="history-total">${(h.totalAmount || h.total_amount || 0).toFixed(2)}€ · ${h.totalVisits || h.total_visits || 0} passages</span>
-            </div>
-            <div class="history-actions">
-                <button class="btn-download" onclick="downloadPDF('${h.id}')">Télécharger</button>
-                <button class="btn-delete" onclick="deletePDF('${h.id}')">Supprimer</button>
-            </div>
-        </div>
-    `).join('');
-}
-
 function downloadPDF(id) {
     const record = history.find(h => h.id === id);
     if (!record) {
