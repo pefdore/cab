@@ -1637,9 +1637,6 @@ function renderCharts() {
     }
     
     // Donut chart by location
-    }
-    
-    // Donut chart by location
     const locationData = {};
     entries.forEach(e => {
         const loc = e.location || 'Autre';
