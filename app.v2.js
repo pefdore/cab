@@ -1328,6 +1328,13 @@ function renderComptaSummary() {
     console.log('[COMPTAB] cabinet-dashboard display:', cabinetDash?.style.display);
     console.log('[COMPTAB] cabinet-dashboard computed:', cabinetDash ? window.getComputedStyle(cabinetDash).display : 'N/A');
     
+    // Force visible for debugging
+    if (cabinetDash) {
+        cabinetDash.style.border = '3px solid red';
+        cabinetDash.style.padding = '20px';
+        cabinetDash.style.backgroundColor = '#fff';
+    }
+    
     if (!cabinetDepenses) cabinetDepenses = [];
     if (!cabinetRecettes) cabinetRecettes = [];
     
