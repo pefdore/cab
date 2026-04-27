@@ -1570,42 +1570,33 @@ async function deleteEntry(id) {
 function renderCharts() {
     console.log('[CHARTS] renderCharts called, entries:', entries?.length || 0);
     
-    // Monthly chart
-    const monthlyData = {};
     const now = new Date();
-    const monthNames = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     
-    // Build proper 12-month range
-    for (let i = 0; i < 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    // ========== REVENUS MENSUELS ==========
+    const monthlyData = {};
+    for (let m = 0; m <= currentMonth; m++) {
+        const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
         monthlyData[key] = 0;
-        console.log('[CHARTS] Created month key:', key, '->', monthNames[d.getMonth()]);
     }
     
-    console.log('[CHARTS] Monthly data keys:', Object.keys(monthlyData));
-    
-    // Aggregate entries by month
     entries.forEach(e => {
         const key = e.monthKey;
         if (monthlyData.hasOwnProperty(key)) {
             monthlyData[key] += e.amount || 0;
-        } else {
-            console.log('[CHARTS] Unknown monthKey:', key, 'entry date:', e.date);
         }
     });
-    
-    console.log('[CHARTS] Aggregated data:', monthlyData);
     
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
     
     if (barsContainer) {
         const maxVal = Math.max(...Object.values(monthlyData), 1);
-        console.log('[CHARTS] Max value:', maxVal);
         barsContainer.innerHTML = Object.entries(monthlyData).map(([key, val]) => {
-            const height = (val / maxVal) * 100;
-            return `<div class="chart-bar" style="height: ${height}%" title="${key}: ${val.toFixed(2)}€"></div>`;
+            const height = val > 0 ? (val / maxVal) * 100 : 2;
+            return `<div class="chart-bar" style="height: ${height}%"><span class="bar-value">${val.toFixed(0)}€</span></div>`;
         }).join('');
     }
     
@@ -1616,17 +1607,16 @@ function renderCharts() {
         }).join('');
     }
     
-    // Visits chart
+    // ========== PASSAGES MENSUELS ==========
     const visitsData = {};
-    for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    for (let m = 0; m <= currentMonth; m++) {
+        const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
         visitsData[key] = 0;
     }
     
     entries.forEach(e => {
         const key = e.monthKey;
-        if (visitsData[key] !== undefined) {
+        if (visitsData.hasOwnProperty(key)) {
             visitsData[key]++;
         }
     });
@@ -1637,13 +1627,16 @@ function renderCharts() {
     if (visitsBars) {
         const maxVal = Math.max(...Object.values(visitsData), 1);
         visitsBars.innerHTML = Object.entries(visitsData).map(([key, val]) => {
-            const height = (val / maxVal) * 100;
-            return `<div class="chart-bar" style="height: ${height}%" title="${key}: ${val} visites"></div>`;
+            const height = val > 0 ? (val / maxVal) * 100 : 2;
+            return `<div class="chart-bar" style="height: ${height}%"><span class="bar-value">${val}</span></div>`;
         }).join('');
     }
     
     if (visitsLabels && labelsContainer) {
         visitsLabels.innerHTML = labelsContainer.innerHTML;
+    }
+    
+    // Donut chart by location
     }
     
     // Donut chart by location
