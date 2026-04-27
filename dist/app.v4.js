@@ -474,10 +474,18 @@ function updateMonthDisplay() {
     }
 }
 
+let isChangingMonth = false;
+
 function changeMonth(delta) {
-    currentMonthAdd.setMonth(currentMonthAdd.getMonth() + delta);
+    if (isChangingMonth) return;
+    isChangingMonth = true;
+    
+    const newMonth = currentMonthAdd.getMonth() + delta;
+    currentMonthAdd.setMonth(newMonth);
     updateMonthDisplay();
     renderEntries();
+    
+    setTimeout(() => { isChangingMonth = false; }, 100);
 }
 
 function setDefaultDate() {
