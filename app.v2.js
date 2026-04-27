@@ -455,12 +455,11 @@ function switchDashboardMode(mode) {
         if (cabinetDash) {
             cabinetDash.style.display = 'block';
             console.log('[DASH] Showing cabinet-dashboard');
-            loadCabinetData();
             
-            // Delay rendering to ensure DOM is ready
-            setTimeout(() => {
-                renderComptaSummary();
-            }, 200);
+            // Force reflow
+            void cabinetDash.offsetWidth;
+            
+            loadCabinetData();
         }
     }
 }
@@ -1331,19 +1330,6 @@ function renderComptaSummary() {
     const cabinetDash = document.getElementById('cabinet-dashboard');
     console.log('[COMPTAB] cabinet-dashboard element:', !!cabinetDash);
     console.log('[COMPTAB] cabinet-dashboard display:', cabinetDash?.style.display);
-    console.log('[COMPTAB] cabinet-dashboard computed:', cabinetDash ? window.getComputedStyle(cabinetDash).display : 'N/A');
-    console.log('[COMPTAB] cabinet-dashboard innerHTML length:', cabinetDash?.innerHTML?.length);
-    
-    // Force rebuild HTML content
-    if (cabinetDash) {
-        cabinetDash.style.border = '3px solid red';
-        cabinetDash.style.padding = '20px';
-        cabinetDash.style.backgroundColor = '#fff';
-        cabinetDash.style.color = 'black';
-        
-        // Force innerHTML refresh
-        cabinetDash.innerHTML = cabinetDash.innerHTML;
-    }
     
     if (!cabinetDepenses) cabinetDepenses = [];
     if (!cabinetRecettes) cabinetRecettes = [];
@@ -1362,10 +1348,20 @@ function renderComptaSummary() {
     console.log('[COMPTAB] Elements found - dashTotalRecettes:', !!elDashTotalRecettes, 'dashTotalDepenses:', !!elDashTotalDepenses, 'dashBalance:', !!elDashBalance);
     
     // DEBUG: Force inline styles
-    if (elDashTotalRecettes) {
+if (elDashTotalRecettes) {
         elDashTotalRecettes.textContent = `${totalRecettes.toFixed(2)}€`;
-        elDashTotalRecettes.style.cssText = 'display: inline-block !important; visibility: visible !important; opacity: 1 !important; background: #10b981; color: white; padding: 15px 30px; font-size: 28px; font-weight: bold; border-radius: 8px;';
+        elDashTotalRecettes.style.display = 'inline-block';
         console.log('[COMPTAB] Set dashTotalRecettes to:', elDashTotalRecettes.textContent);
+    }
+    if (elDashTotalDepenses) {
+        elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
+        elDashTotalDepenses.style.display = 'inline-block';
+        console.log('[COMPTAB] Set dashTotalDepenses to:', elDashTotalDepenses.textContent);
+    }
+    if (elDashBalance) {
+        elDashBalance.textContent = `${balance.toFixed(2)}€`;
+        elDashBalance.style.display = 'inline-block';
+        console.log('[COMPTAB] Set dashBalance to:', elDashBalance.textContent);
     }
     if (elDashTotalDepenses) {
         elDashTotalDepenses.textContent = `${totalDepenses.toFixed(2)}€`;
