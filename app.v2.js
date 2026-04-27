@@ -101,9 +101,8 @@ async function onAuthSuccess() {
     }
     
     renderEntries();
-    
-    // Use switchView to properly initialize dashboard
-    switchView('dashboard');
+    renderCharts();
+    updateStats();
     
     console.log('[AUTH] App fully initialized');
 }
