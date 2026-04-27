@@ -806,14 +806,50 @@ function renderHistory() {
     container.innerHTML = history.map(h => `
         <div class="history-item">
             <div class="history-info">
-                <span class="history-title">${h.month}</span>
-                <span class="history-date">${new Date(h.generated_at).toLocaleDateString('fr-FR')}</span>
+                <span class="history-title">${h.monthName || h.monthKey}</span>
+                <span class="history-date">${new Date(h.generatedAt || h.generated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                <span class="history-total">${(h.totalAmount || h.total_amount || 0).toFixed(2)}€ · ${h.totalVisits || h.total_visits || 0} passages</span>
             </div>
             <div class="history-actions">
-                <button onclick="viewPDF('${h.id}')">Voir</button>
+                <button class="btn-download" onclick="downloadPDF('${h.id}')">Télécharger</button>
+                <button class="btn-delete" onclick="deletePDF('${h.id}')">Supprimer</button>
             </div>
         </div>
     `).join('');
+}
+
+function downloadPDF(id) {
+    const record = history.find(h => h.id === id);
+    if (!record) return;
+    
+    const pdfData = record.pdfData || record.pdf_data;
+    if (!pdfData) {
+        alert('PDF non trouvé'); 
+        return;
+    }
+    
+    const link = document.createElement('a');
+    link.href = pdfData;
+    link.download = 'cotation-' + (record.monthKey || record.monthName || 'document') + '.pdf';
+    link.click();
+}
+
+function deletePDF(id) {
+    if (!confirm('Voulez-vous vraiment supprimer cette feuille de cotation?')) return;
+    
+    supabaseClient
+        .from('comptabilite')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+            if (error) {
+                alert('Erreur lors de la suppression: ' + error.message);
+                return;
+            }
+            
+            history = history.filter(h => h.id !== id);
+            renderHistory();
+        });
 }
 
 function renderLogoPreview() {

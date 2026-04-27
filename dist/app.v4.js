@@ -806,14 +806,50 @@ function renderHistory() {
     container.innerHTML = history.map(h => `
         <div class="history-item">
             <div class="history-info">
-                <span class="history-title">${h.month}</span>
-                <span class="history-date">${new Date(h.generated_at).toLocaleDateString('fr-FR')}</span>
+                <span class="history-title">${h.monthName || h.monthKey}</span>
+                <span class="history-date">${new Date(h.generatedAt || h.generated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                <span class="history-total">${(h.totalAmount || h.total_amount || 0).toFixed(2)}€ · ${h.totalVisits || h.total_visits || 0} passages</span>
             </div>
             <div class="history-actions">
-                <button onclick="viewPDF('${h.id}')">Voir</button>
+                <button class="btn-download" onclick="downloadPDF('${h.id}')">Télécharger</button>
+                <button class="btn-delete" onclick="deletePDF('${h.id}')">Supprimer</button>
             </div>
         </div>
     `).join('');
+}
+
+function downloadPDF(id) {
+    const record = history.find(h => h.id === id);
+    if (!record) return;
+    
+    const pdfData = record.pdfData || record.pdf_data;
+    if (!pdfData) {
+        alert('PDF non trouvé'); 
+        return;
+    }
+    
+    const link = document.createElement('a');
+    link.href = pdfData;
+    link.download = 'cotation-' + (record.monthKey || record.monthName || 'document') + '.pdf';
+    link.click();
+}
+
+function deletePDF(id) {
+    if (!confirm('Voulez-vous vraiment supprimer cette feuille de cotation?')) return;
+    
+    supabaseClient
+        .from('comptabilite')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+            if (error) {
+                alert('Erreur lors de la suppression: ' + error.message);
+                return;
+            }
+            
+            history = history.filter(h => h.id !== id);
+            renderHistory();
+        });
 }
 
 function renderLogoPreview() {
@@ -1555,10 +1591,8 @@ if (elDashTotalRecettes) {
 
 // ===== MISSING FUNCTIONS =====
 
-function generatePDF() {
+async function generatePDF() {
     console.log('[PDF] Starting generation...');
-    console.log('[PDF] window.jspdf:', window.jspdf);
-    console.log('[PDF] window.jsPDF:', window.jsPDF);
     
     let jsPDF = null;
     if (window.jspdf && window.jspdf.jsPDF) {
@@ -1573,14 +1607,16 @@ function generatePDF() {
     }
     
     try {
-        console.log('[PDF] Creating document...');
+        const monthDisplay = document.getElementById('currentMonthAdd')?.textContent || 'N/A';
+        const monthKey = currentMonthAdd.getFullYear() + '-' + String(currentMonthAdd.getMonth() + 1).padStart(2, '0');
+        
         const doc = new jsPDF();
         
         doc.setFontSize(18);
         doc.text('Feuille de cotation', 105, 20, { align: 'center' });
         
         doc.setFontSize(12);
-        doc.text('Mois: ' + (document.getElementById('currentMonthAdd')?.textContent || 'N/A'), 10, 35);
+        doc.text('Mois: ' + monthDisplay, 10, 35);
         doc.text('Date: ' + new Date().toLocaleDateString('fr-FR'), 10, 42);
         
         doc.setFontSize(10);
@@ -1595,7 +1631,15 @@ function generatePDF() {
         doc.line(10, y, 200, y);
         y += 8;
         
-        entries.slice(0, 25).forEach((e, i) => {
+        const monthEntries = entries.filter(e => {
+            if (!e.date || !e.monthKey) return false;
+            const [year, month] = e.monthKey.split('-');
+            const entryMonth = currentMonthAdd.getMonth() + 1;
+            const entryYear = currentMonthAdd.getFullYear();
+            return parseInt(month) === entryMonth && parseInt(year) === entryYear;
+        });
+        
+        monthEntries.forEach((e, i) => {
             doc.text(String(i + 1), 10, y);
             doc.text(e.date || '', 20, y);
             doc.text((e.patientName || '').substring(0, 30), 45, y);
@@ -1604,9 +1648,48 @@ function generatePDF() {
             y += 7;
         });
         
-        console.log('[PDF] Saving...');
-        doc.save('cotation-' + new Date().toISOString().split('T')[0] + '.pdf');
-        console.log('[PDF] Done!');
+        const totalAmount = monthEntries.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+        y += 5;
+        doc.setFontSize(12);
+        doc.text('Total: ' + totalAmount.toFixed(2) + '€', 10, y);
+        doc.text('Nombre de passages: ' + monthEntries.length, 120, y);
+        
+        const pdfBase64 = doc.output('datauristring');
+        
+        const { data: savedRecord, error: saveError } = await supabaseClient
+            .from('comptabilite')
+            .insert([{
+                user_id: currentUser.id,
+                month_key: monthKey,
+                month_name: monthDisplay,
+                total_amount: totalAmount,
+                total_visits: monthEntries.length,
+                pdf_data: pdfBase64,
+                generated_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+        
+        if (saveError) {
+            console.error('[PDF] Save error:', saveError);
+            alert('Erreur lors de la sauvegarde: ' + saveError.message);
+            return;
+        }
+        
+        history.unshift({
+            id: savedRecord.id,
+            monthKey: monthKey,
+            monthName: monthDisplay,
+            totalAmount: totalAmount,
+            totalVisits: monthEntries.length,
+            pdfData: pdfBase64,
+            generatedAt: savedRecord.generated_at
+        });
+        
+        renderHistory();
+        
+        alert('PDF généré et sauvegardé!');
+        console.log('[PDF] Done and saved!');
     } catch (err) {
         console.error('[PDF] Error:', err);
         alert('Erreur lors de la génération: ' + err.message);
