@@ -791,8 +791,10 @@ function deleteCotation(index) {
 
 function downloadPDF(id) {
     console.log('[DOWNLOAD] Looking for PDF with id:', id);
+    console.log('[DOWNLOAD] Full history:', JSON.stringify(history));
     const record = history.find(h => h.id === id);
     console.log('[DOWNLOAD] Found record:', record);
+    console.log('[DOWNLOAD] Record keys:', record ? Object.keys(record) : 'N/A');
     
     if (!record) {
         alert('Document non trouvé');
@@ -802,6 +804,7 @@ function downloadPDF(id) {
     const pdfData = record.pdfData || record.pdf_data;
     console.log('[DOWNLOAD] pdfData exists:', !!pdfData);
     console.log('[DOWNLOAD] pdfData type:', typeof pdfData);
+    console.log('[DOWNLOAD] pdfData (first 100 chars):', pdfData ? pdfData.substring(0, 100) : 'N/A');
     console.log('[DOWNLOAD] pdfData length:', pdfData?.length);
     
     if (!pdfData) {
@@ -812,6 +815,8 @@ function downloadPDF(id) {
     const monthName = record.monthName || record.monthKey || 'document';
     const fileName = 'honoraires-' + monthName + '.pdf';
     
+    console.log('[DOWNLOAD] Creating download link for:', fileName);
+    
     try {
         const link = document.createElement('a');
         link.href = pdfData;
@@ -819,6 +824,7 @@ function downloadPDF(id) {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        console.log('[DOWNLOAD] Done!');
     } catch (error) {
         console.error('Erreur téléchargement PDF:', error);
         alert('Erreur lors du téléchargement: ' + error.message);
