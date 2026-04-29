@@ -790,9 +790,9 @@ function deleteCotation(index) {
 }
 
 function downloadPDF(id) {
-    console.log('[DOWNLOAD] Looking for PDF with id:', id);
+    console.log('[DOWNLOAD] Looking for PDF with id:', id, 'type:', typeof id);
     console.log('[DOWNLOAD] Full history:', JSON.stringify(history));
-    const record = history.find(h => h.id === id);
+    const record = history.find(h => String(h.id) === String(id));
     console.log('[DOWNLOAD] Found record:', record);
     console.log('[DOWNLOAD] Record keys:', record ? Object.keys(record) : 'N/A');
     
@@ -832,6 +832,12 @@ function downloadPDF(id) {
 }
 
 function deletePDF(id) {
+    console.log('[DELETE] Looking for id:', id);
+    const record = history.find(h => String(h.id) === String(id));
+    if (!record) {
+        alert('Document non trouvé');
+        return;
+    }
     if (!confirm('Voulez-vous vraiment supprimer cette feuille de cotation?')) return;
     
     supabaseClient
