@@ -812,15 +812,24 @@ function downloadPDF(id) {
         return;
     }
     
+    // Fix: ensure proper data URI format
+    let downloadUrl = pdfData;
+    if (pdfData.includes('filename=generated.pdf;')) {
+        downloadUrl = pdfData.replace('filename=generated.pdf;', '');
+        console.log('[DOWNLOAD] Fixed URL format');
+    }
+    
     const monthName = record.monthName || record.monthKey || 'document';
     const fileName = 'honoraires-' + monthName + '.pdf';
     
     console.log('[DOWNLOAD] Creating download link for:', fileName);
+    console.log('[DOWNLOAD] Download URL (first 50):', downloadUrl.substring(0, 50));
     
     try {
         const link = document.createElement('a');
-        link.href = pdfData;
+        link.href = downloadUrl;
         link.download = fileName;
+        link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
