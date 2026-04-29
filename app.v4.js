@@ -826,13 +826,20 @@ function downloadPDF(id) {
     console.log('[DOWNLOAD] Download URL (first 50):', downloadUrl.substring(0, 50));
     
     try {
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileName;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // On mobile, open in new tab
+            window.open(downloadUrl, '_blank');
+        } else {
+            // On desktop, use download link
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
         console.log('[DOWNLOAD] Done!');
     } catch (error) {
         console.error('Erreur téléchargement PDF:', error);
