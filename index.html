@@ -750,7 +750,23 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="app.v4.js?v=64" defer></script>
+    <script src="app.v4.js?v=65" defer></script>
+    <script>
+      // Expose downloadPDF and deletePDF after app.v4.js loads
+      let exposedCount = 0;
+      const exposeFunctions = setInterval(() => {
+        if (typeof downloadPDF === 'function') {
+          window.downloadPDF = downloadPDF;
+          console.log('[HISTORY] downloadPDF exposed to window');
+        }
+        if (typeof deletePDF === 'function') {
+          window.deletePDF = deletePDF;
+          console.log('[HISTORY] deletePDF exposed to window');
+        }
+        exposedCount++;
+        if (exposedCount >= 10) clearInterval(exposeFunctions);
+      }, 100);
+    </script>
     <script>
       // Wait for jsPDF to load and expose it properly
       function checkJsPDF() {
