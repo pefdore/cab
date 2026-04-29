@@ -17,14 +17,10 @@ export default defineConfig({
     {
       name: 'copy-files',
       closeBundle() {
-        const files = ['app.v2.js', 'style.css', 'manifest.json', 'icon-192.svg', 'sw.js'];
+        const files = ['app.v4.js', 'style.css', 'manifest.json', 'icon-192.svg', 'sw.js'];
         files.forEach(file => {
           if (existsSync(file)) {
-            let destFile = file;
-            if (file === 'app.v2.js') {
-              destFile = 'app.v4.js';
-            }
-            copyFileSync(file, `dist/${destFile}`);
+            copyFileSync(file, `dist/${file}`);
           }
         });
       }
