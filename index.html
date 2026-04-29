@@ -750,7 +750,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="app.v4.js?v=66" defer></script>
+    <script src="app.v4.js?v=67" defer></script>
     <script>
       // DEBUG: Log everything
       console.log('[DEBUG] Inline script running');
@@ -771,12 +771,38 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
         if (exposedCount >= 10) clearInterval(exposeFunctions);
       }, 100);
       
-      // Also check history array
-      setInterval(() => {
-        if (typeof history !== 'undefined') {
-          console.log('[DEBUG] history.length:', history.length);
+      // Event delegation for download/delete buttons
+      document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-download, .btn-delete');
+        if (!btn) return;
+        
+        console.log('[DEBUG] Button clicked:', btn.className, btn.onclick);
+        
+        // Find the parent history-item to get the ID
+        const item = btn.closest('.history-item, .history-item-compact');
+        if (!item) return;
+        
+        // Get ID from data attribute or button onclick
+        const onclick = btn.getAttribute('onclick') || '';
+        const match = onclick.match(/'(.+)'/);
+        if (!match) return;
+        
+        const id = match[1];
+        
+        if (btn.classList.contains('btn-download')) {
+          console.log('[DEBUG] Calling downloadPDF for id:', id);
+          if (typeof window.downloadPDF === 'function') {
+            window.downloadPDF(id);
+          } else {
+            console.log('[DEBUG] downloadPDF not on window!');
+          }
+        } else if (btn.classList.contains('btn-delete')) {
+          console.log('[DEBUG] Calling deletePDF for id:', id);
+          if (typeof window.deletePDF === 'function') {
+            window.deletePDF(id);
+          }
         }
-      }, 2000);
+      });
     </script>
     <script>
       // Wait for jsPDF to load and expose it properly
