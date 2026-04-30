@@ -73,8 +73,13 @@ Deno.serve(async (req) => {
       console.log(`Processing user: ${profile.email} (id: ${profile.id})`)
 
       // Get passages for this user for the previous month
+      // Use proper month end calculation
+      const year = parseInt(monthKey.split('-')[0])
+      const month = parseInt(monthKey.split('-')[1])
+      const lastDay = new Date(year, month, 0).getDate() // Last day of month
+      
       const startDate = `${monthKey}-01`
-      const endDate = `${monthKey}-31`
+      const endDate = `${monthKey}-${lastDay}`
 
       console.log(`Querying passages from ${startDate} to ${endDate} for user ${profile.id}`)
 
