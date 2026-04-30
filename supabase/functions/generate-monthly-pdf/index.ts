@@ -107,6 +107,11 @@ Deno.serve(async (req) => {
       // Generate PDF using jsPDF
       const doc = new jsPDF()
       
+      // Group by location
+      const ehpadLocations = ['Lilias RdC', 'Lilas 1er étage', 'Tamaris']
+      const medicoSSR = passages.filter((p: Passage) => !ehpadLocations.includes(p.location))
+      const ehpad = passages.filter((p: Passage) => ehpadLocations.includes(p.location))
+      
       // Page 1: Médecin/SSR
       doc.setFillColor(240, 244, 252)
       doc.rect(0, 0, 210, 40, 'F')
