@@ -45,14 +45,13 @@ Deno.serve(async (req) => {
 
     console.log(`Sending emails for ${monthKey} (current: ${currentMonth}/${currentYear})`)
 
-    // Get PDFs with user info for previous month
+    // Get PDFs - no join needed
     console.log('Querying comptabilite for month:', monthKey)
     
     const { data: pdfs, error: pdfsError } = await supabase
       .from('comptabilite')
-      .select('*, profiles(email, first_name, last_name)')
+      .select('*')
       .eq('month_key', monthKey)
-      .order('generated_at', { ascending: false })
 
     console.log('PDFs query result:', pdfsError ? 'ERROR: ' + pdfsError.message : `Found ${pdfs?.length || 0} PDFs`)
 
@@ -66,11 +65,26 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Get user emails from profiles
+    const userIds = [...new Set(pdfs.map(p => p.user_id))]
+    console.log('User IDs:', userIds)
+    
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, email, first_name, last_name')
+      .in('id', userIds)
+
+    // Create a map for easy lookup
+    const profileMap = new Map()
+    profiles?.forEach(p => profileMap.set(p.id, p))
+
     const results = []
 
     for (const pdf of pdfs) {
-      const userEmail = pdf.profiles?.email
-      const userName = pdf.profiles?.first_name || 'Docteur'
+      const profile = profileMap.get(pdf.user_id)
+      const userEmail = profile?.email
+      const userName = profile?.first_name || 'Docteur'
+      const userLastName = profile?.last_name || ''
       
       if (!userEmail) continue
 
@@ -112,11 +126,11 @@ Deno.serve(async (req) => {
         const accountingResult = await resend.emails.send({
           from: 'Cotation Médecin <onboarding@resend.dev>',
           to: [accountingEmail],
-          subject: `Honoraires ${pdf.month_name} - ${pdf.profiles?.first_name} ${pdf.profiles?.last_name}`,
+          subject: `Honoraires ${pdf.month_name} - ${userName} ${userLastName}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #1e40af;">Honoraires ${pdf.month_name}</h1>
-              <p><strong>Médecin:</strong> ${pdf.profiles?.first_name} ${pdf.profiles?.last_name}</p>
+              <p><strong>Médecin:</strong> ${userName} ${userLastName}</p>
               <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <p style="margin: 5px 0;"><strong>Total:</strong> <span style="color: #059669; font-size: 24px;">${pdf.total_amount.toFixed(2)} €</span></p>
                 <p style="margin: 5px 0;"><strong>Nombre d'actes:</strong> ${pdf.total_visits}</p>
@@ -126,7 +140,7 @@ Deno.serve(async (req) => {
             </div>
           `,
           attachments: attachmentContent ? [{
-            filename: `honoraires-${pdf.month_key}-${pdf.profiles?.last_name}.txt`,
+            filename: `honoraires-${pdf.month_key}-${userLastName}.txt`,
             content: attachmentContent
           }] : []
         })
