@@ -29,10 +29,13 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get previous month correctly
+    // Get previous month - use France timezone (UTC+2) since data is French
+    // Server is UTC, but we're in France so add 2 hours
     const now = new Date()
-    const currentMonth = now.getMonth() + 1  // 1-12
-    const currentYear = now.getFullYear()
+    const nowFrance = new Date(now.getTime() + 2 * 60 * 60 * 1000)
+    
+    const currentMonth = nowFrance.getMonth() + 1  // 1-12
+    const currentYear = nowFrance.getFullYear()
     
     // Calculate previous month
     let prevMonth = currentMonth - 1
@@ -47,7 +50,7 @@ Deno.serve(async (req) => {
     const monthName = `${monthNames[prevMonth - 1]} ${prevYear}`
 
     console.log(`Generating PDF for ${monthName} (${monthKey})`)
-    console.log(`Current date: ${now.toISOString()}, month: ${currentMonth}, year: ${currentYear}`)
+    console.log(`Current UTC: ${now.toISOString()}, France: ${nowFrance.toISOString()}, month: ${currentMonth}`)
 
     // Get all user profiles
     console.log('Fetching user profiles...')
