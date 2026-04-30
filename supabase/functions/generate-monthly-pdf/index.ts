@@ -1,0 +1,198 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+interface Passage {
+  id: number
+  user_id: string
+  patient_id: number
+  date: string
+  location: string
+  cotation: string
+  amount: number
+  month_key: string
+  patients?: {
+    name: string
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Get previous month
+    const now = new Date()
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const monthKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+    const monthName = `${monthNames[prevMonth.getMonth()]} ${prevMonth.getFullYear()}`
+
+    console.log(`Generating PDF for ${monthName} (${monthKey})`)
+
+    // Get all user profiles
+    const { data: profiles } = await supabase
+      .from('user_profiles')
+      .select('user_id, email, first_name, last_name')
+
+    const results = []
+
+    for (const profile of profiles || []) {
+      if (!profile.user_id) continue
+
+      // Get passages for this user for the previous month
+      const startDate = `${monthKey}-01`
+      const endDate = `${monthKey}-31`
+
+      const { data: passages } = await supabase
+        .from('passages')
+        .select('*, patients(name)')
+        .eq('user_id', profile.user_id)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: true })
+
+      if (!passages || passages.length === 0) {
+        console.log(`No passages for user ${profile.email} in ${monthKey}`)
+        continue
+      }
+
+      // Generate PDF content
+      const pdfContent = generatePDFContent(passages as Passage[], monthName, monthKey)
+      
+      // Calculate totals
+      const totalAmount = passages.reduce((sum, p) => sum + (parseFloat(String(p.amount)) || 0), 0)
+      
+      // Check if PDF already exists for this month
+      const { data: existing } = await supabase
+        .from('comptabilite')
+        .select('id')
+        .eq('user_id', profile.user_id)
+        .eq('month_key', monthKey)
+        .single()
+
+      if (existing) {
+        // Update existing record
+        await supabase
+          .from('comptabilite')
+          .update({
+            total_amount: totalAmount,
+            total_visits: passages.length,
+            pdf_data: pdfContent,
+            generated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id)
+      } else {
+        // Insert new record
+        await supabase.from('comptabilite').insert([{
+          user_id: profile.user_id,
+          month_key: monthKey,
+          month_name: monthName,
+          total_amount: totalAmount,
+          total_visits: passages.length,
+          pdf_data: pdfContent,
+          generated_at: new Date().toISOString()
+        }])
+      }
+
+      console.log(`PDF generated for ${profile.email}: ${passages.length} passages, ${totalAmount}€`)
+      results.push({ user: profile.email, passages: passages.length, total: totalAmount })
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      month: monthName,
+      results 
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+
+  } catch (error) {
+    console.error('Error:', error.message)
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+})
+
+function generatePDFContent(passages: Passage[], monthName: string, monthKey: string): string {
+  // Group by location
+  const ehpadLocations = ['Lilias RdC', 'Lilas 1er étage', 'Tamaris']
+  const medicoSSR = passages.filter(p => !ehpadLocations.includes(p.location))
+  const ehpad = passages.filter(p => ehpadLocations.includes(p.location))
+
+  let content = `HONORAIRES - ${monthName.toUpperCase()}\n`
+  content += `=${'='.repeat(50)}\n\n`
+
+  // Page 1: Médecin/SSR
+  content += `MÉDECIN / SSR\n`
+  content += `-${'-'.repeat(30)}\n`
+  
+  const byCotation: Record<string, {count: number, amount: number}> = {}
+  medicoSSR.forEach(p => {
+    if (!byCotation[p.cotation]) byCotation[p.cotation] = {count: 0, amount: 0}
+    byCotation[p.cotation].count++
+    byCotation[p.cotation].amount += parseFloat(String(p.amount)) || 0
+  })
+
+  Object.entries(byCotation).forEach(([cotation, data]) => {
+    content += `${cotation}: ${data.count} actes = ${data.amount.toFixed(2)} €\n`
+  })
+
+  const totalMedico = medicoSSR.reduce((sum, p) => sum + (parseFloat(String(p.amount)) || 0), 0)
+  content += `\nTOTAL MÉDECIN / SSR: ${totalMedico.toFixed(2)} € (${medicoSSR.length} actes)\n`
+
+  // Page 2: EHPAD
+  content += `\n${'='.repeat(50)}\n`
+  content += `EHPAD\n`
+  content += `-${'-'.repeat(30)}\n`
+
+  const byLocation: Record<string, Record<string, {count: number, amount: number}>> = {}
+  ehpad.forEach(p => {
+    if (!byLocation[p.location]) byLocation[p.location] = {}
+    if (!byLocation[p.location][p.cotation]) byLocation[p.location][p.cotation] = {count: 0, amount: 0}
+    byLocation[p.location][p.cotation].count++
+    byLocation[p.location][p.cotation].amount += parseFloat(String(p.amount)) || 0
+  })
+
+  Object.entries(byLocation).forEach(([location, cotations]) => {
+    content += `\n${location}\n`
+    Object.entries(cotations).forEach(([cotation, data]) => {
+      content += `  ${cotation}: ${data.count} actes = ${data.amount.toFixed(2)} €\n`
+    })
+  })
+
+  const totalEhpad = ehpad.reduce((sum, p) => sum + (parseFloat(String(p.amount)) || 0), 0)
+  content += `\nTOTAL EHPAD: ${totalEhpad.toFixed(2)} € (${ehpad.length} actes)\n`
+
+  // Page 3: Complete list
+  content += `\n${'='.repeat(50)}\n`
+  content += `LISTE DES PATIENTS - ${monthName}\n`
+  content += `-${'-'.repeat(30)}\n\n`
+
+  content += `Date       | Patient              | Lieu          | Acte   | Montant\n`
+  content += `-${'-'.repeat(75)}\n`
+
+  passages.forEach(p => {
+    const patientName = p.patients?.name || 'Inconnu'
+    const name = patientName.substring(0, 20).padEnd(20)
+    const loc = p.location.substring(0, 12).padEnd(12)
+    content += `${p.date} | ${name} | ${loc} | ${p.cotation} | ${p.amount} €\n`
+  })
+
+  const total = passages.reduce((sum, p) => sum + (parseFloat(String(p.amount)) || 0), 0)
+  content += `-${'-'.repeat(75)}\n`
+  content += `\nTOTAL GÉNÉRAL: ${total.toFixed(2)} € (${passages.length} actes)\n`
+
+  // Return as data URI
+  return `data:text/plain;charset=utf-8,${encodeURIComponent(content)}`
+}
