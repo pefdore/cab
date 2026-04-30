@@ -13,39 +13,32 @@ Deno.serve(async (req) => {
 
   try {
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    console.log('RESEND_API_KEY configured:', resendApiKey ? 'YES' : 'NO')
+    
     if (!resendApiKey) {
       throw new Error('RESEND_API_KEY not configured')
     }
 
     const resend = new Resend(resendApiKey)
+    console.log('Resend client created')
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get previous month - use France timezone (UTC+2) since data is French
-    const now = new Date()
-    const nowFrance = new Date(now.getTime() + 2 * 60 * 60 * 1000)
-    
-    const currentMonth = nowFrance.getMonth() + 1
-    const currentYear = nowFrance.getFullYear()
-    
-    let prevMonth = currentMonth - 1
-    let prevYear = currentYear
-    if (prevMonth < 1) { prevMonth = 12; prevYear = prevYear - 1 }
-    
-    const monthKey = `${prevYear}-${String(prevMonth).padStart(2, '0')}`
-
-    console.log(`Sending emails for ${monthKey} (current: ${currentMonth}/${currentYear}, France: ${nowFrance.getMonth()+1}/${nowFrance.getFullYear()})`)
-
-    // Get accounting email from settings or environment
+    // Get accounting email
     const accountingEmail = Deno.env.get('ACCOUNTING_EMAIL') || 'comptabilite@hopital.fr'
+    console.log('ACCOUNTING_EMAIL:', accountingEmail)
 
     // Get PDFs with user info for previous month
-    const { data: pdfs } = await supabase
+    console.log('Querying comptabilite for month:', monthKey)
+    
+    const { data: pdfs, error: pdfsError } = await supabase
       .from('comptabilite')
       .select('*, profiles(email, first_name, last_name)')
       .eq('month_key', monthKey)
+
+    console.log('PDFs query result:', pdfsError ? 'ERROR: ' + pdfsError.message : `Found ${pdfs?.length || 0} PDFs`)
       .order('generated_at', { ascending: false })
 
     if (!pdfs || pdfs.length === 0) {
