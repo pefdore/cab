@@ -30,6 +30,21 @@ Deno.serve(async (req) => {
     const accountingEmail = Deno.env.get('ACCOUNTING_EMAIL') || 'comptabilite@hopital.fr'
     console.log('ACCOUNTING_EMAIL:', accountingEmail)
 
+    // Get previous month - use France timezone (UTC+2)
+    const now = new Date()
+    const nowFrance = new Date(now.getTime() + 2 * 60 * 60 * 1000)
+    
+    const currentMonth = nowFrance.getMonth() + 1
+    const currentYear = nowFrance.getFullYear()
+    
+    let prevMonth = currentMonth - 1
+    let prevYear = currentYear
+    if (prevMonth < 1) { prevMonth = 12; prevYear = prevYear - 1 }
+    
+    const monthKey = `${prevYear}-${String(prevMonth).padStart(2, '0')}`
+
+    console.log(`Sending emails for ${monthKey} (current: ${currentMonth}/${currentYear})`)
+
     // Get PDFs with user info for previous month
     console.log('Querying comptabilite for month:', monthKey)
     
@@ -37,9 +52,9 @@ Deno.serve(async (req) => {
       .from('comptabilite')
       .select('*, profiles(email, first_name, last_name)')
       .eq('month_key', monthKey)
+      .order('generated_at', { ascending: false })
 
     console.log('PDFs query result:', pdfsError ? 'ERROR: ' + pdfsError.message : `Found ${pdfs?.length || 0} PDFs`)
-      .order('generated_at', { ascending: false })
 
     if (!pdfs || pdfs.length === 0) {
       console.log('No PDFs found for sending')
