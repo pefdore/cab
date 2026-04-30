@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
     // Get all user profiles
     console.log('Fetching user profiles...')
     const { data: profiles, error: profilesError } = await supabase
-      .from('user_profiles')
-      .select('user_id, email, first_name, last_name')
+      .from('profiles')
+      .select('id, email, first_name, last_name')
 
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError)
@@ -65,7 +65,9 @@ Deno.serve(async (req) => {
     const results = []
 
     for (const profile of profiles || []) {
-      if (!profile.user_id) continue
+      if (!profile.id) continue
+
+      console.log(`Processing user: ${profile.email}`)
 
       // Get passages for this user for the previous month
       const startDate = `${monthKey}-01`
@@ -74,7 +76,7 @@ Deno.serve(async (req) => {
       const { data: passages } = await supabase
         .from('passages')
         .select('*, patients(name)')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', profile.id)
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: true })
@@ -94,7 +96,7 @@ Deno.serve(async (req) => {
       const { data: existing } = await supabase
         .from('comptabilite')
         .select('id')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', profile.id)
         .eq('month_key', monthKey)
         .single()
 
@@ -112,7 +114,7 @@ Deno.serve(async (req) => {
       } else {
         // Insert new record
         await supabase.from('comptabilite').insert([{
-          user_id: profile.user_id,
+          user_id: profile.id,
           month_key: monthKey,
           month_name: monthName,
           total_amount: totalAmount,
