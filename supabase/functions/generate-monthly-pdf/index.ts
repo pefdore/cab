@@ -70,19 +70,28 @@ Deno.serve(async (req) => {
     for (const profile of profiles || []) {
       if (!profile.id) continue
 
-      console.log(`Processing user: ${profile.email}`)
+      console.log(`Processing user: ${profile.email} (id: ${profile.id})`)
 
       // Get passages for this user for the previous month
       const startDate = `${monthKey}-01`
       const endDate = `${monthKey}-31`
 
-      const { data: passages } = await supabase
+      console.log(`Querying passages from ${startDate} to ${endDate} for user ${profile.id}`)
+
+      const { data: passages, error: passagesError } = await supabase
         .from('passages')
         .select('*, patients(name)')
         .eq('user_id', profile.id)
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: true })
+
+      if (passagesError) {
+        console.error('Error fetching passages:', passagesError)
+        continue
+      }
+
+      console.log(`Found ${passages?.length || 0} passages`)
 
       if (!passages || passages.length === 0) {
         console.log(`No passages for user ${profile.email} in ${monthKey}`)
