@@ -29,19 +29,38 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get previous month
+    // Get previous month correctly
     const now = new Date()
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const monthKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`
+    const currentMonth = now.getMonth() + 1  // 1-12
+    const currentYear = now.getFullYear()
+    
+    // Calculate previous month
+    let prevMonth = currentMonth - 1
+    let prevYear = currentYear
+    if (prevMonth < 1) {
+      prevMonth = 12
+      prevYear = prevYear - 1
+    }
+    
+    const monthKey = `${prevYear}-${String(prevMonth).padStart(2, '0')}`
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
-    const monthName = `${monthNames[prevMonth.getMonth()]} ${prevMonth.getFullYear()}`
+    const monthName = `${monthNames[prevMonth - 1]} ${prevYear}`
 
     console.log(`Generating PDF for ${monthName} (${monthKey})`)
+    console.log(`Current date: ${now.toISOString()}, month: ${currentMonth}, year: ${currentYear}`)
 
     // Get all user profiles
-    const { data: profiles } = await supabase
+    console.log('Fetching user profiles...')
+    const { data: profiles, error: profilesError } = await supabase
       .from('user_profiles')
       .select('user_id, email, first_name, last_name')
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError)
+      throw new Error(`Profiles error: ${profilesError.message}`)
+    }
+    
+    console.log(`Found ${profiles?.length || 0} users`)
 
     const results = []
 
