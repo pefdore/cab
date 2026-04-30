@@ -23,12 +23,20 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get previous month
+    // Get previous month - use France timezone (UTC+2) since data is French
     const now = new Date()
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const monthKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`
+    const nowFrance = new Date(now.getTime() + 2 * 60 * 60 * 1000)
+    
+    const currentMonth = nowFrance.getMonth() + 1
+    const currentYear = nowFrance.getFullYear()
+    
+    let prevMonth = currentMonth - 1
+    let prevYear = currentYear
+    if (prevMonth < 1) { prevMonth = 12; prevYear = prevYear - 1 }
+    
+    const monthKey = `${prevYear}-${String(prevMonth).padStart(2, '0')}`
 
-    console.log(`Sending emails for ${monthKey}`)
+    console.log(`Sending emails for ${monthKey} (current: ${currentMonth}/${currentYear}, France: ${nowFrance.getMonth()+1}/${nowFrance.getFullYear()})`)
 
     // Get accounting email from settings or environment
     const accountingEmail = Deno.env.get('ACCOUNTING_EMAIL') || 'comptabilite@hopital.fr'
@@ -36,7 +44,7 @@ Deno.serve(async (req) => {
     // Get PDFs with user info for previous month
     const { data: pdfs } = await supabase
       .from('comptabilite')
-      .select('*, user_profiles(email, first_name, last_name)')
+      .select('*, profiles(email, first_name, last_name)')
       .eq('month_key', monthKey)
       .order('generated_at', { ascending: false })
 
@@ -53,8 +61,8 @@ Deno.serve(async (req) => {
     const results = []
 
     for (const pdf of pdfs) {
-      const userEmail = pdf.user_profiles?.email
-      const userName = pdf.user_profiles?.first_name || 'Docteur'
+      const userEmail = pdf.profiles?.email
+      const userName = pdf.profiles?.first_name || 'Docteur'
       
       if (!userEmail) continue
 
@@ -96,11 +104,11 @@ Deno.serve(async (req) => {
         const accountingResult = await resend.emails.send({
           from: 'Cotation Médecin <onboarding@resend.dev>',
           to: [accountingEmail],
-          subject: `Honoraires ${pdf.month_name} - ${pdf.user_profiles?.first_name} ${pdf.user_profiles?.last_name}`,
+          subject: `Honoraires ${pdf.month_name} - ${pdf.profiles?.first_name} ${pdf.profiles?.last_name}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #1e40af;">Honoraires ${pdf.month_name}</h1>
-              <p><strong>Médecin:</strong> ${pdf.user_profiles?.first_name} ${pdf.user_profiles?.last_name}</p>
+              <p><strong>Médecin:</strong> ${pdf.profiles?.first_name} ${pdf.profiles?.last_name}</p>
               <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <p style="margin: 5px 0;"><strong>Total:</strong> <span style="color: #059669; font-size: 24px;">${pdf.total_amount.toFixed(2)} €</span></p>
                 <p style="margin: 5px 0;"><strong>Nombre d'actes:</strong> ${pdf.total_visits}</p>
@@ -110,7 +118,7 @@ Deno.serve(async (req) => {
             </div>
           `,
           attachments: attachmentContent ? [{
-            filename: `honoraires-${pdf.month_key}-${pdf.user_profiles?.last_name}.txt`,
+            filename: `honoraires-${pdf.month_key}-${pdf.profiles?.last_name}.txt`,
             content: attachmentContent
           }] : []
         })
