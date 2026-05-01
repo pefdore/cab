@@ -519,6 +519,11 @@ function populateCotationSelect() {
         opt.textContent = c.key + ' - ' + c.amount.toFixed(2) + '€';
         select.appendChild(opt);
     });
+    
+    const addOption = document.createElement('option');
+    addOption.value = '__add_new__';
+    addOption.textContent = '+ Ajouter une cotation';
+    select.appendChild(addOption);
 }
 
 function setupMobileMonthSelector() {
@@ -643,21 +648,44 @@ async function handleSubmit(e) {
 }
 
 function handleLocationChange() {
-    // Location change handler - could add logic here
+    const location = document.getElementById('visitLocation').value;
+    const cotationSelect = document.getElementById('cotation');
+    
+    if ((location === 'Médecine' || location === 'SSR') && cotationSelect) {
+        const options = Array.from(cotationSelect.options);
+        const gOption = options.find(o => o.value.startsWith('G|'));
+        if (gOption) {
+            cotationSelect.value = gOption.value;
+            handleCotationChange();
+        }
+    }
 }
 
 function handleCotationChange() {
     const select = document.getElementById('cotation');
     const amountDisplay = document.getElementById('amountDisplay');
+    const customCotationGroup = document.getElementById('customCotation');
     
-    if (select && amountDisplay) {
-        const value = select.value;
-        if (value) {
-            const amount = value.split('|')[1];
-            amountDisplay.textContent = parseFloat(amount).toFixed(2) + '€';
-        } else {
-            amountDisplay.textContent = '0€';
-        }
+    if (!select || !amountDisplay) return;
+    
+    const value = select.value;
+    
+    if (value === '__add_new__') {
+        customCotationGroup.style.display = 'flex';
+        select.value = '';
+        amountDisplay.textContent = '0€';
+        return;
+    }
+    
+    if (customCotationGroup) {
+        customCotationGroup.style.display = 'none';
+    }
+    
+    if (value) {
+        const amount = value.split('|')[1];
+        amountDisplay.textContent = parseFloat(amount).toFixed(2) + '€';
+    } else {
+        amountDisplay.textContent = '0€';
     }
 }
 
