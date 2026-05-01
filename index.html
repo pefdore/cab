@@ -46,6 +46,18 @@
             </form>
 
 <script>
+function toggleForm(form) {
+    if (form === 'register') {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('login-toggle').style.display = 'none';
+        document.getElementById('register-form').style.display = 'flex';
+    } else if (form === 'login') {
+        document.getElementById('login-form').style.display = 'flex';
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-toggle').style.display = 'block';
+    }
+}
+
 function attemptLogin() {
     console.log('[MOBILE] Login button clicked');
     const email = document.getElementById('login-email').value;
