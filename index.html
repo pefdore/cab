@@ -224,7 +224,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-value" id="totalPatients">0</span>
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalPatients">0</span>
+                                <span class="stat-comparison" id="patientsComparison"></span>
+                            </div>
                             <span class="stat-label">Patients ce mois</span>
                         </div>
                     </div>
@@ -235,7 +238,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-value" id="totalAmount">0€</span>
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalAmount">0€</span>
+                                <span class="stat-comparison" id="amountComparison"></span>
+                            </div>
                             <span class="stat-label">Revenus du mois</span>
                         </div>
                     </div>
@@ -248,7 +254,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-value" id="totalVisits">0</span>
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalVisits">0</span>
+                                <span class="stat-comparison" id="visitsComparison"></span>
+                            </div>
                             <span class="stat-label">Visites ce mois</span>
                         </div>
                     </div>
@@ -259,7 +268,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-value" id="avgPerDay">0€</span>
+                            <div class="stat-header">
+                                <span class="stat-value" id="avgPerDay">0€</span>
+                                <span class="stat-comparison" id="avgComparison"></span>
+                            </div>
                             <span class="stat-label">Moyenne/jour</span>
                         </div>
                     </div>

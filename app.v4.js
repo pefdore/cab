@@ -1973,26 +1973,65 @@ function updateStats() {
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
     
+    // Previous month data
+    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    
+    const prevMonthEntries = entries.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
+    });
+    
+    const prevPatients = new Set(prevMonthEntries.map(e => e.patientId)).size;
+    const prevAmount = prevMonthEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const prevVisits = prevMonthEntries.length;
+    const prevAvg = prevVisits > 0 ? prevAmount / 28 : 0;
+    
     console.log('[STATS] Month entries:', monthEntries.length);
     
     const totalPatients = new Set(monthEntries.map(e => e.patientId)).size;
     const totalAmount = monthEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
     const totalVisits = monthEntries.length;
-    const avgPerDay = totalVisits > 0 ? totalAmount / Math.max(new Date().getDate(), 1) : 0;
+    const dayOfMonth = new Date().getDate();
+    const avgPerDay = totalVisits > 0 ? totalAmount / Math.max(dayOfMonth, 1) : 0;
     
     const el = (id) => document.getElementById(id);
     if (el('totalPatients')) {
         el('totalPatients').textContent = totalPatients;
+        el('patientsComparison').innerHTML = formatComparison(totalPatients, prevPatients);
         console.log('[STATS] Set totalPatients:', totalPatients);
     }
     if (el('totalAmount')) {
         el('totalAmount').textContent = totalAmount.toFixed(2) + '€';
+        el('amountComparison').innerHTML = formatComparison(totalAmount, prevAmount, true);
         console.log('[STATS] Set totalAmount:', totalAmount);
     }
-    if (el('totalVisits')) el('totalVisits').textContent = totalVisits;
-    if (el('avgPerDay')) el('avgPerDay').textContent = avgPerDay.toFixed(2) + '€';
+    if (el('totalVisits')) {
+        el('totalVisits').textContent = totalVisits;
+        el('visitsComparison').innerHTML = formatComparison(totalVisits, prevVisits);
+    }
+    if (el('avgPerDay')) {
+        el('avgPerDay').textContent = avgPerDay.toFixed(2) + '€';
+        el('avgComparison').innerHTML = formatComparison(avgPerDay, prevAvg, true);
+    }
     
     console.log('[STATS] Updated:', { totalPatients, totalAmount, totalVisits });
+}
+
+function formatComparison(current, previous, isCurrency = false) {
+    if (previous === 0) {
+        if (current > 0) return '<span class="positive">↑ nouveau</span>';
+        return '<span class="neutral">-</span>';
+    }
+    
+    const diff = ((current - previous) / previous) * 100;
+    const arrow = diff >= 0 ? '↑' : '↓';
+    const cls = diff >= 0 ? 'positive' : 'negative';
+    
+    if (isCurrency) {
+        return `<span class="${cls}">${arrow} ${Math.abs(diff).toFixed(0)}%</span>`;
+    }
+    return `<span class="${cls}">${arrow} ${Math.abs(diff).toFixed(0)}%</span>`;
 }
 
 function renderEntries() {

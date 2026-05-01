@@ -544,6 +544,32 @@ h2 {
     margin-top: 4px;
 }
 
+.stat-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.stat-comparison {
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.stat-comparison.positive {
+    color: #10b981;
+}
+
+.stat-comparison.negative {
+    color: #ef4444;
+}
+
+.stat-comparison.neutral {
+    color: var(--color-text-secondary);
+}
+
 /* ===== CHARTS GRID ===== */
 .charts-grid {
     display: grid;
