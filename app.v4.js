@@ -1380,6 +1380,10 @@ function closeSettingsPage() {
     });
 }
 
+// Expose functions to window for inline onclick handlers
+window.openSettingsPage = openSettingsPage;
+window.closeSettingsPage = closeSettingsPage;
+
 // Profile functions
 async function loadProfileData() {
     if (!currentUser) return;
