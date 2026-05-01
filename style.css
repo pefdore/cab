@@ -673,6 +673,95 @@ h2 {
     z-index: 2;
 }
 
+/* Responsive Chart */
+@media (max-width: 768px) {
+    .chart {
+        height: 180px;
+    }
+    
+    .chart-bars {
+        gap: 3px;
+    }
+    
+    .chart-bar {
+        min-width: 12px;
+        max-width: 30px;
+    }
+    
+    .chart-bar-wrapper {
+        min-width: 12px;
+        max-width: 30px;
+    }
+    
+    .chart-labels {
+        gap: 3px;
+    }
+    
+    .chart-labels span {
+        font-size: 9px;
+    }
+    
+    .chart-bar .bar-value {
+        font-size: 9px;
+        top: -18px;
+    }
+    
+    .data-point {
+        width: 8px;
+        height: 8px;
+        border-width: 1px;
+    }
+    
+    .chart-legend {
+        padding: 6px 8px;
+    }
+    
+    .chart-legend .legend-row {
+        gap: 8px;
+    }
+    
+    .chart-legend .legend-total,
+    .chart-legend .legend-ehpad,
+    .chart-legend .legend-medecin {
+        font-size: 10px;
+        gap: 4px;
+    }
+    
+    .chart-legend .legend-dot {
+        width: 8px;
+        height: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chart {
+        height: 150px;
+    }
+    
+    .chart-bar {
+        min-width: 8px;
+        max-width: 20px;
+    }
+    
+    .chart-bar-wrapper {
+        min-width: 8px;
+        max-width: 20px;
+    }
+    
+    .chart-bar .bar-value {
+        display: none;
+    }
+    
+    .chart-labels span {
+        font-size: 8px;
+    }
+    
+    .data-point {
+        width: 6px;
+        height: 6px;
+    }
+}
+
 .data-point-ehpad {
     background: #10b981;
     margin-left: -8px;
