@@ -2109,18 +2109,23 @@ function renderCharts() {
     
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
-    const maxVal = Math.max(...Object.values(monthlyData), 1);
+    
+    const sortedKeys = Array.from({length: 12}, (_, i) => `${currentYear}-${String(i + 1).padStart(2, '0')}`);
+    const values = sortedKeys.map(k => monthlyData[k]);
+    const maxVal = Math.max(...values, 1);
     
     if (barsContainer) {
-        barsContainer.innerHTML = Object.entries(monthlyData).map(([key, val]) => {
+        barsContainer.innerHTML = sortedKeys.map(key => {
+            const val = monthlyData[key];
             const height = val > 0 ? (val / maxVal) * 100 : 0;
             const ehpadVal = ehpadData[key];
             const medecinVal = medecinData[key];
             const ehpadPct = val > 0 ? (ehpadVal / maxVal) * 100 : 0;
             const medecinPct = val > 0 ? (medecinVal / maxVal) * 100 : 0;
+            const monthName = monthNames[parseInt(key.split('-')[1]) - 1];
             
             return `
-                <div class="chart-bar-column" data-total="${val.toFixed(2)}" data-ehpad="${ehpadVal.toFixed(2)}" data-medecin="${medecinVal.toFixed(2)}">
+                <div class="chart-bar-column" data-month="${monthName}" data-total="${val.toFixed(2)}" data-ehpad="${ehpadVal.toFixed(2)}" data-medecin="${medecinVal.toFixed(2)}">
                     <div class="chart-bar" style="height: ${height}%;">
                         ${val > 0 ? `
                             <span class="bar-value">${val.toFixed(0)}€</span>
@@ -2134,20 +2139,21 @@ function renderCharts() {
     }
     
     if (labelsContainer) {
-        labelsContainer.innerHTML = Object.keys(monthlyData).map(key => {
+        labelsContainer.innerHTML = sortedKeys.map(key => {
             const m = parseInt(key.split('-')[1]) - 1;
             return `<span>${monthNames[m]}</span>`;
         }).join('');
     }
     
-    // Add click handlers for bar columns
+    // Add click handlers for bar columns with popup
     document.querySelectorAll('.chart-bar-column').forEach(col => {
         col.style.cursor = 'pointer';
         col.addEventListener('click', function() {
+            const month = this.dataset.month;
             const total = this.dataset.total;
             const ehpad = this.dataset.ehpad;
             const medecin = this.dataset.medecin;
-            alert(`Total: ${total}€\nEHPAD: ${ehpad}€\nMédecine/SSR: ${medecin}€`);
+            showMonthPopup(month, total, ehpad, medecin);
         });
     });
     
@@ -2238,6 +2244,58 @@ function renderCharts() {
         cotationLabels.innerHTML = sorted.map(([c]) => `<span>${c}</span>`).join('');
     }
 }
+
+function showMonthPopup(month, total, ehpad, medecin) {
+    let popup = document.getElementById('monthPopup');
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'monthPopup';
+        popup.className = 'popup-overlay';
+        popup.innerHTML = `
+            <div class="popup-content">
+                <div class="popup-header">
+                    <h3 id="popupMonthTitle"></h3>
+                    <button class="popup-close" onclick="closeMonthPopup()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="popup-body">
+                    <div class="popup-row total">
+                        <span class="popup-label">Total</span>
+                        <span class="popup-value" id="popupTotal"></span>
+                    </div>
+                    <div class="popup-row ehpad">
+                        <span class="popup-label"><span class="dot-ehpad"></span> EHPAD</span>
+                        <span class="popup-value" id="popupEhpad"></span>
+                    </div>
+                    <div class="popup-row medecin">
+                        <span class="popup-label"><span class="dot-medecin"></span> Médecine/SSR</span>
+                        <span class="popup-value" id="popupMedecin"></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(popup);
+        popup.addEventListener('click', function(e) {
+            if (e.target === this) closeMonthPopup();
+        });
+    }
+    
+    document.getElementById('popupMonthTitle').textContent = month + ' 2026';
+    document.getElementById('popupTotal').textContent = total + '€';
+    document.getElementById('popupEhpad').textContent = ehpad + '€';
+    document.getElementById('popupMedecin').textContent = medecin + '€';
+    popup.style.display = 'flex';
+}
+
+function closeMonthPopup() {
+    const popup = document.getElementById('monthPopup');
+    if (popup) popup.style.display = 'none';
+}
+
+window.closeMonthPopup = closeMonthPopup;
 
 function renderRecentList() {
     const container = document.getElementById('recentList');
