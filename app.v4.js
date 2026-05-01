@@ -275,6 +275,7 @@ async function loadUserSettings() {
             });
         }
         renderLogoPreview();
+        loadTheme();
     } catch (e) {
         console.error('[AUTH] Erreur chargement settings:', e);
     }
@@ -1276,6 +1277,173 @@ function handleSignatureUpload(e) {
     reader.readAsDataURL(file);
 }
 
+// Profile functions
+async function loadProfileData() {
+    if (!currentUser) return;
+    
+    document.getElementById('profileLastname').value = currentUser.lastname || '';
+    document.getElementById('profileFirstname').value = currentUser.firstname || '';
+    document.getElementById('profileEmail').value = currentUser.email || '';
+    document.getElementById('profileRole').value = currentUser.role || '';
+}
+
+document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
+    const lastname = document.getElementById('profileLastname').value.trim();
+    const firstname = document.getElementById('profileFirstname').value.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    
+    if (!lastname || !firstname || !email) {
+        alert('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    try {
+        const { error } = await supabase.from('users').update({
+            lastname,
+            firstname,
+            email
+        }).eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.lastname = lastname;
+        currentUser.firstname = firstname;
+        currentUser.email = email;
+        localStorage.setItem('cotation_user', JSON.stringify(currentUser));
+        
+        alert('Profil mis à jour');
+    } catch (err) {
+        console.error('Error updating profile:', err);
+        alert('Erreur lors de la mise à jour');
+    }
+});
+
+document.getElementById('changePasswordBtn')?.addEventListener('click', async () => {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        alert('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        alert('Les mots de passe ne correspondent pas');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        alert('Le mot de passe doit contenir au moins 6 caractères');
+        return;
+    }
+    
+    try {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        
+        if (error) throw error;
+        
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        
+        alert('Mot de passe modifié');
+    } catch (err) {
+        console.error('Error changing password:', err);
+        alert('Erreur lors du changement de mot de passe');
+    }
+});
+
+// Theme switcher
+document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const theme = btn.dataset.theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        await saveSetting('theme', theme);
+    });
+});
+
+// Load saved theme
+async function loadTheme() {
+    const savedTheme = await getSetting('theme') || 'light';
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === savedTheme);
+    });
+    document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
+// Export functions
+document.getElementById('exportCSV')?.addEventListener('click', async () => {
+    const { data: entries } = await supabase
+        .from('entries')
+        .select('*')
+        .order('date', { ascending: false });
+    
+    if (!entries || entries.length === 0) {
+        alert('Aucune donnée à exporter');
+        return;
+    }
+    
+    const headers = ['Date', 'Patient', 'Lieu', 'Cotation', 'Montant'];
+    const rows = entries.map(e => [
+        e.date,
+        e.patient_name,
+        e.location,
+        e.cotation_key,
+        e.amount
+    ]);
+    
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    downloadFile(csv, 'cotation-export.csv', 'text/csv');
+});
+
+document.getElementById('exportJSON')?.addEventListener('click', async () => {
+    const { data: entries } = await supabase
+        .from('entries')
+        .select('*')
+        .order('date', { ascending: false });
+    
+    const json = JSON.stringify(entries, null, 2);
+    downloadFile(json, 'cotation-export.json', 'application/json');
+});
+
+document.getElementById('exportPDF')?.addEventListener('click', () => {
+    generateMonthlyPDF();
+});
+
+function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Delete all data
+document.getElementById('deleteAllData')?.addEventListener('click', async () => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer toutes vos données? Cette action est irréversible.')) {
+        return;
+    }
+    
+    if (!confirm('Vraiment? Toutes les données seront perdues définitivement.')) {
+        return;
+    }
+    
+    try {
+        await supabase.from('entries').delete().neq('id', 0);
+        alert('Toutes les données ont été supprimées');
+        location.reload();
+    } catch (err) {
+        console.error('Error deleting data:', err);
+        alert('Erreur lors de la suppression');
+    }
+});
+
 function switchView(viewName) {
     // Update nav
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -1308,6 +1476,8 @@ function switchView(viewName) {
     } else if (viewName === 'history') {
         renderHistory();
     } else if (viewName === 'settings') {
+        loadProfileData();
+        loadTheme();
         renderSettingsCotationList();
         // On mobile, show settings as full page overlay
         if (window.innerWidth <= 768) {

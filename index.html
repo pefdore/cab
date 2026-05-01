@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=69">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -525,7 +525,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             <tbody id="entriesBody"></tbody>
                         </table>
                     </div>
-                    <div id="noEntries" class="no-entries">Aucun passage ce mois</div>
                 </div>
             </section>
 
@@ -550,11 +549,92 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <h2>Paramètres</h2>
                 
                 <div class="settings-tabs">
-                    <button class="settings-tab active" data-tab="cotation">Cotations</button>
-                    <button class="settings-tab" data-tab="pdf">PDF</button>
+                    <button class="settings-tab active" data-tab="profil">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        Profil
+                    </button>
+                    <button class="settings-tab" data-tab="cotation">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        Cotations
+                    </button>
+                    <button class="settings-tab" data-tab="pdf">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                        </svg>
+                        PDF
+                    </button>
+                    <button class="settings-tab" data-tab="preferences">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Préférences
+                    </button>
+                    <button class="settings-tab" data-tab="donnees">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                        </svg>
+                        Données
+                    </button>
+                </div>
+
+                <!-- Profil -->
+                <div id="tab-profil" class="settings-tab-content active">
+                    <div class="settings-section">
+                        <h3>Informations du compte</h3>
+                        <div class="profile-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nom</label>
+                                    <input type="text" id="profileLastname" placeholder="Votre nom">
+                                </div>
+                                <div class="form-group">
+                                    <label>Prénom</label>
+                                    <input type="text" id="profileFirstname" placeholder="Votre prénom">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="profileEmail" placeholder="votre@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Fonction</label>
+                                <select id="profileRole" disabled>
+                                    <option value="medecin_installe">Médecin installé</option>
+                                    <option value="medecin_remplacant">Médecin remplaçant</option>
+                                    <option value="secretaire">Secrétaire</option>
+                                </select>
+                            </div>
+                            <button id="saveProfileBtn" class="btn-primary">Enregistrer</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Changer le mot de passe</h3>
+                        <div class="password-form">
+                            <div class="form-group">
+                                <label>Mot de passe actuel</label>
+                                <input type="password" id="currentPassword" placeholder="••••••••">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nouveau mot de passe</label>
+                                    <input type="password" id="newPassword" placeholder="••••••••">
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirmer</label>
+                                    <input type="password" id="confirmPassword" placeholder="••••••••">
+                                </div>
+                            </div>
+                            <button id="changePasswordBtn" class="btn-primary">Changer le mot de passe</button>
+                        </div>
+                    </div>
                 </div>
                 
-                <div id="tab-cotation" class="settings-tab-content active">
+                <div id="tab-cotation" class="settings-tab-content">
                     <h3>Paramètres des cotations</h3>
                     <div id="settingsCotationList"></div>
                     <div class="add-cotation-form">
@@ -599,6 +679,98 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                         <a href="supabase/functions/generate-monthly-pdf/template.html" target="_blank" class="add-btn" style="display: inline-block; text-decoration: none; text-align: center;">
                             Ouvrir le modèle HTML
                         </a>
+                    </div>
+                </div>
+
+                <!-- Préférences -->
+                <div id="tab-preferences" class="settings-tab-content">
+                    <div class="settings-section">
+                        <h3>Apparence</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Thème</span>
+                                <span class="preference-desc">Choisir entre clair et sombre</span>
+                            </div>
+                            <div class="theme-switcher">
+                                <button class="theme-btn active" data-theme="light">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                                    </svg>
+                                    Clair
+                                </button>
+                                <button class="theme-btn" data-theme="dark">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                    </svg>
+                                    Sombre
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Notifications</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Notifications de rappel</span>
+                                <span class="preference-desc">Recevoir des rappels pour les VL</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="notifVL" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Email mensuel</span>
+                                <span class="preference-desc">Recevoir le résumé par email</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="notifEmail">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Données -->
+                <div id="tab-donnees" class="settings-tab-content">
+                    <div class="settings-section">
+                        <h3>Exporter vos données</h3>
+                        <p class="settings-desc">Téléchargez vos données dans le format souhaité</p>
+                        <div class="export-buttons">
+                            <button id="exportCSV" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                CSV
+                            </button>
+                            <button id="exportJSON" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                JSON
+                            </button>
+                            <button id="exportPDF" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                PDF
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section danger-zone">
+                        <h3>Zone dangereuse</h3>
+                        <p class="settings-desc">Attention, ces actions sont irréversibles</p>
+                        <div class="danger-actions">
+                            <button id="deleteAllData" class="danger-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Supprimer toutes les données
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -757,7 +929,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="app.v4.js?v=68c" defer></script>
+    <script src="app.v4.js?v=69" defer></script>
     <script>
       // DEBUG: Log everything
       console.log('[DEBUG] Inline script running');
