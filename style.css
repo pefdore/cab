@@ -926,7 +926,7 @@ h2 {
 /* ===== RECENT SECTION ===== */
 .recent-section {
     background: var(--color-bg-elevated);
-    padding: 28px;
+    padding: 24px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
 }
@@ -934,8 +934,13 @@ h2 {
 .recent-section h3 {
     font-size: var(--text-base);
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     color: var(--color-text);
+}
+
+.recent-list {
+    display: flex;
+    flex-direction: column;
 }
 
 .recent-vl-section {

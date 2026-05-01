@@ -2320,6 +2320,45 @@ function renderRecentList() {
             <span class="recent-amount">${(e.amount || 0).toFixed(2)}€</span>
         </div>
     `).join('');
+    
+    // Apply modern card styling
+    container.querySelectorAll('.recent-item').forEach((item, index) => {
+        item.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--color-bg-subtle);
+            border-radius: 12px;
+            margin-bottom: ${index < recent.length - 1 ? '8px' : '0'};
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        `;
+        item.addEventListener('mouseenter', () => {
+            item.style.transform = 'translateY(-2px)';
+            item.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        });
+        item.addEventListener('mouseleave', () => {
+            item.style.transform = 'translateY(0)';
+            item.style.boxShadow = 'none';
+        });
+    });
+    
+    container.querySelectorAll('.recent-info').forEach(info => {
+        info.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+    });
+    
+    container.querySelectorAll('.recent-patient').forEach(patient => {
+        patient.style.cssText = 'font-weight: 600; color: var(--color-text); font-size: 14px;';
+    });
+    
+    container.querySelectorAll('.recent-date').forEach(date => {
+        date.style.cssText = 'font-size: 12px; color: var(--color-text-secondary);';
+    });
+    
+    container.querySelectorAll('.recent-amount').forEach(amount => {
+        amount.style.cssText = 'font-weight: 700; color: #10b981; font-size: 16px;';
+    });
 }
 
 // Cabinet functions
