@@ -2424,7 +2424,6 @@ function renderCharts() {
     
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
-    const chartContainer = document.getElementById('monthlyChart');
     
     const sortedKeys = Array.from({length: 12}, (_, i) => `${currentYear}-${String(i + 1).padStart(2, '0')}`);
     const values = sortedKeys.map(k => monthlyData[k]);
@@ -2452,11 +2451,6 @@ function renderCharts() {
                 </div>
             `;
         }).join('');
-        
-        // Draw trend lines after DOM is rendered
-        requestAnimationFrame(() => {
-            drawTrendLines(chartContainer, barsContainer, sortedKeys);
-        });
     }
     
     if (labelsContainer) {
@@ -2567,85 +2561,6 @@ function renderCharts() {
     if (cotationLabels) {
         const sorted = Object.entries(cotationData).sort((a, b) => b[1] - a[1]).slice(0, 8);
         cotationLabels.innerHTML = sorted.map(([c]) => `<span>${c}</span>`).join('');
-    }
-}
-
-function drawTrendLines(chartContainer, barsContainer, sortedKeys) {
-    if (!chartContainer || !barsContainer) return;
-    
-    // Remove existing lines
-    const existingLines = chartContainer.querySelector('.chart-lines');
-    if (existingLines) existingLines.remove();
-    
-    const columns = barsContainer.querySelectorAll('.chart-bar-column');
-    if (columns.length === 0) return;
-    
-    const containerRect = barsContainer.getBoundingClientRect();
-    const ehpadPoints = [];
-    const medecinPoints = [];
-    
-    columns.forEach((col, i) => {
-        const bar = col.querySelector('.chart-bar');
-        const height = bar ? parseFloat(bar.style.height) : 0;
-        
-        if (height > 0) {
-            const colRect = col.getBoundingClientRect();
-            const barHeight = (height / 100) * containerRect.height;
-            
-            // Get data point positions
-            const ehpadPoint = col.querySelector('.data-point-ehpad');
-            const medecinPoint = col.querySelector('.data-point-medecin');
-            
-            // Center X position of each column
-            const x = ((colRect.left + colRect.width / 2) - containerRect.left) / containerRect.width * 100;
-            
-            if (ehpadPoint) {
-                const bottom = parseFloat(ehpadPoint.style.bottom || 0);
-                const y = 100 - ((bottom / 100) * barHeight / containerRect.height * 100) - ((containerRect.height - barHeight) / containerRect.height * 100);
-                ehpadPoints.push({ x, y });
-            }
-            
-            if (medecinPoint) {
-                const bottom = parseFloat(medecinPoint.style.bottom || 0);
-                const y = 100 - ((bottom / 100) * barHeight / containerRect.height * 100) - ((containerRect.height - barHeight) / containerRect.height * 100);
-                medecinPoints.push({ x, y });
-            }
-        }
-    });
-    
-    // Only draw if we have points
-    if (ehpadPoints.length > 1 || medecinPoints.length > 1) {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.classList.add('chart-lines');
-        svg.setAttribute('style', 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible;');
-        
-        // Create polyline for EHPAD
-        if (ehpadPoints.length > 1) {
-            const pointsStr = ehpadPoints.map(p => `${p.x},${p.y}`).join(' ');
-            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-            polyline.setAttribute('points', pointsStr);
-            polyline.setAttribute('fill', 'none');
-            polyline.setAttribute('stroke', '#10b981');
-            polyline.setAttribute('stroke-width', '2');
-            polyline.setAttribute('stroke-linecap', 'round');
-            polyline.setAttribute('stroke-linejoin', 'round');
-            svg.appendChild(polyline);
-        }
-        
-        // Create polyline for Medecin
-        if (medecinPoints.length > 1) {
-            const pointsStr = medecinPoints.map(p => `${p.x},${p.y}`).join(' ');
-            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-            polyline.setAttribute('points', pointsStr);
-            polyline.setAttribute('fill', 'none');
-            polyline.setAttribute('stroke', '#f59e0b');
-            polyline.setAttribute('stroke-width', '2');
-            polyline.setAttribute('stroke-linecap', 'round');
-            polyline.setAttribute('stroke-linejoin', 'round');
-            svg.appendChild(polyline);
-        }
-        
-        chartContainer.appendChild(svg);
     }
 }
 
