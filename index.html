@@ -564,7 +564,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
                 <!-- Settings Menu (main page) -->
                 <div id="settings-menu" class="settings-menu">
-                    <div class="settings-card" data-settings-page="profil" onclick="alert('TEST: opening profil'); openSettingsPage('profil')">
+                    <div class="settings-card" data-settings-page="profil" onclick="alert('TEST: opening profil'); console.log('opening profil'); openSettingsPage('profil'); alert('after openSettingsPage')">
                         <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
