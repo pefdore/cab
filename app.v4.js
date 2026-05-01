@@ -2424,7 +2424,6 @@ function renderCharts() {
     
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
-    const chartContainer = document.getElementById('monthlyChart');
     
     const sortedKeys = Array.from({length: 12}, (_, i) => `${currentYear}-${String(i + 1).padStart(2, '0')}`);
     const values = sortedKeys.map(k => monthlyData[k]);
@@ -2452,71 +2451,6 @@ function renderCharts() {
                 </div>
             `;
         }).join('');
-        
-        // Add SVG lines for EHPAD and Medecin trends
-        if (chartContainer && values.some(v => v > 0)) {
-            setTimeout(() => {
-                const columns = barsContainer.querySelectorAll('.chart-bar-column');
-                if (columns.length !== 12) return;
-                
-                const ehpadPoints = [];
-                const medecinPoints = [];
-                
-                columns.forEach((col, i) => {
-                    const bar = col.querySelector('.chart-bar');
-                    const ehpadPoint = col.querySelector('.data-point-ehpad');
-                    const medecinPoint = col.querySelector('.data-point-medecin');
-                    
-                    if (bar && parseFloat(bar.style.height) > 0) {
-                        const rect = bar.getBoundingClientRect();
-                        const containerRect = barsContainer.getBoundingClientRect();
-                        const x = (i * (100 / 12)) + (100 / 24);
-                        
-                        if (ehpadPoint) {
-                            const bottom = parseFloat(ehpadPoint.style.bottom);
-                            const y = 100 - bottom;
-                            ehpadPoints.push({ x, y });
-                        }
-                        
-                        if (medecinPoint) {
-                            const bottom = parseFloat(medecinPoint.style.bottom);
-                            const y = 100 - bottom;
-                            medecinPoints.push({ x, y });
-                        }
-                    }
-                });
-                
-                // Remove existing lines
-                const existingLines = chartContainer.querySelector('.chart-lines');
-                if (existingLines) existingLines.remove();
-                
-                // Create SVG for lines
-                if (ehpadPoints.length > 1 || medecinPoints.length > 1) {
-                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                    svg.classList.add('chart-lines');
-                    svg.setAttribute('style', 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;');
-                    
-                    // Create paths
-                    const createPath = (points, color) => {
-                        if (points.length < 2) return '';
-                        let d = `M ${points[0].x} ${points[0].y}`;
-                        for (let i = 1; i < points.length; i++) {
-                            d += ` L ${points[i].x} ${points[i].y}`;
-                        }
-                        return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
-                    };
-                    
-                    if (ehpadPoints.length > 0) {
-                        svg.innerHTML += createPath(ehpadPoints, '#10b981');
-                    }
-                    if (medecinPoints.length > 0) {
-                        svg.innerHTML += createPath(medecinPoints, '#f59e0b');
-                    }
-                    
-                    chartContainer.insertBefore(svg, barsContainer);
-                }
-            }, 100);
-        }
     }
     
     if (labelsContainer) {
