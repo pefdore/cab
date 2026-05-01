@@ -270,6 +270,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div class="charts-grid">
                     <div class="chart-card">
                         <h3>Revenus mensuels</h3>
+                        <div class="chart-legend" id="monthlyChartLegend"></div>
                         <div class="chart" id="monthlyChart">
                             <div class="chart-bars" id="monthlyChartBars"></div>
                             <div class="chart-labels" id="monthlyChartLabels"></div>
@@ -813,14 +814,21 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
       });
     </script>
     <script>
+      // Wait for jsPDF to load and expose it properly
       function checkJsPDF() {
         if (window.jspdf && window.jspdf.jsPDF) {
           window.jsPDF = window.jspdf.jsPDF;
           console.log('[PDF] jsPDF loaded and exposed');
         }
       }
+      
+      // Check immediately
       checkJsPDF();
+      
+      // Also check when window loads
       window.addEventListener('load', checkJsPDF);
+      
+      // Poll every 500ms for up to 10 seconds
       let attempts = 0;
       const poll = setInterval(() => {
         checkJsPDF();
