@@ -1351,7 +1351,6 @@ function openSettingsPage(pageName) {
         page.style.display = 'block';
         page.classList.add('active');
     }
-}
     
     // Load data for specific pages
     if (pageName === 'profil') {
