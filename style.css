@@ -588,6 +588,17 @@ h2 {
     padding-bottom: 8px;
 }
 
+.chart-bar-column {
+    flex: 1;
+    min-width: 20px;
+    max-width: 60px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+}
+
 .chart-bar {
     flex: 1;
     min-width: 20px;
@@ -614,8 +625,9 @@ h2 {
     font-weight: 600;
     color: var(--color-text);
     white-space: nowrap;
-    opacity: 0;
+    opacity: 1;
     transition: opacity 0.2s;
+    pointer-events: none;
 }
 
 .chart-bar:hover .bar-value {
@@ -654,13 +666,6 @@ h2 {
     display: inline-block;
 }
 
-/* Data Points on Bars */
-.chart-bar-wrapper {
-    flex: 1;
-    min-width: 20px;
-    max-width: 60px;
-}
-
 .data-point {
     position: absolute;
     left: 50%;
@@ -671,6 +676,7 @@ h2 {
     border: 2px solid white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     z-index: 2;
+    cursor: pointer;
 }
 
 /* Responsive Chart */
@@ -683,14 +689,13 @@ h2 {
         gap: 3px;
     }
     
-    .chart-bar {
+    .chart-bar-column {
         min-width: 12px;
         max-width: 30px;
     }
     
-    .chart-bar-wrapper {
-        min-width: 12px;
-        max-width: 30px;
+    .chart-bar {
+        min-width: 100%;
     }
     
     .chart-labels {
@@ -738,12 +743,7 @@ h2 {
         height: 150px;
     }
     
-    .chart-bar {
-        min-width: 8px;
-        max-width: 20px;
-    }
-    
-    .chart-bar-wrapper {
+    .chart-bar-column {
         min-width: 8px;
         max-width: 20px;
     }

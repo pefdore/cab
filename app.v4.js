@@ -2113,17 +2113,17 @@ function renderCharts() {
     
     if (barsContainer) {
         barsContainer.innerHTML = Object.entries(monthlyData).map(([key, val]) => {
-            const height = val > 0 ? (val / maxVal) * 100 : 2;
+            const height = val > 0 ? (val / maxVal) * 100 : 0;
             const ehpadVal = ehpadData[key];
             const medecinVal = medecinData[key];
             const ehpadPct = val > 0 ? (ehpadVal / maxVal) * 100 : 0;
             const medecinPct = val > 0 ? (medecinVal / maxVal) * 100 : 0;
             
             return `
-                <div class="chart-bar-wrapper" style="height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
-                    <div class="chart-bar" style="height: ${height}%; width: 100%; position: relative;">
-                        <span class="bar-value">${val.toFixed(0)}€</span>
+                <div class="chart-bar-column" data-total="${val.toFixed(2)}" data-ehpad="${ehpadVal.toFixed(2)}" data-medecin="${medecinVal.toFixed(2)}">
+                    <div class="chart-bar" style="height: ${height}%;">
                         ${val > 0 ? `
+                            <span class="bar-value">${val.toFixed(0)}€</span>
                             <span class="data-point data-point-ehpad" style="bottom: ${ehpadPct}%;" title="EHPAD: ${ehpadVal.toFixed(0)}€"></span>
                             <span class="data-point data-point-medecin" style="bottom: ${medecinPct}%;" title="Médecine/SSR: ${medecinVal.toFixed(0)}€"></span>
                         ` : ''}
@@ -2140,9 +2140,20 @@ function renderCharts() {
         }).join('');
     }
     
+    // Add click handlers for bar columns
+    document.querySelectorAll('.chart-bar-column').forEach(col => {
+        col.style.cursor = 'pointer';
+        col.addEventListener('click', function() {
+            const total = this.dataset.total;
+            const ehpad = this.dataset.ehpad;
+            const medecin = this.dataset.medecin;
+            alert(`Total: ${total}€\nEHPAD: ${ehpad}€\nMédecine/SSR: ${medecin}€`);
+        });
+    });
+    
     // ========== PASSAGES MENSUELS ==========
     const visitsData = {};
-    for (let m = 0; m <= currentMonth; m++) {
+    for (let m = 0; m < 12; m++) {
         const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
         visitsData[key] = 0;
     }
@@ -2160,8 +2171,8 @@ function renderCharts() {
     if (visitsBars) {
         const maxVal = Math.max(...Object.values(visitsData), 1);
         visitsBars.innerHTML = Object.entries(visitsData).map(([key, val]) => {
-            const height = val > 0 ? (val / maxVal) * 100 : 2;
-            return `<div class="chart-bar" style="height: ${height}%"><span class="bar-value">${val}</span></div>`;
+            const height = val > 0 ? (val / maxVal) * 100 : 0;
+            return `<div class="chart-bar" style="height: ${height}%;"><span class="bar-value">${val}</span></div>`;
         }).join('');
     }
     
