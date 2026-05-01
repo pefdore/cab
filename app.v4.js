@@ -2214,9 +2214,12 @@ function renderCharts() {
     }
     
     if (donutLegendContainer) {
-        donutLegendContainer.innerHTML = Object.entries(locationData).map(([loc, val]) => 
-            `<div class="legend-item"><span class="legend-color" style="background:${colors[Object.keys(locationData).indexOf(loc) % colors.length]}"></span>${loc}</div>`
-        ).join('');
+        const total = Object.values(locationData).reduce((a, b) => a + b, 0);
+        donutLegendContainer.innerHTML = Object.entries(locationData).map(([loc, val]) => {
+            const pct = ((val / total) * 100).toFixed(1);
+            const colorIndex = Object.keys(locationData).indexOf(loc) % colors.length;
+            return `<div class="legend-item"><span class="legend-color" style="background:${colors[colorIndex]}"></span>${loc} <span class="legend-pct">${pct}%</span></div>`;
+        }).join('');
     }
     
     // Cotation chart
