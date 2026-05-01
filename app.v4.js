@@ -502,20 +502,15 @@ function populateCotationSelect() {
     
     // Default cotations
     const cotations = [
-        { key: 'CS', amount: 26.50 },
-        { key: 'CS+MD', amount: 31.50 },
-        { key: 'CC', amount: 23.00 },
-        { key: 'CC+MD', amount: 28.00 },
-        { key: 'CNPSY', amount: 54.00 },
-        { key: 'CNP', amount: 46.00 },
-        { key: 'VL', amount: 60.00 },
-        { key: 'VL+MD', amount: 70.00 },
-        { key: 'AMC', amount: 30.00 },
-        { key: 'AMI', amount: 26.50 },
-        { key: 'DI', amount: 30.00 },
-        { key: 'FP', amount: 26.50 },
-        { key: 'VSP', amount: 60.00 },
-        { key: 'IMT', amount: 36.00 }
+        { key: 'G', amount: 30 },
+        { key: 'VG', amount: 30 },
+        { key: 'VG+MD', amount: 40 },
+        { key: 'VG+MU', amount: 52.6 },
+        { key: 'ALQP003', amount: 69.12 },
+        { key: 'VL', amount: 60 },
+        { key: 'VL+MD', amount: 70 },
+        { key: 'VG+MD+MSH', amount: 63 },
+        { key: 'VG+MD+2IK', amount: 41.22 }
     ];
     
     select.innerHTML = '<option value="">Sélectionner...</option>';
