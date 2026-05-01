@@ -37,6 +37,7 @@
 }
 
 /* Primary Accent - Indigo */
+:root {
     --color-primary: #6366f1;
     --color-primary-hover: #4f46e5;
     --color-primary-light: #e0e7ff;
