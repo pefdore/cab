@@ -2177,7 +2177,7 @@ function renderCharts() {
     });
     
     const donutContainer = document.getElementById('donutChart');
-    const legendContainer = document.getElementById('donutLegend');
+    const donutLegendContainer = document.getElementById('donutLegend');
     const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
     
     if (donutContainer && Object.keys(locationData).length > 0) {
@@ -2196,8 +2196,8 @@ function renderCharts() {
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
     }
     
-    if (legendContainer) {
-        legendContainer.innerHTML = Object.entries(locationData).map(([loc, val]) => 
+    if (donutLegendContainer) {
+        donutLegendContainer.innerHTML = Object.entries(locationData).map(([loc, val]) => 
             `<div class="legend-item"><span class="legend-color" style="background:${colors[Object.keys(locationData).indexOf(loc) % colors.length]}"></span>${loc}</div>`
         ).join('');
     }
