@@ -546,43 +546,97 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
             <!-- Settings View -->
             <section id="view-settings" class="view">
-                <h2>Paramètres</h2>
-                
-                <div class="settings-tabs">
-                    <button class="settings-tab active" data-tab="profil">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                <!-- Settings Header -->
+                <div class="settings-header">
+                    <button class="settings-back-btn" id="settingsBackBtn" style="display: none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
                         </svg>
-                        Profil
+                        <span>Retour</span>
                     </button>
-                    <button class="settings-tab" data-tab="cotation">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                        Cotations
-                    </button>
-                    <button class="settings-tab" data-tab="pdf">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
-                        </svg>
-                        PDF
-                    </button>
-                    <button class="settings-tab" data-tab="preferences">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                        </svg>
-                        Préférences
-                    </button>
-                    <button class="settings-tab" data-tab="donnees">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-                        </svg>
-                        Données
-                    </button>
+                    <h2>Paramètres</h2>
                 </div>
 
-                <!-- Profil -->
-                <div id="tab-profil" class="settings-tab-content active">
+                <!-- Settings Menu (main page) -->
+                <div id="settings-menu" class="settings-menu">
+                    <div class="settings-card" data-settings-page="profil">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Profil</h3>
+                            <p>Informations du compte et mot de passe</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </div>
+
+                    <div class="settings-card" data-settings-page="cotation">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Cotations</h3>
+                            <p>Gérer les codes de cotation</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </div>
+
+                    <div class="settings-card" data-settings-page="pdf">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>PDF</h3>
+                            <p>Logo, signature et modèle</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </div>
+
+                    <div class="settings-card" data-settings-page="preferences">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Préférences</h3>
+                            <p>Thème et notifications</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </div>
+
+                    <div class="settings-card" data-settings-page="donnees">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Données</h3>
+                            <p>Exporter ou supprimer vos données</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Profil Page -->
+                <div id="settings-page-profil" class="settings-page" style="display: none;">
                     <div class="settings-section">
                         <h3>Informations du compte</h3>
                         <div class="profile-form">
@@ -633,18 +687,22 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                         </div>
                     </div>
                 </div>
-                
-                <div id="tab-cotation" class="settings-tab-content">
-                    <h3>Paramètres des cotations</h3>
-                    <div id="settingsCotationList"></div>
-                    <div class="add-cotation-form">
-                        <input type="text" id="newCotationKey" placeholder="Nouvelle clé (ex: VG+MD)">
-                        <input type="number" id="newCotationAmount" placeholder="Montant" step="0.01">
-                        <button id="addNewCotation" class="add-btn">Ajouter</button>
+
+                <!-- Cotations Page -->
+                <div id="settings-page-cotation" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Mes cotations</h3>
+                        <div id="settingsCotationList"></div>
+                        <div class="add-cotation-form">
+                            <input type="text" id="newCotationKey" placeholder="Nouvelle clé (ex: VG+MD)">
+                            <input type="number" id="newCotationAmount" placeholder="Montant" step="0.01">
+                            <button id="addNewCotation" class="add-btn">Ajouter</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div id="tab-pdf" class="settings-tab-content">
+
+                <!-- PDF Page -->
+                <div id="settings-page-pdf" class="settings-page" style="display: none;">
                     <div class="settings-section">
                         <h3>Logo du PDF</h3>
                         <p class="settings-desc">Uploadez le logo de l'établissement (affiché en haut à gauche)</p>
@@ -682,8 +740,8 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     </div>
                 </div>
 
-                <!-- Préférences -->
-                <div id="tab-preferences" class="settings-tab-content">
+                <!-- Préférences Page -->
+                <div id="settings-page-preferences" class="settings-page" style="display: none;">
                     <div class="settings-section">
                         <h3>Apparence</h3>
                         <div class="preference-item">
@@ -733,8 +791,8 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     </div>
                 </div>
 
-                <!-- Données -->
-                <div id="tab-donnees" class="settings-tab-content">
+                <!-- Données Page -->
+                <div id="settings-page-donnees" class="settings-page" style="display: none;">
                     <div class="settings-section">
                         <h3>Exporter vos données</h3>
                         <p class="settings-desc">Téléchargez vos données dans le format souhaité</p>
@@ -929,7 +987,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="app.v4.js?v=69" defer></script>
+    <script src="app.v4.js?v=70" defer></script>
     <script>
       // DEBUG: Log everything
       console.log('[DEBUG] Inline script running');

@@ -1845,6 +1845,108 @@ h2 {
     transform: translateY(-1px);
 }
 
+/* Settings Header */
+.settings-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.settings-header h2 {
+    margin-bottom: 0;
+}
+
+.settings-back-btn {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.settings-back-btn:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-text-tertiary);
+}
+
+.settings-back-btn span {
+    display: inline;
+}
+
+/* Settings Menu Cards */
+.settings-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.settings-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.settings-card:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.settings-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.settings-card-content {
+    flex: 1;
+}
+
+.settings-card-content h3 {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.settings-card-content p {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+.settings-card-arrow {
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+}
+
+/* Settings Page (sub-pages) */
+.settings-page {
+    display: none;
+}
+
+.settings-page.active {
+    display: block;
+    animation: fadeIn 0.3s var(--transition-base);
+}
+
 /* Settings page mode */
 .settings-page-mode .settings-tabs {
     flex-direction: column;

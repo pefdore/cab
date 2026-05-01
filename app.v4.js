@@ -786,21 +786,48 @@ function renderSettingsCotationList() {
     const container = document.getElementById('settingsCotationList');
     if (!container) return;
     
-    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
-    const customCotations = settings.customCotations || [];
-    
-    if (customCotations.length === 0) {
-        container.innerHTML = '<p style="color: var(--color-text-secondary);">Aucune cotation personnalisée</p>';
-        return;
-    }
-    
-    container.innerHTML = customCotations.map((c, i) => `
-        <div class="cotation-item">
-            <span>${c.key}</span>
-            <span>${c.amount.toFixed(2)}€</span>
-            <button onclick="deleteCotation(${i})" style="color: var(--color-danger);">Supprimer</button>
-        </div>
-    `).join('');
+    // Get unique cotations from user's entries
+    supabase.from('entries')
+        .select('cotation_key, amount')
+        .eq('user_id', currentUser.id)
+        .then(({ data }) => {
+            if (data && data.length > 0) {
+                // Group by cotation_key and get average amount
+                const cotationsMap = {};
+                data.forEach(e => {
+                    if (e.cotation_key) {
+                        if (!cotationsMap[e.cotation_key]) {
+                            cotationsMap[e.cotation_key] = { count: 0, total: 0 };
+                        }
+                        cotationsMap[e.cotation_key].count++;
+                        cotationsMap[e.cotation_key].total += e.amount || 0;
+                    }
+                });
+                
+                const usedCotations = Object.entries(cotationsMap)
+                    .map(([key, vals]) => ({
+                        key,
+                        amount: vals.total / vals.count,
+                        count: vals.count
+                    }))
+                    .sort((a, b) => b.count - a.count);
+                
+                container.innerHTML = `
+                    <div class="settings-cotation-list">
+                        <h4 style="margin-bottom: 12px; font-size: var(--text-sm); color: var(--color-text-secondary);">Cotations utilisées</h4>
+                        ${usedCotations.map(c => `
+                            <div class="settings-cotation-item">
+                                <span class="cotation-key">${c.key}</span>
+                                <span class="cotation-amount">${c.amount.toFixed(2)}€</span>
+                                <span class="cotation-count">${c.count}x</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<p style="color: var(--color-text-secondary);">Aucune cotation utilisée</p>';
+            }
+        });
 }
 
 function deleteCotation(index) {
@@ -1228,15 +1255,17 @@ function setupEventListeners() {
         renderLogoPreview();
     });
     
-    // Settings tabs
-    document.querySelectorAll('.settings-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabName = tab.dataset.tab;
-            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+    // Settings cards navigation (new page-based system)
+    document.querySelectorAll('.settings-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const page = card.dataset.settingsPage;
+            openSettingsPage(page);
         });
+    });
+    
+    // Settings back button
+    document.getElementById('settingsBackBtn')?.addEventListener('click', () => {
+        closeSettingsPage();
     });
     
     // Cabinet tabs
@@ -1301,6 +1330,54 @@ function handleSignatureUpload(e) {
         renderLogoPreview();
     };
     reader.readAsDataURL(file);
+}
+
+// Settings page navigation
+function openSettingsPage(pageName) {
+    const menu = document.getElementById('settings-menu');
+    const backBtn = document.getElementById('settingsBackBtn');
+    const title = document.querySelector('#view-settings h2');
+    
+    if (menu) menu.style.display = 'none';
+    if (backBtn) backBtn.style.display = 'flex';
+    if (title) title.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+    
+    // Hide all settings pages
+    document.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
+    
+    // Show the selected page
+    const page = document.getElementById(`settings-page-${pageName}`);
+    if (page) {
+        page.style.display = 'block';
+        page.classList.add('active');
+    }
+    
+    // Load data for specific pages
+    if (pageName === 'profil') {
+        loadProfileData();
+    } else if (pageName === 'cotation') {
+        renderSettingsCotationList();
+    } else if (pageName === 'pdf') {
+        renderLogoPreview();
+    } else if (pageName === 'preferences') {
+        loadTheme();
+    }
+}
+
+function closeSettingsPage() {
+    const menu = document.getElementById('settings-menu');
+    const backBtn = document.getElementById('settingsBackBtn');
+    const title = document.querySelector('#view-settings h2');
+    
+    if (menu) menu.style.display = 'flex';
+    if (backBtn) backBtn.style.display = 'none';
+    if (title) title.textContent = 'Paramètres';
+    
+    // Hide all settings pages
+    document.querySelectorAll('.settings-page').forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+    });
 }
 
 // Profile functions
@@ -1502,9 +1579,8 @@ function switchView(viewName) {
     } else if (viewName === 'history') {
         renderHistory();
     } else if (viewName === 'settings') {
-        loadProfileData();
-        loadTheme();
-        renderSettingsCotationList();
+        // Reset to settings menu
+        closeSettingsPage();
         // On mobile, show settings as full page overlay
         if (window.innerWidth <= 768) {
             const settingsSection = document.getElementById('view-settings');
