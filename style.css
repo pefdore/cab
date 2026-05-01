@@ -584,12 +584,14 @@ h2 {
     flex: 1;
     display: flex;
     align-items: flex-end;
-    gap: 12px;
+    gap: 6px;
     padding-bottom: 8px;
 }
 
 .chart-bar {
     flex: 1;
+    min-width: 20px;
+    max-width: 60px;
     background: linear-gradient(180deg, #6366f1 0%, #818cf8 100%);
     border-radius: 6px 6px 0 0;
     min-height: 8px;
@@ -620,9 +622,70 @@ h2 {
     opacity: 1;
 }
 
+/* Chart Legend for Monthly Revenue */
+.chart-legend {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: var(--color-bg-subtle);
+    border-radius: 8px;
+}
+
+.chart-legend .legend-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.chart-legend .legend-total,
+.chart-legend .legend-ehpad,
+.chart-legend .legend-medecin {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.chart-legend .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Data Points on Bars */
+.chart-bar-wrapper {
+    flex: 1;
+    min-width: 20px;
+    max-width: 60px;
+}
+
+.data-point {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 2;
+}
+
+.data-point-ehpad {
+    background: #10b981;
+    margin-left: -8px;
+}
+
+.data-point-medecin {
+    background: #f59e0b;
+    margin-left: 8px;
+}
+
 .chart-labels {
     display: flex;
-    gap: 12px;
+    gap: 6px;
     padding-top: 8px;
     border-top: 1px solid var(--color-border-subtle);
 }

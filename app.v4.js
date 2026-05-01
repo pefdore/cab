@@ -1328,6 +1328,17 @@ function switchView(viewName) {
                     switchView('dashboard');
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
+                
+                // Set up tabs in overlay
+                overlay.querySelectorAll('.settings-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.dataset.tab;
+                        overlay.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                        overlay.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        overlay.querySelector(`#tab-${tabName}`).classList.add('active');
+                    });
+                });
             }
             overlay.classList.add('active');
         }
@@ -2048,28 +2059,77 @@ function renderCharts() {
     const currentMonth = now.getMonth();
     const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     
+    const ehpadLocations = ['Tamaris', 'Lilias RdC', 'Lilas 1er étage'];
+    
     // ========== REVENUS MENSUELS ==========
     const monthlyData = {};
-    for (let m = 0; m <= currentMonth; m++) {
+    const ehpadData = {};
+    const medecinData = {};
+    
+    // Initialize all 12 months
+    for (let m = 0; m < 12; m++) {
         const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
         monthlyData[key] = 0;
+        ehpadData[key] = 0;
+        medecinData[key] = 0;
     }
     
+    // Aggregate data
     entries.forEach(e => {
         const key = e.monthKey;
         if (monthlyData.hasOwnProperty(key)) {
-            monthlyData[key] += e.amount || 0;
+            const amount = e.amount || 0;
+            monthlyData[key] += amount;
+            
+            const location = e.location || '';
+            if (ehpadLocations.includes(location)) {
+                ehpadData[key] += amount;
+            } else {
+                medecinData[key] += amount;
+            }
         }
     });
     
+    // Calculate totals for legend
+    const totalAnnual = Object.values(monthlyData).reduce((a, b) => a + b, 0);
+    const totalEhpad = Object.values(ehpadData).reduce((a, b) => a + b, 0);
+    const totalMedecin = Object.values(medecinData).reduce((a, b) => a + b, 0);
+    
+    // Render legend
+    const legendContainer = document.getElementById('monthlyChartLegend');
+    if (legendContainer) {
+        legendContainer.innerHTML = `
+            <div class="legend-row">
+                <span class="legend-total"><span class="legend-dot" style="background: #6366f1;"></span> Total: ${totalAnnual.toFixed(0)}€</span>
+                <span class="legend-ehpad"><span class="legend-dot" style="background: #10b981;"></span> EHPAD: ${totalEhpad.toFixed(0)}€</span>
+                <span class="legend-medecin"><span class="legend-dot" style="background: #f59e0b;"></span> Médecine/SSR: ${totalMedecin.toFixed(0)}€</span>
+            </div>
+        `;
+    }
+    
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
+    const maxVal = Math.max(...Object.values(monthlyData), 1);
     
     if (barsContainer) {
-        const maxVal = Math.max(...Object.values(monthlyData), 1);
         barsContainer.innerHTML = Object.entries(monthlyData).map(([key, val]) => {
             const height = val > 0 ? (val / maxVal) * 100 : 2;
-            return `<div class="chart-bar" style="height: ${height}%"><span class="bar-value">${val.toFixed(0)}€</span></div>`;
+            const ehpadVal = ehpadData[key];
+            const medecinVal = medecinData[key];
+            const ehpadPct = val > 0 ? (ehpadVal / maxVal) * 100 : 0;
+            const medecinPct = val > 0 ? (medecinVal / maxVal) * 100 : 0;
+            
+            return `
+                <div class="chart-bar-wrapper" style="height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
+                    <div class="chart-bar" style="height: ${height}%; width: 100%; position: relative;">
+                        <span class="bar-value">${val.toFixed(0)}€</span>
+                        ${val > 0 ? `
+                            <span class="data-point data-point-ehpad" style="bottom: ${ehpadPct}%;" title="EHPAD: ${ehpadVal.toFixed(0)}€"></span>
+                            <span class="data-point data-point-medecin" style="bottom: ${medecinPct}%;" title="Médecine/SSR: ${medecinVal.toFixed(0)}€"></span>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
         }).join('');
     }
     

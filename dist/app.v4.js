@@ -789,46 +789,12 @@ function deleteCotation(index) {
     populateCotationSelect();
 }
 
-function renderHistory() {
-    const container = document.getElementById('historyList');
-    const noHistory = document.getElementById('noHistory');
-    
-    if (!container) return;
-    
-    if (history.length === 0) {
-        container.innerHTML = '';
-        if (noHistory) noHistory.style.display = 'block';
-        return;
-    }
-    
-    if (noHistory) noHistory.style.display = 'none';
-    
-    container.innerHTML = history.map(h => `
-        <div class="history-item-compact">
-            <div class="history-item-left">
-                <span class="history-month-compact">${h.monthName || h.monthKey}</span>
-                <span class="history-date-compact">${new Date(h.generatedAt || h.generated_at).toLocaleDateString('fr-FR')}</span>
-            </div>
-            <div class="history-item-right">
-                <span class="history-amount-compact">${(h.totalAmount || h.total_amount || 0).toFixed(2)}€</span>
-                <span class="history-count-compact">${h.totalVisits || h.total_visits || 0} actes</span>
-            </div>
-            <div class="history-actions-compact">
-                <button class="btn-icon" onclick="downloadPDF('${h.id}')" title="Télécharger">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                </button>
-                <button class="btn-icon btn-icon-danger" onclick="deletePDF('${h.id}')" title="Supprimer">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
 function downloadPDF(id) {
-    console.log('[DOWNLOAD] Looking for PDF with id:', id);
-    const record = history.find(h => h.id === id);
+    console.log('[DOWNLOAD] Looking for PDF with id:', id, 'type:', typeof id);
+    console.log('[DOWNLOAD] Full history:', JSON.stringify(history));
+    const record = history.find(h => String(h.id) === String(id));
     console.log('[DOWNLOAD] Found record:', record);
+    console.log('[DOWNLOAD] Record keys:', record ? Object.keys(record) : 'N/A');
     
     if (!record) {
         alert('Document non trouvé');
@@ -838,6 +804,7 @@ function downloadPDF(id) {
     const pdfData = record.pdfData || record.pdf_data;
     console.log('[DOWNLOAD] pdfData exists:', !!pdfData);
     console.log('[DOWNLOAD] pdfData type:', typeof pdfData);
+    console.log('[DOWNLOAD] pdfData (first 100 chars):', pdfData ? pdfData.substring(0, 100) : 'N/A');
     console.log('[DOWNLOAD] pdfData length:', pdfData?.length);
     
     if (!pdfData) {
@@ -845,16 +812,35 @@ function downloadPDF(id) {
         return;
     }
     
+    // Fix: ensure proper data URI format
+    let downloadUrl = pdfData;
+    if (pdfData.includes('filename=generated.pdf;')) {
+        downloadUrl = pdfData.replace('filename=generated.pdf;', '');
+        console.log('[DOWNLOAD] Fixed URL format');
+    }
+    
     const monthName = record.monthName || record.monthKey || 'document';
     const fileName = 'honoraires-' + monthName + '.pdf';
     
+    console.log('[DOWNLOAD] Creating download link for:', fileName);
+    console.log('[DOWNLOAD] Download URL (first 50):', downloadUrl.substring(0, 50));
+    
     try {
-        const link = document.createElement('a');
-        link.href = pdfData;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // On mobile, open in new tab
+            window.open(downloadUrl, '_blank');
+        } else {
+            // On desktop, use download link
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        console.log('[DOWNLOAD] Done!');
     } catch (error) {
         console.error('Erreur téléchargement PDF:', error);
         alert('Erreur lors du téléchargement: ' + error.message);
@@ -862,6 +848,12 @@ function downloadPDF(id) {
 }
 
 function deletePDF(id) {
+    console.log('[DELETE] Looking for id:', id);
+    const record = history.find(h => String(h.id) === String(id));
+    if (!record) {
+        alert('Document non trouvé');
+        return;
+    }
     if (!confirm('Voulez-vous vraiment supprimer cette feuille de cotation?')) return;
     
     supabaseClient
@@ -1336,6 +1328,17 @@ function switchView(viewName) {
                     switchView('dashboard');
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
+                
+                // Set up tabs in overlay
+                overlay.querySelectorAll('.settings-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.dataset.tab;
+                        overlay.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                        overlay.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        overlay.querySelector(`#tab-${tabName}`).classList.add('active');
+                    });
+                });
             }
             overlay.classList.add('active');
         }

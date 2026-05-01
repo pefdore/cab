@@ -270,6 +270,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div class="charts-grid">
                     <div class="chart-card">
                         <h3>Revenus mensuels</h3>
+                        <div class="chart-legend" id="monthlyChartLegend"></div>
                         <div class="chart" id="monthlyChart">
                             <div class="chart-bars" id="monthlyChartBars"></div>
                             <div class="chart-labels" id="monthlyChartLabels"></div>
@@ -592,6 +593,14 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             <button id="uploadSignatureBtn" class="add-btn">Choisir une image</button>
                             <button id="removeSignatureBtn" class="remove-btn" style="display: none;">Supprimer</button>
                         </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Modèle de PDF</h3>
+                        <p class="settings-desc">Modifier le modèle des honoraires</p>
+                        <a href="supabase/functions/generate-monthly-pdf/template.html" target="_blank" class="add-btn" style="display: inline-block; text-decoration: none; text-align: center;">
+                            Ouvrir le modèle HTML
+                        </a>
                     </div>
                 </div>
 
