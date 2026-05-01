@@ -1334,12 +1334,9 @@ function handleSignatureUpload(e) {
 
 // Settings page navigation
 function openSettingsPage(pageName) {
-    alert('openSettingsPage START: ' + pageName);
     const menu = document.getElementById('settings-menu');
     const backBtn = document.getElementById('settingsBackBtn');
     const title = document.querySelector('#view-settings h2');
-    
-    alert('menu: ' + menu + ', backBtn: ' + backBtn + ', title: ' + title);
     
     if (menu) menu.style.display = 'none';
     if (backBtn) backBtn.style.display = 'flex';
@@ -1350,13 +1347,10 @@ function openSettingsPage(pageName) {
     
     // Show the selected page
     const page = document.getElementById(`settings-page-${pageName}`);
-    alert('page element: ' + page);
     if (page) {
         page.style.display = 'block';
         page.classList.add('active');
     }
-    
-    alert('openSettingsPage END');
 }
     
     // Load data for specific pages
