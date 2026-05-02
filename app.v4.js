@@ -2270,27 +2270,23 @@ function refreshLLMAnalysis(type) {
     // Generate response based on type
     const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
     
-    // Check if OpenRouter is configured
-    const useOpenAI = typeof CONFIG !== 'undefined' && CONFIG && CONFIG.openrouterApiKey;
+    // Check if API is configured
+    const useGemini = typeof CONFIG !== 'undefined' && CONFIG && CONFIG.geminiApiKey;
     
-    if (useOpenAI) {
-        // Use OpenRouter API
+    if (useGemini) {
+        // Use Google Gemini API
         contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
         
-        fetch('https://openrouter.ai/api/v1/chat/completions', {
+        fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${CONFIG.geminiApiKey}`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${CONFIG.openrouterApiKey}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'anthropic/claude-3-haiku',
-                messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
+                contents: [{ parts: [{ text: prompt + '\n\nRéponds en français de manière concise (3 points max).' }] }]
             })
         })
         .then(res => res.json())
         .then(result => {
-            const response = result.choices?.[0]?.message?.content || 'Erreur de réponse';
+            const response = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Erreur de réponse';
             contentEl.innerHTML = `<p>${response.replace(/\n/g, '<br>')}</p>`;
         })
         .catch(err => {
