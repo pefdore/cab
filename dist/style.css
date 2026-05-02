@@ -473,21 +473,23 @@ h2 {
 
 /* Bar Tooltip */
 .bar-tooltip {
-    position: absolute;
+    position: fixed;
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 0.75rem;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8125rem;
     color: var(--color-text);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 100;
-    pointer-events: none;
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
     white-space: nowrap;
+    min-width: 140px;
 }
 
 .bar-tooltip .tooltip-amount {
     font-weight: 600;
+    display: block;
+    margin-top: 4px;
 }
 
 /* LLM Analysis Section */
@@ -4469,11 +4471,12 @@ h2 {
 }
 
 @media (max-width: 768px) {
-    .cabinet-stats-row { grid-template-columns: repeat(2, 1fr); }
+    .cabinet-stats-row { grid-template-columns: repeat(2, 1fr); margin-top: 16px; }
     
     .compta-summary {
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
+        margin-bottom: 16px;
         overflow-x: auto;
         padding-bottom: 4px;
     }

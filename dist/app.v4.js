@@ -2109,6 +2109,8 @@ if (elDashTotalRecettes) {
 
 // ===== BAR TOOLTIP FUNCTION =====
 function showBarTooltip(event, idx) {
+    event.stopPropagation();
+    
     const monthlyData = window._monthlyData;
     if (!monthlyData) return;
     
@@ -2117,7 +2119,10 @@ function showBarTooltip(event, idx) {
     
     const m = values[idx];
     const existingTooltip = document.querySelector('.bar-tooltip');
-    if (existingTooltip) existingTooltip.remove();
+    if (existingTooltip) {
+        existingTooltip.remove();
+        return;
+    }
     
     const tooltip = document.createElement('div');
     tooltip.className = 'bar-tooltip';
@@ -2125,15 +2130,34 @@ function showBarTooltip(event, idx) {
         <div><strong>${m.label}</strong></div>
         <div class="tooltip-amount" style="color:var(--color-danger)">Dépenses: ${m.depenses.toFixed(2)}€</div>
         <div class="tooltip-amount" style="color:var(--color-success)">Recettes: ${m.recettes.toFixed(2)}€</div>
+        <div style="font-size:0.625rem;color:var(--color-text-tertiary);margin-top:4px">Cliquez pour fermer</div>
     `;
     
-    const rect = event.target.getBoundingClientRect();
-    tooltip.style.left = rect.left + 'px';
-    tooltip.style.top = (rect.top - 80) + 'px';
+    const rect = event.currentTarget.getBoundingClientRect();
+    const tooltipWidth = 160;
+    let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+    let top = rect.top - 90;
+    
+    if (left < 10) left = 10;
+    if (left + tooltipWidth > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipWidth - 10;
+    }
+    if (top < 10) top = rect.bottom + 10;
+    
+    tooltip.style.position = 'fixed';
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
     document.body.appendChild(tooltip);
     
+    const closeTooltip = function(e) {
+        if (!tooltip.contains(e.target)) {
+            tooltip.remove();
+            document.removeEventListener('click', closeTooltip);
+        }
+    };
+    
     setTimeout(() => {
-        tooltip.addEventListener('click', () => tooltip.remove());
+        document.addEventListener('click', closeTooltip);
     }, 100);
 }
 
