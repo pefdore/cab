@@ -4177,6 +4177,29 @@ h2 {
 .compta-card.expense .compta-value { color: var(--color-danger); }
 .compta-card.balance .compta-value { color: var(--color-primary); }
 
+.compta-trend { font-size: 0.6875rem; margin-top: 4px; display: block; }
+.compta-trend.up { color: var(--color-success); }
+.compta-trend.down { color: var(--color-danger); }
+.compta-trend.neutral { color: var(--color-text-tertiary); }
+
+.cabinet-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+
+.cabinet-stat-card { background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+
+.cabinet-stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cabinet-stat-icon.green { background: var(--color-success-bg); color: var(--color-success); }
+.cabinet-stat-icon.red { background: var(--color-danger-bg); color: var(--color-danger); }
+.cabinet-stat-icon.blue { background: var(--color-primary-subtle); color: var(--color-primary); }
+.cabinet-stat-icon.purple { background: #f3e8ff; color: #9333ea; }
+
+.cabinet-stat-content { display: flex; flex-direction: column; }
+.cabinet-stat-label { font-size: 0.6875rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.cabinet-stat-value { font-size: 1.125rem; font-weight: 700; color: var(--color-text); }
+
+@media (max-width: 768px) {
+    .cabinet-stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* Categories Grid */
 .compta-categories, .compta-mois {
     margin-bottom: 24px;
