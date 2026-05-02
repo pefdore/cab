@@ -449,11 +449,13 @@ function switchDashboardMode(mode) {
         // Hide cabinet, show cotation
         console.log('[TOGGLE] Switching to COTATION');
         if (cabinetDash) {
-            cabinetDash.style.display = 'none !important';
+            cabinetDash.style.display = 'none';
+            cabinetDash.style.visibility = 'hidden';
             console.log('[TOGGLE] cabinet-dashboard hidden');
         }
         if (cotationDash) {
             cotationDash.style.display = 'block';
+            cotationDash.style.visibility = 'visible';
             console.log('[TOGGLE] cotation-dashboard shown');
             // Load cotation data when showing
             if (typeof updateStats === 'function') updateStats();
@@ -462,11 +464,13 @@ function switchDashboardMode(mode) {
         // Hide cotation, show cabinet
         console.log('[TOGGLE] Switching to CABINET');
         if (cotationDash) {
-            cotationDash.style.display = 'none !important';
+            cotationDash.style.display = 'none';
+            cotationDash.style.visibility = 'hidden';
             console.log('[TOGGLE] cotation-dashboard hidden');
         }
         if (cabinetDash) {
             cabinetDash.style.display = 'block';
+            cabinetDash.style.visibility = 'visible';
             console.log('[TOGGLE] cabinet-dashboard shown');
             loadCabinetData();
         }
