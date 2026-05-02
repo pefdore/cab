@@ -2233,6 +2233,10 @@ if (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
 else if (typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.groqApiKey) {
   LLM_CONFIG.groqApiKey = API_CONFIG.groqApiKey;
 }
+// Then try LLM_CONFIG (llm-api.js)
+else if (typeof LLM_CONFIG !== 'undefined' && LLM_CONFIG && LLM_CONFIG.groqApiKey) {
+  // Already set
+}
 
 function refreshLLMAnalysis(type) {
     const contentEl = document.getElementById(`llm-${type}-content`);
