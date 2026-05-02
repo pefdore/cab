@@ -1675,13 +1675,19 @@ window.toggleDepenseForm = toggleDepenseForm;
 window.toggleRecetteForm = toggleRecetteForm;
 
 async function loadCabinetData() {
+    console.log('[LOAD] loadCabinetData called');
+    console.log('[LOAD] currentUser:', !!currentUser, 'supabaseClient:', !!supabaseClient);
+    
     // Load data for all authenticated users
     // Only proceed if supabaseClient is initialized
     if (currentUser && supabaseClient) {
         console.log('Loading cabinet data for user:', currentUser.id);
         await loadDepenses();
         await loadRecettes();
+        console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
+    } else {
+        console.log('[LOAD] Cannot load - missing auth or client');
     }
 }
 
@@ -1692,6 +1698,7 @@ async function loadDepenses() {
         const { data, error } = await supabaseClient
             .from('cabinet_depenses')
             .select('*')
+            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Depenses loaded:', data?.length || 0, error);
@@ -1715,6 +1722,7 @@ async function loadRecettes() {
         const { data, error } = await supabaseClient
             .from('cabinet_recettes')
             .select('*')
+            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Recettes loaded:', data?.length || 0, error);

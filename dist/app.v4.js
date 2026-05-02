@@ -1692,6 +1692,7 @@ async function loadDepenses() {
         const { data, error } = await supabaseClient
             .from('cabinet_depenses')
             .select('*')
+            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Depenses loaded:', data?.length || 0, error);
@@ -1715,6 +1716,7 @@ async function loadRecettes() {
         const { data, error } = await supabaseClient
             .from('cabinet_recettes')
             .select('*')
+            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Recettes loaded:', data?.length || 0, error);
