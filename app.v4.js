@@ -438,10 +438,6 @@ function switchDashboardMode(mode) {
     const cotationDash = document.getElementById('cotation-dashboard');
     const cabinetDash = document.getElementById('cabinet-dashboard');
     
-    alert('REMOVING HIDDEN from cabinetDash. Current class: ' + cabinetDash.className);
-    cabinetDash.classList.remove('hidden');
-    alert('After remove hidden, class: ' + cabinetDash.className + ' display: ' + getComputedStyle(cabinetDash).display);
-    
     if (mode === 'cotation') {
         if (cotationDash) {
             cotationDash.classList.remove('hidden');
