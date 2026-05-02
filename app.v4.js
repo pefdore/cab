@@ -2267,10 +2267,38 @@ function refreshLLMAnalysis(type) {
     });
     data.monthlyData = monthlyData;
     
-    // Generate response based on type (placeholder - to be connected to LLM)
+    // Generate response based on type
     const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
     
-    // Simulated responses (replace with actual LLM API call)
+    // Check if OpenRouter is configured
+    const useOpenAI = typeof CONFIG !== 'undefined' && CONFIG && CONFIG.openrouterApiKey;
+    
+    if (useOpenAI) {
+        // Use OpenRouter API
+        contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
+        
+        fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${CONFIG.openrouterApiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'anthropic/claude-3-haiku',
+                messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            const response = result.choices?.[0]?.message?.content || 'Erreur de réponse';
+            contentEl.innerHTML = `<p>${response.replace(/\n/g, '<br>')}</p>`;
+        })
+        .catch(err => {
+            console.error('LLM Error:', err);
+            contentEl.innerHTML = '<p class="llm-error">Erreur de connexion IA</p>';
+        });
+    } else {
+    // Fallback to simulated responses
     setTimeout(() => {
         const responses = {
             optimisation: `<ul>
@@ -2297,6 +2325,7 @@ function refreshLLMAnalysis(type) {
         
         contentEl.innerHTML = responses[type] || '<p>Aucune analyse disponible</p>';
     }, 800);
+    }
 }
 
 window.refreshLLMAnalysis = refreshLLMAnalysis;
