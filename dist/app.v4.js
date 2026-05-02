@@ -1811,16 +1811,11 @@ function renderRecettes() {
 function renderComptaSummary() {
     console.log('[COMPTAB] renderComptaSummary called - v74');
     
-    // Skip if no data
+    // Always render - let the function build from loaded data
     if (!cabinetDepenses) cabinetDepenses = [];
     if (!cabinetRecettes) cabinetRecettes = [];
     
-    if (cabinetDepenses.length === 0 && cabinetRecettes.length === 0) {
-        console.log('[COMPTAB] No data, skipping render');
-        return;
-    }
-    
-    console.log('[COMPTAB] Rendering with cabinetDepenses:', cabinetDepenses.length, 'cabinetRecettes:', cabinetRecettes.length);
+    console.log('[COMPTAB] Data check - cabinetDepenses:', cabinetDepenses.length, 'cabinetRecettes:', cabinetRecettes.length);
     
     const totalDepenses = cabinetDepenses.reduce((sum, d) => sum + d.amount, 0);
     const totalRecettes = cabinetRecettes.reduce((sum, r) => sum + r.amount, 0);

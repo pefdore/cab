@@ -359,6 +359,7 @@ h2 {
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     padding: 20px;
+    margin-bottom: 16px;
 }
 
 .chart-card.small {
@@ -370,6 +371,17 @@ h2 {
     font-weight: 600;
     margin-bottom: 16px;
     color: var(--color-text);
+}
+
+.charts-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.charts-row .chart-card {
+    flex: 1;
+    margin-bottom: 0;
 }
 
 /* Bar Chart */
@@ -975,6 +987,7 @@ h2 {
     padding: 24px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
+    margin-bottom: 16px;
 }
 
 .recent-section h3 {
