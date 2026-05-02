@@ -1819,11 +1819,6 @@ function renderComptaSummary() {
     console.log('[COMPTAB] cabinetDepenses:', cabinetDepenses?.length || 0);
     console.log('[COMPTAB] cabinetRecettes:', cabinetRecettes?.length || 0);
     
-    // Check if cabinet-dashboard is visible
-    const cabinetDash = document.getElementById('cabinet-dashboard');
-    console.log('[COMPTAB] cabinet-dashboard element:', !!cabinetDash);
-    console.log('[COMPTAB] cabinet-dashboard display:', cabinetDash?.style.display);
-    
     if (!cabinetDepenses) cabinetDepenses = [];
     if (!cabinetRecettes) cabinetRecettes = [];
     
