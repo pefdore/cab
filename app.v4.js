@@ -1812,19 +1812,16 @@ function renderRecettes() {
 function renderComptaSummary() {
     console.log('[COMPTAB] renderComptaSummary called - v74');
     
-    // CRITICAL: Only render if cabinet-dashboard is actually visible
-    const cabinetDash = document.getElementById('cabinet-dashboard');
-    if (!cabinetDash || cabinetDash.style.display === 'none') {
-        console.log('[COMPTAB] cabinet-dashboard not visible, skipping render');
+    // Skip if no data
+    if (!cabinetDepenses) cabinetDepenses = [];
+    if (!cabinetRecettes) cabinetRecettes = [];
+    
+    if (cabinetDepenses.length === 0 && cabinetRecettes.length === 0) {
+        console.log('[COMPTAB] No data, skipping render');
         return;
     }
     
-    console.log('[COMPTAB] cabinet-dashboard IS visible, rendering...');
-    console.log('[COMPTAB] cabinetDepenses:', cabinetDepenses?.length || 0);
-    console.log('[COMPTAB] cabinetRecettes:', cabinetRecettes?.length || 0);
-    
-    if (!cabinetDepenses) cabinetDepenses = [];
-    if (!cabinetRecettes) cabinetRecettes = [];
+    console.log('[COMPTAB] Rendering with cabinetDepenses:', cabinetDepenses.length, 'cabinetRecettes:', cabinetRecettes.length);
     
     const totalDepenses = cabinetDepenses.reduce((sum, d) => sum + d.amount, 0);
     const totalRecettes = cabinetRecettes.reduce((sum, r) => sum + r.amount, 0);
