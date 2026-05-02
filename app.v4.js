@@ -2009,19 +2009,36 @@ if (elDashTotalRecettes) {
     
     // Donut Chart - Répartition dépenses
     const donutContainer = document.getElementById('depensesPieChart');
+    const donutLegendContainer = document.getElementById('depensesPieLegend');
     console.log('[COMPTAB] donutContainer found:', !!donutContainer, 'totalDepenses:', totalDepenses);
     if (donutContainer && totalDepenses > 0) {
         let gradient = '';
         const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
         let cumulative = 0;
+        const legendItems = [];
         sortedCats.slice(0, 6).forEach(([cat, amount], i) => {
             const pct = (amount / totalDepenses) * 100;
             const end = cumulative + pct;
             gradient += `${colors[i % colors.length]} ${cumulative}% ${end}%, `;
             cumulative = end;
+            // Add to legend
+            legendItems.push({ cat, pct, color: colors[i % colors.length] });
         });
         gradient += `#e5e7eb ${cumulative}% 100%`;
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
+        
+        // Render legend with percentages
+        if (donutLegendContainer) {
+            donutLegendContainer.innerHTML = legendItems.map(item => `
+                <div class="donut-legend-item">
+                    <span class="donut-legend-color" style="background: ${item.color}"></span>
+                    <span class="donut-legend-name">${item.cat}</span>
+                    <span class="donut-legend-pct">${item.pct.toFixed(1)}%</span>
+                </div>
+            `).join('');
+        }
+    } else if (donutLegendContainer) {
+        donutLegendContainer.innerHTML = '';
     }
     
     // Evolution mensuelle - Bar chart (12 derniers mois) - click to show amounts

@@ -306,22 +306,32 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     <h3>Passages récents</h3>
                     <div class="recent-list" id="recentList"></div>
                 </div>
-                
+                </div>
+
                 <!-- Cabinet Dashboard -->
                 <div id="cabinet-dashboard" style="display:none;">
                     <div class="compta-summary">
                         <div class="compta-card income">
-                            <span class="compta-label">Recettes totales</span>
+                            <span class="compta-label">Recettes totales
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Somme de toutes les recettes enregistrées (honoraires, télétransmission, dépassements...) depuis le début de l'utilisation de l'application.</span></span>
+                            </span>
                             <span class="compta-value" id="dash-cab-recettes">0€</span>
                             <span class="compta-trend" id="recettesTrend"></span>
                         </div>
                         <div class="compta-card expense">
-                            <span class="compta-label">Dépenses totales</span>
+                            <span class="compta-label">Dépenses totales
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Somme de toutes les dépenses du cabinet (loyer, charges sociales, fournitures, logiciels...) classées par catégorie.</span></span>
+                            </span>
                             <span class="compta-value" id="dash-cab-depenses">0€</span>
                             <span class="compta-trend" id="depensesTrend"></span>
                         </div>
                         <div class="compta-card balance">
-                            <span class="compta-label">Balance nette</span>
+                            <span class="compta-label">Balance nette
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Différence entre les recettes et les dépenses. Positif = excédent (bénéfice), Négatif = déficit.</span></span>
+                            </span>
                             <span class="compta-value" id="dash-cab-balance">0€</span>
                             <span class="compta-trend" id="balanceTrend"></span>
                         </div>
@@ -333,7 +343,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                             </div>
                             <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Recettes ce mois</span>
+                                <span class="cabinet-stat-label">Recettes ce mois
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Total des recettes du mois en cours (honoraires, télétransmission, actes outside PA).</span></span>
+                                </span>
                                 <span class="cabinet-stat-value" id="recettesThisMonth">-</span>
                             </div>
                         </div>
@@ -342,7 +355,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
                             </div>
                             <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Dépenses ce mois</span>
+                                <span class="cabinet-stat-label">Dépenses ce mois
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Total des dépenses du mois en cours, toutes catégories confondues.</span></span>
+                                </span>
                                 <span class="cabinet-stat-value" id="depensesThisMonth">-</span>
                             </div>
                         </div>
@@ -351,7 +367,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                             </div>
                             <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Cumul Année</span>
+                                <span class="cabinet-stat-label">Cumul Année
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Balance totale depuis le 1er janvier de l'année en cours (recettes - dépenses YTD).</span></span>
+                                </span>
                                 <span class="cabinet-stat-value" id="cumulAnnee">-</span>
                             </div>
                         </div>
@@ -360,7 +379,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                             </div>
                             <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Taux de marge</span>
+                                <span class="cabinet-stat-label">Taux de marge
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Pourcentage de marge brute = (Recettes - Dépenses) / Recettes × 100. Idéal > 30% pour un cabinet médical.</span></span>
+                                </span>
                                 <span class="cabinet-stat-value" id="tauxMarge">-</span>
                             </div>
                         </div>
@@ -372,7 +394,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             </div>
                             <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">vs Année -1</span>
+                                <span class="cabinet-stat-label">vs Année -1
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Évolution de la balance par rapport à la même période de l'année précédente (N-1).</span></span>
+                                </span>
                                 <span class="cabinet-stat-value" id="vsAnneePrecedente">-</span>
                             </div>
                         </div>
@@ -381,7 +406,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </div>
                             <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Réserve trésorerie</span>
+                                <span class="cabinet-stat-label">Réserve trésorerie
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Nombre de mois de fonctionnement couverts par la balance actuelle. Objectif: 3-6 mois de réserve.</span></span>
+                                </span>
                                 <span class="cabinet-stat-value" id="reserveTresorerie">-</span>
                             </div>
                         </div>
@@ -390,7 +418,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
                             </div>
                             <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Postes clés</span>
+                                <span class="cabinet-stat-label">Postes clés
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">La catégorie de dépenses la plus importante en valeur absolue (premier poste de charge).</span></span>
+                                </span>
                                 <span class="cabinet-stat-value" id="topPostes">-</span>
                             </div>
                         </div>
@@ -399,14 +430,20 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                             </div>
                             <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Alertes</span>
+                                <span class="cabinet-stat-label">Alertes
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Nombre d'alertes: postes représentant >40% des dépenses, balance négative, trésorerie critique.</span></span>
+                                </span>
                                 <span class="cabinet-stat-value" id="alertesCount">-</span>
                             </div>
                         </div>
                     </div>
                     
                     <div class="chart-card">
-                        <h3>Évolution mensuelle (12 derniers mois)</h3>
+                        <h3>Évolution mensuelle (12 derniers mois)
+                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="tooltip-text">Graphique en barres显示过去12个月的收入和支出。点击任意月份可查看该月的详细金额。</span></span>
+                        </h3>
                         <div class="chart-legend">
                             <span class="legend-item"><span class="legend-dot expense"></span>Dépenses</span>
                             <span class="legend-item"><span class="legend-dot income"></span>Recettes</span>
@@ -416,19 +453,44 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     
                     <div class="charts-row">
                         <div class="chart-card small">
-                            <h3>Répartition dépenses</h3>
+                            <h3>Répartition dépenses
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Répartition des dépenses par catégorie sous forme de graphique en anneau. Cliquez sur une section pour voir le détail.</span></span>
+                            </h3>
                             <div class="donut-chart" id="depensesPieChart"></div>
+                            <div class="donut-legend" id="depensesPieLegend"></div>
                         </div>
                         
                         <div class="chart-card small">
-                            <h3>Top catégories</h3>
+                            <h3>Top catégories
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Les 5 premières catégories de dépenses triées par montant total, avec le pourcentage par rapport au total.</span></span>
+                            </h3>
                             <div id="topCategories"></div>
                         </div>
                     </div>
                     
-                    <!-- Analyse LLM -->
+                    <div class="recent-section">
+                        <h3>5 dernières dépenses
+                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="tooltip-text">Liste des 5 dernières dépenses enregistrées, triées par date (la plus récente en haut). Cliquez pour voir le détail.</span></span>
+                        </h3>
+                        <div id="dashRecentDepenses" class="recent-list"></div>
+                    </div>
+                    <div class="recent-section">
+                        <h3>5 dernières recettes
+                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="tooltip-text">Liste des 5 dernières recettes enregistrées, triées par date (la plus récente en haut). Cliquez pour voir le détail.</span></span>
+                        </h3>
+                        <div id="dashRecentRecettes" class="recent-list"></div>
+                    </div>
+                    
+                    <!-- Analyse financiere -->
                     <div class="llm-analysis-section">
-                        <h3>Analyse financiere</h3>
+                        <h3>Analyse financiere
+                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="tooltip-text">Analyse automatique basée sur vos données financières. Cliquez sur le bouton de rafraîchissement pour mettre à jour.</span></span>
+                        </h3>
                         <div class="llm-cards-grid">
                             <div class="llm-card" id="llm-optimisation">
                                 <div class="llm-card-header">
@@ -479,15 +541,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                 </button>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="recent-section">
-                        <h3>5 dernières dépenses</h3>
-                        <div id="dashRecentDepenses" class="recent-list"></div>
-                    </div>
-                    <div class="recent-section">
-                        <h3>5 dernières recettes</h3>
-                        <div id="dashRecentRecettes" class="recent-list"></div>
                     </div>
                 </div>
             </section>
