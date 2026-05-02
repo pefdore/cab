@@ -2222,15 +2222,15 @@ const LLM_PROMPTS = {
     recommandations: (data) => `Based on: total ${data.totalRecettes}€ revenue, ${data.totalDepenses}€ expenses, ${data.tauxMarge}% margin, alerts: ${JSON.stringify(data.alertes || [])}, give 3 concrete actions to improve financial health.`
 };
 
-// CONFIGURATION LLM - clé API Google Gemini intégrée
-// Pour changer la clé, modifie cette ligne:
+// CONFIGURATION LLM - Clé API Groq (gratuit et rapide)
+// Pour changer la clé, modifie cette ligne ou le fichier config.js:
 var LLM_CONFIG = {
-  geminiApiKey: 'AIzaSyAmBMaaXvgLoX8FOSlRjVltmxpiZ5VIvDs'
+  groqApiKey: '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'
 };
 
 // Fallback: also check CONFIG if exists
-if (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.geminiApiKey) {
-  LLM_CONFIG.geminiApiKey = CONFIG.geminiApiKey;
+if (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
+  LLM_CONFIG.groqApiKey = CONFIG.GROQ_API_KEY;
 }
 
 function refreshLLMAnalysis(type) {
@@ -2282,21 +2282,25 @@ function refreshLLMAnalysis(type) {
     const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
     
     // Check if API is configured
-    const hasApiKey = typeof LLM_CONFIG !== 'undefined' && LLM_CONFIG && LLM_CONFIG.geminiApiKey && LLM_CONFIG.geminiApiKey.length > 0;
+    const hasApiKey = LLM_CONFIG && LLM_CONFIG.groqApiKey && LLM_CONFIG.groqApiKey.length > 0;
     console.log('[LLM] LLM_CONFIG:', LLM_CONFIG);
-    console.log('[LLM] geminiApiKey value:', LLM_CONFIG?.geminiApiKey);
+    console.log('[LLM] groqApiKey value:', LLM_CONFIG?.groqApiKey);
     console.log('[LLM] hasApiKey:', hasApiKey);
     
     if (hasApiKey) {
-        // Use Google Gemini API
+        // Use Groq API (free and fast)
         contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
-        console.log('[LLM] Calling Gemini API with key:', LLM_CONFIG.geminiApiKey ? LLM_CONFIG.geminiApiKey.substring(0, 10) + '...' : 'EMPTY');
+        console.log('[LLM] Calling Groq API with key:', LLM_CONFIG.groqApiKey ? LLM_CONFIG.groqApiKey.substring(0, 10) + '...' : 'EMPTY');
         
-        fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${LLM_CONFIG.geminiApiKey}`, {
+        fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Authorization': `Bearer ${LLM_CONFIG.groqApiKey}`,
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt + '\n\nRéponds en français de manière concise (3 points max).' }] }]
+                model: 'llama-3.1-70b-versatile',
+                messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
             })
         })
         .then(res => {
@@ -2305,7 +2309,7 @@ function refreshLLMAnalysis(type) {
         })
         .then(result => {
             console.log('[LLM] Result:', JSON.stringify(result).substring(0, 200));
-            const response = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Erreur: ' + JSON.stringify(result).substring(0, 100);
+            const response = result.choices?.[0]?.message?.content || 'Erreur: ' + JSON.stringify(result).substring(0, 100);
             contentEl.innerHTML = `<p>${response.replace(/\n/g, '<br>')}</p>`;
         })
         .catch(err => {
