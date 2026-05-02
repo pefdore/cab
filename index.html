@@ -312,7 +312,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div id="cabinet-dashboard" style="display:none;">
                     <div class="compta-summary">
                         <div class="compta-card income">
-                            <span class="compta-label">Recettes année
+                            <span class="compta-label">Recettes totales
                                 <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                 <span class="tooltip-text">Somme des apports des associés (virements reçus) enregistrés depuis le début de l'utilisation de l'application.</span></span>
                             </span>
@@ -320,7 +320,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             <span class="compta-trend" id="recettesTrend"></span>
                         </div>
                         <div class="compta-card expense">
-                            <span class="compta-label">Dépenses année
+                            <span class="compta-label">Dépenses totales
                                 <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                 <span class="tooltip-text">Somme de toutes les dépenses du cabinet (loyer, charges sociales, fournitures, logiciels...) classées par catégorie.</span></span>
                             </span>
@@ -328,7 +328,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             <span class="compta-trend" id="depensesTrend"></span>
                         </div>
                         <div class="compta-card balance">
-                            <span class="compta-label">Balance année
+                            <span class="compta-label">Balance nette
                                 <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                 <span class="tooltip-text">Différence entre les recettes et les dépenses. Positif = excédent (bénéfice), Négatif = déficit.</span></span>
                             </span>
@@ -400,18 +400,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                     <span class="tooltip-text">Nombre de mois de fonctionnement couverts par la balance actuelle. Objectif: 3-6 mois de réserve.</span></span>
                                 </span>
                                 <span class="cabinet-stat-value" id="reserveTresorerie">-</span>
-                            </div>
-                        </div>
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon orange">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
-                            </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Moy. mensuelle
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Moyenne mensuelle des charges sur l'année en cours. Permet de mieux anticiper les besoins de trésorerie.</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="avgMonthlyDepenses">-</span>
                             </div>
                         </div>
                         <div class="cabinet-stat-card">
