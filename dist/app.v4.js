@@ -2222,9 +2222,13 @@ const LLM_PROMPTS = {
     recommandations: (data) => `Based on: total ${data.totalRecettes}€ revenue, ${data.totalDepenses}€ expenses, ${data.tauxMarge}% margin, alerts: ${JSON.stringify(data.alertes || [])}, give 3 concrete actions to improve financial health.`
 };
 
-// CONFIGURATION LLM - fallback if llm-config.js not loaded
+// CONFIGURATION LLM - fallback if config files not loaded
 if (typeof LLM_CONFIG === 'undefined') {
     var LLM_CONFIG = { geminiApiKey: '' };
+}
+// Also check CONFIG (original file)
+if ((!LLM_CONFIG.geminiApiKey || LLM_CONFIG.geminiApiKey === '') && typeof CONFIG !== 'undefined' && CONFIG && CONFIG.geminiApiKey) {
+    LLM_CONFIG.geminiApiKey = CONFIG.geminiApiKey;
 }
 
 function refreshLLMAnalysis(type) {
