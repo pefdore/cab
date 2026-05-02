@@ -1830,6 +1830,82 @@ if (elDashTotalRecettes) {
         elDashBalance.textContent = `${balance.toFixed(2)}€`;
     }
     
+    // Build monthly data first (needed for trends)
+    const monthlyData = {};
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = d.toLocaleDateString('fr-FR', { month: 'short' });
+        monthlyData[key] = { label: monthLabel, depenses: 0, recettes: 0 };
+    }
+    
+    cabinetDepenses.forEach(d => {
+        const key = d.date ? d.date.substring(0, 7) : null;
+        if (key && monthlyData[key]) monthlyData[key].depenses += d.amount;
+    });
+    cabinetRecettes.forEach(r => {
+        const key = r.date ? r.date.substring(0, 7) : null;
+        if (key && monthlyData[key]) monthlyData[key].recettes += r.amount;
+    });
+    
+    // Current month data
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const thisMonthDepenses = monthlyData[currentMonthKey]?.depenses || 0;
+    const thisMonthRecettes = monthlyData[currentMonthKey]?.recettes || 0;
+
+    // Calculate trends (compare to previous month)
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevMonthKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+    const prevMonthDepenses = monthlyData[prevMonthKey]?.depenses || 0;
+    const prevMonthRecettes = monthlyData[prevMonthKey]?.recettes || 0;
+
+    // Update new stats elements
+    const elRecettesThisMonth = document.getElementById('recettesThisMonth');
+    const elDepensesThisMonth = document.getElementById('depensesThisMonth');
+    const elAvgMonthly = document.getElementById('avgMonthly');
+    const elTauxMarge = document.getElementById('tauxMarge');
+    
+    if (elRecettesThisMonth) elRecettesThisMonth.textContent = `${thisMonthRecettes.toFixed(2)}€`;
+    if (elDepensesThisMonth) elDepensesThisMonth.textContent = `${thisMonthDepenses.toFixed(2)}€`;
+    
+    // Average
+    const monthsWithData = Object.values(monthlyData).filter(m => m.depenses > 0 || m.recettes > 0).length;
+    const avgMonthly = monthsWithData > 0 ? (totalDepenses + totalRecettes) / monthsWithData / 2 : 0;
+    if (elAvgMonthly) elAvgMonthly.textContent = `${avgMonthly.toFixed(2)}€`;
+
+    // Margin rate
+    const tauxMarge = totalRecettes > 0 ? ((totalRecettes - totalDepenses) / totalRecettes * 100) : 0;
+    if (elTauxMarge) {
+        elTauxMarge.textContent = `${tauxMarge.toFixed(1)}%`;
+        elTauxMarge.style.color = tauxMarge >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    }
+
+    // Trends
+    const updateTrend = (elementId, current, previous) => {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        if (previous === 0) {
+            el.textContent = current > 0 ? '↑ Nouveau' : '';
+            el.className = 'compta-trend ' + (current > 0 ? 'up' : 'neutral');
+        } else {
+            const diff = previous > 0 ? ((current - previous) / previous * 100).toFixed(1) : 0;
+            if (diff > 0) {
+                el.textContent = `↑ +${diff}%`;
+                el.className = 'compta-trend up';
+            } else if (diff < 0) {
+                el.textContent = `↓ ${diff}%`;
+                el.className = 'compta-trend down';
+            } else {
+                el.textContent = '→ 0%';
+                el.className = 'compta-trend neutral';
+            }
+        }
+    };
+    updateTrend('recettesTrend', thisMonthRecettes, prevMonthRecettes);
+    updateTrend('depensesTrend', thisMonthDepenses, prevMonthDepenses);
+    updateTrend('balanceTrend', thisMonthRecettes - thisMonthDepenses, prevMonthRecettes - prevMonthDepenses);
+    
     // Moyennes
     const nbDepenses = cabinetDepenses.length;
     const avgDepenses = nbDepenses > 0 ? totalDepenses / nbDepenses : 0;
@@ -1872,25 +1948,7 @@ if (elDashTotalRecettes) {
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
     }
     
-    // Evoluton mensuelle - Bar chart (12 derniers mois)
-    const monthlyData = {};
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const monthLabel = d.toLocaleDateString('fr-FR', { month: 'short' });
-        monthlyData[key] = { label: monthLabel, depenses: 0, recettes: 0 };
-    }
-    
-    cabinetDepenses.forEach(d => {
-        const key = d.date ? d.date.substring(0, 7) : null;
-        if (key && monthlyData[key]) monthlyData[key].depenses += d.amount;
-    });
-    cabinetRecettes.forEach(r => {
-        const key = r.date ? r.date.substring(0, 7) : null;
-        if (key && monthlyData[key]) monthlyData[key].recettes += r.amount;
-    });
-    
+    // Evolution mensuelle - Bar chart (12 derniers mois)
     const monthlyValues = Object.values(monthlyData);
     const maxValue = Math.max(...monthlyValues.map(m => Math.max(m.depenses, m.recettes)), 1);
     
