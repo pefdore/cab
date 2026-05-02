@@ -85,7 +85,7 @@ async function onAuthSuccess() {
     loadUserProfile();
     loadUserSettings();
     
-    try {
+try {
         console.log('[AUTH] Calling loadData...');
         await loadData();
         console.log('[AUTH] loadData completed, entries:', entries.length);
@@ -275,6 +275,7 @@ async function loadUserSettings() {
             });
         }
         renderLogoPreview();
+        loadTheme();
     } catch (e) {
         console.error('[AUTH] Erreur chargement settings:', e);
     }
@@ -520,6 +521,7 @@ function populateCotationSelect() {
         select.appendChild(opt);
     });
     
+    // Add "Ajouter une cotation" option
     const addOption = document.createElement('option');
     addOption.value = '__add_new__';
     addOption.textContent = '+ Ajouter une cotation';
@@ -652,6 +654,7 @@ function handleLocationChange() {
     const cotationSelect = document.getElementById('cotation');
     
     if ((location === 'Médecine' || location === 'SSR') && cotationSelect) {
+        // Auto-select G 30€ for Médecine or SSR
         const options = Array.from(cotationSelect.options);
         const gOption = options.find(o => o.value.startsWith('G|'));
         if (gOption) {
@@ -671,6 +674,7 @@ function handleCotationChange() {
     const value = select.value;
     
     if (value === '__add_new__') {
+        // Show custom cotation form
         customCotationGroup.style.display = 'flex';
         select.value = '';
         amountDisplay.textContent = '0€';
@@ -782,21 +786,48 @@ function renderSettingsCotationList() {
     const container = document.getElementById('settingsCotationList');
     if (!container) return;
     
-    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
-    const customCotations = settings.customCotations || [];
-    
-    if (customCotations.length === 0) {
-        container.innerHTML = '<p style="color: var(--color-text-secondary);">Aucune cotation personnalisée</p>';
-        return;
-    }
-    
-    container.innerHTML = customCotations.map((c, i) => `
-        <div class="cotation-item">
-            <span>${c.key}</span>
-            <span>${c.amount.toFixed(2)}€</span>
-            <button onclick="deleteCotation(${i})" style="color: var(--color-danger);">Supprimer</button>
-        </div>
-    `).join('');
+    // Get unique cotations from user's entries
+    supabase.from('entries')
+        .select('cotation_key, amount')
+        .eq('user_id', currentUser.id)
+        .then(({ data }) => {
+            if (data && data.length > 0) {
+                // Group by cotation_key and get average amount
+                const cotationsMap = {};
+                data.forEach(e => {
+                    if (e.cotation_key) {
+                        if (!cotationsMap[e.cotation_key]) {
+                            cotationsMap[e.cotation_key] = { count: 0, total: 0 };
+                        }
+                        cotationsMap[e.cotation_key].count++;
+                        cotationsMap[e.cotation_key].total += e.amount || 0;
+                    }
+                });
+                
+                const usedCotations = Object.entries(cotationsMap)
+                    .map(([key, vals]) => ({
+                        key,
+                        amount: vals.total / vals.count,
+                        count: vals.count
+                    }))
+                    .sort((a, b) => b.count - a.count);
+                
+                container.innerHTML = `
+                    <div class="settings-cotation-list">
+                        <h4 style="margin-bottom: 12px; font-size: var(--text-sm); color: var(--color-text-secondary);">Cotations utilisées</h4>
+                        ${usedCotations.map(c => `
+                            <div class="settings-cotation-item">
+                                <span class="cotation-key">${c.key}</span>
+                                <span class="cotation-amount">${c.amount.toFixed(2)}€</span>
+                                <span class="cotation-count">${c.count}x</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<p style="color: var(--color-text-secondary);">Aucune cotation utilisée</p>';
+            }
+        });
 }
 
 function deleteCotation(index) {
@@ -1166,11 +1197,25 @@ async function loadData() {
 }
 
 function setupEventListeners() {
-    // Navigation
+    // Desktop Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const view = item.dataset.view;
+            switchView(view);
+        });
+    });
+    
+    // Mobile Bottom Navigation
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const view = item.dataset.view;
+            
+            // Update active state
+            document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            
             switchView(view);
         });
     });
@@ -1224,15 +1269,17 @@ function setupEventListeners() {
         renderLogoPreview();
     });
     
-    // Settings tabs
-    document.querySelectorAll('.settings-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabName = tab.dataset.tab;
-            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+    // Settings cards navigation (new page-based system)
+    document.querySelectorAll('.settings-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const page = card.dataset.settingsPage;
+            openSettingsPage(page);
         });
+    });
+    
+    // Settings back button
+    document.getElementById('settingsBackBtn')?.addEventListener('click', () => {
+        closeSettingsPage();
     });
     
     // Cabinet tabs
@@ -1299,6 +1346,225 @@ function handleSignatureUpload(e) {
     reader.readAsDataURL(file);
 }
 
+// Settings page navigation
+function openSettingsPage(pageName) {
+    const menu = document.getElementById('settings-menu');
+    const backBtn = document.getElementById('settingsBackBtn');
+    const title = document.querySelector('#view-settings h2');
+    
+    if (menu) menu.style.display = 'none';
+    if (backBtn) backBtn.style.display = 'flex';
+    if (title) title.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+    
+    // Hide all settings pages
+    document.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
+    
+    // Show the selected page
+    const page = document.getElementById(`settings-page-${pageName}`);
+    if (page) {
+        page.style.display = 'block';
+        page.classList.add('active');
+    }
+    
+    // Load data for specific pages
+    if (pageName === 'profil') {
+        loadProfileData();
+    } else if (pageName === 'cotation') {
+        renderSettingsCotationList();
+    } else if (pageName === 'pdf') {
+        renderLogoPreview();
+    } else if (pageName === 'preferences') {
+        loadTheme();
+    }
+}
+
+function closeSettingsPage() {
+    const menu = document.getElementById('settings-menu');
+    const backBtn = document.getElementById('settingsBackBtn');
+    const title = document.querySelector('#view-settings h2');
+    
+    if (menu) menu.style.display = 'flex';
+    if (backBtn) backBtn.style.display = 'none';
+    if (title) title.textContent = 'Paramètres';
+    
+    // Hide all settings pages
+    document.querySelectorAll('.settings-page').forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+    });
+}
+
+// Expose functions to window for inline onclick handlers
+window.openSettingsPage = openSettingsPage;
+window.closeSettingsPage = closeSettingsPage;
+
+// Profile functions
+async function loadProfileData() {
+    if (!currentUser) return;
+    
+    document.getElementById('profileLastname').value = currentUser.lastname || '';
+    document.getElementById('profileFirstname').value = currentUser.firstname || '';
+    document.getElementById('profileEmail').value = currentUser.email || '';
+    document.getElementById('profileRole').value = currentUser.role || '';
+}
+
+document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
+    const lastname = document.getElementById('profileLastname').value.trim();
+    const firstname = document.getElementById('profileFirstname').value.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    
+    if (!lastname || !firstname || !email) {
+        alert('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    try {
+        const { error } = await supabase.from('users').update({
+            lastname,
+            firstname,
+            email
+        }).eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.lastname = lastname;
+        currentUser.firstname = firstname;
+        currentUser.email = email;
+        localStorage.setItem('cotation_user', JSON.stringify(currentUser));
+        
+        alert('Profil mis à jour');
+    } catch (err) {
+        console.error('Error updating profile:', err);
+        alert('Erreur lors de la mise à jour');
+    }
+});
+
+document.getElementById('changePasswordBtn')?.addEventListener('click', async () => {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        alert('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        alert('Les mots de passe ne correspondent pas');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        alert('Le mot de passe doit contenir au moins 6 caractères');
+        return;
+    }
+    
+    try {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        
+        if (error) throw error;
+        
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        
+        alert('Mot de passe modifié');
+    } catch (err) {
+        console.error('Error changing password:', err);
+        alert('Erreur lors du changement de mot de passe');
+    }
+});
+
+// Theme switcher
+document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const theme = btn.dataset.theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        await saveSetting('theme', theme);
+    });
+});
+
+// Load saved theme
+async function loadTheme() {
+    const savedTheme = await getSetting('theme') || 'light';
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === savedTheme);
+    });
+    document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
+// Export functions
+document.getElementById('exportCSV')?.addEventListener('click', async () => {
+    const { data: entries } = await supabase
+        .from('entries')
+        .select('*')
+        .order('date', { ascending: false });
+    
+    if (!entries || entries.length === 0) {
+        alert('Aucune donnée à exporter');
+        return;
+    }
+    
+    const headers = ['Date', 'Patient', 'Lieu', 'Cotation', 'Montant'];
+    const rows = entries.map(e => [
+        e.date,
+        e.patient_name,
+        e.location,
+        e.cotation_key,
+        e.amount
+    ]);
+    
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    downloadFile(csv, 'cotation-export.csv', 'text/csv');
+});
+
+document.getElementById('exportJSON')?.addEventListener('click', async () => {
+    const { data: entries } = await supabase
+        .from('entries')
+        .select('*')
+        .order('date', { ascending: false });
+    
+    const json = JSON.stringify(entries, null, 2);
+    downloadFile(json, 'cotation-export.json', 'application/json');
+});
+
+document.getElementById('exportPDF')?.addEventListener('click', () => {
+    generateMonthlyPDF();
+});
+
+function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Delete all data
+document.getElementById('deleteAllData')?.addEventListener('click', async () => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer toutes vos données? Cette action est irréversible.')) {
+        return;
+    }
+    
+    if (!confirm('Vraiment? Toutes les données seront perdues définitivement.')) {
+        return;
+    }
+    
+    try {
+        await supabase.from('entries').delete().neq('id', 0);
+        alert('Toutes les données ont été supprimées');
+        location.reload();
+    } catch (err) {
+        console.error('Error deleting data:', err);
+        alert('Erreur lors de la suppression');
+    }
+});
+
 function switchView(viewName) {
     // Update nav
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -1331,7 +1597,8 @@ function switchView(viewName) {
     } else if (viewName === 'history') {
         renderHistory();
     } else if (viewName === 'settings') {
-        renderSettingsCotationList();
+        // Reset to settings menu
+        closeSettingsPage();
         // On mobile, show settings as full page overlay
         if (window.innerWidth <= 768) {
             const settingsSection = document.getElementById('view-settings');
@@ -1367,11 +1634,10 @@ function switchView(viewName) {
         }
     } else if (viewName === 'cabinet') {
         loadCabinetData();
+        renderComptaSummary();
     } else if (viewName === 'add') {
         renderEntries();
         loadVLHistory().then(() => renderRecentVLForAdd());
-    } else if (viewName === 'cabinet') {
-        loadCabinetData();
     }
 }
 
@@ -1396,7 +1662,8 @@ window.toggleRecetteForm = toggleRecetteForm;
 
 async function loadCabinetData() {
     // Load data for all authenticated users
-    if (currentUser) {
+    // Only proceed if supabaseClient is initialized
+    if (currentUser && supabaseClient) {
         console.log('Loading cabinet data for user:', currentUser.id);
         await loadDepenses();
         await loadRecettes();
@@ -1563,13 +1830,92 @@ if (elDashTotalRecettes) {
         elDashBalance.textContent = `${balance.toFixed(2)}€`;
     }
     
-    // Moyennes
+    // Build monthly data first (needed for trends)
+    const monthlyData = {};
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = d.toLocaleDateString('fr-FR', { month: 'short' });
+        monthlyData[key] = { label: monthLabel, depenses: 0, recettes: 0 };
+    }
+    
+    cabinetDepenses.forEach(d => {
+        const key = d.date ? d.date.substring(0, 7) : null;
+        if (key && monthlyData[key]) monthlyData[key].depenses += d.amount;
+    });
+    cabinetRecettes.forEach(r => {
+        const key = r.date ? r.date.substring(0, 7) : null;
+        if (key && monthlyData[key]) monthlyData[key].recettes += r.amount;
+    });
+    
+    // Current month data
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const thisMonthDepenses = monthlyData[currentMonthKey]?.depenses || 0;
+    const thisMonthRecettes = monthlyData[currentMonthKey]?.recettes || 0;
+
+    // Calculate trends (compare to previous month)
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevMonthKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+    const prevMonthDepenses = monthlyData[prevMonthKey]?.depenses || 0;
+    const prevMonthRecettes = monthlyData[prevMonthKey]?.recettes || 0;
+
+    // Update new stats elements
+    const elRecettesThisMonth = document.getElementById('recettesThisMonth');
+    const elDepensesThisMonth = document.getElementById('depensesThisMonth');
+    const elAvgMonthly = document.getElementById('avgMonthly');
+    const elTauxMarge = document.getElementById('tauxMarge');
+    
+    if (elRecettesThisMonth) elRecettesThisMonth.textContent = `${thisMonthRecettes.toFixed(2)}€`;
+    if (elDepensesThisMonth) elDepensesThisMonth.textContent = `${thisMonthDepenses.toFixed(2)}€`;
+    
+    // Average
+    const monthsWithData = Object.values(monthlyData).filter(m => m.depenses > 0 || m.recettes > 0).length;
+    const avgMonthly = monthsWithData > 0 ? (totalDepenses + totalRecettes) / monthsWithData / 2 : 0;
+    if (elAvgMonthly) elAvgMonthly.textContent = `${avgMonthly.toFixed(2)}€`;
+
+    // Margin rate
+    const tauxMarge = totalRecettes > 0 ? ((totalRecettes - totalDepenses) / totalRecettes * 100) : 0;
+    if (elTauxMarge) {
+        elTauxMarge.textContent = `${tauxMarge.toFixed(1)}%`;
+        elTauxMarge.style.color = tauxMarge >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    }
+
+    // Trends
+    const updateTrend = (elementId, current, previous) => {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        if (previous === 0) {
+            el.textContent = current > 0 ? '↑ Nouveau' : '';
+            el.className = 'compta-trend ' + (current > 0 ? 'up' : 'neutral');
+        } else {
+            const diff = previous > 0 ? ((current - previous) / previous * 100).toFixed(1) : 0;
+            if (diff > 0) {
+                el.textContent = `↑ +${diff}%`;
+                el.className = 'compta-trend up';
+            } else if (diff < 0) {
+                el.textContent = `↓ ${diff}%`;
+                el.className = 'compta-trend down';
+            } else {
+                el.textContent = '→ 0%';
+                el.className = 'compta-trend neutral';
+            }
+        }
+    };
+    updateTrend('recettesTrend', thisMonthRecettes, prevMonthRecettes);
+    updateTrend('depensesTrend', thisMonthDepenses, prevMonthDepenses);
+    updateTrend('balanceTrend', thisMonthRecettes - thisMonthDepenses, prevMonthRecettes - prevMonthDepenses);
+    
+    // Moyennes (legacy elements - check if exist)
     const nbDepenses = cabinetDepenses.length;
     const avgDepenses = nbDepenses > 0 ? totalDepenses / nbDepenses : 0;
     const avgRecettes = cabinetRecettes.length > 0 ? totalRecettes / cabinetRecettes.length : 0;
-    document.getElementById('avgDepenses').textContent = `${avgDepenses.toFixed(2)}€`;
-    document.getElementById('avgRecettes').textContent = `${avgRecettes.toFixed(2)}€`;
-    document.getElementById('nbDepenses').textContent = nbDepenses;
+    const elAvgDepenses = document.getElementById('avgDepenses');
+    const elAvgRecettes = document.getElementById('avgRecettes');
+    const elNbDepenses = document.getElementById('nbDepenses');
+    if (elAvgDepenses) elAvgDepenses.textContent = `${avgDepenses.toFixed(2)}€`;
+    if (elAvgRecettes) elAvgRecettes.textContent = `${avgRecettes.toFixed(2)}€`;
+    if (elNbDepenses) elNbDepenses.textContent = nbDepenses;
     
     // Dépenses par catégorie
     const depensesParCat = {};
@@ -1605,25 +1951,7 @@ if (elDashTotalRecettes) {
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
     }
     
-    // Evoluton mensuelle - Bar chart (12 derniers mois)
-    const monthlyData = {};
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const monthLabel = d.toLocaleDateString('fr-FR', { month: 'short' });
-        monthlyData[key] = { label: monthLabel, depenses: 0, recettes: 0 };
-    }
-    
-    cabinetDepenses.forEach(d => {
-        const key = d.date ? d.date.substring(0, 7) : null;
-        if (key && monthlyData[key]) monthlyData[key].depenses += d.amount;
-    });
-    cabinetRecettes.forEach(r => {
-        const key = r.date ? r.date.substring(0, 7) : null;
-        if (key && monthlyData[key]) monthlyData[key].recettes += r.amount;
-    });
-    
+    // Evolution mensuelle - Bar chart (12 derniers mois)
     const monthlyValues = Object.values(monthlyData);
     const maxValue = Math.max(...monthlyValues.map(m => Math.max(m.depenses, m.recettes)), 1);
     
@@ -1996,26 +2324,65 @@ function updateStats() {
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
     
+    // Previous month data
+    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    
+    const prevMonthEntries = entries.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
+    });
+    
+    const prevPatients = new Set(prevMonthEntries.map(e => e.patientId)).size;
+    const prevAmount = prevMonthEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const prevVisits = prevMonthEntries.length;
+    const prevAvg = prevVisits > 0 ? prevAmount / 28 : 0;
+    
     console.log('[STATS] Month entries:', monthEntries.length);
     
     const totalPatients = new Set(monthEntries.map(e => e.patientId)).size;
     const totalAmount = monthEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
     const totalVisits = monthEntries.length;
-    const avgPerDay = totalVisits > 0 ? totalAmount / Math.max(new Date().getDate(), 1) : 0;
+    const dayOfMonth = new Date().getDate();
+    const avgPerDay = totalVisits > 0 ? totalAmount / Math.max(dayOfMonth, 1) : 0;
     
     const el = (id) => document.getElementById(id);
     if (el('totalPatients')) {
         el('totalPatients').textContent = totalPatients;
+        el('patientsComparison').innerHTML = formatComparison(totalPatients, prevPatients);
         console.log('[STATS] Set totalPatients:', totalPatients);
     }
     if (el('totalAmount')) {
         el('totalAmount').textContent = totalAmount.toFixed(2) + '€';
+        el('amountComparison').innerHTML = formatComparison(totalAmount, prevAmount, true);
         console.log('[STATS] Set totalAmount:', totalAmount);
     }
-    if (el('totalVisits')) el('totalVisits').textContent = totalVisits;
-    if (el('avgPerDay')) el('avgPerDay').textContent = avgPerDay.toFixed(2) + '€';
+    if (el('totalVisits')) {
+        el('totalVisits').textContent = totalVisits;
+        el('visitsComparison').innerHTML = formatComparison(totalVisits, prevVisits);
+    }
+    if (el('avgPerDay')) {
+        el('avgPerDay').textContent = avgPerDay.toFixed(2) + '€';
+        el('avgComparison').innerHTML = formatComparison(avgPerDay, prevAvg, true);
+    }
     
     console.log('[STATS] Updated:', { totalPatients, totalAmount, totalVisits });
+}
+
+function formatComparison(current, previous, isCurrency = false) {
+    if (previous === 0) {
+        if (current > 0) return '<span class="positive">↑ nouveau</span>';
+        return '<span class="neutral">-</span>';
+    }
+    
+    const diff = ((current - previous) / previous) * 100;
+    const arrow = diff >= 0 ? '↑' : '↓';
+    const cls = diff >= 0 ? 'positive' : 'negative';
+    
+    if (isCurrency) {
+        return `<span class="${cls}">${arrow} ${Math.abs(diff).toFixed(0)}%</span>`;
+    }
+    return `<span class="${cls}">${arrow} ${Math.abs(diff).toFixed(0)}%</span>`;
 }
 
 function renderEntries() {
@@ -2132,21 +2499,26 @@ function renderCharts() {
     
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
-    const maxVal = Math.max(...Object.values(monthlyData), 1);
+    
+    const sortedKeys = Array.from({length: 12}, (_, i) => `${currentYear}-${String(i + 1).padStart(2, '0')}`);
+    const values = sortedKeys.map(k => monthlyData[k]);
+    const maxVal = Math.max(...values, 1);
     
     if (barsContainer) {
-        barsContainer.innerHTML = Object.entries(monthlyData).map(([key, val]) => {
-            const height = val > 0 ? (val / maxVal) * 100 : 2;
+        barsContainer.innerHTML = sortedKeys.map(key => {
+            const val = monthlyData[key];
+            const height = val > 0 ? (val / maxVal) * 100 : 0;
             const ehpadVal = ehpadData[key];
             const medecinVal = medecinData[key];
             const ehpadPct = val > 0 ? (ehpadVal / maxVal) * 100 : 0;
             const medecinPct = val > 0 ? (medecinVal / maxVal) * 100 : 0;
+            const monthName = monthNames[parseInt(key.split('-')[1]) - 1];
             
             return `
-                <div class="chart-bar-wrapper" style="height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
-                    <div class="chart-bar" style="height: ${height}%; width: 100%; position: relative;">
-                        <span class="bar-value">${val.toFixed(0)}€</span>
+                <div class="chart-bar-column" data-month="${monthName}" data-total="${val.toFixed(2)}" data-ehpad="${ehpadVal.toFixed(2)}" data-medecin="${medecinVal.toFixed(2)}">
+                    <div class="chart-bar" style="height: ${height}%;">
                         ${val > 0 ? `
+                            <span class="bar-value">${val.toFixed(0)}€</span>
                             <span class="data-point data-point-ehpad" style="bottom: ${ehpadPct}%;" title="EHPAD: ${ehpadVal.toFixed(0)}€"></span>
                             <span class="data-point data-point-medecin" style="bottom: ${medecinPct}%;" title="Médecine/SSR: ${medecinVal.toFixed(0)}€"></span>
                         ` : ''}
@@ -2157,15 +2529,27 @@ function renderCharts() {
     }
     
     if (labelsContainer) {
-        labelsContainer.innerHTML = Object.keys(monthlyData).map(key => {
+        labelsContainer.innerHTML = sortedKeys.map(key => {
             const m = parseInt(key.split('-')[1]) - 1;
             return `<span>${monthNames[m]}</span>`;
         }).join('');
     }
     
+    // Add click handlers for bar columns with popup
+    document.querySelectorAll('.chart-bar-column').forEach(col => {
+        col.style.cursor = 'pointer';
+        col.addEventListener('click', function() {
+            const month = this.dataset.month;
+            const total = this.dataset.total;
+            const ehpad = this.dataset.ehpad;
+            const medecin = this.dataset.medecin;
+            showMonthPopup(month, total, ehpad, medecin);
+        });
+    });
+    
     // ========== PASSAGES MENSUELS ==========
     const visitsData = {};
-    for (let m = 0; m <= currentMonth; m++) {
+    for (let m = 0; m < 12; m++) {
         const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
         visitsData[key] = 0;
     }
@@ -2183,8 +2567,8 @@ function renderCharts() {
     if (visitsBars) {
         const maxVal = Math.max(...Object.values(visitsData), 1);
         visitsBars.innerHTML = Object.entries(visitsData).map(([key, val]) => {
-            const height = val > 0 ? (val / maxVal) * 100 : 2;
-            return `<div class="chart-bar" style="height: ${height}%"><span class="bar-value">${val}</span></div>`;
+            const height = val > 0 ? (val / maxVal) * 100 : 0;
+            return `<div class="chart-bar" style="height: ${height}%;"><span class="bar-value">${val}</span></div>`;
         }).join('');
     }
     
@@ -2220,9 +2604,13 @@ function renderCharts() {
     }
     
     if (donutLegendContainer) {
-        donutLegendContainer.innerHTML = Object.entries(locationData).map(([loc, val]) => 
-            `<div class="legend-item"><span class="legend-color" style="background:${colors[Object.keys(locationData).indexOf(loc) % colors.length]}"></span>${loc}</div>`
-        ).join('');
+        const total = Object.values(locationData).reduce((a, b) => a + b, 0);
+        const entriesArr = Object.entries(locationData);
+        donutLegendContainer.innerHTML = entriesArr.map(([loc, val], i) => {
+            const pct = ((val / total) * 100).toFixed(1);
+            const color = colors[i % colors.length];
+            return `<div class="legend-item"><span class="legend-color" style="background:${color}"></span>${loc} <span class="legend-pct">${pct}%</span></div>`;
+        }).join('');
     }
     
     // Cotation chart
@@ -2251,6 +2639,58 @@ function renderCharts() {
     }
 }
 
+function showMonthPopup(month, total, ehpad, medecin) {
+    let popup = document.getElementById('monthPopup');
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'monthPopup';
+        popup.className = 'popup-overlay';
+        popup.innerHTML = `
+            <div class="popup-content">
+                <div class="popup-header">
+                    <h3 id="popupMonthTitle"></h3>
+                    <button class="popup-close" onclick="closeMonthPopup()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="popup-body">
+                    <div class="popup-row total">
+                        <span class="popup-label">Total</span>
+                        <span class="popup-value" id="popupTotal"></span>
+                    </div>
+                    <div class="popup-row ehpad">
+                        <span class="popup-label"><span class="dot-ehpad"></span> EHPAD</span>
+                        <span class="popup-value" id="popupEhpad"></span>
+                    </div>
+                    <div class="popup-row medecin">
+                        <span class="popup-label"><span class="dot-medecin"></span> Médecine/SSR</span>
+                        <span class="popup-value" id="popupMedecin"></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(popup);
+        popup.addEventListener('click', function(e) {
+            if (e.target === this) closeMonthPopup();
+        });
+    }
+    
+    document.getElementById('popupMonthTitle').textContent = month + ' 2026';
+    document.getElementById('popupTotal').textContent = total + '€';
+    document.getElementById('popupEhpad').textContent = ehpad + '€';
+    document.getElementById('popupMedecin').textContent = medecin + '€';
+    popup.style.display = 'flex';
+}
+
+function closeMonthPopup() {
+    const popup = document.getElementById('monthPopup');
+    if (popup) popup.style.display = 'none';
+}
+
+window.closeMonthPopup = closeMonthPopup;
+
 function renderRecentList() {
     const container = document.getElementById('recentList');
     if (!container) return;
@@ -2271,6 +2711,45 @@ function renderRecentList() {
             <span class="recent-amount">${(e.amount || 0).toFixed(2)}€</span>
         </div>
     `).join('');
+    
+    // Apply modern card styling
+    container.querySelectorAll('.recent-item').forEach((item, index) => {
+        item.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--color-bg-subtle);
+            border-radius: 12px;
+            margin-bottom: ${index < recent.length - 1 ? '8px' : '0'};
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        `;
+        item.addEventListener('mouseenter', () => {
+            item.style.transform = 'translateY(-2px)';
+            item.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        });
+        item.addEventListener('mouseleave', () => {
+            item.style.transform = 'translateY(0)';
+            item.style.boxShadow = 'none';
+        });
+    });
+    
+    container.querySelectorAll('.recent-info').forEach(info => {
+        info.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+    });
+    
+    container.querySelectorAll('.recent-patient').forEach(patient => {
+        patient.style.cssText = 'font-weight: 600; color: var(--color-text); font-size: 14px;';
+    });
+    
+    container.querySelectorAll('.recent-date').forEach(date => {
+        date.style.cssText = 'font-size: 12px; color: var(--color-text-secondary);';
+    });
+    
+    container.querySelectorAll('.recent-amount').forEach(amount => {
+        amount.style.cssText = 'font-weight: 700; color: #10b981; font-size: 16px;';
+    });
 }
 
 // Cabinet functions

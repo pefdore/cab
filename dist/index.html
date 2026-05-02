@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -46,6 +46,18 @@
             </form>
 
 <script>
+function toggleForm(form) {
+    if (form === 'register') {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('login-toggle').style.display = 'none';
+        document.getElementById('register-form').style.display = 'flex';
+    } else if (form === 'login') {
+        document.getElementById('login-form').style.display = 'flex';
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-toggle').style.display = 'block';
+    }
+}
+
 function attemptLogin() {
     console.log('[MOBILE] Login button clicked');
     const email = document.getElementById('login-email').value;
@@ -76,13 +88,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
     }
 });
 </script>
-            
-            <div class="login-toggle" id="login-toggle">
-                <button type="button" id="show-register" class="btn-link">
-                    Pas encore de compte? S'inscrire
-                </button>
-            </div>
-            
             <form id="register-form" class="login-form" style="display:none;">
                 <div class="form-row-auth">
                     <div class="form-group">
@@ -224,7 +229,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-value" id="totalPatients">0</span>
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalPatients">0</span>
+                                <span class="stat-comparison" id="patientsComparison"></span>
+                            </div>
                             <span class="stat-label">Patients ce mois</span>
                         </div>
                     </div>
@@ -235,7 +243,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-value" id="totalAmount">0€</span>
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalAmount">0€</span>
+                                <span class="stat-comparison" id="amountComparison"></span>
+                            </div>
                             <span class="stat-label">Revenus du mois</span>
                         </div>
                     </div>
@@ -248,7 +259,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-value" id="totalVisits">0</span>
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalVisits">0</span>
+                                <span class="stat-comparison" id="visitsComparison"></span>
+                            </div>
                             <span class="stat-label">Visites ce mois</span>
                         </div>
                     </div>
@@ -259,7 +273,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-value" id="avgPerDay">0€</span>
+                            <div class="stat-header">
+                                <span class="stat-value" id="avgPerDay">0€</span>
+                                <span class="stat-comparison" id="avgComparison"></span>
+                            </div>
                             <span class="stat-label">Moyenne/jour</span>
                         </div>
                     </div>
@@ -277,24 +294,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                         </div>
                     </div>
                     <div class="chart-card">
-                        <h3>Passages mensuels</h3>
-                        <div class="chart" id="visitsChart">
-                            <div class="chart-bars" id="visitsChartBars"></div>
-                            <div class="chart-labels" id="visitsChartLabels"></div>
-                        </div>
-                    </div>
-                    <div class="chart-card">
                         <h3>Répartition par lieu</h3>
                         <div class="donut-wrapper" id="locationChart">
                             <div class="donut-chart" id="donutChart"></div>
                             <div class="legend" id="donutLegend"></div>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <h3>Top cotations</h3>
-                        <div class="chart" id="cotationChart">
-                            <div class="chart-bars" id="cotationChartBars"></div>
-                            <div class="chart-labels" id="cotationChartLabels"></div>
                         </div>
                     </div>
                 </div>
@@ -308,16 +311,58 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div id="cabinet-dashboard" class="dashboard-content hidden">
                     <div class="compta-summary">
                         <div class="compta-card income">
-                            <span class="compta-label">Recettes</span>
+                            <span class="compta-label">Recettes totales</span>
                             <span class="compta-value" id="dash-cab-recettes">0€</span>
+                            <span class="compta-trend" id="recettesTrend"></span>
                         </div>
                         <div class="compta-card expense">
-                            <span class="compta-label">Dépenses</span>
+                            <span class="compta-label">Dépenses totales</span>
                             <span class="compta-value" id="dash-cab-depenses">0€</span>
+                            <span class="compta-trend" id="depensesTrend"></span>
                         </div>
                         <div class="compta-card balance">
-                            <span class="compta-label">Balance</span>
+                            <span class="compta-label">Balance nette</span>
                             <span class="compta-value" id="dash-cab-balance">0€</span>
+                            <span class="compta-trend" id="balanceTrend"></span>
+                        </div>
+                    </div>
+
+                    <div class="cabinet-stats-row">
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon green">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Recettes ce mois</span>
+                                <span class="cabinet-stat-value" id="recettesThisMonth">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon red">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Dépenses ce mois</span>
+                                <span class="cabinet-stat-value" id="depensesThisMonth">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Moy. mensuelle</span>
+                                <span class="cabinet-stat-value" id="avgMonthly">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon purple">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Taux de marge</span>
+                                <span class="cabinet-stat-value" id="tauxMarge">-</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -335,21 +380,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                         <div class="chart-card small">
                             <h3>Top catégories</h3>
                             <div id="topCategories"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="stats-row">
-                        <div class="mini-stat">
-                            <span class="mini-label">Moy. mensuelle dépenses</span>
-                            <span class="mini-value" id="avgDepenses">0€</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-label">Moy. mensuelle recettes</span>
-                            <span class="mini-value" id="avgRecettes">0€</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-label">Nombre de dépenses</span>
-                            <span class="mini-value" id="nbDepenses">0</span>
                         </div>
                     </div>
                     
@@ -527,7 +557,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             <tbody id="entriesBody"></tbody>
                         </table>
                     </div>
-                    <div id="noEntries" class="no-entries">Aucun passage ce mois</div>
                 </div>
             </section>
 
@@ -549,24 +578,163 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
             <!-- Settings View -->
             <section id="view-settings" class="view">
-                <h2>Paramètres</h2>
-                
-                <div class="settings-tabs">
-                    <button class="settings-tab active" data-tab="cotation">Cotations</button>
-                    <button class="settings-tab" data-tab="pdf">PDF</button>
+                <!-- Settings Header -->
+                <div class="settings-header">
+                    <button class="settings-back-btn" id="settingsBackBtn" style="display: none;" onclick="closeSettingsPage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        <span>Retour</span>
+                    </button>
+                    <h2>Paramètres</h2>
                 </div>
-                
-                <div id="tab-cotation" class="settings-tab-content active">
-                    <h3>Paramètres des cotations</h3>
-                    <div id="settingsCotationList"></div>
-                    <div class="add-cotation-form">
-                        <input type="text" id="newCotationKey" placeholder="Nouvelle clé (ex: VG+MD)">
-                        <input type="number" id="newCotationAmount" placeholder="Montant" step="0.01">
-                        <button id="addNewCotation" class="add-btn">Ajouter</button>
+
+                <!-- Settings Menu (main page) -->
+                <div id="settings-menu" class="settings-menu">
+                    <button type="button" class="settings-card" data-settings-page="profil" onclick="openSettingsPage('profil')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Profil</h3>
+                            <p>Informations du compte et mot de passe</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+
+                    <button type="button" class="settings-card" data-settings-page="cotation" onclick="openSettingsPage('cotation')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Cotations</h3>
+                            <p>Gérer les codes de cotation</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+
+                    <button type="button" class="settings-card" data-settings-page="pdf" onclick="openSettingsPage('pdf')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>PDF</h3>
+                            <p>Logo, signature et modèle</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+
+                    <button type="button" class="settings-card" data-settings-page="preferences" onclick="openSettingsPage('preferences')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Préférences</h3>
+                            <p>Thème et notifications</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+
+                    <button type="button" class="settings-card" data-settings-page="donnees" onclick="openSettingsPage('donnees')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Données</h3>
+                            <p>Exporter ou supprimer vos données</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Profil Page -->
+                <div id="settings-page-profil" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Informations du compte</h3>
+                        <div class="profile-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nom</label>
+                                    <input type="text" id="profileLastname" placeholder="Votre nom">
+                                </div>
+                                <div class="form-group">
+                                    <label>Prénom</label>
+                                    <input type="text" id="profileFirstname" placeholder="Votre prénom">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="profileEmail" placeholder="votre@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Fonction</label>
+                                <select id="profileRole" disabled>
+                                    <option value="medecin_installe">Médecin installé</option>
+                                    <option value="medecin_remplacant">Médecin remplaçant</option>
+                                    <option value="secretaire">Secrétaire</option>
+                                </select>
+                            </div>
+                            <button id="saveProfileBtn" class="btn-primary">Enregistrer</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Changer le mot de passe</h3>
+                        <div class="password-form">
+                            <div class="form-group">
+                                <label>Mot de passe actuel</label>
+                                <input type="password" id="currentPassword" placeholder="••••••••">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nouveau mot de passe</label>
+                                    <input type="password" id="newPassword" placeholder="••••••••">
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirmer</label>
+                                    <input type="password" id="confirmPassword" placeholder="••••••••">
+                                </div>
+                            </div>
+                            <button id="changePasswordBtn" class="btn-primary">Changer le mot de passe</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div id="tab-pdf" class="settings-tab-content">
+
+                <!-- Cotations Page -->
+                <div id="settings-page-cotation" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Mes cotations</h3>
+                        <div id="settingsCotationList"></div>
+                        <div class="add-cotation-form">
+                            <input type="text" id="newCotationKey" placeholder="Nouvelle clé (ex: VG+MD)">
+                            <input type="number" id="newCotationAmount" placeholder="Montant" step="0.01">
+                            <button id="addNewCotation" class="add-btn">Ajouter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDF Page -->
+                <div id="settings-page-pdf" class="settings-page" style="display: none;">
                     <div class="settings-section">
                         <h3>Logo du PDF</h3>
                         <p class="settings-desc">Uploadez le logo de l'établissement (affiché en haut à gauche)</p>
@@ -601,6 +769,98 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                         <a href="supabase/functions/generate-monthly-pdf/template.html" target="_blank" class="add-btn" style="display: inline-block; text-decoration: none; text-align: center;">
                             Ouvrir le modèle HTML
                         </a>
+                    </div>
+                </div>
+
+                <!-- Préférences Page -->
+                <div id="settings-page-preferences" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Apparence</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Thème</span>
+                                <span class="preference-desc">Choisir entre clair et sombre</span>
+                            </div>
+                            <div class="theme-switcher">
+                                <button class="theme-btn active" data-theme="light">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                                    </svg>
+                                    Clair
+                                </button>
+                                <button class="theme-btn" data-theme="dark">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                    </svg>
+                                    Sombre
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Notifications</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Notifications de rappel</span>
+                                <span class="preference-desc">Recevoir des rappels pour les VL</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="notifVL" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Email mensuel</span>
+                                <span class="preference-desc">Recevoir le résumé par email</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="notifEmail">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Données Page -->
+                <div id="settings-page-donnees" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Exporter vos données</h3>
+                        <p class="settings-desc">Téléchargez vos données dans le format souhaité</p>
+                        <div class="export-buttons">
+                            <button id="exportCSV" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                CSV
+                            </button>
+                            <button id="exportJSON" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                JSON
+                            </button>
+                            <button id="exportPDF" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                PDF
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section danger-zone">
+                        <h3>Zone dangereuse</h3>
+                        <p class="settings-desc">Attention, ces actions sont irréversibles</p>
+                        <div class="danger-actions">
+                            <button id="deleteAllData" class="danger-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Supprimer toutes les données
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -755,11 +1015,49 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 </div>
             </section>
         </main>
+
+        <!-- Mobile Bottom Navbar -->
+        <nav class="mobile-bottom-nav">
+            <a href="#" class="mobile-nav-item active" data-view="dashboard">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="add">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                <span>Ajouter</span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="history">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                </svg>
+                <span>Docs</span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="cabinet">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                <span>Cabinet</span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="settings">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>Paramètres</span>
+            </a>
+        </nav>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="app.v4.js?v=68c" defer></script>
+    <script src="app.v4.js?v=73" defer></script>
     <script>
       // DEBUG: Log everything
       console.log('[DEBUG] Inline script running');
