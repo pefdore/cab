@@ -308,7 +308,8 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 </div>
                 
                 <!-- Cabinet Dashboard (in dashboard view) -->
-                <div id="cabinet-dashboard" class="dashboard-content hidden" style="position:fixed;top:0;left:0;right:0;bottom:0;background:white;z-index:9999;padding:50px;overflow:auto;">
+                <div id="cabinet-dashboard" class="dashboard-content hidden">
+                    <div id="debug-cabinet-test" style="background:yellow;padding:20px;">CABINET DASHBOARD TEST</div>
                     <h1 style="color:black !important;">CABINET DASHBOARD - IF YOU SEE THIS IT WORKS</h1>
                     <div class="compta-summary">
                         <div class="compta-card income">
@@ -1056,6 +1057,22 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
         </nav>
     </div>
 
+    <script>
+      // Unregister service worker first
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.unregister();
+          });
+        }).then(() => {
+          console.log('Service workers unregistered');
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+            console.log('Caches cleared');
+          });
+        });
+      }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="app.v4.js?v=99" defer></script>
@@ -1134,13 +1151,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
         attempts++;
         if (attempts >= 20) clearInterval(poll);
       }, 500);
-    </script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(() => {}, () => {});
-        });
-      }
-    </script>
+</script>
 </body>
 </html>

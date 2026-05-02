@@ -430,7 +430,7 @@ const RECETTE_CATEGORIES = {
 const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
 
 function switchDashboardMode(mode) {
-    console.log('[DASH] switchDashboardMode called with:', mode);
+    console.log('[DASH] switchDashboardMode:', mode);
     document.querySelectorAll('.switch-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
     });
@@ -438,32 +438,19 @@ function switchDashboardMode(mode) {
     const cotationDash = document.getElementById('cotation-dashboard');
     const cabinetDash = document.getElementById('cabinet-dashboard');
     
-    console.log('[DASH] Elements found - cotationDash:', !!cotationDash, 'cabinetDash:', !!cabinetDash);
-    console.log('[DASH] cabinetDash classes:', cabinetDash?.className);
-    console.log('[DASH] cabinetDash style.display before:', cabinetDash?.style.display);
-    
     if (mode === 'cotation') {
         if (cotationDash) {
             cotationDash.classList.remove('hidden');
-            cotationDash.style.cssText = 'display:block !important;visibility:visible !important;';
-            console.log('[DASH] Showing cotation-dashboard');
         }
         if (cabinetDash) {
             cabinetDash.classList.add('hidden');
-            cabinetDash.style.cssText = 'display:none !important;visibility:hidden !important;';
-            console.log('[DASH] Hiding cabinet-dashboard');
         }
     } else {
         if (cotationDash) {
             cotationDash.classList.add('hidden');
-            cotationDash.style.cssText = 'display:none !important;visibility:hidden !important;';
-            console.log('[DASH] Hiding cotation-dashboard');
         }
-if (cabinetDash) {
+        if (cabinetDash) {
             cabinetDash.classList.remove('hidden');
-            cabinetDash.style.cssText = 'position:fixed !important;top:0 !important;left:0 !important;right:0 !important;bottom:0 !important;background:white !important;z-index:9999 !important;padding:50px !important;overflow:auto !important;display:block !important;';
-            console.log('[DASH] After change - cabinetDash classes:', cabinetDash.className);
-            
             loadCabinetData();
         }
     }
