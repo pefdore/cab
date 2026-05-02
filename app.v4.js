@@ -445,11 +445,12 @@ function switchDashboardMode(mode) {
     if (mode === 'cotation') {
         if (cotationDash) {
             cotationDash.classList.remove('hidden');
+            cotationDash.style.cssText = 'display:block !important;visibility:visible !important;';
             console.log('[DASH] Showing cotation-dashboard');
         }
         if (cabinetDash) {
             cabinetDash.classList.add('hidden');
-            cabinetDash.style.display = 'none';
+            cabinetDash.style.cssText = 'display:none !important;visibility:hidden !important;';
             console.log('[DASH] Hiding cabinet-dashboard');
         }
     } else {
