@@ -343,15 +343,7 @@ h2 {
 }
 
 .dashboard-content.hidden {
-    display: none !important;
-}
-
-#cabinet-dashboard {
-    display: block;
-}
-
-#cabinet-dashboard.hidden {
-    display: none !important;
+    display: none;
 }
 
 /* ===== CABINET DASHBOARD CHARTS ===== */
