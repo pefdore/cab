@@ -455,14 +455,13 @@ function switchDashboardMode(mode) {
     } else {
         if (cotationDash) {
             cotationDash.classList.add('hidden');
-            cotationDash.style.display = 'none';
+            cotationDash.style.cssText = 'display:none !important;visibility:hidden !important;';
             console.log('[DASH] Hiding cotation-dashboard');
         }
-        if (cabinetDash) {
+if (cabinetDash) {
             cabinetDash.classList.remove('hidden');
-            cabinetDash.style.display = 'block';
+            cabinetDash.style.cssText = 'position:fixed !important;top:0 !important;left:0 !important;right:0 !important;bottom:0 !important;background:white !important;z-index:9999 !important;padding:50px !important;overflow:auto !important;display:block !important;';
             console.log('[DASH] After change - cabinetDash classes:', cabinetDash.className);
-            console.log('[DASH] After change - cabinetDash style.display:', cabinetDash.style.display);
             
             loadCabinetData();
         }
