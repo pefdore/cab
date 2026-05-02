@@ -2222,15 +2222,16 @@ const LLM_PROMPTS = {
     recommandations: (data) => `Based on: total ${data.totalRecettes}€ revenue, ${data.totalDepenses}€ expenses, ${data.tauxMarge}% margin, alerts: ${JSON.stringify(data.alertes || [])}, give 3 concrete actions to improve financial health.`
 };
 
-// CONFIGURATION LLM - Clé API Groq (gratuit et rapide)
-// Pour changer la clé, modifie cette ligne ou le fichier config.js:
-var LLM_CONFIG = {
-  groqApiKey: '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'
-};
+// CONFIGURATION LLM - utilise config.js ou api-config.js pour la clé API
+var LLM_CONFIG = {};
 
-// Fallback: also check CONFIG if exists
+// Try to load from CONFIG (config.js) first
 if (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
   LLM_CONFIG.groqApiKey = CONFIG.GROQ_API_KEY;
+}
+// Then try API_CONFIG (api-config.js for production)
+else if (typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.groqApiKey) {
+  LLM_CONFIG.groqApiKey = API_CONFIG.groqApiKey;
 }
 
 function refreshLLMAnalysis(type) {
