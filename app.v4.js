@@ -1197,11 +1197,25 @@ async function loadData() {
 }
 
 function setupEventListeners() {
-    // Navigation
+    // Desktop Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const view = item.dataset.view;
+            switchView(view);
+        });
+    });
+    
+    // Mobile Bottom Navigation
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const view = item.dataset.view;
+            
+            // Update active state
+            document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            
             switchView(view);
         });
     });
