@@ -1906,13 +1906,16 @@ if (elDashTotalRecettes) {
     updateTrend('depensesTrend', thisMonthDepenses, prevMonthDepenses);
     updateTrend('balanceTrend', thisMonthRecettes - thisMonthDepenses, prevMonthRecettes - prevMonthDepenses);
     
-    // Moyennes
+    // Moyennes (legacy elements - check if exist)
     const nbDepenses = cabinetDepenses.length;
     const avgDepenses = nbDepenses > 0 ? totalDepenses / nbDepenses : 0;
     const avgRecettes = cabinetRecettes.length > 0 ? totalRecettes / cabinetRecettes.length : 0;
-    document.getElementById('avgDepenses').textContent = `${avgDepenses.toFixed(2)}€`;
-    document.getElementById('avgRecettes').textContent = `${avgRecettes.toFixed(2)}€`;
-    document.getElementById('nbDepenses').textContent = nbDepenses;
+    const elAvgDepenses = document.getElementById('avgDepenses');
+    const elAvgRecettes = document.getElementById('avgRecettes');
+    const elNbDepenses = document.getElementById('nbDepenses');
+    if (elAvgDepenses) elAvgDepenses.textContent = `${avgDepenses.toFixed(2)}€`;
+    if (elAvgRecettes) elAvgRecettes.textContent = `${avgRecettes.toFixed(2)}€`;
+    if (elNbDepenses) elNbDepenses.textContent = nbDepenses;
     
     // Dépenses par catégorie
     const depensesParCat = {};
