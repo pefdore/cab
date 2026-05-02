@@ -472,6 +472,95 @@ h2 {
     font-weight: 600;
 }
 
+/* LLM Analysis Section */
+.llm-analysis-section {
+    margin: 24px 0;
+}
+
+.llm-analysis-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--color-text);
+}
+
+.llm-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.llm-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+}
+
+.llm-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 8px;
+}
+
+.llm-card-header svg {
+    color: var(--color-primary);
+}
+
+.llm-card-content {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.llm-card-content ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.llm-card-content li {
+    margin-bottom: 4px;
+}
+
+.llm-loading {
+    color: var(--color-text-tertiary);
+    font-style: italic;
+}
+
+.llm-refresh-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.llm-refresh-btn:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-primary);
+}
+
+.llm-error {
+    color: var(--color-danger);
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .llm-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Donut Chart */
 .donut-chart {
     width: 120px;
@@ -4243,6 +4332,10 @@ h2 {
 .cabinet-stat-icon.red { background: var(--color-danger-bg); color: var(--color-danger); }
 .cabinet-stat-icon.blue { background: var(--color-primary-subtle); color: var(--color-primary); }
 .cabinet-stat-icon.purple { background: #f3e8ff; color: #9333ea; }
+.cabinet-stat-icon.orange { background: #fff7ed; color: #ea580c; }
+.cabinet-stat-icon.teal { background: #f0fdfa; color: #0d9488; }
+.cabinet-stat-icon.yellow { background: #fefce8; color: #ca8a04; }
+.cabinet-stat-icon.pink { background: #fdf2f8; color: #db2777; }
 
 .cabinet-stat-content { display: flex; flex-direction: column; }
 .cabinet-stat-label { font-size: 0.6875rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }

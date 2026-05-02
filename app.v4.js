@@ -1879,26 +1879,75 @@ if (elDashTotalRecettes) {
     const prevMonthDepenses = monthlyData[prevMonthKey]?.depenses || 0;
     const prevMonthRecettes = monthlyData[prevMonthKey]?.recettes || 0;
 
-    // Update new stats elements
+    // Update stats elements
     const elRecettesThisMonth = document.getElementById('recettesThisMonth');
     const elDepensesThisMonth = document.getElementById('depensesThisMonth');
-    const elAvgMonthly = document.getElementById('avgMonthly');
+    const elCumulAnnee = document.getElementById('cumulAnnee');
     const elTauxMarge = document.getElementById('tauxMarge');
+    const elVsAnneePrecedente = document.getElementById('vsAnneePrecedente');
+    const elReserveTresorerie = document.getElementById('reserveTresorerie');
+    const elTopPostes = document.getElementById('topPostes');
+    const elAlertesCount = document.getElementById('alertesCount');
     
-    if (elRecettesThisMonth) elRecettesThisMonth.textContent = `${thisMonthRecettes.toFixed(2)}€`;
-    if (elDepensesThisMonth) elDepensesThisMonth.textContent = `${thisMonthDepenses.toFixed(2)}€`;
+    if (elRecettesThisMonth) elRecettesThisMonth.textContent = `${thisMonthRecettes.toFixed(0)}€`;
+    if (elDepensesThisMonth) elDepensesThisMonth.textContent = `${thisMonthDepenses.toFixed(0)}€`;
     
-    // Average
-    const monthsWithData = Object.values(monthlyData).filter(m => m.depenses > 0 || m.recettes > 0).length;
-    const avgMonthly = monthsWithData > 0 ? (totalDepenses + totalRecettes) / monthsWithData / 2 : 0;
-    if (elAvgMonthly) elAvgMonthly.textContent = `${avgMonthly.toFixed(2)}€`;
-
-    // Margin rate
+    // Cumul année (recettes - depenses YTD)
+    const cumulAnnee = totalRecettes - totalDepenses;
+    if (elCumulAnnee) {
+        elCumulAnnee.textContent = `${cumulAnnee >= 0 ? '+' : ''}${cumulAnnee.toFixed(0)}€`;
+        elCumulAnnee.style.color = cumulAnnee >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    }
+    
+    // Taux de marge
     const tauxMarge = totalRecettes > 0 ? ((totalRecettes - totalDepenses) / totalRecettes * 100) : 0;
     if (elTauxMarge) {
-        elTauxMarge.textContent = `${tauxMarge.toFixed(1)}%`;
+        elTauxMarge.textContent = `${tauxMarge >= 0 ? '+' : ''}${tauxMarge.toFixed(1)}%`;
         elTauxMarge.style.color = tauxMarge >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
     }
+    
+    // Vs Année précédente (comparer total YTD vs année N-1)
+    const currentYear = now.getFullYear();
+    const prevYearTotal = Object.entries(monthlyData)
+        .filter(([key]) => key.startsWith(String(currentYear - 1)))
+        .reduce((sum, [, m]) => sum + m.recettes - m.depenses, 0);
+    if (elVsAnneePrecedente) {
+        if (prevYearTotal > 0) {
+            const diff = ((cumulAnnee - prevYearTotal) / prevYearTotal * 100).toFixed(0);
+            elVsAnneePrecedente.textContent = `${diff >= 0 ? '+' : ''}${diff}%`;
+            elVsAnneePrecedente.style.color = diff >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+        } else {
+            elVsAnneePrecedente.textContent = cumulAnnee > 0 ? '+ Nouveau' : '-';
+            elVsAnneePrecedente.style.color = cumulAnnee > 0 ? 'var(--color-success)' : 'var(--color-text-tertiary)';
+        }
+    }
+    
+    // Réserve trésorerie (nombre de mois de dépenses couverts par la balance)
+    const avgMonthlyDepenses = totalDepenses / Math.max(monthsWithData, 1);
+    const reserveMois = avgMonthlyDepenses > 0 ? Math.floor(balance / avgMonthlyDepenses) : 0;
+    if (elReserveTresorerie) {
+        elReserveTresorerie.textContent = reserveMois >= 0 ? `${reserveMois} mois` : 'Négatif';
+        elReserveTresorerie.style.color = reserveMois >= 3 ? 'var(--color-success)' : reserveMois >= 1 ? 'var(--color-warning)' : 'var(--color-danger)';
+    }
+    
+    // Top postes (première catégorie de dépenses)
+    if (elTopPostes && sortedCats.length > 0) {
+        elTopPostes.textContent = sortedCats[0][0];
+    }
+    
+    // Alertes: postes en hausse significative ou anormaux
+    let alertes = [];
+    sortedCats.forEach(([cat, amount]) => {
+        const pct = (amount / totalDepenses) * 100;
+        if (pct > 40) alertes.push(`${cat}: ${pct.toFixed(0)}%`);
+    });
+    if (balance < 0) alertes.push('Balance négative');
+    if (reserveMois < 1 && balance < 0) alertes.push('Trésorerie critique');
+    if (elAlertesCount) {
+        elAlertesCount.textContent = alertes.length > 0 ? `${alertes.length}` : '0';
+        elAlertesCount.style.color = alertes.length > 0 ? 'var(--color-danger)' : 'var(--color-success)';
+    }
+    window._cabinetAlertes = alertes;
 
     // Trends
     const updateTrend = (elementId, current, previous) => {
@@ -2059,6 +2108,110 @@ function showBarTooltip(event, idx) {
 }
 
 window.showBarTooltip = showBarTooltip;
+
+// ===== LLM ANALYSIS FUNCTIONS =====
+const LLM_PROMPTS = {
+    optimisation: (data) => `Analyze these expenses and suggest optimizations: ${JSON.stringify(data.topCategories.slice(0,5))}. Total expenses: ${data.totalDepenses}€. Give 3 specific actionable recommendations.`,
+    
+    benchmark: (data) => `For a medical cabinet in France with annual revenue of ${data.totalRecettes}€ and expenses of ${data.totalDepenses}€, what is the typical breakdown by category? Compare with: ${JSON.stringify(data.topCategories.slice(0,3))}. Give percentage comparisons.`,
+    
+    previsions: (data) => `Based on monthly data: ${JSON.stringify(Object.values(data.monthlyData).slice(-6))}, predict the trend for next 3 months. Current balance: ${data.balance}€.`,
+    
+    recommandations: (data) => `Based on: total ${data.totalRecettes}€ revenue, ${data.totalDepenses}€ expenses, ${data.tauxMarge}% margin, alerts: ${JSON.stringify(data.alertes || [])}, give 3 concrete actions to improve financial health.`
+};
+
+function refreshLLMAnalysis(type) {
+    const contentEl = document.getElementById(`llm-${type}-content`);
+    if (!contentEl) return;
+    
+    contentEl.innerHTML = '<p class="llm-loading">Analyse en cours...</p>';
+    
+    // Gather data for LLM
+    const data = {
+        totalDepenses: cabinetDepenses.reduce((s, d) => s + d.amount, 0),
+        totalRecettes: cabinetRecettes.reduce((s, r) => s + r.amount, 0),
+        balance: 0,
+        tauxMarge: 0,
+        topCategories: [],
+        monthlyData: {},
+        alertes: window._cabinetAlertes || []
+    };
+    data.balance = data.totalRecettes - data.totalDepenses;
+    data.tauxMarge = data.totalRecettes > 0 ? (data.balance / data.totalRecettes * 100) : 0;
+    
+    // Get top categories
+    const depensesParCat = {};
+    cabinetDepenses.forEach(d => {
+        const cat = CABINET_CATEGORIES[d.category]?.label || d.category;
+        depensesParCat[cat] = (depensesParCat[cat] || 0) + d.amount;
+    });
+    data.topCategories = Object.entries(depensesParCat).sort((a, b) => b[1] - a[1]);
+    
+    // Get monthly data
+    const now = new Date();
+    const monthlyData = {};
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[key] = { depenses: 0, recettes: 0 };
+    }
+    cabinetDepenses.forEach(d => {
+        const key = d.date?.substring(0, 7);
+        if (key && monthlyData[key]) monthlyData[key].depenses += d.amount;
+    });
+    cabinetRecettes.forEach(r => {
+        const key = r.date?.substring(0, 7);
+        if (key && monthlyData[key]) monthlyData[key].recettes += r.amount;
+    });
+    data.monthlyData = monthlyData;
+    
+    // Generate response based on type (placeholder - to be connected to LLM)
+    const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
+    
+    // Simulated responses (replace with actual LLM API call)
+    setTimeout(() => {
+        const responses = {
+            optimisation: `<ul>
+                <li><strong>Réduire les charges sociales</strong> - Vérifiez vos échéances URSSAF et envisagez un échéancier si nécessaire</li>
+                <li><strong>Optimiser les consommables</strong> - Comparer les fournisseurs pour les achats récurrents</li>
+                <li><strong>Revoir les abonnements</strong> - Auditer les logiciels et services mensuels</li>
+            </ul>`,
+            benchmark: `<ul>
+                <li><strong>Typical breakdown:</strong> Charges locatives 25-35%, Masse salariale 20-30%, URSSAF 15-20%, Logiciels 5-10%</li>
+                <li><strong>Your main expense:</strong> ${data.topCategories[0]?.[0] || 'N/A'} represents ${data.topCategories[0] ? ((data.topCategories[0][1] / data.totalDepenses) * 100).toFixed(0) : 0}% of total</li>
+                <li><strong>Recommendation:</strong> Stay within market norms for your category</li>
+            </ul>`,
+            previsions: `<ul>
+                <li><strong>Tendance actuelle:</strong> ${data.balance >= 0 ? 'Positive (excédent)' : 'Négative (déficit)'}</li>
+                <li><strong>Moyenne mensuelle:</strong> ${(data.totalRecettes / 12).toFixed(0)}€ revenus / ${(data.totalDepenses / 12).toFixed(0)}€ charges</li>
+                <li><strong>Prévision:</strong> ${data.balance >= 0 ? 'Situation stable attendue' : 'Vigilance recommandée sur la trésorerie'}</li>
+            </ul>`,
+            recommandations: `<ul>
+                <li><strong>1.</strong> Suivre mensuellement le ratio charges/revenus</li>
+                <li><strong>2.</strong> Constituer une réserve de 3 mois de charges</li>
+                <li><strong>3.</strong> Réviser les contrats fournisseurs annuellement</li>
+            </ul>`
+        };
+        
+        contentEl.innerHTML = responses[type] || '<p>Aucune analyse disponible</p>';
+    }, 800);
+}
+
+window.refreshLLMAnalysis = refreshLLMAnalysis;
+
+// Auto-refresh LLM analysis when rendering dashboard
+const originalRenderComptaSummary = renderComptaSummary;
+renderComptaSummary = function() {
+    originalRenderComptaSummary.apply(this, arguments);
+    // Trigger LLM analysis after rendering
+    setTimeout(() => {
+        ['optimisation', 'benchmark', 'previsions', 'recommandations'].forEach(type => {
+            if (document.getElementById(`llm-${type}-content`)) {
+                refreshLLMAnalysis(type);
+            }
+        });
+    }, 500);
+};
 
 // ===== MISSING FUNCTIONS =====
 
