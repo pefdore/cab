@@ -311,16 +311,58 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div id="cabinet-dashboard" class="dashboard-content hidden">
                     <div class="compta-summary">
                         <div class="compta-card income">
-                            <span class="compta-label">Recettes</span>
+                            <span class="compta-label">Recettes totales</span>
                             <span class="compta-value" id="dash-cab-recettes">0€</span>
+                            <span class="compta-trend" id="recettesTrend"></span>
                         </div>
                         <div class="compta-card expense">
-                            <span class="compta-label">Dépenses</span>
+                            <span class="compta-label">Dépenses totales</span>
                             <span class="compta-value" id="dash-cab-depenses">0€</span>
+                            <span class="compta-trend" id="depensesTrend"></span>
                         </div>
                         <div class="compta-card balance">
-                            <span class="compta-label">Balance</span>
+                            <span class="compta-label">Balance nette</span>
                             <span class="compta-value" id="dash-cab-balance">0€</span>
+                            <span class="compta-trend" id="balanceTrend"></span>
+                        </div>
+                    </div>
+
+                    <div class="cabinet-stats-row">
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon green">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Recettes ce mois</span>
+                                <span class="cabinet-stat-value" id="recettesThisMonth">0€</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon red">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Dépenses ce mois</span>
+                                <span class="cabinet-stat-value" id="depensesThisMonth">0€</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Moy. mensuelle</span>
+                                <span class="cabinet-stat-value" id="avgMonthly">0€</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon purple">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Taux de marge</span>
+                                <span class="cabinet-stat-value" id="tauxMarge">0%</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -338,21 +380,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                         <div class="chart-card small">
                             <h3>Top catégories</h3>
                             <div id="topCategories"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="stats-row">
-                        <div class="mini-stat">
-                            <span class="mini-label">Moy. mensuelle dépenses</span>
-                            <span class="mini-value" id="avgDepenses">0€</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-label">Moy. mensuelle recettes</span>
-                            <span class="mini-value" id="avgRecettes">0€</span>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-label">Nombre de dépenses</span>
-                            <span class="mini-value" id="nbDepenses">0</span>
                         </div>
                     </div>
                     
