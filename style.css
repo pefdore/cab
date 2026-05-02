@@ -423,6 +423,55 @@ h2 {
     margin-top: 4px;
 }
 
+/* Chart Legend */
+.chart-legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.legend-dot.income {
+    background: var(--color-success);
+}
+
+.legend-dot.expense {
+    background: var(--color-danger);
+}
+
+/* Bar Tooltip */
+.bar-tooltip {
+    position: absolute;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    color: var(--color-text);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 100;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.bar-tooltip .tooltip-amount {
+    font-weight: 600;
+}
+
 /* Donut Chart */
 .donut-chart {
     width: 120px;

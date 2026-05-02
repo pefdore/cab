@@ -1970,17 +1970,17 @@ if (elDashTotalRecettes) {
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
     }
     
-    // Evolution mensuelle - Bar chart (12 derniers mois)
+    // Evolution mensuelle - Bar chart (12 derniers mois) - click to show amounts
     const monthlyValues = Object.values(monthlyData);
     const maxValue = Math.max(...monthlyValues.map(m => Math.max(m.depenses, m.recettes)), 1);
     
     const barContainer = document.getElementById('evolutionChart');
     if (barContainer) {
-        barContainer.innerHTML = monthlyValues.map(m => {
+        barContainer.innerHTML = monthlyValues.map((m, idx) => {
             const depHeight = (m.depenses / maxValue) * 100;
             const recHeight = (m.recettes / maxValue) * 100;
             return `
-                <div class="bar-group">
+                <div class="bar-group" onclick="showBarTooltip(event, ${idx})" style="cursor:pointer">
                     <div class="bar-wrapper">
                         <div class="bar expense" style="height: ${depHeight}%"></div>
                         <div class="bar income" style="height: ${recHeight}%"></div>
@@ -1990,6 +1990,9 @@ if (elDashTotalRecettes) {
             `;
         }).join('');
     }
+    
+    // Store monthly data for tooltip
+    window._monthlyData = monthlyData;
     
     // Dashboard - catégories
     const dashCatContainer = document.getElementById('dashDepensesParCategorie');
@@ -2024,6 +2027,38 @@ if (elDashTotalRecettes) {
         `).join('') || '<div class="no-entries">Aucune</div>';
     }
 }
+
+// ===== BAR TOOLTIP FUNCTION =====
+function showBarTooltip(event, idx) {
+    const monthlyData = window._monthlyData;
+    if (!monthlyData) return;
+    
+    const values = Object.values(monthlyData);
+    if (!values[idx]) return;
+    
+    const m = values[idx];
+    const existingTooltip = document.querySelector('.bar-tooltip');
+    if (existingTooltip) existingTooltip.remove();
+    
+    const tooltip = document.createElement('div');
+    tooltip.className = 'bar-tooltip';
+    tooltip.innerHTML = `
+        <div><strong>${m.label}</strong></div>
+        <div class="tooltip-amount" style="color:var(--color-danger)">Dépenses: ${m.depenses.toFixed(2)}€</div>
+        <div class="tooltip-amount" style="color:var(--color-success)">Recettes: ${m.recettes.toFixed(2)}€</div>
+    `;
+    
+    const rect = event.target.getBoundingClientRect();
+    tooltip.style.left = rect.left + 'px';
+    tooltip.style.top = (rect.top - 80) + 'px';
+    document.body.appendChild(tooltip);
+    
+    setTimeout(() => {
+        tooltip.addEventListener('click', () => tooltip.remove());
+    }, 100);
+}
+
+window.showBarTooltip = showBarTooltip;
 
 // ===== MISSING FUNCTIONS =====
 
