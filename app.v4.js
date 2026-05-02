@@ -94,13 +94,6 @@ async function onAuthSuccess() {
     }
     
     try {
-        await loadCabinetData();
-        console.log('[AUTH] loadCabinetData completed');
-    } catch (e) {
-        console.error('[AUTH] loadCabinetData error:', e);
-    }
-    
-    try {
         await loadPatients();
         console.log('[AUTH] loadPatients completed, patients:', patients.length);
     } catch (e) {
@@ -1837,17 +1830,13 @@ if (elDashTotalRecettes) {
         elDashBalance.textContent = `${balance.toFixed(2)}€`;
     }
     
-    // Moyennes (legacy support)
+    // Moyennes
     const nbDepenses = cabinetDepenses.length;
     const avgDepenses = nbDepenses > 0 ? totalDepenses / nbDepenses : 0;
     const avgRecettes = cabinetRecettes.length > 0 ? totalRecettes / cabinetRecettes.length : 0;
-    
-    const elAvgDepenses = document.getElementById('avgDepenses');
-    const elAvgRecettes = document.getElementById('avgRecettes');
-    const elNbDepenses = document.getElementById('nbDepenses');
-    if (elAvgDepenses) elAvgDepenses.textContent = `${avgDepenses.toFixed(2)}€`;
-    if (elAvgRecettes) elAvgRecettes.textContent = `${avgRecettes.toFixed(2)}€`;
-    if (elNbDepenses) elNbDepenses.textContent = nbDepenses;
+    document.getElementById('avgDepenses').textContent = `${avgDepenses.toFixed(2)}€`;
+    document.getElementById('avgRecettes').textContent = `${avgRecettes.toFixed(2)}€`;
+    document.getElementById('nbDepenses').textContent = nbDepenses;
     
     // Dépenses par catégorie
     const depensesParCat = {};
@@ -1921,225 +1910,16 @@ if (elDashTotalRecettes) {
             `;
         }).join('');
     }
-
-    // Current month data
-    const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const thisMonthDepenses = monthlyData[currentMonthKey]?.depenses || 0;
-    const thisMonthRecettes = monthlyData[currentMonthKey]?.recettes || 0;
-
-    // Calculate trends (compare to previous month)
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const prevMonthKey = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
-    const prevMonthDepenses = monthlyData[prevMonthKey]?.depenses || 0;
-    const prevMonthRecettes = monthlyData[prevMonthKey]?.recettes || 0;
-
-    // Update stats
-    const elRecettesThisMonth = document.getElementById('recettesThisMonth');
-    const elDepensesThisMonth = document.getElementById('depensesThisMonth');
-    if (elRecettesThisMonth) elRecettesThisMonth.textContent = `${thisMonthRecettes.toFixed(2)}€`;
-    if (elDepensesThisMonth) elDepensesThisMonth.textContent = `${thisMonthDepenses.toFixed(2)}€`;
-
-    // Averages
-    const avgMonthly = (totalDepenses + totalRecettes) / 2;
-    const elAvgMonthly = document.getElementById('avgMonthly');
-    if (elAvgMonthly) elAvgMonthly.textContent = `${avgMonthly.toFixed(2)}€`;
-
-    // Margin rate
-    const tauxMarge = totalRecettes > 0 ? ((totalRecettes - totalDepenses) / totalRecettes * 100) : 0;
-    const elTauxMarge = document.getElementById('tauxMarge');
-    if (elTauxMarge) {
-        elTauxMarge.textContent = `${tauxMarge.toFixed(1)}%`;
-        elTauxMarge.style.color = tauxMarge >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
-    }
-
-    // Trends
-    const updateTrend = (elementId, current, previous) => {
-        const el = document.getElementById(elementId);
-        if (!el) return;
-        if (previous === 0) {
-            el.textContent = current > 0 ? '↑ Nouveau' : '';
-            el.className = 'compta-trend ' + (current > 0 ? 'up' : 'neutral');
-        } else {
-            const diff = ((current - previous) / previous * 100).toFixed(1);
-            if (diff > 0) {
-                el.textContent = `↑ +${diff}%`;
-                el.className = 'compta-trend up';
-            } else if (diff < 0) {
-                el.textContent = `↓ ${diff}%`;
-                el.className = 'compta-trend down';
-            } else {
-                el.textContent = '→ 0%';
-                el.className = 'compta-trend neutral';
-            }
-        }
-    };
-    updateTrend('recettesTrend', thisMonthRecettes, prevMonthRecettes);
-    updateTrend('depensesTrend', thisMonthDepenses, prevMonthDepenses);
-    updateTrend('balanceTrend', thisMonthRecettes - thisMonthDepenses, prevMonthRecettes - prevMonthDepenses);
-
-    // Top catégories with bars
-    const topCatContainer = document.getElementById('topCategories');
-    if (topCatContainer && totalDepenses > 0) {
-        const maxCatAmount = sortedCats[0]?.[1] || 1;
-        topCatContainer.innerHTML = sortedCats.slice(0, 5).map(([cat, amount]) => {
-            const pct = ((amount / totalDepenses) * 100).toFixed(1);
-            const barWidth = (amount / maxCatAmount) * 100;
-            return `
-                <div class="category-bar-item">
-                    <div class="category-bar-header">
-                        <span class="category-bar-name">${cat}</span>
-                        <span class="category-bar-value">${amount.toFixed(2)}€ (${pct}%)</span>
-                    </div>
-                    <div class="category-bar-track">
-                        <div class="category-bar-fill" style="width: ${barWidth}%"></div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    } else if (topCatContainer) {
-        topCatContainer.innerHTML = '<div class="no-entries">Aucune dépense enregistrée</div>';
-    }
-
-    // Donut Chart with legend
-    const donutContainer = document.getElementById('depensesPieChart');
-    const donutTotalEl = document.getElementById('depensesTotalDonut');
-    const donutLegendEl = document.getElementById('depensesDonutLegend');
-    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
     
-    if (donutTotalEl) donutTotalEl.textContent = `${totalDepenses.toFixed(0)}€`;
-    
-    if (donutContainer && totalDepenses > 0) {
-        let gradient = '';
-        let cumulative = 0;
-        sortedCats.slice(0, 6).forEach(([cat, amount], i) => {
-            const pct = (amount / totalDepenses) * 100;
-            const end = cumulative + pct;
-            gradient += `${colors[i % colors.length]} ${cumulative}% ${end}%, `;
-            cumulative = end;
-        });
-        gradient += `#e5e7eb ${cumulative}% 100%`;
-        donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
-    } else if (donutContainer) {
-        donutContainer.style.background = `conic-gradient(#e5e7eb 0% 100%)`;
-    }
-
-    // Donut legend
-    if (donutLegendEl && totalDepenses > 0) {
-        donutLegendEl.innerHTML = sortedCats.slice(0, 6).map(([cat, amount], i) => {
-            const pct = ((amount / totalDepenses) * 100).toFixed(1);
-            return `
-                <div class="donut-legend-item">
-                    <span class="legend-color" style="background: ${colors[i % colors.length]}"></span>
-                    <span class="legend-label">${cat}</span>
-                    <span class="legend-value">${amount.toFixed(0)}€</span>
-                    <span class="legend-pct">${pct}%</span>
-                </div>
-            `;
-        }).join('');
-    } else if (donutLegendEl) {
-        donutLegendEl.innerHTML = '<div class="no-entries">Aucune donnée</div>';
-    }
-
-    // Recettes breakdown
-    const recettesParCat = {};
-    cabinetRecettes.forEach(r => {
-        const cat = RECETTE_CATEGORIES[r.category];
-        const catLabel = cat ? cat.label : r.category;
-        recettesParCat[catLabel] = (recettesParCat[catLabel] || 0) + r.amount;
-    });
-    const sortedRecettes = Object.entries(recettesParCat).sort((a, b) => b[1] - a[1]);
-    const recettesBreakdown = document.getElementById('recettesBreakdown');
-    if (recettesBreakdown) {
-        if (sortedRecettes.length > 0) {
-            recettesBreakdown.innerHTML = sortedRecettes.map(([cat, amount]) => `
-                <div class="recette-item">
-                    <span class="recette-label">${cat}</span>
-                    <span class="recette-value">${amount.toFixed(2)}€</span>
-                </div>
-            `).join('');
-        } else {
-            recettesBreakdown.innerHTML = '<div class="no-entries">Aucune recette</div>';
-        }
-    }
-
-    // Trend Analysis
-    const trendAnalysis = document.getElementById('trendAnalysis');
-    if (trendAnalysis) {
-        const last3Months = monthlyValues.slice(-3);
-        const avgLast3Dep = last3Months.reduce((s, m) => s + m.depenses, 0) / 3;
-        const avgLast3Rec = last3Months.reduce((s, m) => s + m.recettes, 0) / 3;
-        const avgAllDep = monthlyValues.filter(m => m.depenses > 0).reduce((s, m) => s + m.depenses, 0) / Math.max(monthlyValues.filter(m => m.depenses > 0).length, 1);
-        const avgAllRec = monthlyValues.filter(m => m.recettes > 0).reduce((s, m) => s + m.recettes, 0) / Math.max(monthlyValues.filter(m => m.recettes > 0).length, 1);
-        
-        const depTrend = avgLast3Dep > avgAllDep ? 'up' : (avgLast3Dep < avgAllDep ? 'down' : 'neutral');
-        const recTrend = avgLast3Rec > avgAllRec ? 'up' : (avgLast3Rec < avgAllRec ? 'down' : 'neutral');
-        
-        trendAnalysis.innerHTML = `
-            <div class="trend-item">
-                <span class="trend-label">Tendance dépenses (3 mois)</span>
-                <div class="trend-value-group">
-                    <span class="trend-value" style="color: ${depTrend === 'up' ? 'var(--color-danger)' : (depTrend === 'down' ? 'var(--color-success)' : 'var(--color-text-secondary)')}">${avgLast3Dep.toFixed(0)}€</span>
-                    <span class="trend-badge ${depTrend === 'up' ? 'negative' : (depTrend === 'down' ? 'positive' : 'neutral')}">${depTrend === 'up' ? '↑' : (depTrend === 'down' ? '↓' : '→')}</span>
-                </div>
+    // Dashboard - catégories
+    const dashCatContainer = document.getElementById('dashDepensesParCategorie');
+    if (dashCatContainer) {
+        dashCatContainer.innerHTML = sortedCats.slice(0, 5).map(([cat, amount]) => `
+            <div class="category-item">
+                <span class="cat-label">${cat}</span>
+                <span class="cat-amount">${amount.toFixed(2)}€</span>
             </div>
-            <div class="trend-item">
-                <span class="trend-label">Tendance recettes (3 mois)</span>
-                <div class="trend-value-group">
-                    <span class="trend-value" style="color: ${recTrend === 'up' ? 'var(--color-success)' : (recTrend === 'down' ? 'var(--color-danger)' : 'var(--color-text-secondary)')}">${avgLast3Rec.toFixed(0)}€</span>
-                    <span class="trend-badge ${recTrend === 'up' ? 'positive' : (recTrend === 'down' ? 'negative' : 'neutral')}">${recTrend === 'up' ? '↑' : (recTrend === 'down' ? '↓' : '→')}</span>
-                </div>
-            </div>
-            <div class="trend-item">
-                <span class="trend-label">Moyenne historique</span>
-                <div class="trend-value-group">
-                    <span class="trend-value">${(avgAllDep + avgAllRec).toFixed(0)}€</span>
-                    <span class="trend-badge neutral">/mois</span>
-                </div>
-            </div>
-        `;
-    }
-
-    // Insights
-    const insightsGrid = document.getElementById('insightsGrid');
-    if (insightsGrid) {
-        const insights = [];
-        
-        // Margin insight
-        if (tauxMarge >= 30) {
-            insights.push({ type: 'success', title: 'Bonne rentabilité', text: `Votre taux de marge de ${tauxMarge.toFixed(1)}% est excellent. Continuez ainsi!` });
-        } else if (tauxMarge >= 0) {
-            insights.push({ type: 'warning', title: 'Rentabilité modérée', text: `Taux de marge de ${tauxMarge.toFixed(1)}%. Envisagez d'optimiser vos dépenses.` });
-        } else {
-            insights.push({ type: 'danger', title: 'Attention déficit', text: `Vos dépenses dépassent vos recettes. Analysez vos postes de charge.` });
-        }
-        
-        // Top category insight
-        if (sortedCats.length > 0) {
-            const topCat = sortedCats[0];
-            const topCatPct = ((topCat[1] / totalDepenses) * 100).toFixed(0);
-            if (parseInt(topCatPct) > 40) {
-                insights.push({ type: 'warning', title: 'Concentration des dépenses', text: `${topCat[0]} représente ${topCatPct}% des dépenses. Peut-être réduire?` });
-            }
-        }
-        
-        // Trend insight
-        if (thisMonthDepenses > prevMonthDepenses * 1.2 && prevMonthDepenses > 0) {
-            insights.push({ type: 'info', title: 'Hausse des dépenses', text: `Les dépenses ont augmenté de ${((thisMonthDepenses/prevMonthDepenses-1)*100).toFixed(0)}% ce mois-ci.` });
-        }
-        
-        // Activity insight
-        const nbTransactions = cabinetDepenses.length + cabinetRecettes.length;
-        if (nbTransactions < 3) {
-            insights.push({ type: 'info', title: 'Peu d\'activité', text: 'Enregistrez vos opérations régulières pour avoir des analyses plus pertinentes.' });
-        }
-        
-        insightsGrid.innerHTML = insights.map(i => `
-            <div class="insight-card ${i.type}">
-                <div class="insight-title">${i.title}</div>
-                <div class="insight-text">${i.text}</div>
-            </div>
-        `).join('');
+        `).join('') || '<div class="no-entries">Aucune dépense</div>';
     }
     
     // Dashboard - Recent depenses
