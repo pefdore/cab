@@ -3,6 +3,12 @@
 /* Dashboard toggle - force hide by default */
 #cabinet-dashboard { display: none; }
 
+#cabinet-dashboard > *:first-child {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
 :root {
     /* Core Palette */
     --color-bg: #fcfcfc;
@@ -570,6 +576,31 @@ h2 {
 @media (max-width: 768px) {
     .llm-cards-grid {
         grid-template-columns: 1fr;
+    }
+    
+    /* Donut Chart responsive */
+    .donut-chart {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .donut-chart::after {
+        width: 55px;
+        height: 55px;
+    }
+    
+    /* Top Categories responsive */
+    #topCategories {
+        gap: 6px;
+    }
+    
+    .top-cat-item {
+        padding: 6px 8px;
+    }
+    
+    .top-cat-name,
+    .top-cat-pct {
+        font-size: 0.75rem;
     }
 }
 
@@ -4356,6 +4387,119 @@ h2 {
 
 @media (max-width: 768px) {
     .cabinet-stats-row { grid-template-columns: repeat(2, 1fr); }
+    
+    .compta-summary {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .charts-row {
+        flex-direction: column;
+    }
+    
+    .charts-row .chart-card {
+        margin-bottom: 0;
+    }
+    
+    .recent-section {
+        margin-bottom: 16px;
+    }
+    
+    .llm-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-card {
+        padding: 16px 12px;
+    }
+    
+    .chart-card h3 {
+        font-size: 0.875rem;
+    }
+    
+    .bar-chart {
+        height: 120px;
+    }
+    
+    .bar-label {
+        font-size: 0.5rem;
+    }
+    
+    .cabinet-stat-card {
+        padding: 12px;
+    }
+    
+    .cabinet-stat-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .cabinet-stat-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .cabinet-stat-value {
+        font-size: 1rem;
+    }
+    
+    .cabinet-stat-label {
+        font-size: 0.625rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .cabinet-stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .cabinet-stat-card {
+        padding: 10px;
+        gap: 8px;
+    }
+    
+    .cabinet-stat-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .cabinet-stat-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .cabinet-stat-value {
+        font-size: 0.9375rem;
+    }
+    
+    .cabinet-stat-label {
+        font-size: 0.5625rem;
+    }
+    
+    .compta-card {
+        padding: 12px;
+    }
+    
+    .compta-card .compta-value {
+        font-size: 1.25rem;
+    }
+    
+    /* Recent items responsive */
+    .recent-item {
+        padding: 10px 8px;
+        font-size: 0.8125rem;
+    }
+    
+    .recent-item .amount {
+        font-size: 0.8125rem;
+    }
+    
+    /* Bar chart mobile */
+    .bar-chart {
+        height: 100px;
+        gap: 2px;
+    }
 }
 
 /* Categories Grid */

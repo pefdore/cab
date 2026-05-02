@@ -1,5 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
+/* Dashboard toggle - force hide by default */
+#cabinet-dashboard { display: none; }
+
+#cabinet-dashboard > *:first-child {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
 :root {
     /* Core Palette */
     --color-bg: #fcfcfc;
@@ -430,6 +439,169 @@ h2 {
     font-size: 0.625rem;
     color: var(--color-text-tertiary);
     margin-top: 4px;
+}
+
+/* Chart Legend */
+.chart-legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.legend-dot.income {
+    background: var(--color-success);
+}
+
+.legend-dot.expense {
+    background: var(--color-danger);
+}
+
+/* Bar Tooltip */
+.bar-tooltip {
+    position: absolute;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    color: var(--color-text);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 100;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.bar-tooltip .tooltip-amount {
+    font-weight: 600;
+}
+
+/* LLM Analysis Section */
+.llm-analysis-section {
+    margin: 24px 0;
+}
+
+.llm-analysis-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--color-text);
+}
+
+.llm-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.llm-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+}
+
+.llm-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 8px;
+}
+
+.llm-card-header svg {
+    color: var(--color-primary);
+}
+
+.llm-card-content {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.llm-card-content ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.llm-card-content li {
+    margin-bottom: 4px;
+}
+
+.llm-loading {
+    color: var(--color-text-tertiary);
+    font-style: italic;
+}
+
+.llm-refresh-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.llm-refresh-btn:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-primary);
+}
+
+.llm-error {
+    color: var(--color-danger);
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .llm-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Donut Chart responsive */
+    .donut-chart {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .donut-chart::after {
+        width: 55px;
+        height: 55px;
+    }
+    
+    /* Top Categories responsive */
+    #topCategories {
+        gap: 6px;
+    }
+    
+    .top-cat-item {
+        padding: 6px 8px;
+    }
+    
+    .top-cat-name,
+    .top-cat-pct {
+        font-size: 0.75rem;
+    }
 }
 
 /* Donut Chart */
@@ -4213,24 +4385,121 @@ h2 {
 .cabinet-stat-label { font-size: 0.6875rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 .cabinet-stat-value { font-size: 1.125rem; font-weight: 700; color: var(--color-text); }
 
-/* LLM Analysis Section */
-.llm-analysis-section { margin: 24px 0; }
-.llm-analysis-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; color: var(--color-text); }
-.llm-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.llm-card { background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; position: relative; }
-.llm-card-header { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; color: var(--color-text); margin-bottom: 8px; }
-.llm-card-header svg { color: var(--color-primary); }
-.llm-card-content { font-size: 0.8125rem; color: var(--color-text-secondary); line-height: 1.5; }
-.llm-card-content ul { margin: 0; padding-left: 16px; }
-.llm-card-content li { margin-bottom: 4px; }
-.llm-loading { color: var(--color-text-tertiary); font-style: italic; }
-.llm-refresh-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); padding: 4px; border-radius: 4px; transition: all 0.2s; }
-.llm-refresh-btn:hover { background: var(--color-bg-muted); color: var(--color-primary); }
-.llm-error { color: var(--color-danger); font-size: 0.75rem; }
-@media (max-width: 768px) { .llm-cards-grid { grid-template-columns: 1fr; } }
-
 @media (max-width: 768px) {
     .cabinet-stats-row { grid-template-columns: repeat(2, 1fr); }
+    
+    .compta-summary {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .charts-row {
+        flex-direction: column;
+    }
+    
+    .charts-row .chart-card {
+        margin-bottom: 0;
+    }
+    
+    .recent-section {
+        margin-bottom: 16px;
+    }
+    
+    .llm-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-card {
+        padding: 16px 12px;
+    }
+    
+    .chart-card h3 {
+        font-size: 0.875rem;
+    }
+    
+    .bar-chart {
+        height: 120px;
+    }
+    
+    .bar-label {
+        font-size: 0.5rem;
+    }
+    
+    .cabinet-stat-card {
+        padding: 12px;
+    }
+    
+    .cabinet-stat-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .cabinet-stat-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .cabinet-stat-value {
+        font-size: 1rem;
+    }
+    
+    .cabinet-stat-label {
+        font-size: 0.625rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .cabinet-stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .cabinet-stat-card {
+        padding: 10px;
+        gap: 8px;
+    }
+    
+    .cabinet-stat-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .cabinet-stat-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .cabinet-stat-value {
+        font-size: 0.9375rem;
+    }
+    
+    .cabinet-stat-label {
+        font-size: 0.5625rem;
+    }
+    
+    .compta-card {
+        padding: 12px;
+    }
+    
+    .compta-card .compta-value {
+        font-size: 1.25rem;
+    }
+    
+    /* Recent items responsive */
+    .recent-item {
+        padding: 10px 8px;
+        font-size: 0.8125rem;
+    }
+    
+    .recent-item .amount {
+        font-size: 0.8125rem;
+    }
+    
+    /* Bar chart mobile */
+    .bar-chart {
+        height: 100px;
+        gap: 2px;
+    }
 }
 
 /* Categories Grid */
