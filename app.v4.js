@@ -430,25 +430,24 @@ const RECETTE_CATEGORIES = {
 const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
 
 function switchDashboardMode(mode) {
-    // Toggle button active state
-    document.querySelectorAll('.switch-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.mode === mode);
-    });
+    // Toggle buttons
+    var btns = document.querySelectorAll('.switch-btn');
+    for (var i = 0; i < btns.length; i++) {
+        if (btns[i].getAttribute('data-mode') === mode) {
+            btns[i].classList.add('active');
+        } else {
+            btns[i].classList.remove('active');
+        }
+    }
     
-    const cotationDash = document.getElementById('cotation-dashboard');
-    const cabinetDash = document.getElementById('cabinet-dashboard');
+    var cotationDash = document.getElementById('cotation-dashboard');
+    var cabinetDash = document.getElementById('cabinet-dashboard');
     
     if (mode === 'cotation') {
-        if (cotationDash) {
-            cotationDash.style.display = 'block';
-        }
-        if (cabinetDash) {
-            cabinetDash.style.display = 'none';
-        }
+        if (cotationDash) cotationDash.style.display = 'block';
+        if (cabinetDash) cabinetDash.style.display = 'none';
     } else {
-        if (cotationDash) {
-            cotationDash.style.display = 'none';
-        }
+        if (cotationDash) cotationDash.style.display = 'none';
         if (cabinetDash) {
             cabinetDash.style.display = 'block';
             loadCabinetData();
