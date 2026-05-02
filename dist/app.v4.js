@@ -430,6 +430,7 @@ const RECETTE_CATEGORIES = {
 const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
 
 function switchDashboardMode(mode) {
+    console.log('[DASH] switchDashboardMode called with:', mode);
     document.querySelectorAll('.switch-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
     });
@@ -437,7 +438,9 @@ function switchDashboardMode(mode) {
     const cotationDash = document.getElementById('cotation-dashboard');
     const cabinetDash = document.getElementById('cabinet-dashboard');
     
-    console.log('[DASH] switchDashboardMode:', mode, 'cotationDash:', !!cotationDash, 'cabinetDash:', !!cabinetDash);
+    console.log('[DASH] Elements found - cotationDash:', !!cotationDash, 'cabinetDash:', !!cabinetDash);
+    console.log('[DASH] cabinetDash classes:', cabinetDash?.className);
+    console.log('[DASH] cabinetDash style.display before:', cabinetDash?.style.display);
     
     if (mode === 'cotation') {
         if (cotationDash) {
@@ -446,17 +449,20 @@ function switchDashboardMode(mode) {
         }
         if (cabinetDash) {
             cabinetDash.classList.add('hidden');
+            cabinetDash.style.display = 'none';
             console.log('[DASH] Hiding cabinet-dashboard');
         }
     } else {
         if (cotationDash) {
             cotationDash.classList.add('hidden');
+            cotationDash.style.display = 'none';
             console.log('[DASH] Hiding cotation-dashboard');
         }
         if (cabinetDash) {
             cabinetDash.classList.remove('hidden');
-            cabinetDash.style.display = '';
-            console.log('[DASH] Showing cabinet-dashboard');
+            cabinetDash.style.display = 'block';
+            console.log('[DASH] After change - cabinetDash classes:', cabinetDash.className);
+            console.log('[DASH] After change - cabinetDash style.display:', cabinetDash.style.display);
             
             loadCabinetData();
         }

@@ -346,6 +346,14 @@ h2 {
     display: none !important;
 }
 
+#cabinet-dashboard {
+    display: block;
+}
+
+#cabinet-dashboard.hidden {
+    display: none !important;
+}
+
 /* ===== CABINET DASHBOARD CHARTS ===== */
 .charts-row {
     display: grid;
