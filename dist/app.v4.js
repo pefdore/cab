@@ -2277,12 +2277,14 @@ function refreshLLMAnalysis(type) {
     
     // Check if API is configured
     const hasApiKey = typeof LLM_CONFIG !== 'undefined' && LLM_CONFIG && LLM_CONFIG.geminiApiKey && LLM_CONFIG.geminiApiKey.length > 0;
-    console.log('[LLM] LLM_CONFIG defined:', typeof LLM_CONFIG !== 'undefined', 'API Key present:', !!LLM_CONFIG?.geminiApiKey);
+    console.log('[LLM] LLM_CONFIG:', LLM_CONFIG);
+    console.log('[LLM] geminiApiKey value:', LLM_CONFIG?.geminiApiKey);
+    console.log('[LLM] hasApiKey:', hasApiKey);
     
     if (hasApiKey) {
         // Use Google Gemini API
         contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
-        console.log('[LLM] Calling Gemini API with key:', LLM_CONFIG.geminiApiKey.substring(0, 10) + '...');
+        console.log('[LLM] Calling Gemini API with key:', LLM_CONFIG.geminiApiKey ? LLM_CONFIG.geminiApiKey.substring(0, 10) + '...' : 'EMPTY');
         
         fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${LLM_CONFIG.geminiApiKey}`, {
             method: 'POST',
