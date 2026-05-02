@@ -1872,6 +1872,15 @@ if (elDashTotalRecettes) {
     // Count months with data
     const monthsWithData = Object.values(monthlyData).filter(m => m.depenses > 0 || m.recettes > 0).length;
     
+    // Build depensesParCat and sortedCats early (needed for KPIs)
+    const depensesParCat = {};
+    cabinetDepenses.forEach(d => {
+        const cat = CABINET_CATEGORIES[d.category];
+        const catLabel = cat ? cat.label : d.category;
+        depensesParCat[catLabel] = (depensesParCat[catLabel] || 0) + d.amount;
+    });
+    const sortedCats = Object.entries(depensesParCat).sort((a, b) => b[1] - a[1]);
+    
     // Current month data
     const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const thisMonthDepenses = monthlyData[currentMonthKey]?.depenses || 0;
@@ -1989,15 +1998,7 @@ if (elDashTotalRecettes) {
     if (elAvgRecettes) elAvgRecettes.textContent = `${avgRecettes.toFixed(2)}€`;
     if (elNbDepenses) elNbDepenses.textContent = nbDepenses;
     
-    // Dépenses par catégorie
-    const depensesParCat = {};
-    cabinetDepenses.forEach(d => {
-        const cat = CABINET_CATEGORIES[d.category];
-        const catLabel = cat ? cat.label : d.category;
-        depensesParCat[catLabel] = (depensesParCat[catLabel] || 0) + d.amount;
-    });
-    
-    const sortedCats = Object.entries(depensesParCat).sort((a, b) => b[1] - a[1]);
+    // Top catégories - reuse sortedCats computed earlier
     const topCatContainer = document.getElementById('topCategories');
     if (topCatContainer && totalDepenses > 0) {
         topCatContainer.innerHTML = sortedCats.slice(0, 5).map(([cat, amount]) => {
