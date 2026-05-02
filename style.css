@@ -1898,12 +1898,19 @@ h2 {
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all var(--transition-base);
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
 }
 
 .settings-card:hover {
     border-color: var(--color-primary-light);
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
+}
+
+.settings-card:active {
+    transform: translateY(0);
 }
 
 .settings-card-icon {
@@ -1949,7 +1956,7 @@ h2 {
 
 /* Mobile Bottom Navbar */
 .mobile-bottom-nav {
-    display: none;
+    display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -1960,6 +1967,12 @@ h2 {
     padding-bottom: max(8px, env(safe-area-inset-bottom));
     justify-content: space-around;
     z-index: 1000;
+}
+
+@media (min-width: 769px) {
+    .mobile-bottom-nav {
+        display: none;
+    }
 }
 
 .mobile-nav-item {
