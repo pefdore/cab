@@ -312,25 +312,25 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div id="cabinet-dashboard" style="display:none;">
                     <div class="compta-summary">
                         <div class="compta-card income">
-                            <span class="compta-label">Recettes année
+                            <span class="compta-label">Recettes totales
                                 <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <span class="tooltip-text">Somme des apports des associés (virements reçus) pour l'année en cours uniquement.</span></span>
+                                <span class="tooltip-text">Somme des apports des associés (virements reçus) enregistrés depuis le début de l'utilisation de l'application.</span></span>
                             </span>
                             <span class="compta-value" id="dash-cab-recettes">0€</span>
                             <span class="compta-trend" id="recettesTrend"></span>
                         </div>
                         <div class="compta-card expense">
-                            <span class="compta-label">Dépenses année
+                            <span class="compta-label">Dépenses totales
                                 <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <span class="tooltip-text">Somme de toutes les dépenses du cabinet pour l'année en cours uniquement.</span></span>
+                                <span class="tooltip-text">Somme de toutes les dépenses du cabinet (loyer, charges sociales, fournitures, logiciels...) classées par catégorie.</span></span>
                             </span>
                             <span class="compta-value" id="dash-cab-depenses">0€</span>
                             <span class="compta-trend" id="depensesTrend"></span>
                         </div>
                         <div class="compta-card balance">
-                            <span class="compta-label">Balance année
+                            <span class="compta-label">Balance nette
                                 <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <span class="tooltip-text">Différence entre les apports et les charges de l'année en cours. Positif = excédent, Négatif = déficit.</span></span>
+                                <span class="tooltip-text">Différence entre les recettes et les dépenses. Positif = excédent (bénéfice), Négatif = déficit.</span></span>
                             </span>
                             <span class="compta-value" id="dash-cab-balance">0€</span>
                             <span class="compta-trend" id="balanceTrend"></span>
@@ -391,18 +391,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             </div>
                         </div>
                         <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon orange">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
-                            </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Moy. mensuelle
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Moyenne mensuelle des charges sur l'année en cours. Permet de mieux anticiper les besoins de trésorerie.</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="avgMonthlyDepenses">-</span>
-                            </div>
-                        </div>
-                        <div class="cabinet-stat-card">
                             <div class="cabinet-stat-icon teal">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </div>
@@ -443,7 +431,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     <div class="chart-card">
                         <h3>Évolution mensuelle (12 derniers mois)
                             <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            <span class="tooltip-text">Graphique en barres显示ant les apports et charges des 12 derniers mois. Cliquez sur un mois pour voir le détail.</span></span>
+                            <span class="tooltip-text">Graphique en barres显示过去12个月的收入和支出。点击任意月份可查看该月的详细金额。</span></span>
                         </h3>
                         <div class="chart-legend">
                             <span class="legend-item"><span class="legend-dot expense"></span>Dépenses</span>

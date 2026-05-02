@@ -1825,19 +1825,9 @@ function renderComptaSummary() {
     
     console.log('[COMPTAB] Data check - cabinetDepenses:', cabinetDepenses.length, 'cabinetRecettes:', cabinetRecettes.length);
     
-    // Filter to current year only (YTD)
-    const currentYear = new Date().getFullYear();
-    const ytdDepenses = cabinetDepenses.filter(d => d.date && d.date.startsWith(String(currentYear)));
-    const ytdRecettes = cabinetRecettes.filter(r => r.date && r.date.startsWith(String(currentYear)));
-    
-    const totalDepenses = ytdDepenses.reduce((sum, d) => sum + d.amount, 0);
-    const totalRecettes = ytdRecettes.reduce((sum, r) => sum + r.amount, 0);
+    const totalDepenses = cabinetDepenses.reduce((sum, d) => sum + d.amount, 0);
+    const totalRecettes = cabinetRecettes.reduce((sum, r) => sum + r.amount, 0);
     const balance = totalRecettes - totalDepenses;
-    
-    // Calculate monthly averages
-    const monthsWithData = Object.keys(monthlyData).filter(k => k.startsWith(String(currentYear))).length || 1;
-    const avgMonthlyDepenses = totalDepenses / monthsWithData;
-    const avgMonthlyRecettes = totalRecettes / monthsWithData;
     
     console.log('[COMPTAB] Totals - Depenses:', totalDepenses, 'Recettes:', totalRecettes, 'Balance:', balance);
     
@@ -1905,19 +1895,21 @@ if (elDashTotalRecettes) {
     // Update stats elements
     const elRecettesThisMonth = document.getElementById('recettesThisMonth');
     const elDepensesThisMonth = document.getElementById('depensesThisMonth');
+    const elCumulAnnee = document.getElementById('cumulAnnee');
     const elTauxMarge = document.getElementById('tauxMarge');
     const elVsAnneePrecedente = document.getElementById('vsAnneePrecedente');
     const elReserveTresorerie = document.getElementById('reserveTresorerie');
     const elTopPostes = document.getElementById('topPostes');
     const elAlertesCount = document.getElementById('alertesCount');
-    const elAvgMonthlyDepenses = document.getElementById('avgMonthlyDepenses');
     
     if (elRecettesThisMonth) elRecettesThisMonth.textContent = `${thisMonthRecettes.toFixed(0)}€`;
     if (elDepensesThisMonth) elDepensesThisMonth.textContent = `${thisMonthDepenses.toFixed(0)}€`;
     
-    // Average monthly depenses
-    if (elAvgMonthlyDepenses) {
-        elAvgMonthlyDepenses.textContent = `${avgMonthlyDepenses.toFixed(0)}€`;
+    // Cumul année (recettes - depenses YTD)
+    const cumulAnnee = totalRecettes - totalDepenses;
+    if (elCumulAnnee) {
+        elCumulAnnee.textContent = `${cumulAnnee >= 0 ? '+' : ''}${cumulAnnee.toFixed(0)}€`;
+        elCumulAnnee.style.color = cumulAnnee >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
     }
     
     // Taux de marge
@@ -1934,17 +1926,17 @@ if (elDashTotalRecettes) {
         .reduce((sum, [, m]) => sum + m.recettes - m.depenses, 0);
     if (elVsAnneePrecedente) {
         if (prevYearTotal > 0) {
-            const diff = ((balance - prevYearTotal) / prevYearTotal * 100).toFixed(0);
+            const diff = ((cumulAnnee - prevYearTotal) / prevYearTotal * 100).toFixed(0);
             elVsAnneePrecedente.textContent = `${diff >= 0 ? '+' : ''}${diff}%`;
             elVsAnneePrecedente.style.color = diff >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
         } else {
-            elVsAnneePrecedente.textContent = balance > 0 ? '+ Nouveau' : '-';
-            elVsAnneePrecedente.style.color = balance > 0 ? 'var(--color-success)' : 'var(--color-text-tertiary)';
+            elVsAnneePrecedente.textContent = cumulAnnee > 0 ? '+ Nouveau' : '-';
+            elVsAnneePrecedente.style.color = cumulAnnee > 0 ? 'var(--color-success)' : 'var(--color-text-tertiary)';
         }
     }
     
     // Réserve trésorerie (nombre de mois de dépenses couverts par la balance)
-    // Note: avgMonthlyDepenses already calculated above
+    const avgMonthlyDepenses = totalDepenses / Math.max(monthsWithData, 1);
     const reserveMois = avgMonthlyDepenses > 0 ? Math.floor(balance / avgMonthlyDepenses) : 0;
     if (elReserveTresorerie) {
         elReserveTresorerie.textContent = reserveMois >= 0 ? `${reserveMois} mois` : 'Négatif';
