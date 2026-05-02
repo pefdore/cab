@@ -2267,10 +2267,40 @@ function refreshLLMAnalysis(type) {
     });
     data.monthlyData = monthlyData;
     
-    // Generate response based on type (placeholder - to be connected to LLM)
+    // Generate response based on type
     const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
     
-    // Simulated responses (replace with actual LLM API call)
+    // Check if API is configured
+    const hasApiKey = typeof CONFIG !== 'undefined' && CONFIG && CONFIG.geminiApiKey && CONFIG.geminiApiKey.length > 0;
+    console.log('[LLM] CONFIG defined:', typeof CONFIG !== 'undefined', 'API Key present:', !!CONFIG?.geminiApiKey);
+    
+    if (hasApiKey) {
+        // Use Google Gemini API
+        contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
+        console.log('[LLM] Calling Gemini API with key:', CONFIG.geminiApiKey.substring(0, 10) + '...');
+        
+        fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${CONFIG.geminiApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt + '\n\nRéponds en français de manière concise (3 points max).' }] }]
+            })
+        })
+        .then(res => {
+            console.log('[LLM] Response status:', res.status);
+            return res.json();
+        })
+        .then(result => {
+            console.log('[LLM] Result:', JSON.stringify(result).substring(0, 200));
+            const response = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Erreur: ' + JSON.stringify(result).substring(0, 100);
+            contentEl.innerHTML = `<p>${response.replace(/\n/g, '<br>')}</p>`;
+        })
+        .catch(err => {
+            console.error('[LLM] Error:', err);
+            contentEl.innerHTML = '<p class="llm-error">Erreur de connexion IA</p>';
+        });
+    } else {
+    // Fallback to simulated responses
     setTimeout(() => {
         const responses = {
             optimisation: `<ul>
@@ -2297,6 +2327,7 @@ function refreshLLMAnalysis(type) {
         
         contentEl.innerHTML = responses[type] || '<p>Aucune analyse disponible</p>';
     }, 800);
+    }
 }
 
 window.refreshLLMAnalysis = refreshLLMAnalysis;
