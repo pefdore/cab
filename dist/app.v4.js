@@ -1853,6 +1853,7 @@ if (elDashTotalRecettes) {
     // Build monthly data first (needed for trends)
     const monthlyData = {};
     const now = new Date();
+    const currentYear = now.getFullYear();
     for (let i = 11; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -1868,6 +1869,34 @@ if (elDashTotalRecettes) {
         const key = r.date ? r.date.substring(0, 7) : null;
         if (key && monthlyData[key]) monthlyData[key].recettes += r.amount;
     });
+    
+    // Calculate YTD totals from monthlyData (current year only)
+    const ytdData = Object.entries(monthlyData)
+        .filter(([key]) => key.startsWith(String(currentYear)))
+        .reduce((acc, [, m]) => ({
+            depenses: acc.depenses + m.depenses,
+            recettes: acc.recettes + m.recettes
+        }), { depenses: 0, recettes: 0 });
+    
+    // Update dashboard with YTD totals
+    const ytdTotalDepenses = ytdData.depenses;
+    const ytdTotalRecettes = ytdData.recettes;
+    const ytdBalance = ytdTotalRecettes - ytdTotalDepenses;
+    
+    if (elDashTotalRecettes) {
+        elDashTotalRecettes.textContent = `${ytdTotalRecettes.toFixed(2)}€`;
+    }
+    if (elDashTotalDepenses) {
+        elDashTotalDepenses.textContent = `${ytdTotalDepenses.toFixed(2)}€`;
+    }
+    if (elDashBalance) {
+        elDashBalance.textContent = `${ytdBalance.toFixed(2)}€`;
+    }
+    
+    // Calculate monthly averages for current year
+    const yearMonths = Object.keys(monthlyData).filter(k => k.startsWith(String(currentYear))).length || 1;
+    const avgMonthlyDepenses = ytdTotalDepenses / yearMonths;
+    const avgMonthlyRecettes = ytdTotalRecettes / yearMonths;
     
     // Count months with data
     const monthsWithData = Object.values(monthlyData).filter(m => m.depenses > 0 || m.recettes > 0).length;
@@ -1895,25 +1924,23 @@ if (elDashTotalRecettes) {
     // Update stats elements
     const elRecettesThisMonth = document.getElementById('recettesThisMonth');
     const elDepensesThisMonth = document.getElementById('depensesThisMonth');
-    const elCumulAnnee = document.getElementById('cumulAnnee');
     const elTauxMarge = document.getElementById('tauxMarge');
     const elVsAnneePrecedente = document.getElementById('vsAnneePrecedente');
     const elReserveTresorerie = document.getElementById('reserveTresorerie');
     const elTopPostes = document.getElementById('topPostes');
     const elAlertesCount = document.getElementById('alertesCount');
+    const elAvgMonthlyDepenses = document.getElementById('avgMonthlyDepenses');
     
     if (elRecettesThisMonth) elRecettesThisMonth.textContent = `${thisMonthRecettes.toFixed(0)}€`;
     if (elDepensesThisMonth) elDepensesThisMonth.textContent = `${thisMonthDepenses.toFixed(0)}€`;
     
-    // Cumul année (recettes - depenses YTD)
-    const cumulAnnee = totalRecettes - totalDepenses;
-    if (elCumulAnnee) {
-        elCumulAnnee.textContent = `${cumulAnnee >= 0 ? '+' : ''}${cumulAnnee.toFixed(0)}€`;
-        elCumulAnnee.style.color = cumulAnnee >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    // Average monthly depenses
+    if (elAvgMonthlyDepenses) {
+        elAvgMonthlyDepenses.textContent = `${avgMonthlyDepenses.toFixed(0)}€`;
     }
     
-    // Taux de marge
-    const tauxMarge = totalRecettes > 0 ? ((totalRecettes - totalDepenses) / totalRecettes * 100) : 0;
+    // Taux de marge (YTD)
+    const tauxMarge = ytdTotalRecettes > 0 ? ((ytdTotalRecettes - ytdTotalDepenses) / ytdTotalRecettes * 100) : 0;
     if (elTauxMarge) {
         elTauxMarge.textContent = `${tauxMarge >= 0 ? '+' : ''}${tauxMarge.toFixed(1)}%`;
         elTauxMarge.style.color = tauxMarge >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
@@ -1936,7 +1963,7 @@ if (elDashTotalRecettes) {
     }
     
     // Réserve trésorerie (nombre de mois de dépenses couverts par la balance)
-    const avgMonthlyDepenses = totalDepenses / Math.max(monthsWithData, 1);
+    // avgMonthlyDepenses is calculated earlier with YTD data
     const reserveMois = avgMonthlyDepenses > 0 ? Math.floor(balance / avgMonthlyDepenses) : 0;
     if (elReserveTresorerie) {
         elReserveTresorerie.textContent = reserveMois >= 0 ? `${reserveMois} mois` : 'Négatif';
@@ -1951,11 +1978,11 @@ if (elDashTotalRecettes) {
     // Alertes: postes en hausse significative ou anormaux
     let alertes = [];
     sortedCats.forEach(([cat, amount]) => {
-        const pct = (amount / totalDepenses) * 100;
+        const pct = (amount / ytdTotalDepenses) * 100;
         if (pct > 40) alertes.push(`${cat}: ${pct.toFixed(0)}%`);
     });
-    if (balance < 0) alertes.push('Balance négative');
-    if (reserveMois < 1 && balance < 0) alertes.push('Trésorerie critique');
+    if (ytdBalance < 0) alertes.push('Balance négative');
+    if (reserveMois < 1 && ytdBalance < 0) alertes.push('Trésorerie critique');
     if (elAlertesCount) {
         elAlertesCount.textContent = alertes.length > 0 ? `${alertes.length}` : '0';
         elAlertesCount.style.color = alertes.length > 0 ? 'var(--color-danger)' : 'var(--color-success)';
@@ -1988,9 +2015,10 @@ if (elDashTotalRecettes) {
     updateTrend('balanceTrend', thisMonthRecettes - thisMonthDepenses, prevMonthRecettes - prevMonthDepenses);
     
     // Moyennes (legacy elements - check if exist)
-    const nbDepenses = cabinetDepenses.length;
-    const avgDepenses = nbDepenses > 0 ? totalDepenses / nbDepenses : 0;
-    const avgRecettes = cabinetRecettes.length > 0 ? totalRecettes / cabinetRecettes.length : 0;
+    const nbDepenses = ytdData.depenses > 0 ? cabinetDepenses.filter(d => d.date && d.date.startsWith(String(currentYear))).length : 0;
+    const avgDepenses = nbDepenses > 0 ? ytdTotalDepenses / nbDepenses : 0;
+    const ytdRecettesCount = cabinetRecettes.filter(r => r.date && r.date.startsWith(String(currentYear))).length;
+    const avgRecettes = ytdRecettesCount > 0 ? ytdTotalRecettes / ytdRecettesCount : 0;
     const elAvgDepenses = document.getElementById('avgDepenses');
     const elAvgRecettes = document.getElementById('avgRecettes');
     const elNbDepenses = document.getElementById('nbDepenses');
@@ -2000,9 +2028,9 @@ if (elDashTotalRecettes) {
     
     // Top catégories - reuse sortedCats computed earlier
     const topCatContainer = document.getElementById('topCategories');
-    if (topCatContainer && totalDepenses > 0) {
+    if (topCatContainer && ytdTotalDepenses > 0) {
         topCatContainer.innerHTML = sortedCats.slice(0, 5).map(([cat, amount]) => {
-            const pct = ((amount / totalDepenses) * 100).toFixed(1);
+            const pct = ((amount / ytdTotalDepenses) * 100).toFixed(1);
             return `<div class="top-cat-item"><span class="top-cat-name">${cat}</span><span class="top-cat-pct">${pct}%</span></div>`;
         }).join('');
     }
@@ -2010,14 +2038,14 @@ if (elDashTotalRecettes) {
     // Donut Chart - Répartition dépenses
     const donutContainer = document.getElementById('depensesPieChart');
     const donutLegendContainer = document.getElementById('depensesPieLegend');
-    console.log('[COMPTAB] donutContainer found:', !!donutContainer, 'totalDepenses:', totalDepenses);
-    if (donutContainer && totalDepenses > 0) {
+    console.log('[COMPTAB] donutContainer found:', !!donutContainer, 'totalDepenses:', ytdTotalDepenses);
+    if (donutContainer && ytdTotalDepenses > 0) {
         let gradient = '';
         const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
         let cumulative = 0;
         const legendItems = [];
         sortedCats.slice(0, 6).forEach(([cat, amount], i) => {
-            const pct = (amount / totalDepenses) * 100;
+            const pct = (amount / ytdTotalDepenses) * 100;
             const end = cumulative + pct;
             gradient += `${colors[i % colors.length]} ${cumulative}% ${end}%, `;
             cumulative = end;
