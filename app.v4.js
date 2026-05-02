@@ -455,7 +455,7 @@ function switchDashboardMode(mode) {
         }
         if (cabinetDash) {
             cabinetDash.classList.remove('hidden');
-            cabinetDash.style.display = 'block';
+            cabinetDash.style.display = 'block !important';
             console.log('[DASH] Showing cabinet-dashboard');
             
             loadCabinetData();
