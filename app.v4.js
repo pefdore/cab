@@ -2139,6 +2139,36 @@ function showBarTooltip(event, idx) {
 
 window.showBarTooltip = showBarTooltip;
 
+// ===== CABINET TOOLTIP POSITIONING =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle cabinet-tooltip positioning
+    document.querySelectorAll('.cabinet-tooltip').forEach(function(trigger) {
+        const tooltip = trigger.querySelector('.tooltip-text');
+        if (!tooltip) return;
+        
+        trigger.addEventListener('mouseenter', function(e) {
+            const rect = trigger.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+            
+            // Position below the trigger
+            let top = rect.bottom + 8;
+            let left = rect.left + (rect.width / 2) - (110); // Center the tooltip (220/2)
+            
+            // Adjust if off-screen
+            if (left < 10) left = 10;
+            if (left + 220 > window.innerWidth - 10) {
+                left = window.innerWidth - 230;
+            }
+            if (top + tooltipRect.height > window.innerHeight - 10) {
+                top = rect.top - tooltipRect.height - 8;
+            }
+            
+            tooltip.style.top = top + 'px';
+            tooltip.style.left = left + 'px';
+        });
+    });
+});
+
 // ===== LLM ANALYSIS FUNCTIONS =====
 const LLM_PROMPTS = {
     optimisation: (data) => `Analyze these expenses and suggest optimizations: ${JSON.stringify(data.topCategories.slice(0,5))}. Total expenses: ${data.totalDepenses}€. Give 3 specific actionable recommendations.`,
