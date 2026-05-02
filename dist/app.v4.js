@@ -2222,6 +2222,11 @@ const LLM_PROMPTS = {
     recommandations: (data) => `Based on: total ${data.totalRecettes}€ revenue, ${data.totalDepenses}€ expenses, ${data.tauxMarge}% margin, alerts: ${JSON.stringify(data.alertes || [])}, give 3 concrete actions to improve financial health.`
 };
 
+// CONFIGURATION LLM - fallback if llm-config.js not loaded
+if (typeof LLM_CONFIG === 'undefined') {
+    var LLM_CONFIG = { geminiApiKey: '' };
+}
+
 function refreshLLMAnalysis(type) {
     const contentEl = document.getElementById(`llm-${type}-content`);
     if (!contentEl) return;
