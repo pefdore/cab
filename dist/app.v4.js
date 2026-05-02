@@ -430,6 +430,8 @@ const RECETTE_CATEGORIES = {
 const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
 
 function switchDashboardMode(mode) {
+    console.log('[TOGGLE] switchDashboardMode called with mode:', mode);
+    
     // Toggle buttons
     var btns = document.querySelectorAll('.switch-btn');
     for (var i = 0; i < btns.length; i++) {
@@ -445,17 +447,27 @@ function switchDashboardMode(mode) {
     
     if (mode === 'cotation') {
         // Hide cabinet, show cotation
-        if (cabinetDash) cabinetDash.style.display = 'none';
+        console.log('[TOGGLE] Switching to COTATION');
+        if (cabinetDash) {
+            cabinetDash.style.display = 'none !important';
+            console.log('[TOGGLE] cabinet-dashboard hidden');
+        }
         if (cotationDash) {
             cotationDash.style.display = 'block';
+            console.log('[TOGGLE] cotation-dashboard shown');
             // Load cotation data when showing
             if (typeof updateStats === 'function') updateStats();
         }
     } else {
         // Hide cotation, show cabinet
-        if (cotationDash) cotationDash.style.display = 'none';
+        console.log('[TOGGLE] Switching to CABINET');
+        if (cotationDash) {
+            cotationDash.style.display = 'none !important';
+            console.log('[TOGGLE] cotation-dashboard hidden');
+        }
         if (cabinetDash) {
             cabinetDash.style.display = 'block';
+            console.log('[TOGGLE] cabinet-dashboard shown');
             loadCabinetData();
         }
     }
@@ -1795,13 +1807,17 @@ function renderRecettes() {
 
 function renderComptaSummary() {
     console.log('[COMPTAB] renderComptaSummary called - v74');
+    
+    // CRITICAL: Only render if cabinet-dashboard is actually visible
+    const cabinetDash = document.getElementById('cabinet-dashboard');
+    if (!cabinetDash || cabinetDash.style.display === 'none') {
+        console.log('[COMPTAB] cabinet-dashboard not visible, skipping render');
+        return;
+    }
+    
+    console.log('[COMPTAB] cabinet-dashboard IS visible, rendering...');
     console.log('[COMPTAB] cabinetDepenses:', cabinetDepenses?.length || 0);
     console.log('[COMPTAB] cabinetRecettes:', cabinetRecettes?.length || 0);
-    
-    // Check if cabinet-dashboard is visible
-    const cabinetDash = document.getElementById('cabinet-dashboard');
-    console.log('[COMPTAB] cabinet-dashboard element:', !!cabinetDash);
-    console.log('[COMPTAB] cabinet-dashboard display:', cabinetDash?.style.display);
     
     if (!cabinetDepenses) cabinetDepenses = [];
     if (!cabinetRecettes) cabinetRecettes = [];
