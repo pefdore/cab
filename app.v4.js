@@ -1869,6 +1869,9 @@ if (elDashTotalRecettes) {
         if (key && monthlyData[key]) monthlyData[key].recettes += r.amount;
     });
     
+    // Count months with data
+    const monthsWithData = Object.values(monthlyData).filter(m => m.depenses > 0 || m.recettes > 0).length;
+    
     // Current month data
     const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const thisMonthDepenses = monthlyData[currentMonthKey]?.depenses || 0;
@@ -1994,7 +1997,6 @@ if (elDashTotalRecettes) {
         depensesParCat[catLabel] = (depensesParCat[catLabel] || 0) + d.amount;
     });
     
-    // Top catégories triées
     const sortedCats = Object.entries(depensesParCat).sort((a, b) => b[1] - a[1]);
     const topCatContainer = document.getElementById('topCategories');
     if (topCatContainer && totalDepenses > 0) {
