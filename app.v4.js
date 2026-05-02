@@ -2006,6 +2006,7 @@ if (elDashTotalRecettes) {
     
     // Donut Chart - Répartition dépenses
     const donutContainer = document.getElementById('depensesPieChart');
+    console.log('[COMPTAB] donutContainer found:', !!donutContainer, 'totalDepenses:', totalDepenses);
     if (donutContainer && totalDepenses > 0) {
         let gradient = '';
         const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
@@ -2022,10 +2023,14 @@ if (elDashTotalRecettes) {
     
     // Evolution mensuelle - Bar chart (12 derniers mois) - click to show amounts
     const monthlyValues = Object.values(monthlyData);
+    console.log('[COMPTAB] monthlyValues:', monthlyValues);
     const maxValue = Math.max(...monthlyValues.map(m => Math.max(m.depenses, m.recettes)), 1);
+    console.log('[COMPTAB] maxValue for chart:', maxValue);
     
     const barContainer = document.getElementById('evolutionChart');
+    console.log('[COMPTAB] barContainer found:', !!barContainer);
     if (barContainer) {
+        console.log('[COMPTAB] Rendering bar chart with', monthlyValues.length, 'months');
         barContainer.innerHTML = monthlyValues.map((m, idx) => {
             const depHeight = (m.depenses / maxValue) * 100;
             const recHeight = (m.recettes / maxValue) * 100;
@@ -2057,7 +2062,9 @@ if (elDashTotalRecettes) {
     
     // Dashboard - Recent depenses
     const recentDepContainer = document.getElementById('dashRecentDepenses');
+    console.log('[COMPTAB] recentDepContainer found:', !!recentDepContainer, 'depenses count:', cabinetDepenses.length);
     if (recentDepContainer) {
+        console.log('[COMPTAB] Rendering recent depenses, first 5:', cabinetDepenses.slice(0, 5));
         recentDepContainer.innerHTML = cabinetDepenses.slice(0, 5).map(d => `
             <div class="recent-item">
                 <span>${d.description || d.sous_categorie || '-'}</span>
@@ -2068,7 +2075,9 @@ if (elDashTotalRecettes) {
     
     // Dashboard - Recent recettes
     const recentRecContainer = document.getElementById('dashRecentRecettes');
+    console.log('[COMPTAB] recentRecContainer found:', !!recentRecContainer, 'recettes count:', cabinetRecettes.length);
     if (recentRecContainer) {
+        console.log('[COMPTAB] Rendering recent recettes, first 5:', cabinetRecettes.slice(0, 5));
         recentRecContainer.innerHTML = cabinetRecettes.slice(0, 5).map(r => `
             <div class="recent-item">
                 <span>${r.description || '-'}</span>
