@@ -1348,6 +1348,8 @@ function handleSignatureUpload(e) {
 
 // Settings page navigation
 function openSettingsPage(pageName) {
+    console.log('openSettingsPage called with:', pageName);
+    alert('Opening page: ' + pageName);
     const menu = document.getElementById('settings-menu');
     const backBtn = document.getElementById('settingsBackBtn');
     const title = document.querySelector('#view-settings h2');
