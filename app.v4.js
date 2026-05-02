@@ -444,15 +444,15 @@ function switchDashboardMode(mode) {
     var cabinetDash = document.getElementById('cabinet-dashboard');
     
     if (mode === 'cotation') {
+        // Hide cabinet, show cotation
+        if (cabinetDash) cabinetDash.style.display = 'none';
         if (cotationDash) {
             cotationDash.style.display = 'block';
-            // Refresh stats when showing cotation
+            // Load cotation data when showing
             if (typeof updateStats === 'function') updateStats();
-            if (typeof renderCharts === 'function') renderCharts();
-            if (typeof renderRecentList === 'function') renderRecentList();
         }
-        if (cabinetDash) cabinetDash.style.display = 'none';
     } else {
+        // Hide cotation, show cabinet
         if (cotationDash) cotationDash.style.display = 'none';
         if (cabinetDash) {
             cabinetDash.style.display = 'block';
