@@ -430,7 +430,7 @@ const RECETTE_CATEGORIES = {
 const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
 
 function switchDashboardMode(mode) {
-    alert('switchDashboardMode CALLED with: ' + mode);
+    alert('FUNC: mode=' + mode + ' cabinetDash=' + !!document.getElementById('cabinet-dashboard'));
     console.log('[DASH] switchDashboardMode:', mode);
     document.querySelectorAll('.switch-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
