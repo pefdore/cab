@@ -2198,8 +2198,8 @@ h2 {
         -webkit-font-smoothing: antialiased;
     }
     
-    #view-settings {
-        display: none;
+    #view-settings.active {
+        display: block;
     }
     
     /* App container */
