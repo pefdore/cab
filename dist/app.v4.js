@@ -444,7 +444,13 @@ function switchDashboardMode(mode) {
     var cabinetDash = document.getElementById('cabinet-dashboard');
     
     if (mode === 'cotation') {
-        if (cotationDash) cotationDash.style.display = 'block';
+        if (cotationDash) {
+            cotationDash.style.display = 'block';
+            // Refresh stats when showing cotation
+            if (typeof updateStats === 'function') updateStats();
+            if (typeof renderCharts === 'function') renderCharts();
+            if (typeof renderRecentList === 'function') renderRecentList();
+        }
         if (cabinetDash) cabinetDash.style.display = 'none';
     } else {
         if (cotationDash) cotationDash.style.display = 'none';
