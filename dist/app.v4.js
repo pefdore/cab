@@ -1795,7 +1795,7 @@ function renderRecettes() {
 }
 
 function renderComptaSummary() {
-    console.log('[COMPTAB] renderComptaSummary called');
+    console.log('[COMPTAB] renderComptaSummary called - v74');
     console.log('[COMPTAB] cabinetDepenses:', cabinetDepenses?.length || 0);
     console.log('[COMPTAB] cabinetRecettes:', cabinetRecettes?.length || 0);
     
