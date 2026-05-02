@@ -1358,15 +1358,20 @@ function openSettingsPage(pageName) {
     if (backBtn) backBtn.style.display = 'flex';
     if (title) title.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
     
+    alert('menu hidden');
+    
     // Hide all settings pages
     document.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
     
     // Show the selected page
     const page = document.getElementById(`settings-page-${pageName}`);
+    alert('page element: ' + page);
     if (page) {
         page.style.display = 'block';
         page.classList.add('active');
     }
+    
+    alert('page shown');
     
     // Load data for specific pages
     if (pageName === 'profil') {
