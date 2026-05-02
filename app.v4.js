@@ -85,7 +85,7 @@ async function onAuthSuccess() {
     loadUserProfile();
     loadUserSettings();
     
-    try {
+try {
         console.log('[AUTH] Calling loadData...');
         await loadData();
         console.log('[AUTH] loadData completed, entries:', entries.length);
@@ -1634,11 +1634,10 @@ function switchView(viewName) {
         }
     } else if (viewName === 'cabinet') {
         loadCabinetData();
+        renderComptaSummary();
     } else if (viewName === 'add') {
         renderEntries();
         loadVLHistory().then(() => renderRecentVLForAdd());
-    } else if (viewName === 'cabinet') {
-        loadCabinetData();
     }
 }
 
@@ -1663,7 +1662,8 @@ window.toggleRecetteForm = toggleRecetteForm;
 
 async function loadCabinetData() {
     // Load data for all authenticated users
-    if (currentUser) {
+    // Only proceed if supabaseClient is initialized
+    if (currentUser && supabaseClient) {
         console.log('Loading cabinet data for user:', currentUser.id);
         await loadDepenses();
         await loadRecettes();
