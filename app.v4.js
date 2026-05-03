@@ -1925,8 +1925,10 @@ window.deleteCotation = deleteCotation;
 
 // LLM API functions
 window.saveOpenRouterKey = function() {
+    console.log('[DEBUG] saveOpenRouterKey called');
     const input = document.getElementById('openrouterApiKey');
     const status = document.getElementById('openrouterStatus');
+    console.log('[DEBUG] input:', input, 'value:', input ? input.value : 'N/A');
     
     if (!input || !input.value.trim()) {
         alert('Veuillez entrer une clé API');
