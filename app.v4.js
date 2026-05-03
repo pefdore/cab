@@ -2222,14 +2222,23 @@ const LLM_PROMPTS = {
     recommandations: (data) => `Based on: total ${data.totalRecettes}€ revenue, ${data.totalDepenses}€ expenses, ${data.tauxMarge}% margin, alerts: ${JSON.stringify(data.alertes || [])}, give 3 concrete actions to improve financial health.`
 };
 
+// Ensure LLM_CONFIG is defined
+if (typeof LLM_CONFIG === 'undefined') {
+  var LLM_CONFIG = {};
+}
+
 // CONFIGURATION LLM - Get API key from loaded config files
 // Try various possible sources
 var groqKey = '';
-if (typeof LLM_CONFIG !== 'undefined' && LLM_CONFIG && LLM_CONFIG.groqApiKey) {
-  groqKey = LLM_CONFIG.groqApiKey;
-} else if (typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.groqApiKey) {
+if (typeof LLM_CONFIG !== 'undefined') {
+  if (LLM_CONFIG && LLM_CONFIG.groqApiKey) {
+    groqKey = LLM_CONFIG.groqApiKey;
+  }
+}
+if (!groqKey && typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.groqApiKey) {
   groqKey = API_CONFIG.groqApiKey;
-} else if (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
+}
+if (!groqKey && typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
   groqKey = CONFIG.GROQ_API_KEY;
 }
 
