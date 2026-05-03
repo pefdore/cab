@@ -2160,6 +2160,14 @@ function switchView(viewName) {
                     card.addEventListener('click', (e) => {
                         e.preventDefault();
                         const pageName = card.dataset.settingsPage;
+                        const pageNames = {
+                            'profil': 'Profil',
+                            'cotation': 'Cotations',
+                            'pdf': 'PDF',
+                            'preferences': 'Préférences',
+                            'donnees': 'Données'
+                        };
+                        const displayName = pageNames[pageName] || pageName;
                         
                         if (pageName) {
                             // Hide menu
@@ -2180,7 +2188,7 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
-                            // Add or update back button - ONLY for sub-pages (not preferences)
+                            // Add back button - ONLY for sub-pages (not preferences)
                             let backBtn = overlay.querySelector('.overlay-back-btn');
                             if (pageName !== 'preferences') {
                                 if (!backBtn) {
@@ -2188,7 +2196,7 @@ function switchView(viewName) {
                                     backBtn.className = 'overlay-back-btn';
                                     overlay.insertBefore(backBtn, overlay.firstChild);
                                 }
-                                backBtn.innerHTML = `<span class="back-arrow">Retour</span>`;
+                                backBtn.innerHTML = `<span class="back-arrow">← Retour</span>`;
                                 backBtn.onclick = () => {
                                     // Show menu, hide all pages
                                     const menu = overlay.querySelector('.settings-menu');
@@ -2197,9 +2205,18 @@ function switchView(viewName) {
                                         p.style.display = 'none';
                                         p.classList.remove('active');
                                     });
+                                    // Remove back button
+                                    const btn = overlay.querySelector('.overlay-back-btn');
+                                    if (btn) btn.remove();
                                     // Show logout button again
                                     const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                                     if (logoutBtn) logoutBtn.style.display = 'flex';
+                                    // Show and reset h2 title
+                                    const h2 = overlay.querySelector('h2');
+                                    if (h2) {
+                                        h2.style.display = 'block';
+                                        h2.textContent = 'Paramètres';
+                                    }
                                 };
                             } else {
                                 // On preferences page, remove back button if exists
@@ -2209,35 +2226,15 @@ function switchView(viewName) {
                                 }
                             }
                             
-                            // Remove h2 title in overlay for sub-pages (let the page content show its own title)
+                            // Show and update h2 title in overlay
                             const h2 = overlay.querySelector('h2');
-                            if (h2) h2.style.display = 'none';
+                            if (h2) {
+                                h2.style.display = 'block';
+                                h2.textContent = displayName;
+                            }
                         }
                     });
                 });
-                
-                // Add click handler for close button to go back to menu
-                const closeBtn = overlay.querySelector('.settings-back-btn');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', () => {
-                        // Revenir au menu paramètres
-                        const menu = overlay.querySelector('.settings-menu');
-                        if (menu) menu.style.display = 'flex';
-                        overlay.querySelectorAll('.settings-page').forEach(p => {
-                            p.style.display = 'none';
-                            p.classList.remove('active');
-                        });
-                        // Show logout button again
-                        const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-                        if (logoutBtn) logoutBtn.style.display = 'flex';
-                        // Show and reset h2
-                        const h2 = overlay.querySelector('h2');
-                        if (h2) {
-                            h2.style.display = 'block';
-                            h2.textContent = 'Paramètres';
-                        }
-                    });
-                }
                 
                 // Set up tabs in overlay
                 overlay.querySelectorAll('.settings-tab').forEach(tab => {
