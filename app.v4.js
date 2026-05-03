@@ -547,11 +547,22 @@ function handleDepenseAutocomplete() {
     
     if (!input || !dropdown || !categorySelect) return;
     
+    // Make sure dropdown is positioned absolutely
+    dropdown.style.position = 'absolute';
+    dropdown.style.zIndex = '1000';
+    dropdown.style.background = 'var(--color-bg-elevated)';
+    dropdown.style.border = '1px solid var(--color-border)';
+    dropdown.style.borderRadius = '8px';
+    dropdown.style.boxShadow = 'var(--shadow-md)';
+    dropdown.style.width = '100%';
+    dropdown.style.maxHeight = '200px';
+    dropdown.style.overflowY = 'auto';
+    
     input.addEventListener('input', function() {
         const value = this.value.toLowerCase().trim();
         
         if (value.length < 2) {
-            dropdown.style.display = 'none';
+            dropdown.classList.remove('active');
             return;
         }
         
@@ -559,7 +570,7 @@ function handleDepenseAutocomplete() {
         
         if (cabinetDepenses.length === 0) {
             console.log('[AUTOCOMPLETE] No depenses loaded yet');
-            dropdown.style.display = 'none';
+            dropdown.classList.remove('active');
             return;
         }
         
@@ -572,7 +583,7 @@ function handleDepenseAutocomplete() {
         console.log('[AUTOCOMPLETE] Matches found:', matches.length);
         
         if (matches.length === 0) {
-            dropdown.style.display = 'none';
+            dropdown.classList.remove('active');
             return;
         }
         
@@ -594,19 +605,19 @@ function handleDepenseAutocomplete() {
             </div>`;
         }).join('');
         
-        dropdown.style.display = 'block';
+        dropdown.classList.add('active');
         
         dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
             item.addEventListener('click', function() {
                 input.value = this.dataset.description;
                 categorySelect.value = this.dataset.category;
-                dropdown.style.display = 'none';
+                dropdown.classList.remove('active');
             });
         });
     });
     
     input.addEventListener('blur', function() {
-        setTimeout(() => dropdown.style.display = 'none', 200);
+        setTimeout(() => dropdown.classList.remove('active'), 200);
     });
 }
 
@@ -617,11 +628,27 @@ function handleRecetteAutocomplete() {
     
     if (!input || !dropdown || !categorySelect) return;
     
+    // Make sure dropdown is positioned absolutely
+    dropdown.style.position = 'absolute';
+    dropdown.style.zIndex = '1000';
+    dropdown.style.background = 'var(--color-bg-elevated)';
+    dropdown.style.border = '1px solid var(--color-border)';
+    dropdown.style.borderRadius = '8px';
+    dropdown.style.boxShadow = 'var(--shadow-md)';
+    dropdown.style.width = '100%';
+    dropdown.style.maxHeight = '200px';
+    dropdown.style.overflowY = 'auto';
+    
     input.addEventListener('input', function() {
         const value = this.value.toLowerCase().trim();
         
         if (value.length < 2) {
-            dropdown.style.display = 'none';
+            dropdown.classList.remove('active');
+            return;
+        }
+        
+        if (cabinetRecettes.length === 0) {
+            dropdown.classList.remove('active');
             return;
         }
         
@@ -632,7 +659,7 @@ function handleRecetteAutocomplete() {
         ).slice(0, 5);
         
         if (matches.length === 0) {
-            dropdown.style.display = 'none';
+            dropdown.classList.remove('active');
             return;
         }
         
@@ -654,21 +681,24 @@ function handleRecetteAutocomplete() {
             </div>`;
         }).join('');
         
-        dropdown.style.display = 'block';
+        dropdown.classList.add('active');
         
         dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
             item.addEventListener('click', function() {
                 input.value = this.dataset.description;
                 categorySelect.value = this.dataset.category;
-                dropdown.style.display = 'none';
+                dropdown.classList.remove('active');
             });
         });
     });
     
     input.addEventListener('blur', function() {
-        setTimeout(() => dropdown.style.display = 'none', 200);
+        setTimeout(() => dropdown.classList.remove('active'), 200);
     });
 }
+
+// Dummy function to prevent errors
+function handleRecetteOld() {
 
 window.switchAddMode = switchAddMode;
 window.switchAddDepenseRecette = switchAddDepenseRecette;
