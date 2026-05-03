@@ -3674,6 +3674,11 @@ async function saveDepense() {
         return;
     }
     
+    if (!currentUser || !currentUser.id) {
+        alert('Vous devez être connecté pour enregistrer une dépense');
+        return;
+    }
+    
     const description = document.getElementById('add-depenseDescription')?.value;
     const amount = parseFloat(document.getElementById('add-depenseAmount')?.value);
     const category = document.getElementById('add-depenseCategory')?.value;
@@ -3713,6 +3718,11 @@ async function saveRecette() {
     // Check if we're in edit mode
     if (window._editingRecetteId) {
         await updateRecette(window._editingRecetteId);
+        return;
+    }
+    
+    if (!currentUser || !currentUser.id) {
+        alert('Vous devez être connecté pour enregistrer une recette');
         return;
     }
     
