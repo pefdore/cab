@@ -11,14 +11,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Cotation">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon-192.svg">
-    <link rel="apple-touch-icon" href="icon-192.svg">
+    <link rel="manifest" href="/assets/manifest-BGmaG6wq.json">
+    <link rel="icon" type="image/svg+xml" href="/assets/icon-192-mySIpaht.svg">
+    <link rel="apple-touch-icon" href="/assets/icon-192-mySIpaht.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=99">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" crossorigin href="/assets/main-B-QQxksW.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1153,6 +1153,18 @@ function submitRegisterForm() {
                             </label>
                         </div>
                     </div>
+
+                    <div class="settings-section">
+                        <h3>Intelligence Artificielle</h3>
+                        <p class="settings-desc">Configurez l'accès aux modèles IA pour l'analyse financière et autres fonctionnalités.</p>
+                        <div class="form-group">
+                            <label>Clé API OpenRouter</label>
+                            <input type="password" id="openrouterApiKey" placeholder="sk-or-...">
+                            <p class="form-hint">Obtenez votre clé sur <a href="https://openrouter.ai" target="_blank">openrouter.ai</a></p>
+                            <button type="button" class="btn-secondary" onclick="saveOpenRouterKey()">Enregistrer la clé</button>
+                            <p id="openrouterStatus" class="settings-desc" style="margin-top: 8px; color: var(--color-success);"></p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Données Page -->
@@ -1501,7 +1513,7 @@ function submitRegisterForm() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="llm-api.js" defer></script>
-    <script src="app.v4.js?v=110" defer></script>
+    <script src="app.v4.js?v=111" defer></script>
     <script>
       // DEBUG: Log everything
       console.log('[DEBUG] Inline script running');

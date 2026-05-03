@@ -1153,6 +1153,18 @@ function submitRegisterForm() {
                             </label>
                         </div>
                     </div>
+
+                    <div class="settings-section">
+                        <h3>Intelligence Artificielle</h3>
+                        <p class="settings-desc">Configurez l'accès aux modèles IA pour l'analyse financière et autres fonctionnalités.</p>
+                        <div class="form-group">
+                            <label>Clé API OpenRouter</label>
+                            <input type="password" id="openrouterApiKey" placeholder="sk-or-...">
+                            <p class="form-hint">Obtenez votre clé sur <a href="https://openrouter.ai" target="_blank">openrouter.ai</a></p>
+                            <button type="button" class="btn-secondary" onclick="saveOpenRouterKey()">Enregistrer la clé</button>
+                            <p id="openrouterStatus" class="settings-desc" style="margin-top: 8px; color: var(--color-success);"></p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Données Page -->

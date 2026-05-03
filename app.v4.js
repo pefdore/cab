@@ -279,6 +279,7 @@ async function loadUserSettings() {
         }
         renderLogoPreview();
         loadTheme();
+        loadOpenRouterKey();
     } catch (e) {
         console.error('[AUTH] Erreur chargement settings:', e);
     }
@@ -1897,6 +1898,7 @@ function openSettingsPage(pageName) {
         renderLogoPreview();
     } else if (pageName === 'preferences') {
         loadTheme();
+        loadOpenRouterKey();
     }
 }
 
@@ -2977,8 +2979,7 @@ if (typeof LLM_CONFIG === 'undefined') {
   var LLM_CONFIG = {};
 }
 
-// CONFIGURATION LLM - Get API key from loaded config files
-// Try various possible sources
+// CONFIGURATION LLM - Get API key from various sources (OpenRouter priority)
 var groqKey = '';
 if (typeof LLM_CONFIG !== 'undefined') {
   if (LLM_CONFIG && LLM_CONFIG.groqApiKey) {
@@ -2990,6 +2991,9 @@ if (!groqKey && typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.gr
 }
 if (!groqKey && typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
   groqKey = CONFIG.GROQ_API_KEY;
+}
+if (!groqKey) {
+  groqKey = localStorage.getItem('openrouter_api_key') || '';
 }
 
 console.log('[LLM] groqKey found:', groqKey ? 'YES' : 'NO');
@@ -3042,70 +3046,40 @@ function refreshLLMAnalysis(type) {
     // Generate response based on type
     const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
     
-    // Check if API is configured
-    const hasApiKey = groqKey && groqKey.length > 0;
-    console.log('[LLM] LLM_CONFIG:', LLM_CONFIG);
-    console.log('[LLM] groqApiKey value:', groqKey);
-    console.log('[LLM] hasApiKey:', hasApiKey);
+    // Check if API is configured (OpenRouter key)
+    const openrouterKey = localStorage.getItem('openrouter_api_key');
+    const hasApiKey = openrouterKey && openrouterKey.length > 0;
+    console.log('[LLM] openrouterKey found:', hasApiKey ? 'YES' : 'NO');
     
-    if (hasApiKey) {
-        // Use Groq API (free and fast)
+if (hasApiKey) {
+        // Use OpenRouter API
         contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
-        console.log('[LLM] Calling Groq API with key:', groqKey.substring(0, 10) + '...');
+        console.log('[LLM] Calling OpenRouter API with key:', groqKey.substring(0, 10) + '...');
         
-        fetch('https://api.groq.com/openai/v1/chat/completions', {
+        fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${groqKey}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'Cotation Médecin'
             },
             body: JSON.stringify({
-                model: 'llama-3.1-70b-versatile',
+                model: 'anthropic/claude-3-haiku',
                 messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
             })
         })
-        .then(res => {
-            console.log('[LLM] Response status:', res.status);
-            return res.json();
-        })
-        .then(result => {
-            console.log('[LLM] Result:', JSON.stringify(result).substring(0, 200));
-            const response = result.choices?.[0]?.message?.content || 'Erreur: ' + JSON.stringify(result).substring(0, 100);
-            contentEl.innerHTML = `<p>${response.replace(/\n/g, '<br>')}</p>`;
-        })
         .catch(err => {
             console.error('[LLM] Error:', err);
-            contentEl.innerHTML = '<p class="llm-error">Erreur de connexion IA</p>';
+            contentEl.innerHTML = `<p class="llm-error">${err.message}</p>`;
         });
     } else {
-    // Fallback to simulated responses
-    setTimeout(() => {
-        const responses = {
-            optimisation: `<ul>
-                <li><strong>Réduire les charges sociales</strong> - Vérifiez vos échéances URSSAF et envisagez un échéancier si nécessaire</li>
-                <li><strong>Optimiser les consommables</strong> - Comparer les fournisseurs pour les achats récurrents</li>
-                <li><strong>Revoir les abonnements</strong> - Auditer les logiciels et services mensuels</li>
-            </ul>`,
-            benchmark: `<ul>
-                <li><strong>Typical breakdown:</strong> Charges locatives 25-35%, Masse salariale 20-30%, URSSAF 15-20%, Logiciels 5-10%</li>
-                <li><strong>Your main expense:</strong> ${data.topCategories[0]?.[0] || 'N/A'} represents ${data.topCategories[0] ? ((data.topCategories[0][1] / data.totalDepenses) * 100).toFixed(0) : 0}% of total</li>
-                <li><strong>Recommendation:</strong> Stay within market norms for your category</li>
-            </ul>`,
-            previsions: `<ul>
-                <li><strong>Tendance actuelle:</strong> ${data.balance >= 0 ? 'Positive (excédent)' : 'Négative (déficit)'}</li>
-                <li><strong>Moyenne mensuelle:</strong> ${(data.totalRecettes / 12).toFixed(0)}€ revenus / ${(data.totalDepenses / 12).toFixed(0)}€ charges</li>
-                <li><strong>Prévision:</strong> ${data.balance >= 0 ? 'Situation stable attendue' : 'Vigilance recommandée sur la trésorerie'}</li>
-            </ul>`,
-            recommandations: `<ul>
-                <li><strong>1.</strong> Suivre mensuellement le ratio charges/revenus</li>
-                <li><strong>2.</strong> Constituer une réserve de 3 mois de charges</li>
-                <li><strong>3.</strong> Réviser les contrats fournisseurs annuellement</li>
-            </ul>`
-        };
-        
-        contentEl.innerHTML = responses[type] || '<p>Aucune analyse disponible</p>';
-    }, 800);
-    }
+    // Fallback to simulated responses when no API key configured
+    contentEl.innerHTML = `<p class="llm-error">
+        Configurez votre clé API OpenRouter pour activer l'analyse IA.<br>
+        Allez dans <strong>Paramètres → Préférences</strong> pour la configurer.
+    </p>`;
+}
 }
 
 window.refreshLLMAnalysis = refreshLLMAnalysis;
@@ -4273,6 +4247,122 @@ window.downloadPDF = downloadPDF;
 window.deletePDF = deletePDF;
 
 // Cabinet Modules Functions
+window.saveOpenRouterKey = function() {
+    const apiKey = document.getElementById('openrouterApiKey').value.trim();
+    if (!apiKey) {
+        alert('Veuillez entrer une clé API');
+        return;
+    }
+    
+    localStorage.setItem('openrouter_api_key', apiKey);
+    document.getElementById('openrouterStatus').textContent = 'Clé enregistrée avec succès!';
+    setTimeout(() => {
+        document.getElementById('openrouterStatus').textContent = '';
+    }, 3000);
+};
+
+window.loadOpenRouterKey = function() {
+    const savedKey = localStorage.getItem('openrouter_api_key');
+    if (savedKey) {
+        document.getElementById('openrouterApiKey').value = savedKey;
+    }
+};
+
+window.callLLM = async function(prompt, taskType) {
+    const apiKey = localStorage.getItem('openrouter_api_key');
+    
+    if (!apiKey) {
+        throw new Error('Clé API OpenRouter non configurée. Veuillez la configurer dans les paramètres.');
+    }
+    
+    const systemPrompts = {
+        'generate_odj': 'Tu es un assistant administratif pour un cabinet médical français. Génère des ordres du jour professionnels et structurés.',
+        'draft_sujet': 'Tu es un assistant administratif pour un cabinet médical français. Aide à formuler des sujets de manière professionnelle.',
+        'generate_cr': 'Tu es un assistant administratif pour un cabinet médical français. Génère des comptes rendus de réunion professionnels.',
+        'analyze_commande': 'Tu es un assistant pour la gestion de stocks d\'un cabinet médical français. Analyse les besoins et propose des commandes optimisées.',
+        'analyze_financial': 'Tu es un expert-comptable médical français. Analyse les données financières du cabinet et fournis des insights actionable.'
+    };
+    
+    const systemPrompt = systemPrompts[taskType] || 'Tu es un assistant helpful.';
+    
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'Cotation Médecin'
+        },
+        body: JSON.stringify({
+            model: 'anthropic/claude-3-haiku',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: prompt }
+            ],
+            max_tokens: 1024
+        })
+    });
+    
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error?.message || `Erreur API: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || 'Aucune réponse';
+};
+
+window.analyzeFinancial = async function() {
+    const container = document.getElementById('financialAnalysisResult');
+    container.innerHTML = '<div class="loading">Analyse en cours...</div>';
+    
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const currentMonth = monthNames[currentMonthAddDepenses.getMonth()] + ' ' + currentMonthAddDepenses.getFullYear();
+    
+    const depensesThisMonth = cabinetDepenses.filter(d => {
+        const dDate = new Date(d.date);
+        return dDate.getMonth() === currentMonthAddDepenses.getMonth() && 
+               dDate.getFullYear() === currentMonthAddDepenses.getFullYear();
+    });
+    
+    const recettesThisMonth = cabinetRecettes.filter(r => {
+        const rDate = new Date(r.date);
+        return rDate.getMonth() === currentMonthAddDepenses.getMonth() && 
+               rDate.getFullYear() === currentMonthAddDepenses.getFullYear();
+    });
+    
+    const totalDepenses = depensesThisMonth.reduce((sum, d) => sum + (d.amount || 0), 0);
+    const totalRecettes = recettesThisMonth.reduce((sum, r) => sum + (r.amount || 0), 0);
+    
+    const depensesByCategory = {};
+    depensesThisMonth.forEach(d => {
+        if (!depensesByCategory[d.category]) depensesByCategory[d.category] = 0;
+        depensesByCategory[d.category] += d.amount || 0;
+    });
+    
+    const prompt = `Analyse financière du cabinet médical pour ${currentMonth}:
+
+Recettes: ${totalRecettes.toFixed(2)}€
+Dépenses: ${totalDepenses.toFixed(2)}€
+Marge: ${(totalRecettes - totalDepenses).toFixed(2)}€
+
+Détail des dépenses par catégorie:
+${Object.entries(depensesByCategory).map(([cat, amount]) => `- ${cat}: ${amount.toFixed(2)}€`).join('\n')}
+
+ Fournis une analyse concise en français avec:
+1. Points clés du mois
+2. Alertes si problèmes détectés
+3. Recommandations pour améliorer la rentabilité
+4. Comparaison avec les mois précédents si possible`;
+
+    try {
+        const response = await callLLM(prompt, 'analyze_financial');
+        container.innerHTML = `<h4>Analyse financière - ${currentMonth}</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
+    } catch (error) {
+        container.innerHTML = `<p style="color: red;">Erreur lors de l'analyse: ${error.message}</p>`;
+    }
+};
+
 window.generateODJ = async function() {
     const date = document.getElementById('reunionDate').value;
     const type = document.getElementById('reunionType').value;
