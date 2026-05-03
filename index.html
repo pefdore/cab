@@ -41,13 +41,26 @@
                     <label>Mot de passe</label>
                     <input type="password" id="login-password" placeholder="••••••••" required>
                 </div>
-                <button type="button" class="btn-primary" id="loginBtn">Se connecter</button>
+                <button type="button" class="btn-primary" id="loginBtn" onclick="attemptLogin()">Se connecter</button>
                 <p style="text-align:center;margin-top:15px;">
                     Pas de compte? <a href="#" onclick="toggleForm('register')">S'inscrire</a>
                 </p>
             </form>
 
 <script>
+window.attemptLogin = function() {
+    console.log('[LOGIN] Button clicked');
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) {
+        alert('Veuillez entrer email et mot de passe');
+        return;
+    }
+    if (window.doLogin) {
+        window.doLogin(email, password);
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
 function toggleForm(form) {
     if (form === 'register') {
@@ -79,27 +92,10 @@ document.getElementById('show-login')?.addEventListener('click', function(e) {
     toggleForm('login');
 });
 
-function attemptLogin() {
-    console.log('[MOBILE] Login button clicked');
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    console.log('[MOBILE] Email:', email);
-    console.log('[MOBILE] Password length:', password ? password.length : 0);
-    if (window.doLogin) {
-        window.doLogin(email, password);
-    } else if (typeof doLogin === 'function') {
-        doLogin(email, password);
-    }
-}
-window.handleLoginClick = attemptLogin;
-document.getElementById('loginBtn')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    attemptLogin();
-});
 document.getElementById('login-password')?.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
-        attemptLogin();
+        window.attemptLogin();
     }
 });
 document.getElementById('login-email')?.addEventListener('keypress', function(e) {
@@ -109,24 +105,6 @@ document.getElementById('login-email')?.addEventListener('keypress', function(e)
     }
 });
 });
-
-function submitRegisterForm() {
-    console.log('[REGISTER] Button clicked');
-    const firstName = document.getElementById('register-firstname')?.value;
-    const lastName = document.getElementById('register-lastname')?.value;
-    const role = document.getElementById('register-role')?.value;
-    const replaceMedecinId = document.getElementById('register-remplace')?.value || null;
-    const email = document.getElementById('register-email')?.value;
-    const password = document.getElementById('register-password')?.value;
-    
-    console.log('[REGISTER] Values:', { firstName, lastName, role, email, password });
-    
-    if (window.doSignUp) {
-        doSignUp(email, password, firstName, lastName, role, replaceMedecinId);
-    } else {
-        console.error('[REGISTER] doSignUp not available');
-    }
-}
 </script>
             <form id="register-form" class="login-form" style="display:none;">
                 <p class="login-form-title">Créer un compte</p>
