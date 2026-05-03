@@ -697,9 +697,6 @@ function handleRecetteAutocomplete() {
     });
 }
 
-// Dummy function to prevent errors
-function handleRecetteOld() {
-
 window.switchAddMode = switchAddMode;
 window.switchAddDepenseRecette = switchAddDepenseRecette;
 
