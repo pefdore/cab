@@ -2453,24 +2453,105 @@ h2 {
         font-weight: 600;
         cursor: pointer;
     }
+    
+    /* Manage cotations button */
+    .manage-cotations-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 10px 14px;
+        background: var(--color-bg-subtle);
+        border: 1px dashed var(--color-border);
+        border-radius: 8px;
+        color: var(--color-text-secondary);
+        font-size: 0.85rem;
+        cursor: pointer;
+        width: 100%;
+        transition: all 0.2s;
+    }
+    
+    .manage-cotations-btn:hover {
+        background: var(--color-bg-muted);
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+    }
+    
+    /* Cotation Manager Popup */
+    .cotation-manager-section {
+        margin-bottom: 20px;
+    }
+    
+    .cotation-manager-section h4 {
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .cotation-manager-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .cotation-manager-item .cotation-key {
+        flex: 1;
+        font-weight: 600;
+    }
+    
+    .cotation-manager-item .cotation-amount {
+        color: var(--color-primary);
+        font-weight: 600;
+        margin-right: 12px;
+    }
+    
+    .cotation-manager-item .cotation-actions {
+        display: flex;
+        gap: 6px;
+    }
 
     .settings-page-overlay h2 {
-        margin-bottom: 24px;
+        display: none;
     }
     
     .overlay-close-btn {
         position: fixed;
         top: 16px;
         left: 16px;
+        right: 16px;
         z-index: 1001;
-        padding: 10px 16px;
-        background: var(--color-bg-elevated);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        font-size: var(--text-sm);
-        font-weight: 500;
+        padding: 0;
+        background: transparent;
+        border: none;
         cursor: pointer;
-        box-shadow: var(--shadow-md);
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .overlay-close-btn .back-arrow {
+        font-size: 1.2rem;
+        color: var(--color-text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .overlay-close-btn .back-arrow::before {
+        content: '←';
+    }
+    
+    .overlay-close-btn .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-text);
     }
     
     .overlay-back-btn {
@@ -2479,23 +2560,36 @@ h2 {
         left: 16px;
         right: 16px;
         z-index: 1001;
-        padding: 14px 20px;
-        background: var(--color-primary);
-        color: white;
+        padding: 0;
+        background: transparent;
         border: none;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
         cursor: pointer;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         text-align: left;
         display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .overlay-back-btn .back-arrow {
+        font-size: 1.2rem;
+        color: var(--color-text-secondary);
+        display: flex;
         align-items: center;
+        gap: 4px;
+    }
+    
+    .overlay-back-btn .back-arrow::before {
+        content: '←';
+    }
+    
+    .overlay-back-btn .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-text);
     }
     
     .overlay-back-btn:active {
-        background: var(--color-primary-hover);
-        transform: scale(0.98);
+        opacity: 0.7;
     }
     
     .settings-page-overlay h2 {

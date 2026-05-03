@@ -11,14 +11,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Cotation">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon-192.svg">
-    <link rel="apple-touch-icon" href="icon-192.svg">
+    <link rel="manifest" href="/assets/manifest-BGmaG6wq.json">
+    <link rel="icon" type="image/svg+xml" href="/assets/icon-192-mySIpaht.svg">
+    <link rel="apple-touch-icon" href="/assets/icon-192-mySIpaht.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=99">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" crossorigin href="/assets/main-CzU9eR3n.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -591,6 +591,13 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             <select id="cotation" required>
                                 <option value="">Sélectionner...</option>
                             </select>
+                            <button type="button" class="manage-cotations-btn" onclick="showCotationManager()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Gérer les cotations
+                            </button>
                         </div>
                         <div class="form-group" id="customCotation" style="display: none;">
                             <label>Nouvelle cotation</label>
@@ -601,6 +608,28 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                         <div class="form-group">
                             <label>Montant</label>
                             <div class="amount-display" id="amountDisplay">0€</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cotation Manager Popup -->
+                    <div id="cotation-manager-popup" class="popup-overlay" style="display: none;">
+                        <div class="popup-card">
+                            <div class="popup-header">
+                                <h3>Mes Cotations</h3>
+                                <button class="popup-close" onclick="closeCotationManager()">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="popup-body">
+                                <div id="cotation-manager-list"></div>
+                                <div class="add-cotation-form">
+                                    <input type="text" id="newCotationKey" placeholder="Nouvelle clé (ex: VG+MD)">
+                                    <input type="number" id="newCotationAmount" placeholder="Montant" step="0.01">
+                                    <button id="addNewCotation" class="add-btn">Ajouter</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <button type="submit" class="submit-btn">

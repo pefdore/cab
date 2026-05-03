@@ -779,7 +779,13 @@ function populateCotationSelect() {
         { key: 'VG+MD+2IK', amount: 41.22 }
     ];
     
+    // Get custom cotations from user settings
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = settings.customCotations || [];
+    
     select.innerHTML = '<option value="">Sélectionner...</option>';
+    
+    // Add default cotations
     cotations.forEach(c => {
         const opt = document.createElement('option');
         opt.value = c.key + '|' + c.amount;
@@ -787,12 +793,168 @@ function populateCotationSelect() {
         select.appendChild(opt);
     });
     
-    // Add "Ajouter une cotation" option
+    // Add custom cotations
+    customCotations.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.key + '|' + c.amount;
+        opt.textContent = c.key + ' - ' + parseFloat(c.amount).toFixed(2) + '€';
+        select.appendChild(opt);
+    });
+    
+    // Add "Gérer les cotations" option
     const addOption = document.createElement('option');
-    addOption.value = '__add_new__';
-    addOption.textContent = '+ Ajouter une cotation';
+    addOption.value = '__manage__';
+    addOption.textContent = '+ Gérer mes cotations';
     select.appendChild(addOption);
 }
+
+function showCotationManager() {
+    const popup = document.getElementById('cotation-manager-popup');
+    if (popup) {
+        popup.style.display = 'flex';
+        renderCotationManagerList();
+    }
+}
+
+function closeCotationManager() {
+    const popup = document.getElementById('cotation-manager-popup');
+    if (popup) {
+        popup.style.display = 'none';
+    }
+}
+
+function renderCotationManagerList() {
+    const container = document.getElementById('cotation-manager-list');
+    if (!container) return;
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = settings.customCotations || [];
+    
+    // Default cotations
+    const defaultCotations = [
+        { key: 'G', amount: 30 },
+        { key: 'VG', amount: 30 },
+        { key: 'VG+MD', amount: 40 },
+        { key: 'VG+MU', amount: 52.6 },
+        { key: 'ALQP003', amount: 69.12 },
+        { key: 'VL', amount: 60 },
+        { key: 'VL+MD', amount: 70 },
+        { key: 'VG+MD+MSH', amount: 63 },
+        { key: 'VG+MD+2IK', amount: 41.22 }
+    ];
+    
+    container.innerHTML = `
+        <div class="cotation-manager-section">
+            <h4>Cotations par défaut</h4>
+            ${defaultCotations.map(c => `
+                <div class="cotation-manager-item">
+                    <span class="cotation-key">${c.key}</span>
+                    <span class="cotation-amount">${c.amount.toFixed(2)}€</span>
+                </div>
+            `).join('')}
+        </div>
+        <div class="cotation-manager-section">
+            <h4>Mes cotations personnalisées</h4>
+            ${customCotations.length > 0 ? customCotations.map((c, idx) => `
+                <div class="cotation-manager-item">
+                    <span class="cotation-key">${c.key}</span>
+                    <span class="cotation-amount">${parseFloat(c.amount).toFixed(2)}€</span>
+                    <div class="cotation-actions">
+                        <button class="cotation-edit-btn" onclick="editCotationFromManager('${c.key}', ${parseFloat(c.amount)})">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </button>
+                        <button class="cotation-delete-btn" onclick="deleteCotationFromManager('${c.key}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('') : '<p style="color: var(--color-text-secondary); font-size: 0.9rem;">Aucune cotation personnalisée</p>'}
+        </div>
+    `;
+}
+
+function editCotationFromManager(key, amount) {
+    const newKey = prompt('Modifier la clé de cotation:', key);
+    if (newKey === null || newKey === '') return;
+    
+    const newAmount = prompt('Modifier le montant:', amount);
+    if (newAmount === null || newAmount === '') return;
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    let customCotations = settings.customCotations || [];
+    
+    // Remove old entry
+    customCotations = customCotations.filter(c => c.key !== key);
+    
+    // Add new entry
+    if (newKey && newAmount) {
+        customCotations.push({ key: newKey, amount: parseFloat(newAmount) });
+    }
+    
+    settings.customCotations = customCotations;
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    
+    renderCotationManagerList();
+    populateCotationSelect();
+}
+
+function deleteCotationFromManager(key) {
+    if (!confirm('Supprimer cette cotation?')) return;
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    let customCotations = settings.customCotations || [];
+    
+    // Remove by key
+    customCotations = customCotations.filter(c => c.key !== key);
+    
+    settings.customCotations = customCotations;
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    
+    renderCotationManagerList();
+    populateCotationSelect();
+}
+
+// Add event listener for the add new cotation button in manager
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('addNewCotation')?.addEventListener('click', () => {
+        const key = document.getElementById('newCotationKey').value;
+        const amount = document.getElementById('newCotationAmount').value;
+        
+        if (!key || !amount) {
+            alert('Veuillez entrer une clé et un montant');
+            return;
+        }
+        
+        const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        const customCotations = settings.customCotations || [];
+        customCotations.push({ key, amount: parseFloat(amount) });
+        settings.customCotations = customCotations;
+        localStorage.setItem('userSettings', JSON.stringify(settings));
+        
+        document.getElementById('newCotationKey').value = '';
+        document.getElementById('newCotationAmount').value = '';
+        
+        renderCotationManagerList();
+        populateCotationSelect();
+    });
+    
+    // Close popup when clicking outside
+    document.getElementById('cotation-manager-popup')?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('popup-overlay')) {
+            closeCotationManager();
+        }
+    });
+});
+
+window.showCotationManager = showCotationManager;
+window.closeCotationManager = closeCotationManager;
+window.editCotationFromManager = editCotationFromManager;
+window.deleteCotationFromManager = deleteCotationFromManager;
 
 function setupMobileMonthSelector() {
     // Mobile month selector - no special setup needed for now
@@ -939,11 +1101,10 @@ function handleCotationChange() {
     
     const value = select.value;
     
-    if (value === '__add_new__') {
-        // Show custom cotation form
-        customCotationGroup.style.display = 'flex';
+    if (value === '__manage__') {
+        // Show cotation manager popup
+        showCotationManager();
         select.value = '';
-        amountDisplay.textContent = '0€';
         return;
     }
     
@@ -1979,7 +2140,7 @@ function switchView(viewName) {
                 // Add close button
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'overlay-close-btn';
-                closeBtn.innerHTML = '← Retour';
+                closeBtn.innerHTML = '<span class="back-arrow">Retour</span><span class="page-title">Paramètres</span>';
                 closeBtn.onclick = () => {
                     // Revenir au menu paramètres
                     const menu = overlay.querySelector('.settings-menu');
@@ -2037,7 +2198,7 @@ function switchView(viewName) {
                                 backBtn.className = 'overlay-back-btn';
                                 overlay.insertBefore(backBtn, overlay.firstChild);
                             }
-                            backBtn.innerHTML = `← ${displayName}`;
+                            backBtn.innerHTML = `<span class="back-arrow">Retour</span><span class="page-title">${displayName}</span>`;
                             backBtn.onclick = () => {
                                 // Show menu, hide all pages
                                 const menu = overlay.querySelector('.settings-menu');
