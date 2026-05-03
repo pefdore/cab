@@ -550,14 +550,18 @@ function handleDepenseAutocomplete() {
     input.addEventListener('input', function() {
         const value = this.value.toLowerCase().trim();
         
-        if (value.length < 3) {
+        if (value.length < 2) {
             dropdown.style.display = 'none';
             return;
         }
         
+        console.log('[AUTOCOMPLETE] Searching for:', value, 'depenses:', cabinetDepenses.length);
+        
         const matches = cabinetDepenses.filter(d => 
             d.description && d.description.toLowerCase().includes(value)
         ).slice(0, 5);
+        
+        console.log('[AUTOCOMPLETE] Matches found:', matches.length);
         
         if (matches.length === 0) {
             dropdown.style.display = 'none';
@@ -597,6 +601,20 @@ function handleDepenseAutocomplete() {
         setTimeout(() => dropdown.style.display = 'none', 200);
     });
 }
+        
+        dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', function() {
+                input.value = this.dataset.description;
+                categorySelect.value = this.dataset.category;
+                dropdown.style.display = 'none';
+            });
+        });
+    });
+    
+    input.addEventListener('blur', function() {
+        setTimeout(() => dropdown.style.display = 'none', 200);
+    });
+}
 
 function handleRecetteAutocomplete() {
     const input = document.getElementById('add-recetteDescription');
@@ -608,7 +626,7 @@ function handleRecetteAutocomplete() {
     input.addEventListener('input', function() {
         const value = this.value.toLowerCase().trim();
         
-        if (value.length < 3) {
+        if (value.length < 2) {
             dropdown.style.display = 'none';
             return;
         }
