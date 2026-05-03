@@ -5000,6 +5000,26 @@ h2 {
     color: white;
 }
 
+.edit-btn-small {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    cursor: pointer;
+    font-size: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+}
+
+.edit-btn-small:hover {
+    background: var(--color-primary);
+    color: white;
+}
+
 .depense-item.income .amount {
     color: var(--color-success);
 }

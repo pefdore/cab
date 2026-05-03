@@ -557,10 +557,16 @@ function handleDepenseAutocomplete() {
         
         console.log('[AUTOCOMPLETE] Searching for:', value, 'depenses:', cabinetDepenses.length);
         
+        if (cabinetDepenses.length === 0) {
+            console.log('[AUTOCOMPLETE] No depenses loaded yet');
+            dropdown.style.display = 'none';
+            return;
+        }
+        
         const sortedDepenses = [...cabinetDepenses].sort((a, b) => new Date(b.date) - new Date(a.date));
         
         const matches = sortedDepenses.filter(d => 
-            d.description && d.description.toLowerCase().startsWith(value)
+            d.description && d.description.toLowerCase().includes(value)
         ).slice(0, 5);
         
         console.log('[AUTOCOMPLETE] Matches found:', matches.length);
@@ -622,7 +628,7 @@ function handleRecetteAutocomplete() {
         const sortedRecettes = [...cabinetRecettes].sort((a, b) => new Date(b.date) - new Date(a.date));
         
         const matches = sortedRecettes.filter(r => 
-            r.description && r.description.toLowerCase().startsWith(value)
+            r.description && r.description.toLowerCase().includes(value)
         ).slice(0, 5);
         
         if (matches.length === 0) {
@@ -2283,6 +2289,8 @@ function renderAddDepensesRecettes() {
                         </div>
                         <div class="depense-right">
                             <span class="amount">-${d.amount.toFixed(2)}€</span>
+                            <button class="edit-btn-small" onclick="editDepense(${d.id})" title="Modifier">✎</button>
+                            <button class="delete-btn-small" onclick="deleteDepense(${d.id})" title="Supprimer">✕</button>
                         </div>
                     </div>
                 `;
@@ -2307,6 +2315,8 @@ function renderAddDepensesRecettes() {
                         </div>
                         <div class="depense-right">
                             <span class="amount">+${r.amount.toFixed(2)}€</span>
+                            <button class="edit-btn-small" onclick="editRecette(${r.id})" title="Modifier">✎</button>
+                            <button class="delete-btn-small" onclick="deleteRecette(${r.id})" title="Supprimer">✕</button>
                         </div>
                     </div>
                 `;
@@ -3692,6 +3702,120 @@ async function saveRecette() {
     renderAddDepensesRecettes();
 }
 
+function editDepense(id) {
+    const depense = cabinetDepenses.find(d => d.id === id);
+    if (!depense) return;
+    
+    document.getElementById('add-depenseDescription').value = depense.description || '';
+    document.getElementById('add-depenseAmount').value = depense.amount;
+    document.getElementById('add-depenseCategory').value = depense.category;
+    document.getElementById('add-depenseDate').value = depense.date;
+    
+    window._editingDepenseId = id;
+    
+    const btn = document.getElementById('add-saveDepenseBtn');
+    if (btn) {
+        btn.textContent = 'Modifier la dépense';
+        btn.onclick = () => updateDepense(id);
+    }
+}
+
+async function updateDepense(id) {
+    const description = document.getElementById('add-depenseDescription')?.value;
+    const amount = parseFloat(document.getElementById('add-depenseAmount')?.value);
+    const category = document.getElementById('add-depenseCategory')?.value;
+    const date = document.getElementById('add-depenseDate')?.value;
+    
+    if (!amount) {
+        alert('Veuillez entrer un montant');
+        return;
+    }
+    
+    const { error } = await supabaseClient
+        .from('cabinet_depenses')
+        .update({ description, amount, category, date })
+        .eq('id', id);
+    
+    if (error) {
+        alert('Erreur: ' + error.message);
+        return;
+    }
+    
+    document.getElementById('add-depenseDescription').value = '';
+    document.getElementById('add-depenseAmount').value = '';
+    document.getElementById('add-depenseCategory').selectedIndex = 0;
+    document.getElementById('add-depenseDate').value = '';
+    
+    const btn = document.getElementById('add-saveDepenseBtn');
+    if (btn) {
+        btn.textContent = 'Enregistrer la dépense';
+        btn.onclick = null;
+    }
+    
+    window._editingDepenseId = null;
+    
+    await loadCabinetData();
+    renderComptaSummary();
+    renderAddDepensesRecettes();
+}
+
+function editRecette(id) {
+    const recette = cabinetRecettes.find(r => r.id === id);
+    if (!recette) return;
+    
+    document.getElementById('add-recetteDescription').value = recette.description || '';
+    document.getElementById('add-recetteAmount').value = recette.amount;
+    document.getElementById('add-recetteCategory').value = recette.category;
+    document.getElementById('add-recetteDate').value = recette.date;
+    
+    window._editingRecetteId = id;
+    
+    const btn = document.getElementById('add-saveRecetteBtn');
+    if (btn) {
+        btn.textContent = 'Modifier la recette';
+        btn.onclick = () => updateRecette(id);
+    }
+}
+
+async function updateRecette(id) {
+    const description = document.getElementById('add-recetteDescription')?.value;
+    const amount = parseFloat(document.getElementById('add-recetteAmount')?.value);
+    const category = document.getElementById('add-recetteCategory')?.value;
+    const date = document.getElementById('add-recetteDate')?.value;
+    
+    if (!amount) {
+        alert('Veuillez entrer un montant');
+        return;
+    }
+    
+    const { error } = await supabaseClient
+        .from('cabinet_recettes')
+        .update({ description, amount, category, date })
+        .eq('id', id);
+    
+    if (error) {
+        alert('Erreur: ' + error.message);
+        return;
+    }
+    
+    document.getElementById('add-recetteDescription').value = '';
+    document.getElementById('add-recetteAmount').value = '';
+    document.getElementById('add-recetteCategory').selectedIndex = 0;
+    document.getElementById('add-recetteDate').value = '';
+    
+    const btn = document.getElementById('add-saveRecetteBtn');
+    if (btn) {
+        btn.textContent = 'Enregistrer la recette';
+        btn.onclick = null;
+    }
+    
+    window._editingRecetteId = null;
+    
+    await loadCabinetData();
+    renderComptaSummary();
+    renderAddDepensesRecettes();
+}
+
 async function deleteDepense(id) {
     if (!confirm('Supprimer cette dépense ?')) return;
     
@@ -3707,6 +3831,7 @@ async function deleteDepense(id) {
     
     await loadCabinetData();
     renderComptaSummary();
+    renderAddDepensesRecettes();
 }
 
 async function deleteRecette(id) {
