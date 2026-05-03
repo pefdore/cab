@@ -1925,8 +1925,8 @@ window.deleteCotation = deleteCotation;
 
 // LLM API functions
 window.saveOpenRouterKey = function() {
-    const input = document.querySelector('#settings-page-preferences input[id="openrouterApiKey"]') || document.getElementById('openrouterApiKey');
-    const status = document.querySelector('#openrouterStatus');
+    const input = document.getElementById('openrouterApiKey');
+    const status = document.getElementById('openrouterStatus');
     
     if (!input || !input.value.trim()) {
         alert('Veuillez entrer une clé API');
@@ -1947,7 +1947,7 @@ window.loadOpenRouterKey = function() {
     try {
         const savedKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('groq_api_key');
         if (savedKey) {
-            const input = document.querySelector('#settings-page-preferences input[id="openrouterApiKey"]') || document.getElementById('openrouterApiKey');
+            const input = document.getElementById('openrouterApiKey');
             if (input) input.value = savedKey;
         }
     } catch (e) {
