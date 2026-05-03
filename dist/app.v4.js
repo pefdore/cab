@@ -557,8 +557,10 @@ function handleDepenseAutocomplete() {
         
         console.log('[AUTOCOMPLETE] Searching for:', value, 'depenses:', cabinetDepenses.length);
         
-        const matches = cabinetDepenses.filter(d => 
-            d.description && d.description.toLowerCase().includes(value)
+        const sortedDepenses = [...cabinetDepenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        const matches = sortedDepenses.filter(d => 
+            d.description && d.description.toLowerCase().startsWith(value)
         ).slice(0, 5);
         
         console.log('[AUTOCOMPLETE] Matches found:', matches.length);
@@ -617,8 +619,10 @@ function handleRecetteAutocomplete() {
             return;
         }
         
-        const matches = cabinetRecettes.filter(r => 
-            r.description && r.description.toLowerCase().includes(value)
+        const sortedRecettes = [...cabinetRecettes].sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        const matches = sortedRecettes.filter(r => 
+            r.description && r.description.toLowerCase().startsWith(value)
         ).slice(0, 5);
         
         if (matches.length === 0) {

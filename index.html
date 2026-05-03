@@ -1197,51 +1197,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div id="cabinet-depenses" class="cabinet-tab-content">
                     <div class="section-header">
                         <h3>Dépenses</h3>
-                        <button id="addDepenseBtn" class="add-btn" onclick="document.getElementById('depensesForm').style.display = document.getElementById('depensesForm').style.display === 'none' ? 'block' : 'none'">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            Ajouter
-                        </button>
-                    </div>
-                    
-                    <div class="depenses-form" id="depensesForm" style="display:none;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Catégorie</label>
-                                <select id="depenseCategory">
-                                    <option value="masse_salariale">Masse salariale</option>
-                                    <option value="urssaf">URSSAF</option>
-                                    <option value="logiciel">Logiciel</option>
-                                    <option value="services">Services</option>
-                                    <option value="charges">Charges (EDF, eau, assurance)</option>
-                                    <option value="consommables">Consommables</option>
-                                    <option value="materiel">Matériel</option>
-                                    <option value="reception">Réception/Représentation</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Sous-catégorie</label>
-                                <select id="depenseSousCategorie">
-                                    <option value="">Sélectionner...</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Description</label>
-                                <input type="text" id="depenseDescription" placeholder="Description">
-                            </div>
-                            <div class="form-group">
-                                <label>Montant</label>
-                                <input type="number" id="depenseAmount" placeholder="0.00" step="0.01">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="depenseDate">
-                        </div>
-                        <button id="saveDepenseBtn" class="btn-primary">Enregistrer</button>
                     </div>
                     
                     <div class="depenses-list" id="depensesList"></div>
@@ -1251,27 +1206,10 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div id="cabinet-recettes" class="cabinet-tab-content">
                     <div class="section-header">
                         <h3>Recettes</h3>
-                        <button id="addRecetteBtn" class="add-btn" onclick="document.getElementById('recettesForm').style.display = document.getElementById('recettesForm').style.display === 'none' ? 'block' : 'none'">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            Ajouter
-                        </button>
                     </div>
                     
-                    <div class="recettes-form" id="recettesForm" style="display:none;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Catégorie</label>
-                                <select id="recetteCategory">
-                                    <option value="honoraires">Honoraires</option>
-                                    <option value="remboursements">Remboursements</option>
-                                    <option value="autres">Autres recettes</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Description</label>
-                                <input type="text" id="recetteDescription" placeholder="Description">
+                    <div class="recettes-list" id="recettesList"></div>
+                </div>
                             </div>
                         </div>
                         <div class="form-row">
