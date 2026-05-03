@@ -1852,9 +1852,25 @@ function openSettingsPage(pageName) {
     const backBtn = document.getElementById('settingsBackBtn');
     const title = document.querySelector('#view-settings h2');
     
+    // Page names mapping to display names
+    const pageNames = {
+        'profil': 'Profil',
+        'cotation': 'Cotations',
+        'pdf': 'PDF',
+        'preferences': 'Préférences',
+        'donnees': 'Données'
+    };
+    
+    // Show back button only for sub-pages (not for main preferences page)
+    const isMainPage = pageName === 'preferences';
+    if (backBtn) {
+        backBtn.style.display = isMainPage ? 'none' : 'flex';
+    }
+    if (title) {
+        title.textContent = pageNames[pageName] || pageName;
+    }
+    
     if (menu) menu.style.display = 'none';
-    if (backBtn) backBtn.style.display = 'flex';
-    if (title) title.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
     
     // Hide all settings pages
     document.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
