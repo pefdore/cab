@@ -2320,6 +2320,16 @@ h2 {
         display: flex !important;
         margin: 30px 16px;
         width: calc(100% - 32px);
+        background: #fef2f2;
+        border: 2px solid #fecaca;
+        color: #dc2626;
+        font-weight: 600;
+        padding: 16px;
+        border-radius: 12px;
+    }
+    
+    .settings-page-overlay .mobile-logout-btn:active {
+        background: #fee2e2;
     }
     
     .settings-page-overlay .settings-menu {

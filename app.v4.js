@@ -1589,6 +1589,22 @@ function switchView(viewName) {
     if (viewName !== 'settings') {
         const overlay = document.querySelector('.settings-page-overlay');
         if (overlay) overlay.classList.remove('active');
+    } else {
+        // Reset overlay when coming back to settings
+        const overlay = document.querySelector('.settings-page-overlay');
+        if (overlay) {
+            overlay.classList.add('active');
+            // Show menu, hide all pages
+            const menu = overlay.querySelector('.settings-menu');
+            if (menu) menu.style.display = 'flex';
+            overlay.querySelectorAll('.settings-page').forEach(p => {
+                p.style.display = 'none';
+                p.classList.remove('active');
+            });
+            // Remove back button if exists
+            const backBtn = overlay.querySelector('.overlay-back-btn');
+            if (backBtn) backBtn.remove();
+        }
     }
     
     // Update nav
@@ -1639,8 +1655,16 @@ function switchView(viewName) {
                 closeBtn.className = 'overlay-close-btn';
                 closeBtn.innerHTML = '← Retour';
                 closeBtn.onclick = () => {
-                    overlay.classList.remove('active');
-                    switchView('dashboard');
+                    // Revenir au menu paramètres
+                    const menu = overlay.querySelector('.settings-menu');
+                    if (menu) menu.style.display = 'flex';
+                    overlay.querySelectorAll('.settings-page').forEach(p => {
+                        p.style.display = 'none';
+                        p.classList.remove('active');
+                    });
+                    // Supprimer le bouton back
+                    const backBtn = overlay.querySelector('.overlay-back-btn');
+                    if (backBtn) backBtn.remove();
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
                 
