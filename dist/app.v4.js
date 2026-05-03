@@ -506,7 +506,9 @@ function switchAddMode(mode) {
         if (depensesContent) {
             depensesContent.style.display = 'block';
             if (typeof loadCabinetData === 'function') {
-                loadCabinetData();
+                loadCabinetData().then(() => {
+                    renderAddDepensesRecettes();
+                });
             }
         }
     }
