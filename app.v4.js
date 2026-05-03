@@ -1,6 +1,12 @@
 const SUPABASE_URL = 'https://wlpbnxnvctlmhndqvvim.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndscGJueG52Y3RsbWhuZHF2dmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NjgxMTAsImV4cCI6MjA5MjU0NDExMH0.ob6hctrkA7dTzKLUGG4Ymt1iemcgDnbsCtBwgBZPHoM';
 
+// Expose login function globally immediately
+window.doLogin = null;
+window.doSignUp = null;
+
+console.log('[APP] Starting...');
+
 // ============================================
 // AUTHENTIFICATION - Module complet et robuste
 // ============================================
@@ -12,7 +18,12 @@ let authInitialized = false;
 
 // --- Initialisation du client Supabase ---
 function initAuth() {
-    if (authInitialized) return;
+    console.log('[AUTH] initAuth called');
+    
+    if (authInitialized) {
+        console.log('[AUTH] Already initialized');
+        return;
+    }
     
     if (typeof supabase === 'undefined') {
         console.log('[AUTH] Waiting for Supabase library...');
@@ -20,9 +31,11 @@ function initAuth() {
         return;
     }
     
+    console.log('[AUTH] Supabase library loaded:', typeof supabase);
+    
     const { createClient } = supabase;
     supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('[AUTH] Client Supabase initialisé');
+    console.log('[AUTH] Client Supabase initialisé:', !!supabaseClient);
     
     // Écouter les changements d'état d'authentification
     supabaseClient.auth.onAuthStateChange((event, session) => {

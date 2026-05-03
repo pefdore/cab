@@ -49,62 +49,30 @@
 
 <script>
 window.attemptLogin = function() {
-    console.log('[LOGIN] Button clicked');
+    console.log('[LOGIN] attemptLogin called');
+    console.log('[LOGIN] window.doLogin exists:', typeof window.doLogin);
+    
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
+    
+    console.log('[LOGIN] Email:', email, 'Password length:', password ? password.length : 0);
+    
     if (!email || !password) {
         alert('Veuillez entrer email et mot de passe');
         return;
     }
-    if (window.doLogin) {
-        window.doLogin(email, password);
+    
+    // Try window.doLogin first, then try global doLogin
+    const loginFn = window.doLogin || window['doLogin'] || window.parent?.doLogin;
+    
+    if (typeof loginFn === 'function') {
+        console.log('[LOGIN] Calling doLogin');
+        loginFn(email, password);
+    } else {
+        console.log('[LOGIN] doLogin not found, checking app.v4.js...');
+        alert('Erreur: application non chargée. Attendez quelques secondes et réessayez.');
     }
 };
-
-document.addEventListener('DOMContentLoaded', function() {
-function toggleForm(form) {
-    if (form === 'register') {
-        document.getElementById('login-form').style.display = 'none';
-        document.getElementById('register-form').style.display = 'flex';
-    } else if (form === 'login') {
-        document.getElementById('login-form').style.display = 'flex';
-        document.getElementById('register-form').style.display = 'none';
-    }
-}
-
-function toggleRemplacantField() {
-    const role = document.getElementById('register-role').value;
-    const replaceGroup = document.getElementById('remplace-medecin-group');
-    if (role === 'medecin_remplacant') {
-        replaceGroup.style.display = 'flex';
-    } else {
-        replaceGroup.style.display = 'none';
-    }
-}
-
-document.querySelector('a[onclick="toggleForm(\'register\')"]')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    toggleForm('register');
-});
-
-document.getElementById('show-login')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    toggleForm('login');
-});
-
-document.getElementById('login-password')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        window.attemptLogin();
-    }
-});
-document.getElementById('login-email')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('login-password').focus();
-    }
-});
-});
 </script>
             <form id="register-form" class="login-form" style="display:none;">
                 <p class="login-form-title">Créer un compte</p>
