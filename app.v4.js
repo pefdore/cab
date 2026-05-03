@@ -2222,21 +2222,18 @@ const LLM_PROMPTS = {
     recommandations: (data) => `Based on: total ${data.totalRecettes}€ revenue, ${data.totalDepenses}€ expenses, ${data.tauxMarge}% margin, alerts: ${JSON.stringify(data.alertes || [])}, give 3 concrete actions to improve financial health.`
 };
 
-// CONFIGURATION LLM - utilise config.js ou api-config.js pour la clé API
-var LLM_CONFIG = {};
+// CONFIGURATION LLM - Get API key from loaded config files
+// Try various possible sources
+var groqKey = '';
+if (typeof LLM_CONFIG !== 'undefined' && LLM_CONFIG && LLM_CONFIG.groqApiKey) {
+  groqKey = LLM_CONFIG.groqApiKey;
+} else if (typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.groqApiKey) {
+  groqKey = API_CONFIG.groqApiKey;
+} else if (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
+  groqKey = CONFIG.GROQ_API_KEY;
+}
 
-// Try to load from CONFIG (config.js) first
-if (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
-  LLM_CONFIG.groqApiKey = CONFIG.GROQ_API_KEY;
-}
-// Then try API_CONFIG (api-config.js for production)
-else if (typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.groqApiKey) {
-  LLM_CONFIG.groqApiKey = API_CONFIG.groqApiKey;
-}
-// Then try LLM_CONFIG (llm-api.js)
-else if (typeof LLM_CONFIG !== 'undefined' && LLM_CONFIG && LLM_CONFIG.groqApiKey) {
-  // Already set
-}
+console.log('[LLM] groqKey found:', groqKey ? 'YES' : 'NO');
 
 function refreshLLMAnalysis(type) {
     const contentEl = document.getElementById(`llm-${type}-content`);
@@ -2287,20 +2284,20 @@ function refreshLLMAnalysis(type) {
     const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
     
     // Check if API is configured
-    const hasApiKey = LLM_CONFIG && LLM_CONFIG.groqApiKey && LLM_CONFIG.groqApiKey.length > 0;
+    const hasApiKey = groqKey && groqKey.length > 0;
     console.log('[LLM] LLM_CONFIG:', LLM_CONFIG);
-    console.log('[LLM] groqApiKey value:', LLM_CONFIG?.groqApiKey);
+    console.log('[LLM] groqApiKey value:', groqKey);
     console.log('[LLM] hasApiKey:', hasApiKey);
     
     if (hasApiKey) {
         // Use Groq API (free and fast)
         contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
-        console.log('[LLM] Calling Groq API with key:', LLM_CONFIG.groqApiKey ? LLM_CONFIG.groqApiKey.substring(0, 10) + '...' : 'EMPTY');
+        console.log('[LLM] Calling Groq API with key:', groqKey.substring(0, 10) + '...');
         
         fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${LLM_CONFIG.groqApiKey}`,
+                'Authorization': `Bearer ${groqKey}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
