@@ -1848,8 +1848,6 @@ function handleSignatureUpload(e) {
 
 // Settings page navigation
 function openSettingsPage(pageName) {
-    console.log('[SETTINGS] openSettingsPage:', pageName);
-    
     const menu = document.getElementById('settings-menu');
     const backBtn = document.getElementById('settingsBackBtn');
     const title = document.querySelector('#view-settings h2');
@@ -1864,16 +1862,14 @@ function openSettingsPage(pageName) {
     };
     
     // Hide back button only for preferences page (the main settings page)
-    // Show for all other sub-pages
+    // Show for all other sub-pages (profil, pdf, cotation, donnees)
     const hideBackButton = pageName === 'preferences';
-    console.log('[SETTINGS] hideBackButton:', hideBackButton);
     
     if (backBtn) {
         backBtn.style.display = hideBackButton ? 'none' : 'flex';
     }
     if (title) {
         title.textContent = pageNames[pageName] || pageName;
-        console.log('[SETTINGS] title set to:', title.textContent);
     }
     
     if (menu) menu.style.display = 'none';
