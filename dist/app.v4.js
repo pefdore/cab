@@ -1936,6 +1936,8 @@ window.saveOpenRouterKey = function() {
         return;
     }
     
+    alert('Debug: validation passed, value=' + input.value.trim());
+    
     const apiKey = input.value.trim();
     console.log('[DEBUG] saving key:', apiKey);
     localStorage.setItem('groq_api_key', apiKey);
