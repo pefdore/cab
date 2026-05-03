@@ -4272,9 +4272,14 @@ window.saveOpenRouterKey = function() {
 };
 
 window.loadOpenRouterKey = function() {
-    const savedKey = localStorage.getItem('openrouter_api_key');
-    if (savedKey) {
-        document.getElementById('openrouterApiKey').value = savedKey;
+    try {
+        const savedKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('groq_api_key');
+        if (savedKey) {
+            const input = document.getElementById('openrouterApiKey');
+            if (input) input.value = savedKey;
+        }
+    } catch (e) {
+        console.log('[LLM] loadOpenRouterKey error:', e);
     }
 };
 
