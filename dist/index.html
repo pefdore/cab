@@ -11,14 +11,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Cotation">
-    <link rel="manifest" href="/assets/manifest-BGmaG6wq.json">
-    <link rel="icon" type="image/svg+xml" href="/assets/icon-192-mySIpaht.svg">
-    <link rel="apple-touch-icon" href="/assets/icon-192-mySIpaht.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon-192.svg">
+    <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
+    <link rel="stylesheet" href="style.css?v=99">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-DcviOsfU.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -548,7 +548,18 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
             <!-- Add View -->
             <section id="view-add" class="view">
-                <h2>Ajouter un passage</h2>
+                <div class="add-toggle-header">
+                    <button class="switch-btn active" data-mode="passages" onclick="switchAddMode('passages')">
+                        Passages
+                    </button>
+                    <button class="switch-btn" data-mode="depenses" onclick="switchAddMode('depenses')">
+                        Dépenses
+                    </button>
+                </div>
+                
+                <!-- Formulaire Passage (visible par défaut) -->
+                <div id="add-passages-content">
+                    <h2>Ajouter un passage</h2>
                 <form id="entryForm" class="add-form">
                     <div class="form-group">
                         <label>Patient</label>
@@ -676,8 +687,121 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     if (e.target === this) closeVLRulesPopup();
                 });
                 </script>
-
-                <div class="entries-section">
+                </div>
+                
+                <!-- Contenu Dépenses (caché par défaut) -->
+                <div id="add-depenses-content" style="display: none;">
+                    <h2>Ajouter une dépense ou recette</h2>
+                    
+                    <!-- Toggle Dépenses/Recettes -->
+                    <div class="depense-recette-toggle">
+                        <button class="switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')">Dépenses</button>
+                        <button class="switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')">Recettes</button>
+                    </div>
+                    
+                    <!-- Formulaire Dépense -->
+                    <div id="add-depense-form">
+                        <div class="depenses-form">
+                            <div class="form-group">
+                                <label>Description</label>
+                                <div class="autocomplete-wrapper">
+                                    <input type="text" id="add-depenseDescription" placeholder="Description (ex: Loyer, EDF...)" autocomplete="off">
+                                    <div id="add-depense-autocomplete" class="autocomplete-dropdown"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Catégorie</label>
+                                <select id="add-depenseCategory">
+                                    <option value="masse_salariale">Masse salariale</option>
+                                    <option value="urssaf">URSSAF</option>
+                                    <option value="logiciel">Logiciel</option>
+                                    <option value="services">Services</option>
+                                    <option value="charges">Charges (EDF, eau, assurance)</option>
+                                    <option value="consommables">Consommables</option>
+                                    <option value="materiel">Matériel</option>
+                                    <option value="reception">Réception/Représentation</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Montant</label>
+                                    <input type="number" id="add-depenseAmount" placeholder="0.00" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="date" id="add-depenseDate">
+                                </div>
+                            </div>
+                            <button id="add-saveDepenseBtn" class="btn-primary">Enregistrer la dépense</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulaire Recette (caché par défaut) -->
+                    <div id="add-recette-form" style="display: none;">
+                        <div class="recettes-form">
+                            <div class="form-group">
+                                <label>Description</label>
+                                <div class="autocomplete-wrapper">
+                                    <input type="text" id="add-recetteDescription" placeholder="Description (ex: Honoraires, Remboursement...)" autocomplete="off">
+                                    <div id="add-recette-autocomplete" class="autocomplete-dropdown"></div>
+                                </div>
+                            </div>
+                            <div class="form-group" id="add-recette-category-group">
+                                <label>Catégorie</label>
+                                <select id="add-recetteCategory">
+                                    <option value="honoraires">Honoraires</option>
+                                    <option value="remboursements">Remboursements</option>
+                                    <option value="autres">Autres recettes</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Montant</label>
+                                    <input type="number" id="add-recetteAmount" placeholder="0.00" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="date" id="add-recetteDate">
+                                </div>
+                            </div>
+                            <button id="add-saveRecetteBtn" class="btn-primary">Enregistrer la recette</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Liste des dépenses et recettes du mois -->
+                    <div class="add-depenses-recettes-list" style="margin-top: 24px;">
+                        <div class="entries-header">
+                            <h3>Dépenses et recettes du mois</h3>
+                            <div class="month-selector">
+                                <button id="prevMonthAddDepenses">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M15 18l-6-6 6-6"/>
+                                    </svg>
+                                </button>
+                                <span id="currentMonthAddDepenses">Mai 2026</span>
+                                <button id="nextMonthAddDepenses">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18l6-6-6-6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="depenses-recettes-summary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                            <div class="stat-card" style="padding: 12px; background: var(--color-danger-bg); border-radius: 8px; border: 1px solid var(--color-danger-border);">
+                                <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Dépenses</span>
+                                <span class="stat-value" id="add-depenses-month-total" style="font-size: 1.125rem; font-weight: 600; color: var(--color-danger);">0€</span>
+                            </div>
+                            <div class="stat-card" style="padding: 12px; background: var(--color-success-bg); border-radius: 8px; border: 1px solid var(--color-success-border);">
+                                <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Recettes</span>
+                                <span class="stat-value" id="add-recettes-month-total" style="font-size: 1.125rem; font-weight: 600; color: var(--color-success);">0€</span>
+                            </div>
+                        </div>
+                        <div id="add-depenses-list" class="depenses-list"></div>
+                        <div id="add-recettes-list" class="recettes-list"></div>
+                    </div>
+                </div>
+                
+                <div class="entries-section" id="add-passages-section">
                     <div class="entries-header">
                         <h3>Passages du mois</h3>
                         <div class="month-selector">
@@ -1073,51 +1197,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div id="cabinet-depenses" class="cabinet-tab-content">
                     <div class="section-header">
                         <h3>Dépenses</h3>
-                        <button id="addDepenseBtn" class="add-btn" onclick="document.getElementById('depensesForm').style.display = document.getElementById('depensesForm').style.display === 'none' ? 'block' : 'none'">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            Ajouter
-                        </button>
-                    </div>
-                    
-                    <div class="depenses-form" id="depensesForm" style="display:none;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Catégorie</label>
-                                <select id="depenseCategory">
-                                    <option value="masse_salariale">Masse salariale</option>
-                                    <option value="urssaf">URSSAF</option>
-                                    <option value="logiciel">Logiciel</option>
-                                    <option value="services">Services</option>
-                                    <option value="charges">Charges (EDF, eau, assurance)</option>
-                                    <option value="consommables">Consommables</option>
-                                    <option value="materiel">Matériel</option>
-                                    <option value="reception">Réception/Représentation</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Sous-catégorie</label>
-                                <select id="depenseSousCategorie">
-                                    <option value="">Sélectionner...</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Description</label>
-                                <input type="text" id="depenseDescription" placeholder="Description">
-                            </div>
-                            <div class="form-group">
-                                <label>Montant</label>
-                                <input type="number" id="depenseAmount" placeholder="0.00" step="0.01">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="depenseDate">
-                        </div>
-                        <button id="saveDepenseBtn" class="btn-primary">Enregistrer</button>
                     </div>
                     
                     <div class="depenses-list" id="depensesList"></div>
@@ -1127,40 +1206,6 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                 <div id="cabinet-recettes" class="cabinet-tab-content">
                     <div class="section-header">
                         <h3>Recettes</h3>
-                        <button id="addRecetteBtn" class="add-btn" onclick="document.getElementById('recettesForm').style.display = document.getElementById('recettesForm').style.display === 'none' ? 'block' : 'none'">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            Ajouter
-                        </button>
-                    </div>
-                    
-                    <div class="recettes-form" id="recettesForm" style="display:none;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Catégorie</label>
-                                <select id="recetteCategory">
-                                    <option value="honoraires">Honoraires</option>
-                                    <option value="remboursements">Remboursements</option>
-                                    <option value="autres">Autres recettes</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Description</label>
-                                <input type="text" id="recetteDescription" placeholder="Description">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Montant</label>
-                                <input type="number" id="recetteAmount" placeholder="0.00" step="0.01">
-                            </div>
-                            <div class="form-group">
-                                <label>Date</label>
-                                <input type="date" id="recetteDate">
-                            </div>
-                        </div>
-                        <button id="saveRecetteBtn" class="btn-primary">Enregistrer</button>
                     </div>
                     
                     <div class="recettes-list" id="recettesList"></div>
