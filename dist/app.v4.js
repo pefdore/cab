@@ -279,7 +279,6 @@ async function loadUserSettings() {
         }
         renderLogoPreview();
         loadTheme();
-        loadOpenRouterKey();
     } catch (e) {
         console.error('[AUTH] Erreur chargement settings:', e);
     }
@@ -1819,19 +1818,6 @@ function setupEventListeners() {
             document.getElementById('cabinet-' + tabName)?.classList.add('active');
         });
     });
-    
-    // Sub-tabs for cabinet modules
-    document.querySelectorAll('.sub-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            const parentSection = this.closest('.cabinet-tab-content');
-            const subTabName = this.dataset.subtab;
-            parentSection.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-            parentSection.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-            const contentId = parentSection.id.replace('cabinet-', '') + '-' + subTabName;
-            document.getElementById(contentId)?.classList.add('active');
-        });
-    });
 }
 
 function handleLogoUpload(e) {
@@ -1868,16 +1854,7 @@ function openSettingsPage(pageName) {
     
     if (menu) menu.style.display = 'none';
     if (backBtn) backBtn.style.display = 'flex';
-    
-    const desktopPageNames = {
-        'profil': 'Profil',
-        'cotation': 'Cotations',
-        'pdf': 'PDF',
-        'preferences': 'Préférences',
-        'donnees': 'Données'
-    };
-    const displayName = desktopPageNames[pageName] || pageName.charAt(0).toUpperCase() + pageName.slice(1);
-    if (title) title.textContent = displayName;
+    if (title) title.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
     
     // Hide all settings pages
     document.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
@@ -1898,7 +1875,6 @@ function openSettingsPage(pageName) {
         renderLogoPreview();
     } else if (pageName === 'preferences') {
         loadTheme();
-        loadOpenRouterKey();
     }
 }
 
@@ -2164,8 +2140,7 @@ function switchView(viewName) {
                 // Add close button
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'overlay-close-btn';
-                closeBtn.style.display = 'flex';
-                closeBtn.innerHTML = '<span class="page-title">Paramètres</span>';
+                closeBtn.innerHTML = '<span class="back-arrow">Retour</span><span class="page-title">Paramètres</span>';
                 closeBtn.onclick = () => {
                     // Revenir au menu paramètres
                     const menu = overlay.querySelector('.settings-menu');
@@ -2174,14 +2149,12 @@ function switchView(viewName) {
                         p.style.display = 'none';
                         p.classList.remove('active');
                     });
-                    // Cacher le bouton back
+                    // Supprimer le bouton back
                     const backBtn = overlay.querySelector('.overlay-back-btn');
-                    if (backBtn) backBtn.style.display = 'none';
+                    if (backBtn) backBtn.remove();
                     // Afficher le bouton déconnexion
                     const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                     if (logoutBtn) logoutBtn.style.display = 'flex';
-                    // Afficher le bouton close
-                    closeBtn.style.display = 'flex';
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
                 
@@ -2218,10 +2191,6 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
-                            // Masquer le bouton close (avec "Paramètres") sur les sous-pages
-                            const closeBtn = overlay.querySelector('.overlay-close-btn');
-                            if (closeBtn) closeBtn.style.display = 'none';
-                            
                             // Add or update back button with page name
                             let backBtn = overlay.querySelector('.overlay-back-btn');
                             if (!backBtn) {
@@ -2229,7 +2198,6 @@ function switchView(viewName) {
                                 backBtn.className = 'overlay-back-btn';
                                 overlay.insertBefore(backBtn, overlay.firstChild);
                             }
-                            backBtn.style.display = 'flex';
                             backBtn.innerHTML = `<span class="back-arrow">Retour</span><span class="page-title">${displayName}</span>`;
                             backBtn.onclick = () => {
                                 // Show menu, hide all pages
@@ -2242,11 +2210,6 @@ function switchView(viewName) {
                                 // Show logout button again
                                 const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                                 if (logoutBtn) logoutBtn.style.display = 'flex';
-                                // Show close button again
-                                const closeBtn = overlay.querySelector('.overlay-close-btn');
-                                if (closeBtn) closeBtn.style.display = 'flex';
-                                // Hide back button
-                                backBtn.style.display = 'none';
                             };
                             
                             // Update h2 title in overlay
@@ -2279,7 +2242,6 @@ function switchView(viewName) {
         }
     } else if (viewName === 'cabinet') {
         loadCabinetData();
-        initCabinetModules();
     } else if (viewName === 'add') {
         renderEntries();
         loadVLHistory().then(() => renderRecentVLForAdd());
@@ -2323,22 +2285,14 @@ async function loadCabinetData() {
     }
 }
 
-function initCabinetModules() {
-    console.log('[CABINET] Initializing new modules');
-    
-    document.getElementById('appelsToday')?.insertAdjacentText('afterbegin', '0');
-    document.getElementById('appelMissed')?.insertAdjacentText('afterbegin', '0');
-    document.getElementById('appelAvgTime')?.insertAdjacentText('afterbegin', '0:00');
-    document.getElementById('appelPeak')?.insertAdjacentText('afterbegin', '-');
-}
-
 async function loadDepenses() {
     console.log('[COMPTAB] loadDepenses called, user:', currentUser?.id);
     try {
-        console.log('Loading ALL depenses for cabinet (shared among all partners)');
+        console.log('Loading depenses for user:', currentUser?.id);
         const { data, error } = await supabaseClient
             .from('cabinet_depenses')
             .select('*')
+            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Depenses loaded:', data?.length || 0, error);
@@ -2358,10 +2312,11 @@ async function loadDepenses() {
 async function loadRecettes() {
     console.log('[COMPTAB] loadRecettes called, user:', currentUser?.id);
     try {
-        console.log('Loading ALL recettes for cabinet (shared among all partners)');
+        console.log('Loading recettes for user:', currentUser?.id);
         const { data, error } = await supabaseClient
             .from('cabinet_recettes')
             .select('*')
+            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Recettes loaded:', data?.length || 0, error);
@@ -2979,7 +2934,8 @@ if (typeof LLM_CONFIG === 'undefined') {
   var LLM_CONFIG = {};
 }
 
-// CONFIGURATION LLM - Get API key from various sources (OpenRouter priority)
+// CONFIGURATION LLM - Get API key from loaded config files
+// Try various possible sources
 var groqKey = '';
 if (typeof LLM_CONFIG !== 'undefined') {
   if (LLM_CONFIG && LLM_CONFIG.groqApiKey) {
@@ -2991,9 +2947,6 @@ if (!groqKey && typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.gr
 }
 if (!groqKey && typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
   groqKey = CONFIG.GROQ_API_KEY;
-}
-if (!groqKey) {
-  groqKey = localStorage.getItem('openrouter_api_key') || '';
 }
 
 console.log('[LLM] groqKey found:', groqKey ? 'YES' : 'NO');
@@ -3046,41 +2999,70 @@ function refreshLLMAnalysis(type) {
     // Generate response based on type
     const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
     
-// Check if API is configured (Groq or OpenRouter)
-    const groqKey = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
+    // Check if API is configured
     const hasApiKey = groqKey && groqKey.length > 0;
-    console.log('[LLM] API key found:', hasApiKey ? 'YES' : 'NO');
+    console.log('[LLM] LLM_CONFIG:', LLM_CONFIG);
+    console.log('[LLM] groqApiKey value:', groqKey);
+    console.log('[LLM] hasApiKey:', hasApiKey);
     
     if (hasApiKey) {
         // Use Groq API (free and fast)
         contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
-        console.log('[LLM] Calling Groq API');
+        console.log('[LLM] Calling Groq API with key:', groqKey.substring(0, 10) + '...');
         
-        const isGroq = groqKey.startsWith('gsk_') || !groqKey.includes('sk-or-');
-        
-        if (isGroq) {
-            fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${groqKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: 'llama-3.1-70b-versatile',
-                    messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
-                })
+        fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${groqKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'llama-3.1-70b-versatile',
+                messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
             })
+        })
+        .then(res => {
+            console.log('[LLM] Response status:', res.status);
+            return res.json();
+        })
+        .then(result => {
+            console.log('[LLM] Result:', JSON.stringify(result).substring(0, 200));
+            const response = result.choices?.[0]?.message?.content || 'Erreur: ' + JSON.stringify(result).substring(0, 100);
+            contentEl.innerHTML = `<p>${response.replace(/\n/g, '<br>')}</p>`;
+        })
         .catch(err => {
             console.error('[LLM] Error:', err);
-            contentEl.innerHTML = `<p class="llm-error">${err.message}</p>`;
+            contentEl.innerHTML = '<p class="llm-error">Erreur de connexion IA</p>';
         });
     } else {
-    // Fallback to simulated responses when no API key configured
-    contentEl.innerHTML = `<p class="llm-error">
-        Configurez votre clé API OpenRouter pour activer l'analyse IA.<br>
-        Allez dans <strong>Paramètres → Préférences</strong> pour la configurer.
-    </p>`;
-}
+    // Fallback to simulated responses
+    setTimeout(() => {
+        const responses = {
+            optimisation: `<ul>
+                <li><strong>Réduire les charges sociales</strong> - Vérifiez vos échéances URSSAF et envisagez un échéancier si nécessaire</li>
+                <li><strong>Optimiser les consommables</strong> - Comparer les fournisseurs pour les achats récurrents</li>
+                <li><strong>Revoir les abonnements</strong> - Auditer les logiciels et services mensuels</li>
+            </ul>`,
+            benchmark: `<ul>
+                <li><strong>Typical breakdown:</strong> Charges locatives 25-35%, Masse salariale 20-30%, URSSAF 15-20%, Logiciels 5-10%</li>
+                <li><strong>Your main expense:</strong> ${data.topCategories[0]?.[0] || 'N/A'} represents ${data.topCategories[0] ? ((data.topCategories[0][1] / data.totalDepenses) * 100).toFixed(0) : 0}% of total</li>
+                <li><strong>Recommendation:</strong> Stay within market norms for your category</li>
+            </ul>`,
+            previsions: `<ul>
+                <li><strong>Tendance actuelle:</strong> ${data.balance >= 0 ? 'Positive (excédent)' : 'Négative (déficit)'}</li>
+                <li><strong>Moyenne mensuelle:</strong> ${(data.totalRecettes / 12).toFixed(0)}€ revenus / ${(data.totalDepenses / 12).toFixed(0)}€ charges</li>
+                <li><strong>Prévision:</strong> ${data.balance >= 0 ? 'Situation stable attendue' : 'Vigilance recommandée sur la trésorerie'}</li>
+            </ul>`,
+            recommandations: `<ul>
+                <li><strong>1.</strong> Suivre mensuellement le ratio charges/revenus</li>
+                <li><strong>2.</strong> Constituer une réserve de 3 mois de charges</li>
+                <li><strong>3.</strong> Réviser les contrats fournisseurs annuellement</li>
+            </ul>`
+        };
+        
+        contentEl.innerHTML = responses[type] || '<p>Aucune analyse disponible</p>';
+    }, 800);
+    }
 }
 
 window.refreshLLMAnalysis = refreshLLMAnalysis;
@@ -4246,290 +4228,6 @@ window.handleLoginClick = function() {
 window.doLogin = doLogin;
 window.downloadPDF = downloadPDF;
 window.deletePDF = deletePDF;
-
-// Cabinet Modules Functions
-window.saveOpenRouterKey = function() {
-    const input = document.querySelector('#settings-page-preferences input[id="openrouterApiKey"]') || document.getElementById('openrouterApiKey');
-    const status = document.querySelector('#openrouterStatus');
-    
-    console.log('[LLM] Save key - input found:', !!input);
-    
-    if (!input || !input.value.trim()) {
-        alert('Veuillez entrer une clé API');
-        return;
-    }
-    
-    const apiKey = input.value.trim();
-    localStorage.setItem('openrouter_api_key', apiKey);
-    localStorage.setItem('groq_api_key', apiKey); // Also save for Groq
-    
-    if (status) status.textContent = 'Clé enregistrée avec succès!';
-    setTimeout(() => {
-        if (status) status.textContent = '';
-    }, 3000);
-    
-    console.log('[LLM] API key saved');
-};
-
-window.loadOpenRouterKey = function() {
-    try {
-        const savedKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('groq_api_key');
-        if (savedKey) {
-            const input = document.getElementById('openrouterApiKey');
-            if (input) input.value = savedKey;
-        }
-    } catch (e) {
-        console.log('[LLM] loadOpenRouterKey error:', e);
-    }
-};
-
-window.callLLM = async function(prompt, taskType) {
-    // Try Groq first (free and fast), then OpenRouter
-    let apiKey = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
-    
-    if (!apiKey) {
-        throw new Error('Clé API non configurée. Veuillez la configurer dans Paramètres > Préférences.');
-    }
-    
-    const isGroq = apiKey.startsWith('gsk_') || !apiKey.includes('sk-or-');
-    
-    const systemPrompts = {
-        'generate_odj': 'Tu es un assistant administratif pour un cabinet médical français. Génère des ordres du jour professionnels et structurés.',
-        'draft_sujet': 'Tu es un assistant administratif pour un cabinet médical français. Aide à formuler des sujets de manière professionnelle.',
-        'generate_cr': 'Tu es un assistant administratif pour un cabinet médical français. Génère des comptes rendus de réunion professionnels.',
-        'analyze_commande': 'Tu es un assistant pour la gestion de stocks d\'un cabinet médical français. Analyse les besoins et propose des commandes optimisées.',
-        'analyze_financial': 'Tu es un expert-comptable médical français. Analyse les données financières du cabinet et fournis des insights actionnables en français.'
-    };
-    
-    const systemPrompt = systemPrompts[taskType] || 'Tu es un assistant helpful.';
-    
-    let response;
-    if (isGroq) {
-        // Use Groq API (free, fast, uses Llama)
-        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'llama-3.1-70b-versatile',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: prompt }
-                ],
-                max_tokens: 1024
-            })
-        });
-    } else {
-        // Use OpenRouter
-        response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': window.location.origin,
-                'X-Title': 'Cotation Médecin'
-            },
-            body: JSON.stringify({
-                model: 'anthropic/claude-3-haiku',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: prompt }
-                ],
-                max_tokens: 1024
-            })
-        });
-    }
-    
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error?.message || `Erreur API: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || 'Aucune réponse';
-};
-
-window.analyzeFinancial = async function() {
-    const container = document.getElementById('financialAnalysisResult');
-    container.innerHTML = '<div class="loading">Analyse en cours...</div>';
-    
-    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    const currentMonth = monthNames[currentMonthAddDepenses.getMonth()] + ' ' + currentMonthAddDepenses.getFullYear();
-    
-    const depensesThisMonth = cabinetDepenses.filter(d => {
-        const dDate = new Date(d.date);
-        return dDate.getMonth() === currentMonthAddDepenses.getMonth() && 
-               dDate.getFullYear() === currentMonthAddDepenses.getFullYear();
-    });
-    
-    const recettesThisMonth = cabinetRecettes.filter(r => {
-        const rDate = new Date(r.date);
-        return rDate.getMonth() === currentMonthAddDepenses.getMonth() && 
-               rDate.getFullYear() === currentMonthAddDepenses.getFullYear();
-    });
-    
-    const totalDepenses = depensesThisMonth.reduce((sum, d) => sum + (d.amount || 0), 0);
-    const totalRecettes = recettesThisMonth.reduce((sum, r) => sum + (r.amount || 0), 0);
-    
-    const depensesByCategory = {};
-    depensesThisMonth.forEach(d => {
-        if (!depensesByCategory[d.category]) depensesByCategory[d.category] = 0;
-        depensesByCategory[d.category] += d.amount || 0;
-    });
-    
-    const prompt = `Analyse financière du cabinet médical pour ${currentMonth}:
-
-Recettes: ${totalRecettes.toFixed(2)}€
-Dépenses: ${totalDepenses.toFixed(2)}€
-Marge: ${(totalRecettes - totalDepenses).toFixed(2)}€
-
-Détail des dépenses par catégorie:
-${Object.entries(depensesByCategory).map(([cat, amount]) => `- ${cat}: ${amount.toFixed(2)}€`).join('\n')}
-
- Fournis une analyse concise en français avec:
-1. Points clés du mois
-2. Alertes si problèmes détectés
-3. Recommandations pour améliorer la rentabilité
-4. Comparaison avec les mois précédents si possible`;
-
-    try {
-        const response = await callLLM(prompt, 'analyze_financial');
-        container.innerHTML = `<h4>Analyse financière - ${currentMonth}</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
-    } catch (error) {
-        container.innerHTML = `<p style="color: red;">Erreur lors de l'analyse: ${error.message}</p>`;
-    }
-};
-
-window.generateODJ = async function() {
-    const date = document.getElementById('reunionDate').value;
-    const type = document.getElementById('reunionType').value;
-    const container = document.getElementById('odjResult');
-    
-    if (!date) {
-        alert('Veuillez sélectionner une date');
-        return;
-    }
-    
-    container.innerHTML = '<div class="loading">Génération en cours...</div>';
-    
-    const prompt = `Génère un ordre du jour pour une réunion de cabinet médical de type ${type} prévue le ${date}. 
-    Inclue des sections classiques: points administratifs, points financiers, organisation du cabinet, divers.
-    Format: liste structurée avec points numérotés.`;
-    
-    try {
-        const response = await callLLM(prompt, 'generate_odj');
-        container.innerHTML = `<h4>Ordre du jour - ${date}</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
-    } catch (error) {
-        container.innerHTML = '<p style="color: red;">Erreur lors de la génération</p>';
-    }
-};
-
-window.draftSujet = async function() {
-    const texte = document.getElementById('sujetText').value;
-    const container = document.getElementById('sujetDraft');
-    
-    if (!texte) {
-        alert('Veuillez entrer un sujet');
-        return;
-    }
-    
-    container.innerHTML = '<div class="loading">Affinage en cours...</div>';
-    
-    const prompt = `Aide à formuler ce sujet de manière professionnelle pour une réunion de cabinet médical:
-    "${texte}"
-    Reformule de manière claire et concise, en précisant le contexte et les questions à débattre.`;
-    
-    try {
-        const response = await callLLM(prompt, 'draft_sujet');
-        container.innerHTML = `<h4>Proposition affinée</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
-    } catch (error) {
-        container.innerHTML = '<p style="color: red;">Erreur lors de la génération</p>';
-    }
-};
-
-window.submitSujet = function() {
-    const texte = document.getElementById('sujetText').value;
-    if (!texte) {
-        alert('Veuillez entrer un sujet');
-        return;
-    }
-    
-    const sujetsList = document.getElementById('sujetsList');
-    const sujetItem = document.createElement('div');
-    sujetItem.className = 'sujet-item';
-    sujetItem.innerHTML = `
-        <div class="sujet-author">Proposé par ${currentUser?.email || 'Associé'} - ${new Date().toLocaleDateString()}</div>
-        <div class="sujet-title">${texte}</div>
-        <span class="sujet-status">En attente</span>
-    `;
-    sujetsList.appendChild(sujetItem);
-    
-    document.getElementById('sujetText').value = '';
-    document.getElementById('sujetDraft').innerHTML = '';
-};
-
-window.generateCR = async function() {
-    const notes = document.getElementById('crNotes').value;
-    const container = document.getElementById('crResult');
-    
-    if (!notes) {
-        alert('Veuillez entrer les notes de la réunion');
-        return;
-    }
-    
-    container.innerHTML = '<div class="loading">Génération en cours...</div>';
-    
-    const prompt = `Génère un compte rendu professionnel de réunion de cabinet médical à partir des notes suivantes:
-    "${notes}"
-    
-    Structure attendue:
-    - Date et participants
-    - Points discutés
-    - Décisions prises
-    - Actions à suivre
-    - Prochaine réunion`;
-    
-    try {
-        const response = await callLLM(prompt, 'generate_cr');
-        container.innerHTML = `<h4>Compte rendu</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
-    } catch (error) {
-        container.innerHTML = '<p style="color: red;">Erreur lors de la génération</p>';
-    }
-};
-
-window.downloadCR = function() {
-    const crContent = document.getElementById('crResult').innerText;
-    if (!crContent) {
-        alert('Aucun compte rendu à télécharger');
-        return;
-    }
-    
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const lines = doc.splitTextToSize(crContent, 180);
-    doc.text(lines, 10, 10);
-    doc.save('compte_rendu_reunion.pdf');
-};
-
-window.analyzeCommande = async function() {
-    const container = document.getElementById('commandeSuggestions');
-    container.innerHTML = '<div class="loading">Analyse en cours...</div>';
-    
-    const prompt = `Analyse les besoins de commande pour un cabinet médical français.
-    Stocks actuels常用的: consommables, petit matériel, azote.
-    Propose une commande optimisée en tenant compte des seuils de stock.
-    Format JSON avec: article, quantité_needed, urgence, prix_estime.
-    Réponds en français.`;
-    
-    try {
-        const response = await callLLM(prompt, 'analyze_commande');
-        container.innerHTML = `<h4>Suggestions de commande</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
-    } catch (error) {
-        container.innerHTML = '<p style="color: red;">Erreur lors de l\'analyse</p>';
-    }
-};
 
 // Initialize auth on page load
 if (document.readyState === 'loading') {
