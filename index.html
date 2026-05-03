@@ -776,6 +776,19 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     <div class="add-depenses-recettes-list" style="margin-top: 24px;">
                         <div class="entries-header">
                             <h3>Dépenses et recettes du mois</h3>
+                            <div class="month-selector">
+                                <button id="prevMonthAddDepenses">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M15 18l-6-6 6-6"/>
+                                    </svg>
+                                </button>
+                                <span id="currentMonthAddDepenses">Mai 2026</span>
+                                <button id="nextMonthAddDepenses">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18l6-6-6-6"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         <div class="depenses-recettes-summary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
                             <div class="stat-card" style="padding: 12px; background: var(--color-danger-bg); border-radius: 8px; border: 1px solid var(--color-danger-border);">

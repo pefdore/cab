@@ -560,6 +560,14 @@ function changeMonth(delta) {
     setTimeout(() => { isChangingMonth = false; }, 100);
 }
 
+let currentMonthAddDepenses = new Date();
+
+function changeMonthAddDepenses(delta) {
+    const newMonth = currentMonthAddDepenses.getMonth() + delta;
+    currentMonthAddDepenses.setMonth(newMonth);
+    renderAddDepensesRecettes();
+}
+
 function setDefaultDate() {
     const dateInput = document.getElementById('visitDate');
     if (dateInput && !dateInput.value) {
@@ -1385,6 +1393,8 @@ function setupEventListeners() {
     document.getElementById('cotation').addEventListener('change', handleCotationChange);
     document.getElementById('prevMonthAdd')?.addEventListener('click', () => changeMonth(-1));
     document.getElementById('nextMonthAdd')?.addEventListener('click', () => changeMonth(1));
+    document.getElementById('prevMonthAddDepenses')?.addEventListener('click', () => changeMonthAddDepenses(-1));
+    document.getElementById('nextMonthAddDepenses')?.addEventListener('click', () => changeMonthAddDepenses(1));
     document.getElementById('generatePdfBtn')?.addEventListener('click', generatePDF);
     const pdfBtn = document.getElementById('generatePdfBtn');
     if (pdfBtn) pdfBtn.disabled = false;
@@ -2102,9 +2112,15 @@ function renderRecettes() {
 }
 
 function renderAddDepensesRecettes() {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    
+    const currentMonthAddDepensesDisplay = document.getElementById('currentMonthAddDepenses');
+    if (currentMonthAddDepensesDisplay) {
+        currentMonthAddDepensesDisplay.textContent = monthNames[currentMonthAddDepenses.getMonth()] + ' ' + currentMonthAddDepenses.getFullYear();
+    }
+    
+    const monthStart = new Date(currentMonthAddDepenses.getFullYear(), currentMonthAddDepenses.getMonth(), 1);
+    const monthEnd = new Date(currentMonthAddDepenses.getFullYear(), currentMonthAddDepenses.getMonth() + 1, 0);
     
     const monthDepenses = cabinetDepenses.filter(d => {
         const date = new Date(d.date);
