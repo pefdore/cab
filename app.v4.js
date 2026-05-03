@@ -314,7 +314,6 @@ function setupAuthListeners() {
     if (showRegister) {
         showRegister.addEventListener('click', () => {
             document.getElementById('login-form').style.display = 'none';
-            document.getElementById('login-toggle').style.display = 'none';
             document.getElementById('register-form').style.display = 'flex';
         });
     }
@@ -340,11 +339,9 @@ function setupAuthListeners() {
 function showLoginForm() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
-    const loginToggle = document.getElementById('login-toggle');
     
     if (loginForm) loginForm.style.display = 'flex';
     if (registerForm) registerForm.style.display = 'none';
-    if (loginToggle) loginToggle.style.display = 'block';
 }
 
 function showError(message) {
