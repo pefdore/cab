@@ -4982,14 +4982,15 @@ h2 {
 }
 
 .delete-btn-small {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 6px;
     border: none;
     background: var(--color-danger-bg);
     color: var(--color-danger);
     cursor: pointer;
-    font-size: 0.625rem;
+    font-size: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5001,23 +5002,31 @@ h2 {
 }
 
 .edit-btn-small {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 6px;
     border: none;
     background: var(--color-primary-light);
     color: var(--color-primary);
     cursor: pointer;
-    font-size: 0.625rem;
+    font-size: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 4px;
+    margin-right: 6px;
 }
 
 .edit-btn-small:hover {
     background: var(--color-primary);
     color: white;
+}
+
+.depense-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
 }
 
 .depense-item.income .amount {
