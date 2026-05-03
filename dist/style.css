@@ -4754,6 +4754,7 @@ h2 {
 .compta-value {
     font-size: 1.25rem;
     font-weight: 700;
+    word-break: break-word;
 }
 
 .compta-card.income .compta-value { color: var(--color-success); }
@@ -4869,24 +4870,35 @@ h2 {
     .cabinet-stats-row { grid-template-columns: repeat(2, 1fr); margin-top: 16px; }
     
     .compta-summary {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
+        grid-template-columns: 1fr;
+        gap: 12px;
         margin-bottom: 16px;
-        overflow-x: auto;
-        padding-bottom: 4px;
     }
     
     .compta-card {
-        min-width: 100px;
-        padding: 12px 8px;
+        min-width: auto;
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
     }
     
     .compta-card .compta-label {
-        font-size: 0.625rem;
+        font-size: 0.75rem;
+        margin-bottom: 0;
     }
     
     .compta-card .compta-value {
-        font-size: 1rem;
+        font-size: 1.125rem;
+        word-break: break-word;
+        text-align: right;
+    }
+    
+    .compta-card .compta-trend {
+        margin-top: 0;
+        margin-left: 8px;
+        white-space: nowrap;
     }
     
     .charts-row {
@@ -4937,6 +4949,7 @@ h2 {
     
     .cabinet-stat-value {
         font-size: 1rem;
+        word-break: break-word;
     }
     
     .cabinet-stat-label {
