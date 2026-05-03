@@ -1931,15 +1931,21 @@ window.saveOpenRouterKey = function() {
     console.log('[DEBUG] input:', input, 'value:', input ? input.value : 'N/A');
     
     if (!input || !input.value.trim()) {
+        console.log('[DEBUG] validation failed');
         alert('Veuillez entrer une clé API');
         return;
     }
     
     const apiKey = input.value.trim();
+    console.log('[DEBUG] saving key:', apiKey);
     localStorage.setItem('groq_api_key', apiKey);
     localStorage.setItem('openrouter_api_key', apiKey);
+    console.log('[DEBUG] key saved, checking localStorage:', localStorage.getItem('groq_api_key'));
     
-    if (status) status.textContent = 'Clé enregistrée!';
+    if (status) {
+        status.textContent = 'Clé enregistrée!';
+        console.log('[DEBUG] status message set');
+    }
     setTimeout(() => {
         if (status) status.textContent = '';
     }, 3000);
