@@ -1407,6 +1407,10 @@ function closeSettingsPage() {
         p.style.display = 'none';
         p.classList.remove('active');
     });
+    
+    // Close mobile overlay if open
+    const overlay = document.querySelector('.settings-page-overlay');
+    if (overlay) overlay.classList.remove('active');
 }
 
 // Expose functions to window for inline onclick handlers
@@ -1581,6 +1585,12 @@ document.getElementById('deleteAllData')?.addEventListener('click', async () => 
 });
 
 function switchView(viewName) {
+    // Close settings overlay on mobile when navigating away
+    if (viewName !== 'settings') {
+        const overlay = document.querySelector('.settings-page-overlay');
+        if (overlay) overlay.classList.remove('active');
+    }
+    
     // Update nav
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.toggle('active', item.dataset.view === viewName);
