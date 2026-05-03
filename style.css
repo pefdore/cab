@@ -2318,18 +2318,28 @@ h2 {
     
     .settings-page-overlay .mobile-logout-btn {
         display: flex !important;
-        margin: 30px 16px;
+        margin: 40px 16px;
         width: calc(100% - 32px);
         background: #fef2f2;
         border: 2px solid #fecaca;
         color: #dc2626;
-        font-weight: 600;
-        padding: 16px;
-        border-radius: 12px;
+        font-weight: 700;
+        padding: 20px;
+        border-radius: 14px;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .settings-page-overlay .mobile-logout-btn:active {
         background: #fee2e2;
+        transform: scale(0.98);
+    }
+    
+    /* Masquer le bouton déconnexion sur les sous-pages */
+    .settings-page-overlay .settings-page .mobile-logout-btn,
+    .settings-page-overlay .settings-page.active .mobile-logout-btn {
+        display: none !important;
     }
     
     .settings-page-overlay .settings-menu {
