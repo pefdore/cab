@@ -347,6 +347,36 @@ h2 {
     box-shadow: var(--shadow-sm);
 }
 
+.add-toggle-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 4px;
+    background: var(--color-bg-subtle);
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.add-toggle-header .switch-btn {
+    padding: 8px 16px;
+    font-size: 0.8125rem;
+}
+
+.depense-recette-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 4px;
+    background: var(--color-bg-subtle);
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.depense-recette-toggle .switch-btn {
+    padding: 8px 16px;
+    font-size: 0.8125rem;
+}
+
 .dashboard-content {
     display: block;
 }
@@ -5202,6 +5232,18 @@ h2 {
     }
     
     .danger-btn {
+        justify-content: center;
+    }
+    
+    /* Toggle full width on mobile */
+    .add-toggle-header,
+    .depense-recette-toggle {
+        width: 100%;
+    }
+    
+    .add-toggle-header .switch-btn,
+    .depense-recette-toggle .switch-btn {
+        flex: 1;
         justify-content: center;
     }
 }

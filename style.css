@@ -5234,4 +5234,16 @@ h2 {
     .danger-btn {
         justify-content: center;
     }
+    
+    /* Toggle full width on mobile */
+    .add-toggle-header,
+    .depense-recette-toggle {
+        width: 100%;
+    }
+    
+    .add-toggle-header .switch-btn,
+    .depense-recette-toggle .switch-btn {
+        flex: 1;
+        justify-content: center;
+    }
 }
