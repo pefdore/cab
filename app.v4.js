@@ -43,6 +43,9 @@ function initAuth() {
     // Vérifier si une session existe déjà
     checkExistingSession();
     
+    // Setup des listeners pour les formulaires
+    setupAuthListeners();
+    
     authInitialized = true;
 }
 
