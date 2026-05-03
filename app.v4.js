@@ -1818,6 +1818,19 @@ function setupEventListeners() {
             document.getElementById('cabinet-' + tabName)?.classList.add('active');
         });
     });
+    
+    // Sub-tabs for cabinet modules
+    document.querySelectorAll('.sub-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const parentSection = this.closest('.cabinet-tab-content');
+            const subTabName = this.dataset.subtab;
+            parentSection.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+            parentSection.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            const contentId = parentSection.id.replace('cabinet-', '') + '-' + subTabName;
+            document.getElementById(contentId)?.classList.add('active');
+        });
+    });
 }
 
 function handleLogoUpload(e) {
@@ -2242,6 +2255,7 @@ function switchView(viewName) {
         }
     } else if (viewName === 'cabinet') {
         loadCabinetData();
+        initCabinetModules();
     } else if (viewName === 'add') {
         renderEntries();
         loadVLHistory().then(() => renderRecentVLForAdd());
@@ -2283,6 +2297,15 @@ async function loadCabinetData() {
     } else {
         console.log('[LOAD] Cannot load - missing auth or client');
     }
+}
+
+function initCabinetModules() {
+    console.log('[CABINET] Initializing new modules');
+    
+    document.getElementById('appelsToday')?.insertAdjacentText('afterbegin', '0');
+    document.getElementById('appelMissed')?.insertAdjacentText('afterbegin', '0');
+    document.getElementById('appelAvgTime')?.insertAdjacentText('afterbegin', '0:00');
+    document.getElementById('appelPeak')?.insertAdjacentText('afterbegin', '-');
 }
 
 async function loadDepenses() {
@@ -4226,6 +4249,136 @@ window.handleLoginClick = function() {
 window.doLogin = doLogin;
 window.downloadPDF = downloadPDF;
 window.deletePDF = deletePDF;
+
+// Cabinet Modules Functions
+window.generateODJ = async function() {
+    const date = document.getElementById('reunionDate').value;
+    const type = document.getElementById('reunionType').value;
+    const container = document.getElementById('odjResult');
+    
+    if (!date) {
+        alert('Veuillez sélectionner une date');
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading">Génération en cours...</div>';
+    
+    const prompt = `Génère un ordre du jour pour une réunion de cabinet médical de type ${type} prévue le ${date}. 
+    Inclue des sections classiques: points administratifs, points financiers, organisation du cabinet, divers.
+    Format: liste structurée avec points numérotés.`;
+    
+    try {
+        const response = await callLLM(prompt, 'generate_odj');
+        container.innerHTML = `<h4>Ordre du jour - ${date}</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
+    } catch (error) {
+        container.innerHTML = '<p style="color: red;">Erreur lors de la génération</p>';
+    }
+};
+
+window.draftSujet = async function() {
+    const texte = document.getElementById('sujetText').value;
+    const container = document.getElementById('sujetDraft');
+    
+    if (!texte) {
+        alert('Veuillez entrer un sujet');
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading">Affinage en cours...</div>';
+    
+    const prompt = `Aide à formuler ce sujet de manière professionnelle pour une réunion de cabinet médical:
+    "${texte}"
+    Reformule de manière claire et concise, en précisant le contexte et les questions à débattre.`;
+    
+    try {
+        const response = await callLLM(prompt, 'draft_sujet');
+        container.innerHTML = `<h4>Proposition affinée</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
+    } catch (error) {
+        container.innerHTML = '<p style="color: red;">Erreur lors de la génération</p>';
+    }
+};
+
+window.submitSujet = function() {
+    const texte = document.getElementById('sujetText').value;
+    if (!texte) {
+        alert('Veuillez entrer un sujet');
+        return;
+    }
+    
+    const sujetsList = document.getElementById('sujetsList');
+    const sujetItem = document.createElement('div');
+    sujetItem.className = 'sujet-item';
+    sujetItem.innerHTML = `
+        <div class="sujet-author">Proposé par ${currentUser?.email || 'Associé'} - ${new Date().toLocaleDateString()}</div>
+        <div class="sujet-title">${texte}</div>
+        <span class="sujet-status">En attente</span>
+    `;
+    sujetsList.appendChild(sujetItem);
+    
+    document.getElementById('sujetText').value = '';
+    document.getElementById('sujetDraft').innerHTML = '';
+};
+
+window.generateCR = async function() {
+    const notes = document.getElementById('crNotes').value;
+    const container = document.getElementById('crResult');
+    
+    if (!notes) {
+        alert('Veuillez entrer les notes de la réunion');
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading">Génération en cours...</div>';
+    
+    const prompt = `Génère un compte rendu professionnel de réunion de cabinet médical à partir des notes suivantes:
+    "${notes}"
+    
+    Structure attendue:
+    - Date et participants
+    - Points discutés
+    - Décisions prises
+    - Actions à suivre
+    - Prochaine réunion`;
+    
+    try {
+        const response = await callLLM(prompt, 'generate_cr');
+        container.innerHTML = `<h4>Compte rendu</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
+    } catch (error) {
+        container.innerHTML = '<p style="color: red;">Erreur lors de la génération</p>';
+    }
+};
+
+window.downloadCR = function() {
+    const crContent = document.getElementById('crResult').innerText;
+    if (!crContent) {
+        alert('Aucun compte rendu à télécharger');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const lines = doc.splitTextToSize(crContent, 180);
+    doc.text(lines, 10, 10);
+    doc.save('compte_rendu_reunion.pdf');
+};
+
+window.analyzeCommande = async function() {
+    const container = document.getElementById('commandeSuggestions');
+    container.innerHTML = '<div class="loading">Analyse en cours...</div>';
+    
+    const prompt = `Analyse les besoins de commande pour un cabinet médical français.
+    Stocks actuels常用的: consommables, petit matériel, azote.
+    Propose une commande optimisée en tenant compte des seuils de stock.
+    Format JSON avec: article, quantité_needed, urgence, prix_estime.
+    Réponds en français.`;
+    
+    try {
+        const response = await callLLM(prompt, 'analyze_commande');
+        container.innerHTML = `<h4>Suggestions de commande</h4><pre style="white-space: pre-wrap; font-family: inherit;">${response}</pre>`;
+    } catch (error) {
+        container.innerHTML = '<p style="color: red;">Erreur lors de l\'analyse</p>';
+    }
+};
 
 // Initialize auth on page load
 if (document.readyState === 'loading') {

@@ -1223,63 +1223,237 @@ function submitRegisterForm() {
 
             <!-- Cabinet View -->
             <section id="view-cabinet" class="view">
-                <h2>Comptabilité Cabinet</h2>
+                <h2>Gestion Cabinet</h2>
                 
                 <div class="cabinet-tabs">
-                    <button class="cabinet-tab active" data-tab="comptabilite">Résumé</button>
-                    <button class="cabinet-tab" data-tab="depenses">Dépenses</button>
-                    <button class="cabinet-tab" data-tab="recettes">Recettes</button>
+                    <button class="cabinet-tab active" data-tab="secretariat">Secrétariat</button>
+                    <button class="cabinet-tab" data-tab="reunions">Réunions</button>
+                    <button class="cabinet-tab" data-tab="stocks">Stocks & Remplaçants</button>
                 </div>
                 
-                <!-- Résumé -->
-                <div id="cabinet-comptabilite" class="cabinet-tab-content active">
-                    <div class="compta-summary">
-                        <div class="compta-card income">
-                            <span class="compta-label">Recettes</span>
-                            <span class="compta-value" id="totalRecettes">0€</span>
-                        </div>
-                        <div class="compta-card expense">
-                            <span class="compta-label">Dépenses</span>
-                            <span class="compta-value" id="totalDepenses">0€</span>
-                        </div>
-                        <div class="compta-card balance">
-                            <span class="compta-label">Balance</span>
-                            <span class="compta-value" id="balanceCabinet">0€</span>
+                <!-- Secrétariat -->
+                <div id="cabinet-secretariat" class="cabinet-tab-content active">
+                    <div class="sub-tabs">
+                        <button class="sub-tab active" data-subtab="rh">RH</button>
+                        <button class="sub-tab" data-subtab="planning">Planning</button>
+                        <button class="sub-tab" data-subtab="standard">Standard</button>
+                    </div>
+                    
+                    <div id="secretariat-rh" class="sub-tab-content active">
+                        <div class="module-card">
+                            <h3>Gestion du Personnel</h3>
+                            <p class="module-desc">Gestion des employés, contrats, congés et formation</p>
+                            <div class="module-actions">
+                                <button class="action-btn">Liste du personnel</button>
+                                <button class="action-btn">Ajouter un employé</button>
+                                <button class="action-btn">Congés</button>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="compta-categories">
-                        <h3>Répartition des dépenses</h3>
-                        <div id="depensesParCategorie" class="categories-grid"></div>
+                    <div id="secretariat-planning" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Planning du Secrétariat</h3>
+                            <p class="module-desc">Gestion des plannings et astreintes du secrétariat</p>
+                            <div class="planning-grid">
+                                <div class="planning-day">
+                                    <h4>Lundi</h4>
+                                    <div class="planning-slots"></div>
+                                </div>
+                                <div class="planning-day">
+                                    <h4>Mardi</h4>
+                                    <div class="planning-slots"></div>
+                                </div>
+                                <div class="planning-day">
+                                    <h4>Mercredi</h4>
+                                    <div class="planning-slots"></div>
+                                </div>
+                                <div class="planning-day">
+                                    <h4>Jeudi</h4>
+                                    <div class="planning-slots"></div>
+                                </div>
+                                <div class="planning-day">
+                                    <h4>Vendredi</h4>
+                                    <div class="planning-slots"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="compta-mois">
-                        <h3>Évolution mensuelle</h3>
-                        <div class="mois-selector">
-                            <button id="prevMoisCompta">&lt;</button>
-                            <span id="currentMoisCompta">2026</span>
-                            <button id="nextMoisCompta">&gt;</button>
+                    <div id="secretariat-standard" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Analyse du Standard</h3>
+                            <p class="module-desc">Statistiques et analyse des appels téléphoniques</p>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <span class="stat-value" id=" appelsToday">-</span>
+                                    <span class="stat-label">Appels aujourd'hui</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-value" id="appelMissed">-</span>
+                                    <span class="stat-label">Appels manqués</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-value" id="appelAvgTime">-</span>
+                                    <span class="stat-label">Temps moyen</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-value" id="appelPeak">-</span>
+                                    <span class="stat-label">Heure de pointe</span>
+                                </div>
+                            </div>
+                            <button class="action-btn primary">Importer données standard</button>
                         </div>
-                        <div id="evolutionMensuelle" class="evolution-grid"></div>
                     </div>
                 </div>
                 
-                <!-- Dépenses -->
-                <div id="cabinet-depenses" class="cabinet-tab-content">
-                    <div class="section-header">
-                        <h3>Dépenses</h3>
+                <!-- Réunions -->
+                <div id="cabinet-reunions" class="cabinet-tab-content">
+                    <div class="sub-tabs">
+                        <button class="sub-tab active" data-subtab="odj">Ordre du jour</button>
+                        <button class="sub-tab" data-subtab="sujets">Sujets</button>
+                        <button class="sub-tab" data-subtab="cr">Compte rendu</button>
                     </div>
                     
-                    <div class="depenses-list" id="depensesList"></div>
+                    <div id="reunions-odj" class="sub-tab-content active">
+                        <div class="module-card">
+                            <h3>Générateur d'Ordre du Jour</h3>
+                            <p class="module-desc">Générez automatiquement l'ordre du jour de vos réunions de cabinet</p>
+                            <div class="form-group">
+                                <label>Date de la réunion</label>
+                                <input type="date" id="reunionDate" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Type de réunion</label>
+                                <select id="reunionType" class="form-input">
+                                    <option value="hebdo">Hebdomadaire</option>
+                                    <option value="mensuelle">Mensuelle</option>
+                                    <option value="extra">Extraordinaire</option>
+                                </select>
+                            </div>
+                            <button class="action-btn primary" onclick="generateODJ()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+                                Générer avec IA
+                            </button>
+                            <div id="odjResult" class="result-container"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="reunions-sujets" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Propositions de Sujets</h3>
+                            <p class="module-desc">Chaque associé peut proposer un sujet pour la prochaine réunion</p>
+                            <div class="form-group">
+                                <label>Votre sujet</label>
+                                <textarea id="sujetText" class="form-input" rows="3" placeholder="Décrivez le sujet que vous souhaitez soumettre..."></textarea>
+                            </div>
+                            <button class="action-btn" onclick="draftSujet()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+                                Affiner avec IA
+                            </button>
+                            <button class="action-btn primary" onclick="submitSujet()">Soumettre le sujet</button>
+                            <div id="sujetDraft" class="result-container"></div>
+                            <div id="sujetsList" class="sujets-list"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="reunions-cr" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Générateur de Compte Rendu</h3>
+                            <p class="module-desc">Générez automatiquement le compte rendu après la réunion</p>
+                            <div class="form-group">
+                                <label>Sélectionner la réunion</label>
+                                <select id="reunionSelect" class="form-input">
+                                    <option value="">Choisir une réunion...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes de la réunion</label>
+                                <textarea id="crNotes" class="form-input" rows="5" placeholder="Saisissez les notes brutes de la réunion..."></textarea>
+                            </div>
+                            <button class="action-btn primary" onclick="generateCR()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+                                Générer le CR avec IA
+                            </button>
+                            <button class="action-btn" onclick="downloadCR()">Télécharger PDF</button>
+                            <div id="crResult" class="result-container"></div>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Recettes -->
-                <div id="cabinet-recettes" class="cabinet-tab-content">
-                    <div class="section-header">
-                        <h3>Recettes</h3>
+                <!-- Stocks & Remplaissants -->
+                <div id="cabinet-stocks" class="cabinet-tab-content">
+                    <div class="sub-tabs">
+                        <button class="sub-tab active" data-subtab="remplacants">Remplaçants</button>
+                        <button class="sub-tab" data-subtab="stocks">Gestion Stocks</button>
+                        <button class="sub-tab" data-subtab="commande">Commande IA</button>
                     </div>
                     
-                    <div class="recettes-list" id="recettesList"></div>
+                    <div id="stocks-remplacants" class="sub-tab-content active">
+                        <div class="module-card">
+                            <h3>Gestion des Remplaçants</h3>
+                            <p class="module-desc">Suivi des remplaçants, disponibilités et contacts</p>
+                            <div class="module-actions">
+                                <button class="action-btn">Liste remplaçants</button>
+                                <button class="action-btn">Ajouter un remplaçant</button>
+                                <button class="action-btn">Disponibilités</button>
+                            </div>
+                            <div id="remplacantsList" class="remplacants-grid"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="stocks-inventory" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Gestion des Stocks</h3>
+                            <p class="module-desc">Inventaire du petit matériel, consommables et azote</p>
+                            <div class="inventory-filters">
+                                <select id="stockCategory" class="form-input">
+                                    <option value="">Toutes catégories</option>
+                                    <option value="materiel">Petit matériel</option>
+                                    <option value="consommables">Consommables</option>
+                                    <option value="azote">Azote</option>
+                                    <option value="medicaments">Médicaments</option>
+                                </select>
+                                <button class="action-btn">Ajouter un article</button>
+                            </div>
+                            <div class="inventory-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Article</th>
+                                            <th>Catégorie</th>
+                                            <th>Quantité</th>
+                                            <th>Seuil</th>
+                                            <th>État</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="inventoryBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="inventory-alerts" id="inventoryAlerts"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="stocks-commande" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Assistant Commande IA</h3>
+                            <p class="module-desc">Optimisez vos commandes et réduisez vos dépenses</p>
+                            <div class="form-group">
+                                <label>Analyse automatique</label>
+                                <p class="form-hint">L'IA analyse vos stocks et propose une commande optimisée</p>
+                            </div>
+                            <button class="action-btn primary" onclick="analyzeCommande()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+                                Analyser et proposer commande
+                            </button>
+                            <div id="commandeSuggestions" class="suggestions-container"></div>
+                            <div class="budget-analysis">
+                                <h4>Analyse budget</h4>
+                                <div class="budget-chart" id="budgetChart"></div>
+                                <div class="budget-tips" id="budgetTips"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -1342,7 +1516,7 @@ function submitRegisterForm() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="llm-api.js" defer></script>
-    <script src="app.v4.js?v=109" defer></script>
+    <script src="app.v4.js?v=110" defer></script>
     <script>
       // DEBUG: Log everything
       console.log('[DEBUG] Inline script running');
