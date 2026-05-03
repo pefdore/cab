@@ -540,6 +540,122 @@ function switchAddDepenseRecette(type) {
     }
 }
 
+function handleDepenseAutocomplete() {
+    const input = document.getElementById('add-depenseDescription');
+    const dropdown = document.getElementById('add-depense-autocomplete');
+    const categorySelect = document.getElementById('add-depenseCategory');
+    
+    if (!input || !dropdown || !categorySelect) return;
+    
+    input.addEventListener('input', function() {
+        const value = this.value.toLowerCase().trim();
+        
+        if (value.length < 3) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        const matches = cabinetDepenses.filter(d => 
+            d.description && d.description.toLowerCase().includes(value)
+        ).slice(0, 5);
+        
+        if (matches.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        const uniqueMatches = [];
+        const seen = new Set();
+        matches.forEach(m => {
+            if (!seen.has(m.description)) {
+                seen.add(m.description);
+                uniqueMatches.push(m);
+            }
+        });
+        
+        dropdown.innerHTML = uniqueMatches.map(m => {
+            const cat = CABINET_CATEGORIES[m.category];
+            const catLabel = cat ? cat.label : m.category;
+            return `<div class="autocomplete-item" data-description="${m.description}" data-category="${m.category}">
+                <span class="autocomplete-desc">${m.description}</span>
+                <span class="autocomplete-cat">${catLabel}</span>
+            </div>`;
+        }).join('');
+        
+        dropdown.style.display = 'block';
+        
+        dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', function() {
+                input.value = this.dataset.description;
+                categorySelect.value = this.dataset.category;
+                dropdown.style.display = 'none';
+            });
+        });
+    });
+    
+    input.addEventListener('blur', function() {
+        setTimeout(() => dropdown.style.display = 'none', 200);
+    });
+}
+
+function handleRecetteAutocomplete() {
+    const input = document.getElementById('add-recetteDescription');
+    const dropdown = document.getElementById('add-recette-autocomplete');
+    const categorySelect = document.getElementById('add-recetteCategory');
+    
+    if (!input || !dropdown || !categorySelect) return;
+    
+    input.addEventListener('input', function() {
+        const value = this.value.toLowerCase().trim();
+        
+        if (value.length < 3) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        const matches = cabinetRecettes.filter(r => 
+            r.description && r.description.toLowerCase().includes(value)
+        ).slice(0, 5);
+        
+        if (matches.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        const uniqueMatches = [];
+        const seen = new Set();
+        matches.forEach(m => {
+            if (!seen.has(m.description)) {
+                seen.add(m.description);
+                uniqueMatches.push(m);
+            }
+        });
+        
+        dropdown.innerHTML = uniqueMatches.map(m => {
+            const cat = RECETTE_CATEGORIES[m.category];
+            const catLabel = cat ? cat.label : m.category;
+            return `<div class="autocomplete-item" data-description="${m.description}" data-category="${m.category}">
+                <span class="autocomplete-desc">${m.description}</span>
+                <span class="autocomplete-cat">${catLabel}</span>
+            </div>`;
+        }).join('');
+        
+        dropdown.style.display = 'block';
+        
+        dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', function() {
+                input.value = this.dataset.description;
+                categorySelect.value = this.dataset.category;
+                dropdown.style.display = 'none';
+            });
+        });
+    });
+    
+    input.addEventListener('blur', function() {
+        setTimeout(() => dropdown.style.display = 'none', 200);
+    });
+}
+
 window.switchAddMode = switchAddMode;
 window.switchAddDepenseRecette = switchAddDepenseRecette;
 
@@ -1184,6 +1300,8 @@ function init() {
     renderEntries();
     renderCharts();
     updateStats();
+    handleDepenseAutocomplete();
+    handleRecetteAutocomplete();
 }
 
 // Stub function for VL alerts

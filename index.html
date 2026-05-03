@@ -716,26 +716,36 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                                         <option value="reception">Réception/Représentation</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label>Sous-catégorie</label>
-                                    <select id="add-depenseSousCategorie">
-                                        <option value="">Sélectionner...</option>
-                                    </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <div class="autocomplete-wrapper">
+                                    <input type="text" id="add-depenseDescription" placeholder="Description (ex: Loyer, EDF...)" autocomplete="off">
+                                    <div id="add-depense-autocomplete" class="autocomplete-dropdown"></div>
                                 </div>
                             </div>
+                            <div class="form-group" id="add-depense-category-group">
+                                <label>Catégorie</label>
+                                <select id="add-depenseCategory">
+                                    <option value="masse_salariale">Masse salariale</option>
+                                    <option value="urssaf">URSSAF</option>
+                                    <option value="logiciel">Logiciel</option>
+                                    <option value="services">Services</option>
+                                    <option value="charges">Charges (EDF, eau, assurance)</option>
+                                    <option value="consommables">Consommables</option>
+                                    <option value="materiel">Matériel</option>
+                                    <option value="reception">Réception/Représentation</option>
+                                </select>
+                            </div>
                             <div class="form-row">
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    <input type="text" id="add-depenseDescription" placeholder="Description">
-                                </div>
                                 <div class="form-group">
                                     <label>Montant</label>
                                     <input type="number" id="add-depenseAmount" placeholder="0.00" step="0.01">
                                 </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Date</label>
-                                <input type="date" id="add-depenseDate">
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="date" id="add-depenseDate">
+                                </div>
                             </div>
                             <button id="add-saveDepenseBtn" class="btn-primary">Enregistrer la dépense</button>
                         </div>
@@ -744,19 +754,20 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     <!-- Formulaire Recette (caché par défaut) -->
                     <div id="add-recette-form" style="display: none;">
                         <div class="recettes-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Catégorie</label>
-                                    <select id="add-recetteCategory">
-                                        <option value="honoraires">Honoraires</option>
-                                        <option value="remboursements">Remboursements</option>
-                                        <option value="autres">Autres recettes</option>
-                                    </select>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <div class="autocomplete-wrapper">
+                                    <input type="text" id="add-recetteDescription" placeholder="Description (ex: Honoraires, Remboursement...)" autocomplete="off">
+                                    <div id="add-recette-autocomplete" class="autocomplete-dropdown"></div>
                                 </div>
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    <input type="text" id="add-recetteDescription" placeholder="Description">
-                                </div>
+                            </div>
+                            <div class="form-group" id="add-recette-category-group">
+                                <label>Catégorie</label>
+                                <select id="add-recetteCategory">
+                                    <option value="honoraires">Honoraires</option>
+                                    <option value="remboursements">Remboursements</option>
+                                    <option value="autres">Autres recettes</option>
+                                </select>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">

@@ -1626,6 +1626,24 @@ h2 {
     background: var(--color-primary-subtle);
 }
 
+.autocomplete-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.autocomplete-desc {
+    font-weight: 500;
+}
+
+.autocomplete-cat {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-subtle);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
 .autocomplete-patient-name {
     font-weight: 600;
     margin-bottom: 2px;
