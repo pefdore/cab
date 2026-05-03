@@ -1893,6 +1893,7 @@ function openSettingsPage(pageName) {
         renderLogoPreview();
     } else if (pageName === 'preferences') {
         loadTheme();
+        loadOpenRouterKey();
     }
 }
 
@@ -1921,6 +1922,104 @@ window.openSettingsPage = openSettingsPage;
 window.closeSettingsPage = closeSettingsPage;
 window.editCotation = editCotation;
 window.deleteCotation = deleteCotation;
+
+// LLM API functions
+window.saveOpenRouterKey = function() {
+    const input = document.querySelector('#settings-page-preferences input[id="openrouterApiKey"]') || document.getElementById('openrouterApiKey');
+    const status = document.querySelector('#openrouterStatus');
+    
+    if (!input || !input.value.trim()) {
+        alert('Veuillez entrer une clé API');
+        return;
+    }
+    
+    const apiKey = input.value.trim();
+    localStorage.setItem('groq_api_key', apiKey);
+    localStorage.setItem('openrouter_api_key', apiKey);
+    
+    if (status) status.textContent = 'Clé enregistrée!';
+    setTimeout(() => {
+        if (status) status.textContent = '';
+    }, 3000);
+};
+
+window.loadOpenRouterKey = function() {
+    try {
+        const savedKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('groq_api_key');
+        if (savedKey) {
+            const input = document.querySelector('#settings-page-preferences input[id="openrouterApiKey"]') || document.getElementById('openrouterApiKey');
+            if (input) input.value = savedKey;
+        }
+    } catch (e) {
+        console.log('[LLM] loadOpenRouterKey error:', e);
+    }
+};
+
+window.callLLM = async function(prompt, taskType) {
+    // Try Groq first (free and fast), then OpenRouter
+    let apiKey = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
+    
+    if (!apiKey) {
+        throw new Error('Clé API non configurée. Veuillez la configurer dans Paramètres > Préférences.');
+    }
+    
+    const isGroq = apiKey.startsWith('gsk_') || !apiKey.includes('sk-or-');
+    
+    const systemPrompts = {
+        'generate_odj': 'Tu es un assistant administratif pour un cabinet médical français.',
+        'draft_sujet': 'Tu es un assistant administratif pour un cabinet médical français.',
+        'generate_cr': 'Tu es un assistant administratif pour un cabinet médical français.',
+        'analyze_commande': 'Tu es un assistant pour la gestion de stocks d\'un cabinet médical français.',
+        'analyze_financial': 'Tu es un expert-comptable médical français.'
+    };
+    
+    const systemPrompt = systemPrompts[taskType] || 'Tu es un assistant helpful.';
+    
+    let response;
+    if (isGroq) {
+        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'llama-3.1-70b-versatile',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: prompt }
+                ],
+                max_tokens: 1024
+            })
+        });
+    } else {
+        response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'Cotation Médecin'
+            },
+            body: JSON.stringify({
+                model: 'anthropic/claude-3-haiku',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: prompt }
+                ],
+                max_tokens: 1024
+            })
+        });
+    }
+    
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error?.message || `Erreur API: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || 'Aucune réponse';
+};
 
 // Profile functions
 async function loadProfileData() {
