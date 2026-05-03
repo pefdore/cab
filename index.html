@@ -109,6 +109,24 @@ document.getElementById('login-email')?.addEventListener('keypress', function(e)
     }
 });
 });
+
+function submitRegisterForm() {
+    console.log('[REGISTER] Button clicked');
+    const firstName = document.getElementById('register-firstname')?.value;
+    const lastName = document.getElementById('register-lastname')?.value;
+    const role = document.getElementById('register-role')?.value;
+    const replaceMedecinId = document.getElementById('register-remplace')?.value || null;
+    const email = document.getElementById('register-email')?.value;
+    const password = document.getElementById('register-password')?.value;
+    
+    console.log('[REGISTER] Values:', { firstName, lastName, role, email, password });
+    
+    if (window.doSignUp) {
+        doSignUp(email, password, firstName, lastName, role, replaceMedecinId);
+    } else {
+        console.error('[REGISTER] doSignUp not available');
+    }
+}
 </script>
             <form id="register-form" class="login-form" style="display:none;">
                 <p class="login-form-title">Créer un compte</p>
@@ -146,7 +164,7 @@ document.getElementById('login-email')?.addEventListener('keypress', function(e)
                     <label for="register-password">Mot de passe</label>
                     <input type="password" id="register-password" required placeholder="••••••••" minlength="6">
                 </div>
-                <button type="submit" class="btn-primary">Créer mon compte</button>
+                <button type="button" class="btn-primary" onclick="submitRegisterForm()">Créer mon compte</button>
                 <button type="button" id="show-login" class="btn-link">Déjà un compte? Se connecter</button>
             </form>
         </div>
