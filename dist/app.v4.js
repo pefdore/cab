@@ -1644,6 +1644,47 @@ function switchView(viewName) {
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
                 
+                // Set up click handlers for settings cards in overlay
+                overlay.querySelectorAll('.settings-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const pageName = card.dataset.settingsPage;
+                        if (pageName) {
+                            // Hide menu, show page
+                            const menu = overlay.querySelector('.settings-menu');
+                            if (menu) menu.style.display = 'none';
+                            
+                            // Hide all settings pages in overlay
+                            overlay.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
+                            
+                            // Show selected page
+                            const page = overlay.querySelector(`#settings-page-${pageName}`);
+                            if (page) {
+                                page.style.display = 'block';
+                                page.classList.add('active');
+                            }
+                            
+                            // Add back button if not exists
+                            let backBtn = overlay.querySelector('.overlay-back-btn');
+                            if (!backBtn) {
+                                backBtn = document.createElement('button');
+                                backBtn.className = 'overlay-back-btn';
+                                backBtn.innerHTML = '← Retour';
+                                backBtn.onclick = () => {
+                                    // Show menu, hide all pages
+                                    const menu = overlay.querySelector('.settings-menu');
+                                    if (menu) menu.style.display = 'flex';
+                                    overlay.querySelectorAll('.settings-page').forEach(p => {
+                                        p.style.display = 'none';
+                                        p.classList.remove('active');
+                                    });
+                                };
+                                overlay.insertBefore(backBtn, overlay.firstChild);
+                            }
+                        }
+                    });
+                });
+                
                 // Set up tabs in overlay
                 overlay.querySelectorAll('.settings-tab').forEach(tab => {
                     tab.addEventListener('click', () => {

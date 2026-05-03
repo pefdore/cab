@@ -2291,6 +2291,21 @@ h2 {
         cursor: pointer;
         box-shadow: var(--shadow-md);
     }
+    
+    .overlay-back-btn {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 1001;
+        padding: 10px 16px;
+        background: var(--color-bg-elevated);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        font-weight: 500;
+        cursor: pointer;
+        box-shadow: var(--shadow-md);
+    }
 
     .mobile-logout-btn {
         display: flex !important;
