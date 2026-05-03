@@ -684,7 +684,8 @@ function changeMonth(delta) {
     if (isChangingMonth) return;
     isChangingMonth = true;
     
-    const newMonth = currentMonthAdd.getMonth() + delta;
+    const currentMonth = currentMonthAdd.getMonth();
+    const newMonth = currentMonth + delta;
     currentMonthAdd.setMonth(newMonth);
     updateMonthDisplay();
     renderEntries();
@@ -1597,21 +1598,6 @@ function setupEventListeners() {
             document.getElementById(`cabinet-${tabName}`).classList.add('active');
         });
     });
-    
-    // Depenses
-    document.getElementById('addDepenseBtn')?.addEventListener('click', () => {
-        const form = document.getElementById('depensesForm');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        updateSousCategoriesDepense();
-    });
-    document.getElementById('saveDepenseBtn')?.addEventListener('click', saveDepense);
-    
-    // Recettes
-    document.getElementById('addRecetteBtn')?.addEventListener('click', () => {
-        const form = document.getElementById('recettesForm');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
-    });
-    document.getElementById('saveRecetteBtn')?.addEventListener('click', saveRecette);
     
     // Add view - Depenses/Recettes buttons
     document.getElementById('add-saveDepenseBtn')?.addEventListener('click', saveDepense);
@@ -3635,11 +3621,10 @@ function renderRecentList() {
 
 // Cabinet functions
 async function saveDepense() {
-    const description = document.getElementById('depenseDescription')?.value || document.getElementById('add-depenseDescription')?.value;
-    const amount = parseFloat(document.getElementById('depenseAmount')?.value || document.getElementById('add-depenseAmount')?.value);
-    const category = document.getElementById('depenseCategory')?.value || document.getElementById('add-depenseCategory')?.value;
-    const sousCategorie = document.getElementById('depenseSousCategorie')?.value || document.getElementById('add-depenseSousCategorie')?.value;
-    const date = document.getElementById('depenseDate')?.value || document.getElementById('add-depenseDate')?.value || new Date().toISOString().split('T')[0];
+    const description = document.getElementById('add-depenseDescription')?.value;
+    const amount = parseFloat(document.getElementById('add-depenseAmount')?.value);
+    const category = document.getElementById('add-depenseCategory')?.value;
+    const date = document.getElementById('add-depenseDate')?.value || new Date().toISOString().split('T')[0];
     
     if (!amount) {
         alert('Veuillez entrer un montant');
@@ -3653,7 +3638,6 @@ async function saveDepense() {
             description,
             amount,
             category,
-            sous_categorie: sousCategorie,
             date
         }]);
     
@@ -3662,11 +3646,10 @@ async function saveDepense() {
         return;
     }
     
-    document.getElementById('depenseDescription').value = '';
-    document.getElementById('depenseAmount').value = '';
     document.getElementById('add-depenseDescription').value = '';
     document.getElementById('add-depenseAmount').value = '';
-    document.getElementById('depensesForm').style.display = 'none';
+    document.getElementById('add-depenseCategory').selectedIndex = 0;
+    document.getElementById('add-depenseDate').value = '';
     
     await loadCabinetData();
     renderComptaSummary();
@@ -3674,10 +3657,10 @@ async function saveDepense() {
 }
 
 async function saveRecette() {
-    const description = document.getElementById('recetteDescription')?.value || document.getElementById('add-recetteDescription')?.value;
-    const amount = parseFloat(document.getElementById('recetteAmount')?.value || document.getElementById('add-recetteAmount')?.value);
-    const category = document.getElementById('recetteCategory')?.value || document.getElementById('add-recetteCategory')?.value;
-    const date = document.getElementById('recetteDate')?.value || document.getElementById('add-recetteDate')?.value || new Date().toISOString().split('T')[0];
+    const description = document.getElementById('add-recetteDescription')?.value;
+    const amount = parseFloat(document.getElementById('add-recetteAmount')?.value);
+    const category = document.getElementById('add-recetteCategory')?.value;
+    const date = document.getElementById('add-recetteDate')?.value || new Date().toISOString().split('T')[0];
     
     if (!amount) {
         alert('Veuillez entrer un montant');
@@ -3699,11 +3682,10 @@ async function saveRecette() {
         return;
     }
     
-    document.getElementById('recetteDescription').value = '';
-    document.getElementById('recetteAmount').value = '';
     document.getElementById('add-recetteDescription').value = '';
     document.getElementById('add-recetteAmount').value = '';
-    document.getElementById('recettesForm').style.display = 'none';
+    document.getElementById('add-recetteCategory').selectedIndex = 0;
+    document.getElementById('add-recetteDate').value = '';
     
     await loadCabinetData();
     renderComptaSummary();
