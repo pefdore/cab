@@ -690,9 +690,11 @@ function changeMonth(delta) {
     if (isChangingMonth) return;
     isChangingMonth = true;
     
+    console.log('[MONTH passages] Before:', currentMonthAdd.getMonth(), currentMonthAdd.getFullYear());
     const currentMonth = currentMonthAdd.getMonth();
     const newMonth = currentMonth + delta;
     currentMonthAdd.setMonth(newMonth);
+    console.log('[MONTH passages] After:', currentMonthAdd.getMonth(), currentMonthAdd.getFullYear());
     updateMonthDisplay();
     renderEntries();
     
@@ -700,12 +702,20 @@ function changeMonth(delta) {
 }
 
 let currentMonthAddDepenses = new Date();
+let isChangingMonthDepenses = false;
 
 function changeMonthAddDepenses(delta) {
+    if (isChangingMonthDepenses) return;
+    isChangingMonthDepenses = true;
+    
+    console.log('[MONTH] Before:', currentMonthAddDepenses.getMonth(), currentMonthAddDepenses.getFullYear());
     const currentMonth = currentMonthAddDepenses.getMonth();
     const newMonth = currentMonth + delta;
     currentMonthAddDepenses.setMonth(newMonth);
+    console.log('[MONTH] After:', currentMonthAddDepenses.getMonth(), currentMonthAddDepenses.getFullYear());
     renderAddDepensesRecettes();
+    
+    setTimeout(() => { isChangingMonthDepenses = false; }, 100);
 }
 
 function setDefaultDate() {
@@ -3631,6 +3641,12 @@ function renderRecentList() {
 
 // Cabinet functions
 async function saveDepense() {
+    // Check if we're in edit mode
+    if (window._editingDepenseId) {
+        await updateDepense(window._editingDepenseId);
+        return;
+    }
+    
     const description = document.getElementById('add-depenseDescription')?.value;
     const amount = parseFloat(document.getElementById('add-depenseAmount')?.value);
     const category = document.getElementById('add-depenseCategory')?.value;
@@ -3667,6 +3683,12 @@ async function saveDepense() {
 }
 
 async function saveRecette() {
+    // Check if we're in edit mode
+    if (window._editingRecetteId) {
+        await updateRecette(window._editingRecetteId);
+        return;
+    }
+    
     const description = document.getElementById('add-recetteDescription')?.value;
     const amount = parseFloat(document.getElementById('add-recetteAmount')?.value);
     const category = document.getElementById('add-recetteCategory')?.value;
