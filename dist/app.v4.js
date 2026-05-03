@@ -3046,29 +3046,30 @@ function refreshLLMAnalysis(type) {
     // Generate response based on type
     const prompt = LLM_PROMPTS[type] ? LLM_PROMPTS[type](data) : 'Analyze financial data';
     
-    // Check if API is configured (OpenRouter key)
-    const openrouterKey = localStorage.getItem('openrouter_api_key');
-    const hasApiKey = openrouterKey && openrouterKey.length > 0;
-    console.log('[LLM] openrouterKey found:', hasApiKey ? 'YES' : 'NO');
+// Check if API is configured (Groq or OpenRouter)
+    const groqKey = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
+    const hasApiKey = groqKey && groqKey.length > 0;
+    console.log('[LLM] API key found:', hasApiKey ? 'YES' : 'NO');
     
-if (hasApiKey) {
-        // Use OpenRouter API
+    if (hasApiKey) {
+        // Use Groq API (free and fast)
         contentEl.innerHTML = '<p class="llm-loading">Analyse IA en cours...</p>';
-        console.log('[LLM] Calling OpenRouter API with key:', groqKey.substring(0, 10) + '...');
+        console.log('[LLM] Calling Groq API');
         
-        fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${groqKey}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': window.location.origin,
-                'X-Title': 'Cotation Médecin'
-            },
-            body: JSON.stringify({
-                model: 'anthropic/claude-3-haiku',
-                messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
+        const isGroq = groqKey.startsWith('gsk_') || !groqKey.includes('sk-or-');
+        
+        if (isGroq) {
+            fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${groqKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.1-70b-versatile',
+                    messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
+                })
             })
-        })
         .catch(err => {
             console.error('[LLM] Error:', err);
             contentEl.innerHTML = `<p class="llm-error">${err.message}</p>`;
@@ -4248,17 +4249,26 @@ window.deletePDF = deletePDF;
 
 // Cabinet Modules Functions
 window.saveOpenRouterKey = function() {
-    const apiKey = document.getElementById('openrouterApiKey').value.trim();
-    if (!apiKey) {
+    const input = document.querySelector('#settings-page-preferences input[id="openrouterApiKey"]') || document.getElementById('openrouterApiKey');
+    const status = document.querySelector('#openrouterStatus');
+    
+    console.log('[LLM] Save key - input found:', !!input);
+    
+    if (!input || !input.value.trim()) {
         alert('Veuillez entrer une clé API');
         return;
     }
     
+    const apiKey = input.value.trim();
     localStorage.setItem('openrouter_api_key', apiKey);
-    document.getElementById('openrouterStatus').textContent = 'Clé enregistrée avec succès!';
+    localStorage.setItem('groq_api_key', apiKey); // Also save for Groq
+    
+    if (status) status.textContent = 'Clé enregistrée avec succès!';
     setTimeout(() => {
-        document.getElementById('openrouterStatus').textContent = '';
+        if (status) status.textContent = '';
     }, 3000);
+    
+    console.log('[LLM] API key saved');
 };
 
 window.loadOpenRouterKey = function() {
@@ -4269,39 +4279,63 @@ window.loadOpenRouterKey = function() {
 };
 
 window.callLLM = async function(prompt, taskType) {
-    const apiKey = localStorage.getItem('openrouter_api_key');
+    // Try Groq first (free and fast), then OpenRouter
+    let apiKey = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
     
     if (!apiKey) {
-        throw new Error('Clé API OpenRouter non configurée. Veuillez la configurer dans les paramètres.');
+        throw new Error('Clé API non configurée. Veuillez la configurer dans Paramètres > Préférences.');
     }
+    
+    const isGroq = apiKey.startsWith('gsk_') || !apiKey.includes('sk-or-');
     
     const systemPrompts = {
         'generate_odj': 'Tu es un assistant administratif pour un cabinet médical français. Génère des ordres du jour professionnels et structurés.',
         'draft_sujet': 'Tu es un assistant administratif pour un cabinet médical français. Aide à formuler des sujets de manière professionnelle.',
         'generate_cr': 'Tu es un assistant administratif pour un cabinet médical français. Génère des comptes rendus de réunion professionnels.',
         'analyze_commande': 'Tu es un assistant pour la gestion de stocks d\'un cabinet médical français. Analyse les besoins et propose des commandes optimisées.',
-        'analyze_financial': 'Tu es un expert-comptable médical français. Analyse les données financières du cabinet et fournis des insights actionable.'
+        'analyze_financial': 'Tu es un expert-comptable médical français. Analyse les données financières du cabinet et fournis des insights actionnables en français.'
     };
     
     const systemPrompt = systemPrompts[taskType] || 'Tu es un assistant helpful.';
     
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'Cotation Médecin'
-        },
-        body: JSON.stringify({
-            model: 'anthropic/claude-3-haiku',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: prompt }
-            ],
-            max_tokens: 1024
-        })
-    });
+    let response;
+    if (isGroq) {
+        // Use Groq API (free, fast, uses Llama)
+        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'llama-3.1-70b-versatile',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: prompt }
+                ],
+                max_tokens: 1024
+            })
+        });
+    } else {
+        // Use OpenRouter
+        response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'Cotation Médecin'
+            },
+            body: JSON.stringify({
+                model: 'anthropic/claude-3-haiku',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: prompt }
+                ],
+                max_tokens: 1024
+            })
+        });
+    }
     
     if (!response.ok) {
         const error = await response.json().catch(() => ({}));
