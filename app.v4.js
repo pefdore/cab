@@ -2153,7 +2153,7 @@ function switchView(viewName) {
                 // Add close button
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'overlay-close-btn';
-                closeBtn.innerHTML = '<span class="back-arrow">Retour</span><span class="page-title">Paramètres</span>';
+                closeBtn.innerHTML = '<span class="page-title">Paramètres</span>';
                 closeBtn.onclick = () => {
                     // Revenir au menu paramètres
                     const menu = overlay.querySelector('.settings-menu');
