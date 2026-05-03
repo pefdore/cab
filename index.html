@@ -548,7 +548,18 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 
             <!-- Add View -->
             <section id="view-add" class="view">
-                <h2>Ajouter un passage</h2>
+                <div class="add-toggle-header">
+                    <button class="switch-btn active" data-mode="passages" onclick="switchAddMode('passages')">
+                        Passages
+                    </button>
+                    <button class="switch-btn" data-mode="depenses" onclick="switchAddMode('depenses')">
+                        Dépenses
+                    </button>
+                </div>
+                
+                <!-- Formulaire Passage (visible par défaut) -->
+                <div id="add-passages-content">
+                    <h2>Ajouter un passage</h2>
                 <form id="entryForm" class="add-form">
                     <div class="form-group">
                         <label>Patient</label>
@@ -676,7 +687,92 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     if (e.target === this) closeVLRulesPopup();
                 });
                 </script>
-
+                </div>
+                
+                <!-- Contenu Dépenses (caché par défaut) -->
+                <div id="add-depenses-content" style="display: none;">
+                    <h2>Ajouter une dépense ou recette</h2>
+                    
+                    <!-- Toggle Dépenses/Recettes -->
+                    <div class="depense-recette-toggle">
+                        <button class="switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')">Dépenses</button>
+                        <button class="switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')">Recettes</button>
+                    </div>
+                    
+                    <!-- Formulaire Dépense -->
+                    <div id="add-depense-form">
+                        <div class="depenses-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Catégorie</label>
+                                    <select id="add-depenseCategory">
+                                        <option value="masse_salariale">Masse salariale</option>
+                                        <option value="urssaf">URSSAF</option>
+                                        <option value="logiciel">Logiciel</option>
+                                        <option value="services">Services</option>
+                                        <option value="charges">Charges (EDF, eau, assurance)</option>
+                                        <option value="consommables">Consommables</option>
+                                        <option value="materiel">Matériel</option>
+                                        <option value="reception">Réception/Représentation</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Sous-catégorie</label>
+                                    <select id="add-depenseSousCategorie">
+                                        <option value="">Sélectionner...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <input type="text" id="add-depenseDescription" placeholder="Description">
+                                </div>
+                                <div class="form-group">
+                                    <label>Montant</label>
+                                    <input type="number" id="add-depenseAmount" placeholder="0.00" step="0.01">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="add-depenseDate">
+                            </div>
+                            <button id="add-saveDepenseBtn" class="btn-primary">Enregistrer la dépense</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulaire Recette (caché par défaut) -->
+                    <div id="add-recette-form" style="display: none;">
+                        <div class="recettes-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Catégorie</label>
+                                    <select id="add-recetteCategory">
+                                        <option value="honoraires">Honoraires</option>
+                                        <option value="remboursements">Remboursements</option>
+                                        <option value="autres">Autres recettes</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <input type="text" id="add-recetteDescription" placeholder="Description">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Montant</label>
+                                    <input type="number" id="add-recetteAmount" placeholder="0.00" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="date" id="add-recetteDate">
+                                </div>
+                            </div>
+                            <button id="add-saveRecetteBtn" class="btn-primary">Enregistrer la recette</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="entries-section">
                     <div class="entries-header">
                         <h3>Passages du mois</h3>
