@@ -687,7 +687,8 @@ function changeMonth(delta) {
 let currentMonthAddDepenses = new Date();
 
 function changeMonthAddDepenses(delta) {
-    const newMonth = currentMonthAddDepenses.getMonth() + delta;
+    const currentMonth = currentMonthAddDepenses.getMonth();
+    const newMonth = currentMonth + delta;
     currentMonthAddDepenses.setMonth(newMonth);
     renderAddDepensesRecettes();
 }
