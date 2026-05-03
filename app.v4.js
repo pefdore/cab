@@ -2158,7 +2158,7 @@ function switchView(viewName) {
                 // Add close button
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'overlay-close-btn';
-                closeBtn.innerHTML = '<span class="back-arrow">Retour</span><span class="page-title">Paramètres</span>';
+                closeBtn.innerHTML = '<span class="back-arrow">Fermer</span><span class="page-title">Paramètres</span>';
                 closeBtn.onclick = () => {
                     // Revenir au menu paramètres
                     const menu = overlay.querySelector('.settings-menu');
@@ -2173,6 +2173,9 @@ function switchView(viewName) {
                     // Afficher le bouton déconnexion
                     const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                     if (logoutBtn) logoutBtn.style.display = 'flex';
+                    // Reset title
+                    const h2 = overlay.querySelector('h2');
+                    if (h2) h2.textContent = 'Paramètres';
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
                 
@@ -2209,26 +2212,34 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
-                            // Add or update back button with page name
+                            // Add or update back button - ONLY for sub-pages (not preferences)
                             let backBtn = overlay.querySelector('.overlay-back-btn');
-                            if (!backBtn) {
-                                backBtn = document.createElement('button');
-                                backBtn.className = 'overlay-back-btn';
-                                overlay.insertBefore(backBtn, overlay.firstChild);
+                            if (pageName !== 'preferences') {
+                                if (!backBtn) {
+                                    backBtn = document.createElement('button');
+                                    backBtn.className = 'overlay-back-btn';
+                                    overlay.insertBefore(backBtn, overlay.firstChild);
+                                }
+                                backBtn.innerHTML = `<span class="back-arrow">Retour</span><span class="page-title">${displayName}</span>`;
+                                backBtn.onclick = () => {
+                                    // Show menu, hide all pages
+                                    const menu = overlay.querySelector('.settings-menu');
+                                    if (menu) menu.style.display = 'flex';
+                                    overlay.querySelectorAll('.settings-page').forEach(p => {
+                                        p.style.display = 'none';
+                                        p.classList.remove('active');
+                                    });
+                                    // Show logout button again
+                                    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+                                    if (logoutBtn) logoutBtn.style.display = 'flex';
+                                };
+                            } else {
+                                // On preferences page, remove back button if exists
+                                if (backBtn) {
+                                    backBtn.remove();
+                                    backBtn = null;
+                                }
                             }
-                            backBtn.innerHTML = `<span class="back-arrow">Retour</span><span class="page-title">${displayName}</span>`;
-                            backBtn.onclick = () => {
-                                // Show menu, hide all pages
-                                const menu = overlay.querySelector('.settings-menu');
-                                if (menu) menu.style.display = 'flex';
-                                overlay.querySelectorAll('.settings-page').forEach(p => {
-                                    p.style.display = 'none';
-                                    p.classList.remove('active');
-                                });
-                                // Show logout button again
-                                const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-                                if (logoutBtn) logoutBtn.style.display = 'flex';
-                            };
                             
                             // Update h2 title in overlay
                             const h2 = overlay.querySelector('h2');
