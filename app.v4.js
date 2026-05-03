@@ -505,7 +505,9 @@ function switchAddMode(mode) {
         }
         if (depensesContent) {
             depensesContent.style.display = 'block';
-            renderAddDepensesRecettes();
+            if (typeof loadCabinetData === 'function') {
+                loadCabinetData();
+            }
         }
     }
 }
@@ -1954,6 +1956,7 @@ async function loadCabinetData() {
         await loadRecettes();
         console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
+        renderAddDepensesRecettes();
     } else {
         console.log('[LOAD] Cannot load - missing auth or client');
     }
