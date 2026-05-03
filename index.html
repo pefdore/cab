@@ -48,6 +48,7 @@
             </form>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 function toggleForm(form) {
     if (form === 'register') {
         document.getElementById('login-form').style.display = 'none';
@@ -68,12 +69,12 @@ function toggleRemplacantField() {
     }
 }
 
-document.querySelector('a[onclick="toggleForm(\'register\')"]').addEventListener('click', function(e) {
+document.querySelector('a[onclick="toggleForm(\'register\')"]')?.addEventListener('click', function(e) {
     e.preventDefault();
     toggleForm('register');
 });
 
-document.getElementById('show-login').addEventListener('click', function(e) {
+document.getElementById('show-login')?.addEventListener('click', function(e) {
     e.preventDefault();
     toggleForm('login');
 });
@@ -91,21 +92,22 @@ function attemptLogin() {
     }
 }
 window.handleLoginClick = attemptLogin;
-document.getElementById('loginBtn').addEventListener('click', function(e) {
+document.getElementById('loginBtn')?.addEventListener('click', function(e) {
     e.preventDefault();
     attemptLogin();
 });
-document.getElementById('login-password').addEventListener('keypress', function(e) {
+document.getElementById('login-password')?.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
         attemptLogin();
     }
 });
-document.getElementById('login-email').addEventListener('keypress', function(e) {
+document.getElementById('login-email')?.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
         document.getElementById('login-password').focus();
     }
+});
 });
 </script>
             <form id="register-form" class="login-form" style="display:none;">
