@@ -1650,11 +1650,7 @@ function switchView(viewName) {
                         e.preventDefault();
                         const pageName = card.dataset.settingsPage;
                         if (pageName) {
-                            // Hide menu, show page
-                            const menu = overlay.querySelector('.settings-menu');
-                            if (menu) menu.style.display = 'none';
-                            
-                            // Hide all settings pages in overlay
+                            // Hide all settings pages in overlay first
                             overlay.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
                             
                             // Show selected page
@@ -1671,9 +1667,7 @@ function switchView(viewName) {
                                 backBtn.className = 'overlay-back-btn';
                                 backBtn.innerHTML = '← Retour';
                                 backBtn.onclick = () => {
-                                    // Show menu, hide all pages
-                                    const menu = overlay.querySelector('.settings-menu');
-                                    if (menu) menu.style.display = 'flex';
+                                    // Show all settings pages as hidden (back to menu view)
                                     overlay.querySelectorAll('.settings-page').forEach(p => {
                                         p.style.display = 'none';
                                         p.classList.remove('active');
