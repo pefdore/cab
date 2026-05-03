@@ -1867,7 +1867,16 @@ function openSettingsPage(pageName) {
     
     if (menu) menu.style.display = 'none';
     if (backBtn) backBtn.style.display = 'flex';
-    if (title) title.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+    
+    const desktopPageNames = {
+        'profil': 'Profil',
+        'cotation': 'Cotations',
+        'pdf': 'PDF',
+        'preferences': 'Préférences',
+        'donnees': 'Données'
+    };
+    const displayName = desktopPageNames[pageName] || pageName.charAt(0).toUpperCase() + pageName.slice(1);
+    if (title) title.textContent = displayName;
     
     // Hide all settings pages
     document.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
@@ -2171,6 +2180,9 @@ function switchView(viewName) {
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
                 
+                // Hide back button initially (only shown on sub-pages)
+                overlay.querySelectorAll('.overlay-back-btn').forEach(btn => btn.style.display = 'none');
+                
                 // Set up click handlers for settings cards in overlay
                 overlay.querySelectorAll('.settings-card').forEach(card => {
                     card.addEventListener('click', (e) => {
@@ -2204,11 +2216,16 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
+                            // Masquer le bouton close (avec "Paramètres") sur les sous-pages
+                            const closeBtn = overlay.querySelector('.overlay-close-btn');
+                            if (closeBtn) closeBtn.style.display = 'none';
+                            
                             // Add or update back button with page name
                             let backBtn = overlay.querySelector('.overlay-back-btn');
                             if (!backBtn) {
                                 backBtn = document.createElement('button');
                                 backBtn.className = 'overlay-back-btn';
+                                backBtn.style.display = 'none';
                                 overlay.insertBefore(backBtn, overlay.firstChild);
                             }
                             backBtn.innerHTML = `<span class="back-arrow">Retour</span><span class="page-title">${displayName}</span>`;
@@ -2223,6 +2240,11 @@ function switchView(viewName) {
                                 // Show logout button again
                                 const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                                 if (logoutBtn) logoutBtn.style.display = 'flex';
+                                // Show close button again
+                                const closeBtn = overlay.querySelector('.overlay-close-btn');
+                                if (closeBtn) closeBtn.style.display = 'flex';
+                                // Hide back button
+                                backBtn.style.display = 'none';
                             };
                             
                             // Update h2 title in overlay
