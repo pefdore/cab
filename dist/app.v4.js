@@ -43,6 +43,9 @@ function initAuth() {
     // Vérifier si une session existe déjà
     checkExistingSession();
     
+    // Setup des listeners pour les formulaires
+    setupAuthListeners();
+    
     authInitialized = true;
 }
 
@@ -314,7 +317,6 @@ function setupAuthListeners() {
     if (showRegister) {
         showRegister.addEventListener('click', () => {
             document.getElementById('login-form').style.display = 'none';
-            document.getElementById('login-toggle').style.display = 'none';
             document.getElementById('register-form').style.display = 'flex';
         });
     }
@@ -340,11 +342,9 @@ function setupAuthListeners() {
 function showLoginForm() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
-    const loginToggle = document.getElementById('login-toggle');
     
     if (loginForm) loginForm.style.display = 'flex';
     if (registerForm) registerForm.style.display = 'none';
-    if (loginToggle) loginToggle.style.display = 'block';
 }
 
 function showError(message) {
@@ -2288,11 +2288,10 @@ async function loadCabinetData() {
 async function loadDepenses() {
     console.log('[COMPTAB] loadDepenses called, user:', currentUser?.id);
     try {
-        console.log('Loading depenses for user:', currentUser?.id);
+        console.log('Loading ALL depenses for cabinet (shared among all partners)');
         const { data, error } = await supabaseClient
             .from('cabinet_depenses')
             .select('*')
-            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Depenses loaded:', data?.length || 0, error);
@@ -2312,11 +2311,10 @@ async function loadDepenses() {
 async function loadRecettes() {
     console.log('[COMPTAB] loadRecettes called, user:', currentUser?.id);
     try {
-        console.log('Loading recettes for user:', currentUser?.id);
+        console.log('Loading ALL recettes for cabinet (shared among all partners)');
         const { data, error } = await supabaseClient
             .from('cabinet_recettes')
             .select('*')
-            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Recettes loaded:', data?.length || 0, error);

@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-CzU9eR3n.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-CuD0yxwo.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -31,6 +31,8 @@
             </div>
             
 <form id="login-form" class="login-form">
+                <p class="login-form-title">Bienvenue</p>
+                <p class="login-form-subtitle">Connectez-vous pour continuer</p>
                 <div class="form-group">
                     <label>Email</label>
                     <input type="email" id="login-email" placeholder="votre@email.com" required>
@@ -46,17 +48,36 @@
             </form>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 function toggleForm(form) {
     if (form === 'register') {
         document.getElementById('login-form').style.display = 'none';
-        document.getElementById('login-toggle').style.display = 'none';
         document.getElementById('register-form').style.display = 'flex';
     } else if (form === 'login') {
         document.getElementById('login-form').style.display = 'flex';
         document.getElementById('register-form').style.display = 'none';
-        document.getElementById('login-toggle').style.display = 'block';
     }
 }
+
+function toggleRemplacantField() {
+    const role = document.getElementById('register-role').value;
+    const replaceGroup = document.getElementById('remplace-medecin-group');
+    if (role === 'medecin_remplacant') {
+        replaceGroup.style.display = 'flex';
+    } else {
+        replaceGroup.style.display = 'none';
+    }
+}
+
+document.querySelector('a[onclick="toggleForm(\'register\')"]')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    toggleForm('register');
+});
+
+document.getElementById('show-login')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    toggleForm('login');
+});
 
 function attemptLogin() {
     console.log('[MOBILE] Login button clicked');
@@ -71,24 +92,45 @@ function attemptLogin() {
     }
 }
 window.handleLoginClick = attemptLogin;
-document.getElementById('loginBtn').addEventListener('click', function(e) {
+document.getElementById('loginBtn')?.addEventListener('click', function(e) {
     e.preventDefault();
     attemptLogin();
 });
-document.getElementById('login-password').addEventListener('keypress', function(e) {
+document.getElementById('login-password')?.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
         attemptLogin();
     }
 });
-document.getElementById('login-email').addEventListener('keypress', function(e) {
+document.getElementById('login-email')?.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
         document.getElementById('login-password').focus();
     }
 });
+});
+
+function submitRegisterForm() {
+    console.log('[REGISTER] Button clicked');
+    const firstName = document.getElementById('register-firstname')?.value;
+    const lastName = document.getElementById('register-lastname')?.value;
+    const role = document.getElementById('register-role')?.value;
+    const replaceMedecinId = document.getElementById('register-remplace')?.value || null;
+    const email = document.getElementById('register-email')?.value;
+    const password = document.getElementById('register-password')?.value;
+    
+    console.log('[REGISTER] Values:', { firstName, lastName, role, email, password });
+    
+    if (window.doSignUp) {
+        doSignUp(email, password, firstName, lastName, role, replaceMedecinId);
+    } else {
+        console.error('[REGISTER] doSignUp not available');
+    }
+}
 </script>
             <form id="register-form" class="login-form" style="display:none;">
+                <p class="login-form-title">Créer un compte</p>
+                <p class="login-form-subtitle">Rejoignez l'application de gestion</p>
                 <div class="form-row-auth">
                     <div class="form-group">
                         <label for="register-lastname">Nom</label>
@@ -122,7 +164,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                     <label for="register-password">Mot de passe</label>
                     <input type="password" id="register-password" required placeholder="••••••••" minlength="6">
                 </div>
-                <button type="submit" class="btn-primary">Créer mon compte</button>
+                <button type="button" class="btn-primary" onclick="submitRegisterForm()">Créer mon compte</button>
                 <button type="button" id="show-login" class="btn-link">Déjà un compte? Se connecter</button>
             </form>
         </div>
@@ -778,7 +820,7 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             <div class="form-group" id="add-recette-category-group">
                                 <label>Catégorie</label>
                                 <select id="add-recetteCategory">
-                                    <option value="honoraires">Honoraires</option>
+                                    <option value="participation_associe">Participation d'associé</option>
                                     <option value="remboursements">Remboursements</option>
                                     <option value="autres">Autres recettes</option>
                                 </select>

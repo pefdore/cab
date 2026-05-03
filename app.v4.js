@@ -2288,11 +2288,10 @@ async function loadCabinetData() {
 async function loadDepenses() {
     console.log('[COMPTAB] loadDepenses called, user:', currentUser?.id);
     try {
-        console.log('Loading depenses for user:', currentUser?.id);
+        console.log('Loading ALL depenses for cabinet (shared among all partners)');
         const { data, error } = await supabaseClient
             .from('cabinet_depenses')
             .select('*')
-            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Depenses loaded:', data?.length || 0, error);
@@ -2312,11 +2311,10 @@ async function loadDepenses() {
 async function loadRecettes() {
     console.log('[COMPTAB] loadRecettes called, user:', currentUser?.id);
     try {
-        console.log('Loading recettes for user:', currentUser?.id);
+        console.log('Loading ALL recettes for cabinet (shared among all partners)');
         const { data, error } = await supabaseClient
             .from('cabinet_recettes')
             .select('*')
-            .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
         console.log('[COMPTAB] Recettes loaded:', data?.length || 0, error);
