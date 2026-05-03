@@ -2162,6 +2162,7 @@ function switchView(viewName) {
                 // Add close button
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'overlay-close-btn';
+                closeBtn.style.display = 'flex';
                 closeBtn.innerHTML = '<span class="page-title">Paramètres</span>';
                 closeBtn.onclick = () => {
                     // Revenir au menu paramètres
@@ -2171,17 +2172,16 @@ function switchView(viewName) {
                         p.style.display = 'none';
                         p.classList.remove('active');
                     });
-                    // Supprimer le bouton back
+                    // Cacher le bouton back
                     const backBtn = overlay.querySelector('.overlay-back-btn');
-                    if (backBtn) backBtn.remove();
+                    if (backBtn) backBtn.style.display = 'none';
                     // Afficher le bouton déconnexion
                     const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                     if (logoutBtn) logoutBtn.style.display = 'flex';
+                    // Afficher le bouton close
+                    closeBtn.style.display = 'flex';
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
-                
-                // Hide back button initially (only shown on sub-pages)
-                overlay.querySelectorAll('.overlay-back-btn').forEach(btn => btn.style.display = 'none');
                 
                 // Set up click handlers for settings cards in overlay
                 overlay.querySelectorAll('.settings-card').forEach(card => {
@@ -2225,9 +2225,9 @@ function switchView(viewName) {
                             if (!backBtn) {
                                 backBtn = document.createElement('button');
                                 backBtn.className = 'overlay-back-btn';
-                                backBtn.style.display = 'none';
                                 overlay.insertBefore(backBtn, overlay.firstChild);
                             }
+                            backBtn.style.display = 'flex';
                             backBtn.innerHTML = `<span class="back-arrow">Retour</span><span class="page-title">${displayName}</span>`;
                             backBtn.onclick = () => {
                                 // Show menu, hide all pages
