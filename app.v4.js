@@ -601,20 +601,6 @@ function handleDepenseAutocomplete() {
         setTimeout(() => dropdown.style.display = 'none', 200);
     });
 }
-        
-        dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
-            item.addEventListener('click', function() {
-                input.value = this.dataset.description;
-                categorySelect.value = this.dataset.category;
-                dropdown.style.display = 'none';
-            });
-        });
-    });
-    
-    input.addEventListener('blur', function() {
-        setTimeout(() => dropdown.style.display = 'none', 200);
-    });
-}
 
 function handleRecetteAutocomplete() {
     const input = document.getElementById('add-recetteDescription');
