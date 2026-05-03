@@ -1665,6 +1665,9 @@ function switchView(viewName) {
                     // Supprimer le bouton back
                     const backBtn = overlay.querySelector('.overlay-back-btn');
                     if (backBtn) backBtn.remove();
+                    // Afficher le bouton déconnexion
+                    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+                    if (logoutBtn) logoutBtn.style.display = 'flex';
                 };
                 overlay.insertBefore(closeBtn, overlay.firstChild);
                 
@@ -1687,6 +1690,10 @@ function switchView(viewName) {
                                 page.style.display = 'block';
                                 page.classList.add('active');
                             }
+                            
+                            // Masquer le bouton déconnexion sur les sous-pages
+                            const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+                            if (logoutBtn) logoutBtn.style.display = 'none';
                             
                             // Add back button if not exists
                             let backBtn = overlay.querySelector('.overlay-back-btn');

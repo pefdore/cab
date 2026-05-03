@@ -2319,6 +2319,7 @@ h2 {
     .settings-page-overlay .mobile-logout-btn {
         display: flex !important;
         margin: 40px 16px;
+        margin-bottom: 100px;
         width: calc(100% - 32px);
         background: #fef2f2;
         border: 2px solid #fecaca;
@@ -2336,10 +2337,15 @@ h2 {
         transform: scale(0.98);
     }
     
-    /* Masquer le bouton déconnexion sur les sous-pages */
-    .settings-page-overlay .settings-page .mobile-logout-btn,
-    .settings-page-overlay .settings-page.active .mobile-logout-btn {
+    /* Masquer le bouton déconnexion quand une sous-page est active */
+    .settings-page-overlay .settings-page.active ~ .mobile-logout-btn,
+    .settings-page-overlay .settings-page[style*="block"] ~ .mobile-logout-btn {
         display: none !important;
+    }
+    
+    /* Ajouter padding en bas de l'overlay pour éviter que le bouton soit caché par la navbar */
+    .settings-page-overlay {
+        padding-bottom: 100px !important;
     }
     
     .settings-page-overlay .settings-menu {
