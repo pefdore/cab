@@ -1695,6 +1695,14 @@ function switchView(viewName) {
                         overlay.querySelector(`#tab-${tabName}`).classList.add('active');
                     });
                 });
+                
+                // Set up mobile logout button in overlay
+                const logoutBtn = overlay.querySelector('#mobileLogoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', () => {
+                        doSignOut();
+                    });
+                }
             }
             overlay.classList.add('active');
         }
