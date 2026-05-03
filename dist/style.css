@@ -2156,6 +2156,12 @@ h2 {
     z-index: 1000;
 }
 
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: none;
+    }
+}
+
 @media (min-width: 769px) {
     .mobile-bottom-nav {
         display: none;
