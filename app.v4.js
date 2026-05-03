@@ -801,6 +801,9 @@ function renderSettingsCotationList() {
     const container = document.getElementById('settingsCotationList');
     if (!container) return;
     
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = settings.customCotations || [];
+    
     // Get unique cotations from user's entries
     supabase.from('entries')
         .select('cotation_key, amount')
@@ -827,14 +830,62 @@ function renderSettingsCotationList() {
                     }))
                     .sort((a, b) => b.count - a.count);
                 
+                // Also show custom cotations
+                const allCotations = [...customCotations.map(c => ({ key: c.key, amount: c.amount, isCustom: true }))];
+                usedCotations.forEach(c => {
+                    if (!allCotations.find(ac => ac.key === c.key)) {
+                        allCotations.push(c);
+                    }
+                });
+                
                 container.innerHTML = `
                     <div class="settings-cotation-list">
-                        <h4 style="margin-bottom: 12px; font-size: var(--text-sm); color: var(--color-text-secondary);">Cotations utilisées</h4>
-                        ${usedCotations.map(c => `
-                            <div class="settings-cotation-item">
-                                <span class="cotation-key">${c.key}</span>
-                                <span class="cotation-amount">${c.amount.toFixed(2)}€</span>
-                                <span class="cotation-count">${c.count}x</span>
+                        ${allCotations.length > 0 ? allCotations.map((c, idx) => `
+                            <div class="settings-cotation-item" data-key="${c.key}">
+                                <div class="cotation-info">
+                                    <span class="cotation-key">${c.key}</span>
+                                    <span class="cotation-amount">${typeof c.amount === 'number' ? c.amount.toFixed(2) : parseFloat(c.amount || 0).toFixed(2)}€</span>
+                                    ${c.count ? `<span class="cotation-count">${c.count}x</span>` : ''}
+                                </div>
+                                <div class="cotation-actions">
+                                    <button class="cotation-edit-btn" onclick="editCotation('${c.key}', ${typeof c.amount === 'number' ? c.amount : parseFloat(c.amount || 0)})">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="cotation-delete-btn" onclick="deleteCotation('${c.key}')">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('') : '<p style="color: var(--color-text-secondary);">Aucune cotation</p>'}
+                    </div>
+                `;
+            } else if (customCotations.length > 0) {
+                container.innerHTML = `
+                    <div class="settings-cotation-list">
+                        ${customCotations.map((c, idx) => `
+                            <div class="settings-cotation-item" data-key="${c.key}">
+                                <div class="cotation-info">
+                                    <span class="cotation-key">${c.key}</span>
+                                    <span class="cotation-amount">${parseFloat(c.amount).toFixed(2)}€</span>
+                                </div>
+                                <div class="cotation-actions">
+                                    <button class="cotation-edit-btn" onclick="editCotation('${c.key}', ${parseFloat(c.amount)})">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="cotation-delete-btn" onclick="deleteCotation('${c.key}')">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -845,12 +896,40 @@ function renderSettingsCotationList() {
         });
 }
 
-function deleteCotation(index) {
+function editCotation(key, amount) {
+    const newKey = prompt('Modifier la clé de cotation:', key);
+    if (newKey === null) return;
+    
+    const newAmount = prompt('Modifier le montant:', amount);
+    if (newAmount === null) return;
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    let customCotations = settings.customCotations || [];
+    
+    // Remove old entry
+    customCotations = customCotations.filter(c => c.key !== key);
+    
+    // Add new entry
+    if (newKey && newAmount) {
+        customCotations.push({ key: newKey, amount: parseFloat(newAmount) });
+    }
+    
+    settings.customCotations = customCotations;
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    
+    renderSettingsCotationList();
+    populateCotationSelect();
+}
+
+function deleteCotation(key) {
     if (!confirm('Supprimer cette cotation?')) return;
     
     const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
-    const customCotations = settings.customCotations || [];
-    customCotations.splice(index, 1);
+    let customCotations = settings.customCotations || [];
+    
+    // Supprimer par clé
+    customCotations = customCotations.filter(c => c.key !== key);
+    
     settings.customCotations = customCotations;
     localStorage.setItem('userSettings', JSON.stringify(settings));
     
@@ -1416,6 +1495,8 @@ function closeSettingsPage() {
 // Expose functions to window for inline onclick handlers
 window.openSettingsPage = openSettingsPage;
 window.closeSettingsPage = closeSettingsPage;
+window.editCotation = editCotation;
+window.deleteCotation = deleteCotation;
 
 // Profile functions
 async function loadProfileData() {
@@ -1676,6 +1757,15 @@ function switchView(viewName) {
                     card.addEventListener('click', (e) => {
                         e.preventDefault();
                         const pageName = card.dataset.settingsPage;
+                        const pageNames = {
+                            'profil': 'Profil',
+                            'cotation': 'Cotations',
+                            'pdf': 'PDF',
+                            'preferences': 'Préférences',
+                            'donnees': 'Données'
+                        };
+                        const displayName = pageNames[pageName] || pageName;
+                        
                         if (pageName) {
                             // Hide menu
                             const menu = overlay.querySelector('.settings-menu');
@@ -1695,25 +1785,30 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
-                            // Add back button if not exists
+                            // Add or update back button with page name
                             let backBtn = overlay.querySelector('.overlay-back-btn');
                             if (!backBtn) {
                                 backBtn = document.createElement('button');
                                 backBtn.className = 'overlay-back-btn';
-                                backBtn.innerHTML = '← Retour';
-                                backBtn.onclick = () => {
-                                    // Show menu, hide all pages
-                                    const menu = overlay.querySelector('.settings-menu');
-                                    if (menu) menu.style.display = 'flex';
-                                    overlay.querySelectorAll('.settings-page').forEach(p => {
-                                        p.style.display = 'none';
-                                        p.classList.remove('active');
-                                    });
-                                    // Remove back button
-                                    if (backBtn) backBtn.remove();
-                                };
                                 overlay.insertBefore(backBtn, overlay.firstChild);
                             }
+                            backBtn.innerHTML = `← ${displayName}`;
+                            backBtn.onclick = () => {
+                                // Show menu, hide all pages
+                                const menu = overlay.querySelector('.settings-menu');
+                                if (menu) menu.style.display = 'flex';
+                                overlay.querySelectorAll('.settings-page').forEach(p => {
+                                    p.style.display = 'none';
+                                    p.classList.remove('active');
+                                });
+                                // Show logout button again
+                                const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+                                if (logoutBtn) logoutBtn.style.display = 'flex';
+                            };
+                            
+                            // Update h2 title in overlay
+                            const h2 = overlay.querySelector('h2');
+                            if (h2) h2.textContent = displayName;
                         }
                     });
                 });
