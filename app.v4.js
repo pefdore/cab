@@ -499,12 +499,16 @@ function switchAddMode(mode) {
         if (depensesContent) {
             depensesContent.style.display = 'none';
         }
+        var passagesSection = document.getElementById('add-passages-section');
+        if (passagesSection) passagesSection.style.display = 'block';
     } else {
         if (passagesContent) {
             passagesContent.style.display = 'none';
         }
         if (depensesContent) {
             depensesContent.style.display = 'block';
+            var passagesSection = document.getElementById('add-passages-section');
+            if (passagesSection) passagesSection.style.display = 'none';
             if (typeof loadCabinetData === 'function') {
                 loadCabinetData().then(() => {
                     renderAddDepensesRecettes();
