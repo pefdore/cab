@@ -31,6 +31,8 @@
             </div>
             
 <form id="login-form" class="login-form">
+                <p class="login-form-title">Bienvenue</p>
+                <p class="login-form-subtitle">Connectez-vous pour continuer</p>
                 <div class="form-group">
                     <label>Email</label>
                     <input type="email" id="login-email" placeholder="votre@email.com" required>
@@ -49,14 +51,32 @@
 function toggleForm(form) {
     if (form === 'register') {
         document.getElementById('login-form').style.display = 'none';
-        document.getElementById('login-toggle').style.display = 'none';
         document.getElementById('register-form').style.display = 'flex';
     } else if (form === 'login') {
         document.getElementById('login-form').style.display = 'flex';
         document.getElementById('register-form').style.display = 'none';
-        document.getElementById('login-toggle').style.display = 'block';
     }
 }
+
+function toggleRemplacantField() {
+    const role = document.getElementById('register-role').value;
+    const replaceGroup = document.getElementById('remplace-medecin-group');
+    if (role === 'medecin_remplacant') {
+        replaceGroup.style.display = 'flex';
+    } else {
+        replaceGroup.style.display = 'none';
+    }
+}
+
+document.querySelector('a[onclick="toggleForm(\'register\')"]').addEventListener('click', function(e) {
+    e.preventDefault();
+    toggleForm('register');
+});
+
+document.getElementById('show-login').addEventListener('click', function(e) {
+    e.preventDefault();
+    toggleForm('login');
+});
 
 function attemptLogin() {
     console.log('[MOBILE] Login button clicked');
@@ -89,6 +109,8 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
 });
 </script>
             <form id="register-form" class="login-form" style="display:none;">
+                <p class="login-form-title">Créer un compte</p>
+                <p class="login-form-subtitle">Rejoignez l'application de gestion</p>
                 <div class="form-row-auth">
                     <div class="form-group">
                         <label for="register-lastname">Nom</label>

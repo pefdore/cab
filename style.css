@@ -4400,6 +4400,18 @@ h2 {
     pointer-events: auto;
     position: relative;
     z-index: 100000;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .login-form {
@@ -4408,7 +4420,8 @@ h2 {
 
 .login-form button,
 .login-form input,
-.login-form a {
+.login-form a,
+.login-form select {
     pointer-events: auto;
     touch-action: manipulation;
 }
@@ -4471,6 +4484,12 @@ h2 {
     font-size: 48px;
     display: block;
     margin-bottom: 10px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 .login-header h1 {
@@ -4478,6 +4497,10 @@ h2 {
     color: var(--color-text);
     margin: 0;
     font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .login-header p {
@@ -4559,10 +4582,15 @@ h2 {
     cursor: pointer;
     font-size: 14px;
     font-family: inherit;
+    padding: 10px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    width: 100%;
 }
 
 .btn-link:hover {
-    text-decoration: underline;
+    background: var(--color-bg-muted);
+    text-decoration: none;
 }
 
 .login-form select {
@@ -4588,6 +4616,21 @@ h2 {
 
 .form-row-auth .form-group {
     flex: 1;
+}
+
+.login-form-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.login-form-subtitle {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 /* ===== USER SECTION / LOGOUT ===== */
