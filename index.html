@@ -771,6 +771,25 @@ document.getElementById('login-email').addEventListener('keypress', function(e) 
                             <button id="add-saveRecetteBtn" class="btn-primary">Enregistrer la recette</button>
                         </div>
                     </div>
+                    
+                    <!-- Liste des dépenses et recettes du mois -->
+                    <div class="add-depenses-recettes-list" style="margin-top: 24px;">
+                        <div class="entries-header">
+                            <h3>Dépenses et recettes du mois</h3>
+                        </div>
+                        <div class="depenses-recettes-summary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                            <div class="stat-card" style="padding: 12px; background: var(--color-danger-bg); border-radius: 8px; border: 1px solid var(--color-danger-border);">
+                                <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Dépenses</span>
+                                <span class="stat-value" id="add-depenses-month-total" style="font-size: 1.125rem; font-weight: 600; color: var(--color-danger);">0€</span>
+                            </div>
+                            <div class="stat-card" style="padding: 12px; background: var(--color-success-bg); border-radius: 8px; border: 1px solid var(--color-success-border);">
+                                <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Recettes</span>
+                                <span class="stat-value" id="add-recettes-month-total" style="font-size: 1.125rem; font-weight: 600; color: var(--color-success);">0€</span>
+                            </div>
+                        </div>
+                        <div id="add-depenses-list" class="depenses-list"></div>
+                        <div id="add-recettes-list" class="recettes-list"></div>
+                    </div>
                 </div>
                 
                 <div class="entries-section">

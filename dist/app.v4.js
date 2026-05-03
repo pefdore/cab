@@ -505,6 +505,7 @@ function switchAddMode(mode) {
         }
         if (depensesContent) {
             depensesContent.style.display = 'block';
+            renderAddDepensesRecettes();
         }
     }
 }
@@ -2100,6 +2101,82 @@ function renderRecettes() {
     }).join('');
 }
 
+function renderAddDepensesRecettes() {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const monthDepenses = cabinetDepenses.filter(d => {
+        const date = new Date(d.date);
+        return date >= monthStart && date <= monthEnd;
+    });
+    
+    const monthRecettes = cabinetRecettes.filter(r => {
+        const date = new Date(r.date);
+        return date >= monthStart && date <= monthEnd;
+    });
+    
+    const totalDepenses = monthDepenses.reduce((sum, d) => sum + d.amount, 0);
+    const totalRecettes = monthRecettes.reduce((sum, r) => sum + r.amount, 0);
+    
+    const depensesTotalEl = document.getElementById('add-depenses-month-total');
+    const recettesTotalEl = document.getElementById('add-recettes-month-total');
+    
+    if (depensesTotalEl) depensesTotalEl.textContent = totalDepenses.toFixed(2) + '€';
+    if (recettesTotalEl) recettesTotalEl.textContent = totalRecettes.toFixed(2) + '€';
+    
+    const depensesListEl = document.getElementById('add-depenses-list');
+    const recettesListEl = document.getElementById('add-recettes-list');
+    
+    if (depensesListEl) {
+        if (monthDepenses.length === 0) {
+            depensesListEl.innerHTML = '<div class="no-entries">Aucune dépense ce mois</div>';
+        } else {
+            depensesListEl.innerHTML = monthDepenses.map(d => {
+                const cat = CABINET_CATEGORIES[d.category];
+                const catLabel = cat ? cat.label : d.category;
+                const dateStr = d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '-';
+                return `
+                    <div class="depense-item">
+                        <div>
+                            <span class="date-small">${dateStr}</span>
+                            <span class="description">${d.description || d.sous_categorie || '-'}</span>
+                            <span class="category">${catLabel}</span>
+                        </div>
+                        <div class="depense-right">
+                            <span class="amount">-${d.amount.toFixed(2)}€</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+    
+    if (recettesListEl) {
+        if (monthRecettes.length === 0) {
+            recettesListEl.innerHTML = '<div class="no-entries">Aucune recette ce mois</div>';
+        } else {
+            recettesListEl.innerHTML = monthRecettes.map(r => {
+                const cat = RECETTE_CATEGORIES[r.category];
+                const catLabel = cat ? cat.label : r.category;
+                const dateStr = r.date ? new Date(r.date).toLocaleDateString('fr-FR') : '-';
+                return `
+                    <div class="depense-item income">
+                        <div>
+                            <span class="date-small">${dateStr}</span>
+                            <span class="description">${r.description || '-'}</span>
+                            <span class="category">${catLabel}</span>
+                        </div>
+                        <div class="depense-right">
+                            <span class="amount">+${r.amount.toFixed(2)}€</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+}
+
 function renderComptaSummary() {
     console.log('[COMPTAB] renderComptaSummary called - v74');
     
@@ -3441,6 +3518,7 @@ async function saveDepense() {
     
     await loadCabinetData();
     renderComptaSummary();
+    renderAddDepensesRecettes();
 }
 
 async function saveRecette() {
@@ -3477,6 +3555,7 @@ async function saveRecette() {
     
     await loadCabinetData();
     renderComptaSummary();
+    renderAddDepensesRecettes();
 }
 
 async function deleteDepense(id) {
