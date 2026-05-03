@@ -2155,43 +2155,11 @@ function switchView(viewName) {
                 overlay.innerHTML = settingsSection.innerHTML;
                 document.body.appendChild(overlay);
                 
-                // Add close button
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'overlay-close-btn';
-                closeBtn.innerHTML = '<span class="back-arrow">Fermer</span><span class="page-title">Paramètres</span>';
-                closeBtn.onclick = () => {
-                    // Revenir au menu paramètres
-                    const menu = overlay.querySelector('.settings-menu');
-                    if (menu) menu.style.display = 'flex';
-                    overlay.querySelectorAll('.settings-page').forEach(p => {
-                        p.style.display = 'none';
-                        p.classList.remove('active');
-                    });
-                    // Supprimer le bouton back
-                    const backBtn = overlay.querySelector('.overlay-back-btn');
-                    if (backBtn) backBtn.remove();
-                    // Afficher le bouton déconnexion
-                    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-                    if (logoutBtn) logoutBtn.style.display = 'flex';
-                    // Reset title
-                    const h2 = overlay.querySelector('h2');
-                    if (h2) h2.textContent = 'Paramètres';
-                };
-                overlay.insertBefore(closeBtn, overlay.firstChild);
-                
                 // Set up click handlers for settings cards in overlay
                 overlay.querySelectorAll('.settings-card').forEach(card => {
                     card.addEventListener('click', (e) => {
                         e.preventDefault();
                         const pageName = card.dataset.settingsPage;
-                        const pageNames = {
-                            'profil': 'Profil',
-                            'cotation': 'Cotations',
-                            'pdf': 'PDF',
-                            'preferences': 'Préférences',
-                            'donnees': 'Données'
-                        };
-                        const displayName = pageNames[pageName] || pageName;
                         
                         if (pageName) {
                             // Hide menu
@@ -2220,7 +2188,7 @@ function switchView(viewName) {
                                     backBtn.className = 'overlay-back-btn';
                                     overlay.insertBefore(backBtn, overlay.firstChild);
                                 }
-                                backBtn.innerHTML = `<span class="back-arrow">Retour</span><span class="page-title">${displayName}</span>`;
+                                backBtn.innerHTML = `<span class="back-arrow">Retour</span>`;
                                 backBtn.onclick = () => {
                                     // Show menu, hide all pages
                                     const menu = overlay.querySelector('.settings-menu');
@@ -2241,12 +2209,35 @@ function switchView(viewName) {
                                 }
                             }
                             
-                            // Update h2 title in overlay
+                            // Remove h2 title in overlay for sub-pages (let the page content show its own title)
                             const h2 = overlay.querySelector('h2');
-                            if (h2) h2.textContent = displayName;
+                            if (h2) h2.style.display = 'none';
                         }
                     });
                 });
+                
+                // Add click handler for close button to go back to menu
+                const closeBtn = overlay.querySelector('.settings-back-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => {
+                        // Revenir au menu paramètres
+                        const menu = overlay.querySelector('.settings-menu');
+                        if (menu) menu.style.display = 'flex';
+                        overlay.querySelectorAll('.settings-page').forEach(p => {
+                            p.style.display = 'none';
+                            p.classList.remove('active');
+                        });
+                        // Show logout button again
+                        const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+                        if (logoutBtn) logoutBtn.style.display = 'flex';
+                        // Show and reset h2
+                        const h2 = overlay.querySelector('h2');
+                        if (h2) {
+                            h2.style.display = 'block';
+                            h2.textContent = 'Paramètres';
+                        }
+                    });
+                }
                 
                 // Set up tabs in overlay
                 overlay.querySelectorAll('.settings-tab').forEach(tab => {
