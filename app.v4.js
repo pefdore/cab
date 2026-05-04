@@ -1924,7 +1924,7 @@ window.editCotation = editCotation;
 window.deleteCotation = deleteCotation;
 
 // LLM API functions
-window.saveOpenRouterKey = function() {
+window.saveOpenRouterKey = async function() {
     // On mobile, the settings are in an overlay, so we need to look there first
     const overlay = document.querySelector('.settings-page-overlay');
     const input = overlay ? overlay.querySelector('#openrouterApiKey') : document.getElementById('openrouterApiKey');
@@ -1938,6 +1938,15 @@ window.saveOpenRouterKey = function() {
     const apiKey = input.value.trim();
     localStorage.setItem('groq_api_key', apiKey);
     localStorage.setItem('openrouter_api_key', apiKey);
+    
+    // Also save to Supabase for persistence
+    if (currentUser && typeof supabase !== 'undefined') {
+        try {
+            await supabase.from('users').update({ api_key: apiKey }).eq('id', currentUser.id);
+        } catch (e) {
+            console.log('[API Key] Error saving to Supabase:', e);
+        }
+    }
     
     if (status) {
         status.textContent = 'Clé enregistrée!';
@@ -3069,6 +3078,38 @@ if (!groqKey && typeof API_CONFIG !== 'undefined' && API_CONFIG && API_CONFIG.gr
 if (!groqKey && typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) {
   groqKey = CONFIG.GROQ_API_KEY;
 }
+
+// Load API key from Supabase if not found in localStorage/config
+async function loadApiKeyFromSupabase() {
+  if (groqKey) return groqKey; // Already have a key
+  
+  if (currentUser && typeof supabase !== 'undefined') {
+    try {
+      const { data, error } = await supabase.from('users').select('api_key').eq('id', currentUser.id).single();
+      if (data && data.api_key) {
+        groqKey = data.api_key;
+        localStorage.setItem('groq_api_key', data.api_key);
+        localStorage.setItem('openrouter_api_key', data.api_key);
+        console.log('[LLM] Loaded API key from Supabase');
+      }
+    } catch (e) {
+      console.log('[LLM] Error loading API key from Supabase:', e);
+    }
+  }
+  return groqKey;
+}
+
+// Call on login
+const originalDoSignIn = doSignIn;
+doSignIn = async function() {
+  if (originalDoSignIn) {
+    const result = originalDoSignIn.apply(this, arguments);
+    if (result && result.then) {
+      await result;
+    }
+  }
+  await loadApiKeyFromSupabase();
+};
 
 console.log('[LLM] groqKey found:', groqKey ? 'YES' : 'NO');
 
