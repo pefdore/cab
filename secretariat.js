@@ -2,6 +2,9 @@
 // SECRÉTARIAT - Gestion RH, Planning, Standard
 // ============================================
 
+// Debug: confirm file is loading
+console.log('[SECRETARIAT] ===== FILE LOADED =====');
+
 // Data stores
 let employees = [];
 let contracts = [];
