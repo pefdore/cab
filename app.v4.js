@@ -1941,13 +1941,28 @@ window.saveOpenRouterKey = async function() {
     
     // Also save to Supabase for persistence (use profiles table)
     console.log('[API Key] Saving to Supabase - currentUser:', currentUser ? currentUser.id : 'null');
+    console.log('[API Key] supabaseClient:', supabaseClient);
+    console.log('[API Key] apiKey:', apiKey);
     if (currentUser && supabaseClient) {
         try {
-            console.log('[API Key] Attempting to update profiles with api_key');
-            const { data, error } = await supabaseClient.from('profiles').update({ api_key: apiKey }).eq('id', currentUser.id);
-            console.log('[API Key] Supabase update result:', { data, error });
-            if (error) {
-                console.error('[API Key] Error saving to Supabase:', error);
+            // First check if profile exists
+            console.log('[API Key] Checking if profile exists...');
+            const { data: existingProfile, error: fetchError } = await supabaseClient.from('profiles').select('id').eq('id', currentUser.id).single();
+            console.log('[API Key] Existing profile:', existingProfile, 'error:', fetchError);
+            
+            if (fetchError && fetchError.message.includes('No rows')) {
+                // Profile doesn't exist, create one
+                console.log('[API Key] Profile does not exist, creating...');
+                const { data, error } = await supabaseClient.from('profiles').insert({ id: currentUser.id, api_key: apiKey });
+                console.log('[API Key] Insert result:', { data, error });
+            } else {
+                // Profile exists, update it
+                console.log('[API Key] Updating existing profile...');
+                const { data, error } = await supabaseClient.from('profiles').update({ api_key: apiKey }).eq('id', currentUser.id);
+                console.log('[API Key] Update result:', { data, error });
+                if (error) {
+                    console.error('[API Key] Error saving to Supabase:', error);
+                }
             }
         } catch (e) {
             console.log('[API Key] Exception saving to Supabase:', e);
