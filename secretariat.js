@@ -160,6 +160,9 @@ function showAddEmployeeModal() {
     document.getElementById('add-employee-modal').style.display = 'flex';
 }
 
+// Expose immediately for button click
+window.showAddEmployeeModal = showAddEmployeeModal;
+
 async function saveEmployee() {
     const employee = {
         user_id: currentUser.id,
@@ -198,6 +201,9 @@ async function saveEmployee() {
         alert('Erreur: ' + e.message);
     }
 }
+
+// Expose immediately
+window.saveEmployee = saveEmployee;
 
 async function editEmployee(id) {
     const emp = employees.find(e => e.id === id);
