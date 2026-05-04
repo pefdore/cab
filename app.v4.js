@@ -4235,7 +4235,6 @@ function editRecette(id) {
         btn.onclick = () => updateRecette(id);
     }
 }
-}
 
 async function updateRecette(id) {
     const description = document.getElementById('add-recetteDescription')?.value;
