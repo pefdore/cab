@@ -4159,11 +4159,7 @@ function editDepense(id) {
     
     window.scroll(0, 0);
     
-    const recetteForm = document.getElementById('add-recette-form');
-    if (recetteForm) recetteForm.style.display = 'none';
-    
-    const depenseForm = document.getElementById('add-depense-form');
-    if (depenseForm) depenseForm.style.display = 'block';
+    switchAddDepenseRecette('depense');
     
     document.getElementById('add-depenseDescription').value = depense.description || '';
     document.getElementById('add-depenseAmount').value = depense.amount;
@@ -4224,11 +4220,7 @@ function editRecette(id) {
     
     window.scroll(0, 0);
     
-    const depenseForm = document.getElementById('add-depense-form');
-    if (depenseForm) depenseForm.style.display = 'none';
-    
-    const recetteForm = document.getElementById('add-recette-form');
-    if (recetteForm) recetteForm.style.display = 'block';
+    switchAddDepenseRecette('recette');
     
     document.getElementById('add-recetteDescription').value = recette.description || '';
     document.getElementById('add-recetteAmount').value = recette.amount;
