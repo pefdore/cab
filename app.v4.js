@@ -4157,6 +4157,14 @@ function editDepense(id) {
     const depense = cabinetDepenses.find(d => d.id === id);
     if (!depense) return;
     
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    const recetteForm = document.getElementById('recettesForm');
+    if (recetteForm) recetteForm.style.display = 'none';
+    
+    const depenseForm = document.getElementById('depensesForm');
+    if (depenseForm) depenseForm.style.display = 'block';
+    
     document.getElementById('add-depenseDescription').value = depense.description || '';
     document.getElementById('add-depenseAmount').value = depense.amount;
     document.getElementById('add-depenseCategory').value = depense.category;
@@ -4213,6 +4221,14 @@ async function updateDepense(id) {
 function editRecette(id) {
     const recette = cabinetRecettes.find(r => r.id === id);
     if (!recette) return;
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    const depenseForm = document.getElementById('depensesForm');
+    if (depenseForm) depenseForm.style.display = 'none';
+    
+    const recetteForm = document.getElementById('recettesForm');
+    if (recetteForm) recetteForm.style.display = 'block';
     
     document.getElementById('add-recetteDescription').value = recette.description || '';
     document.getElementById('add-recetteAmount').value = recette.amount;
