@@ -3091,7 +3091,7 @@ if (!groqKey && typeof CONFIG !== 'undefined' && CONFIG && CONFIG.GROQ_API_KEY) 
 async function loadApiKeyFromSupabase() {
   if (groqKey) return groqKey; // Already have a key
   
-  if (currentUser && typeof supabase !== 'undefined') {
+  if (currentUser && supabaseClient) {
     try {
       const { data, error } = await supabaseClient.from('profiles').select('api_key').eq('id', currentUser.id).single();
       if (data && data.api_key) {
