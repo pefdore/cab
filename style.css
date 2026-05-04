@@ -4269,7 +4269,14 @@ h2 {
         align-items: center;
         gap: 8px;
     }
-    
+
+    .edit-btn-small,
+    .delete-btn-small {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+
     .depense-item .description {
         font-size: 0.8125rem;
         white-space: nowrap;
@@ -4321,18 +4328,30 @@ h2 {
         padding: 16px 12px;
         padding-bottom: 90px;
     }
-    
+
     .stats-grid {
         gap: 8px;
     }
-    
+
     .stat-card {
         padding: 14px;
     }
-    
+
     .stat-icon {
         width: 36px;
         height: 36px;
+    }
+
+    .depense-right {
+        gap: 12px;
+    }
+
+    .edit-btn-small,
+    .delete-btn-small {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        font-size: 1rem;
     }
     
     .stat-icon svg {
