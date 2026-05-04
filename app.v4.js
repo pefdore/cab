@@ -1926,8 +1926,10 @@ window.deleteCotation = deleteCotation;
 // LLM API functions
 window.saveOpenRouterKey = function() {
     console.log('[DEBUG] saveOpenRouterKey called');
-    const input = document.getElementById('openrouterApiKey');
-    const status = document.getElementById('openrouterStatus');
+    // On mobile, the settings are in an overlay, so we need to look there first
+    const overlay = document.querySelector('.settings-page-overlay');
+    const input = overlay ? overlay.querySelector('#openrouterApiKey') : document.getElementById('openrouterApiKey');
+    const status = overlay ? overlay.querySelector('#openrouterStatus') : document.getElementById('openrouterStatus');
     console.log('[DEBUG] input:', input, 'value:', input ? input.value : 'N/A');
     
     if (!input || !input.value.trim()) {
@@ -1957,7 +1959,8 @@ window.loadOpenRouterKey = function() {
     try {
         const savedKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('groq_api_key');
         if (savedKey) {
-            const input = document.getElementById('openrouterApiKey');
+            const overlay = document.querySelector('.settings-page-overlay');
+            const input = overlay ? overlay.querySelector('#openrouterApiKey') : document.getElementById('openrouterApiKey');
             if (input) input.value = savedKey;
         }
     } catch (e) {
