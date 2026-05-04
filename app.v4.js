@@ -1925,30 +1925,22 @@ window.deleteCotation = deleteCotation;
 
 // LLM API functions
 window.saveOpenRouterKey = function() {
-    console.log('[DEBUG] saveOpenRouterKey called');
     // On mobile, the settings are in an overlay, so we need to look there first
     const overlay = document.querySelector('.settings-page-overlay');
     const input = overlay ? overlay.querySelector('#openrouterApiKey') : document.getElementById('openrouterApiKey');
     const status = overlay ? overlay.querySelector('#openrouterStatus') : document.getElementById('openrouterStatus');
-    console.log('[DEBUG] input:', input, 'value:', input ? input.value : 'N/A');
     
     if (!input || !input.value.trim()) {
-        console.log('[DEBUG] validation failed');
         alert('Veuillez entrer une clé API');
         return;
     }
     
-    alert('Debug: validation passed, value=' + input.value.trim());
-    
     const apiKey = input.value.trim();
-    console.log('[DEBUG] saving key:', apiKey);
     localStorage.setItem('groq_api_key', apiKey);
     localStorage.setItem('openrouter_api_key', apiKey);
-    console.log('[DEBUG] key saved, checking localStorage:', localStorage.getItem('groq_api_key'));
     
     if (status) {
         status.textContent = 'Clé enregistrée!';
-        console.log('[DEBUG] status message set');
     }
     setTimeout(() => {
         if (status) status.textContent = '';
@@ -3063,9 +3055,9 @@ if (typeof LLM_CONFIG === 'undefined') {
   var LLM_CONFIG = {};
 }
 
-// CONFIGURATION LLM - Get API key from loaded config files
+// CONFIGURATION LLM - Get API key from loaded config files or localStorage
 // Try various possible sources
-var groqKey = '';
+var groqKey = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key') || '';
 if (typeof LLM_CONFIG !== 'undefined') {
   if (LLM_CONFIG && LLM_CONFIG.groqApiKey) {
     groqKey = LLM_CONFIG.groqApiKey;
