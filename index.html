@@ -1772,14 +1772,32 @@ window.attemptLogin = function() {
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
     <script src="app.v4.js?v=202605041530" defer></script>
-    <script src="secretariat.js?v=202605041530" defer></script>
+    <script src="secretariat.js?v=202605041815" defer></script>
     <script>
       // Test if secretariat functions are loaded
       window.testSecretariat = function() {
         console.log('Testing secretariat...');
         console.log('showAddEmployeeModal:', typeof window.showAddEmployeeModal);
         console.log('initSecretariat:', typeof window.initSecretariat);
+        alert('showAddEmployeeModal: ' + typeof window.showAddEmployeeModal);
       };
+      
+      // Check if script loaded
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          if (typeof window.showAddEmployeeModal !== 'function') {
+            console.error('[DEBUG] showAddEmployeeModal not available!');
+            // Try to load the script dynamically
+            var script = document.createElement('script');
+            script.src = 'secretariat.js?v=202605041815';
+            script.onload = function() {
+              console.log('[DEBUG] Script loaded dynamically');
+              window.showAddEmployeeModal = showAddEmployeeModal;
+            };
+            document.head.appendChild(script);
+          }
+        }, 2000);
+      });
       
       // Initialize secretariat after DOM and scripts loaded
       document.addEventListener('DOMContentLoaded', function() {
