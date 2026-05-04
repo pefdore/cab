@@ -11,15 +11,23 @@ let currentProfile = null;
 let authInitialized = false;
 
 // --- Initialisation du client Supabase ---
-function initAuth() {
+async function initAuth() {
     console.log('[AUTH] initAuth called, authInitialized:', authInitialized);
     if (authInitialized) return;
     
     console.log('[AUTH] typeof supabase:', typeof supabase);
     
+    // Wait up to 3 seconds for Supabase to load
+    let attempts = 0;
+    while (typeof supabase === 'undefined' && attempts < 30) {
+        console.log('[AUTH] Waiting for Supabase library... attempt', attempts);
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+    }
+    
     if (typeof supabase === 'undefined') {
-        console.log('[AUTH] Waiting for Supabase library...');
-        setTimeout(initAuth, 100);
+        console.error('[AUTH] Supabase library never loaded!');
+        showError('Erreur: bibliothèque Supabase non chargée. Vérifiez votre connexion internet.');
         return;
     }
     
