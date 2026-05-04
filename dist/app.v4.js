@@ -4227,19 +4227,8 @@ function editRecette(id) {
     const depenseForm = document.getElementById('add-depense-form');
     const recetteForm = document.getElementById('add-recette-form');
     
-    console.log('[DEBUG] editRecette - before:', 'depenseForm display:', depenseForm?.style.display, 'recetteForm display:', recetteForm?.style.display);
-    
-    if (depenseForm) {
-        depenseForm.style.display = 'none';
-        depenseForm.setAttribute('data-visible', 'false');
-    }
-    
-    if (recetteForm) {
-        recetteForm.style.display = 'block';
-        recetteForm.setAttribute('data-visible', 'true');
-    }
-    
-    console.log('[DEBUG] editRecette - after:', 'depenseForm display:', depenseForm?.style.display, 'recetteForm display:', recetteForm?.style.display);
+    if (depenseForm) depenseForm.style.display = 'none';
+    if (recetteForm) recetteForm.style.display = 'block';
     
     document.getElementById('add-recetteDescription').value = recette.description || '';
     document.getElementById('add-recetteAmount').value = recette.amount;

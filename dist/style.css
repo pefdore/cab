@@ -5221,6 +5221,13 @@ h2 {
     gap: 10px;
 }
 
+.depense-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
 .depense-item .description {
     font-weight: 500;
     font-size: 0.875rem;
