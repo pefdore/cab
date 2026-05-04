@@ -1941,10 +1941,10 @@ window.saveOpenRouterKey = async function() {
     
     // Also save to Supabase for persistence (use profiles table)
     console.log('[API Key] Saving to Supabase - currentUser:', currentUser ? currentUser.id : 'null');
-    if (currentUser && typeof supabase !== 'undefined') {
+    if (currentUser && supabaseClient) {
         try {
             console.log('[API Key] Attempting to update profiles with api_key');
-            const { data, error } = await supabase.from('profiles').update({ api_key: apiKey }).eq('id', currentUser.id);
+            const { data, error } = await supabaseClient.from('profiles').update({ api_key: apiKey }).eq('id', currentUser.id);
             console.log('[API Key] Supabase update result:', { data, error });
             if (error) {
                 console.error('[API Key] Error saving to Supabase:', error);
@@ -1953,7 +1953,7 @@ window.saveOpenRouterKey = async function() {
             console.log('[API Key] Exception saving to Supabase:', e);
         }
     } else {
-        console.log('[API Key] Cannot save to Supabase - currentUser or supabase undefined');
+        console.log('[API Key] Cannot save to Supabase - currentUser or supabaseClient undefined');
     }
     
     if (status) {
@@ -3093,7 +3093,7 @@ async function loadApiKeyFromSupabase() {
   
   if (currentUser && typeof supabase !== 'undefined') {
     try {
-      const { data, error } = await supabase.from('profiles').select('api_key').eq('id', currentUser.id).single();
+      const { data, error } = await supabaseClient.from('profiles').select('api_key').eq('id', currentUser.id).single();
       if (data && data.api_key) {
         groqKey = data.api_key;
         localStorage.setItem('groq_api_key', data.api_key);
