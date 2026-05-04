@@ -4157,7 +4157,7 @@ function editDepense(id) {
     const depense = cabinetDepenses.find(d => d.id === id);
     if (!depense) return;
     
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scroll(0, 0);
     
     const recetteForm = document.getElementById('add-recette-form');
     if (recetteForm) recetteForm.style.display = 'none';
@@ -4222,12 +4222,12 @@ function editRecette(id) {
     const recette = cabinetRecettes.find(r => r.id === id);
     if (!recette) return;
     
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scroll(0, 0);
     
     const depenseForm = document.getElementById('add-depense-form');
-    const recetteForm = document.getElementById('add-recette-form');
-    
     if (depenseForm) depenseForm.style.display = 'none';
+    
+    const recetteForm = document.getElementById('add-recette-form');
     if (recetteForm) recetteForm.style.display = 'block';
     
     document.getElementById('add-recetteDescription').value = recette.description || '';
@@ -4242,6 +4242,7 @@ function editRecette(id) {
         btn.textContent = 'Modifier la recette';
         btn.onclick = () => updateRecette(id);
     }
+}
 }
 
 async function updateRecette(id) {
