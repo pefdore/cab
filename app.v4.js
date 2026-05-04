@@ -1989,7 +1989,7 @@ window.callLLM = async function(prompt, taskType) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.1-70b-versatile',
+                model: 'llama-3.1-8b-instant',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: prompt }
@@ -3138,7 +3138,7 @@ function refreshLLMAnalysis(type) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.1-70b-versatile',
+                model: 'llama-3.1-8b-instant',
                 messages: [{ role: 'user', content: prompt + '\n\nRéponds en français de manière concise (3 points max).' }]
             })
         })
