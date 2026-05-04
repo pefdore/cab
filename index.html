@@ -1837,6 +1837,109 @@ window.attemptLogin = function() {
         document.getElementById(modalId).style.display = 'none';
       };
       
+      // Fallback for loading employees list
+      window.loadEmployeesList = function() {
+        console.log('[FALLBACK] loadEmployeesList called');
+        if (!window.currentUser || !window.supabaseClient) {
+          console.log('[FALLBACK] Cannot load - currentUser or supabaseClient not available');
+          return;
+        }
+        
+        window.supabaseClient.from('employees')
+          .select('*')
+          .eq('user_id', window.currentUser.id)
+          .order('lastname', { ascending: true })
+          .then(function(response) {
+            if (response.error) {
+              console.error('[FALLBACK] Error loading employees:', response.error);
+              return;
+            }
+            
+            var employees = response.data || [];
+            var tbody = document.getElementById('employeesTableBody');
+            if (!tbody) return;
+            
+            if (employees.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Aucun employé enregistré</td></tr>';
+              return;
+            }
+            
+            // Render employees
+            var functionLabels = {
+              'secretaire': 'Secrétaire',
+              'aide_soignante': 'Aide-soignante',
+              'infirmiere': 'Infirmière',
+              'agent_entretien': 'Agent d\'entretien',
+              'autre': 'Autre'
+            };
+            
+            var contractLabels = {
+              'cdi': 'CDI',
+              'cdd': 'CDD',
+              'interim': 'Intérim',
+              'stage': 'Stage',
+              'apprentissage': 'Apprentissage'
+            };
+            
+            tbody.innerHTML = employees.map(function(emp) {
+              return '<tr>' +
+                '<td><div class="employee-name"><strong>' + emp.lastname + '</strong> ' + emp.firstname + '</div></td>' +
+                '<td>' + (functionLabels[emp.function] || emp.function) + '</td>' +
+                '<td><span class="contract-badge ' + emp.contract_type + '">' + (contractLabels[emp.contract_type] || emp.contract_type) + '</span></td>' +
+                '<td>' + (emp.start_date ? new Date(emp.start_date).toLocaleDateString('fr-FR') : '-') + '</td>' +
+                '<td>' + (emp.end_date ? new Date(emp.end_date).toLocaleDateString('fr-FR') : '-') + '</td>' +
+                '<td>' + (emp.hours_per_week || 35) + 'h</td>' +
+                '<td><button class="btn-small" onclick="editEmployee(' + emp.id + ')">✏️</button></td>' +
+              '</tr>';
+            }).join('');
+            
+            console.log('[FALLBACK] Loaded', employees.length, 'employees');
+          });
+      };
+      
+      // Fallback for editing employee
+      window.editEmployee = function(id) {
+        console.log('[FALLBACK] editEmployee called:', id);
+        if (!window.supabaseClient) {
+          alert('Erreur: Client Supabase non disponible');
+          return;
+        }
+        
+        window.supabaseClient.from('employees')
+          .select('*')
+          .eq('id', id)
+          .single()
+          .then(function(response) {
+            if (response.error || !response.data) {
+              alert('Employé non trouvé');
+              return;
+            }
+            
+            var emp = response.data;
+            document.getElementById('employeeLastname').value = emp.lastname || '';
+            document.getElementById('employeeFirstname').value = emp.firstname || '';
+            document.getElementById('employeeEmail').value = emp.email || '';
+            document.getElementById('employeePhone').value = emp.phone || '';
+            document.getElementById('employeeFunction').value = emp.function || 'secretaire';
+            document.getElementById('employeeContractType').value = emp.contract_type || 'cdi';
+            document.getElementById('employeeStartDate').value = emp.start_date || '';
+            document.getElementById('employeeEndDate').value = emp.end_date || '';
+            document.getElementById('employeeHoursWeek').value = emp.hours_per_week || 35;
+            document.getElementById('employeeSalary').value = emp.salary || '';
+            document.getElementById('employeeNotes').value = emp.notes || '';
+            
+            document.getElementById('employeeModalTitle').textContent = 'Modifier Employé';
+            document.getElementById('add-employee-modal').style.display = 'flex';
+          });
+      };
+      
+      // Auto-load employees when view-cabinet becomes visible
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          window.loadEmployeesList();
+        }, 3000);
+      });
+      
       // Test if secretariat functions are loaded
       window.testSecretariat = function() {
         console.log('Testing secretariat...');
