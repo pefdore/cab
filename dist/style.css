@@ -4262,14 +4262,14 @@ h2 {
     .depense-item > div:first-child {
         flex: 1;
         min-width: 0;
-        max-width: 60%;
+        max-width: 60% !important;
     }
     
     .depense-right {
-        flex-direction: row;
+        flex-direction: row !important;
         align-items: center;
-        gap: 8px;
-        flex-wrap: nowrap;
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
     }
 
     .edit-btn-small,
@@ -4345,7 +4345,7 @@ h2 {
     }
 
     .depense-right {
-        gap: 12px;
+        gap: 12px !important;
     }
 
     .edit-btn-small,
