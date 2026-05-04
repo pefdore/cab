@@ -114,6 +114,11 @@ try {
     // NOW switch to dashboard and render - data is ready
     switchView('dashboard');
     
+    // Expose currentUser and supabaseClient globally for other modules
+    window.currentUser = currentUser;
+    window.supabaseClient = supabaseClient;
+    console.log('[AUTH] Exposed currentUser and supabaseClient to window');
+    
     // Initialize autocomplete handlers (must be after DOM is ready)
     init();
     
