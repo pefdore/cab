@@ -1115,11 +1115,13 @@ window.confirmStandardImport = confirmStandardImport;
 window.switchAnalysisView = switchAnalysisView;
 
 // Also set up button listeners on load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('[SECRETARIAT] DOM loaded, setting up button handlers');
+function setupButtonHandlers() {
+    console.log('[SECRETARIAT] Setting up button handlers');
     
     // Add employee button
     const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+    console.log('[SECRETARIAT] addEmployeeBtn found:', !!addEmployeeBtn);
+    
     if (addEmployeeBtn) {
         addEmployeeBtn.addEventListener('click', function() {
             console.log('[SECRETARIAT] Add employee button clicked');
@@ -1130,5 +1132,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Erreur: Le module secrétariaat n\'est pas chargé. Vérifiez la console.');
             }
         });
+        console.log('[SECRETARIAT] Event listener added to addEmployeeBtn');
     }
-});
+}
+
+// Run immediately and on DOMContentLoaded
+setupButtonHandlers();
+document.addEventListener('DOMContentLoaded', setupButtonHandlers);
