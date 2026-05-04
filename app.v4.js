@@ -3099,14 +3099,15 @@ async function loadApiKeyFromSupabase() {
   return groqKey;
 }
 
-// Call on login
-const originalDoSignIn = doSignIn;
-doSignIn = async function() {
-  if (originalDoSignIn) {
-    const result = originalDoSignIn.apply(this, arguments);
-    if (result && result.then) {
-      await result;
-    }
+// Call on login (only if doLogin exists)
+if (typeof doLogin !== 'undefined') {
+  const originalDoLogin = doLogin;
+  window.doLogin = async function(email, password) {
+    const result = await originalDoLogin.call(this, email, password);
+    await loadApiKeyFromSupabase();
+    return result;
+  };
+}
   }
   await loadApiKeyFromSupabase();
 };
@@ -4393,7 +4394,7 @@ window.deletePDF = deletePDF;
 
 // Initialize auth on page load
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAuth);
+    document.addEventListener('DOMContentLoaded', () => initAuth());
 } else {
-    initAuth();
+    initAuth().then(() => console.log('[AUTH] Init complete'));
 }
