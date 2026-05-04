@@ -11,29 +11,18 @@ let currentProfile = null;
 let authInitialized = false;
 
 // --- Initialisation du client Supabase ---
-async function initAuth() {
-    console.log('[AUTH] initAuth called, authInitialized:', authInitialized);
+function initAuth() {
     if (authInitialized) return;
     
-    console.log('[AUTH] typeof supabase:', typeof supabase);
-    
-    // Wait up to 3 seconds for Supabase to load
-    let attempts = 0;
-    while (typeof supabase === 'undefined' && attempts < 30) {
-        console.log('[AUTH] Waiting for Supabase library... attempt', attempts);
-        await new Promise(r => setTimeout(r, 100));
-        attempts++;
-    }
-    
     if (typeof supabase === 'undefined') {
-        console.error('[AUTH] Supabase library never loaded!');
-        showError('Erreur: bibliothèque Supabase non chargée. Vérifiez votre connexion internet.');
+        console.log('[AUTH] Waiting for Supabase library...');
+        setTimeout(initAuth, 100);
         return;
     }
     
     const { createClient } = supabase;
     supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('[AUTH] Client Supabase initialisé, client:', supabaseClient);
+    console.log('[AUTH] Client Supabase initialisé');
     
     // Écouter les changements d'état d'authentification
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -114,8 +103,19 @@ try {
         console.error('[AUTH] loadPatients error:', e);
     }
     
+    // Pre-load cabinet data (depenses/recettes) for autocomplete
+    try {
+        await loadCabinetData();
+        console.log('[AUTH] loadCabinetData completed, depenses:', cabinetDepenses.length);
+    } catch (e) {
+        console.error('[AUTH] loadCabinetData error:', e);
+    }
+    
     // NOW switch to dashboard and render - data is ready
     switchView('dashboard');
+    
+    // Initialize autocomplete handlers (must be after DOM is ready)
+    init();
     
     console.log('[AUTH] App fully initialized');
 }
@@ -520,6 +520,14 @@ function switchAddMode(mode) {
             depensesContent.style.display = 'block';
             var passagesSection = document.getElementById('add-passages-section');
             if (passagesSection) passagesSection.style.display = 'none';
+            
+            // Initialize autocomplete when depenses form is shown (with small delay to ensure DOM is ready)
+            setTimeout(() => {
+                console.log('[SWITCH] Initializing autocomplete for depenses');
+                handleDepenseAutocomplete();
+                handleRecetteAutocomplete();
+            }, 50);
+            
             if (typeof loadCabinetData === 'function') {
                 loadCabinetData().then(() => {
                     renderAddDepensesRecettes();
@@ -556,7 +564,16 @@ function handleDepenseAutocomplete() {
     const dropdown = document.getElementById('add-depense-autocomplete');
     const categorySelect = document.getElementById('add-depenseCategory');
     
+    console.log('[AUTOCOMPLETE-DEP] handleDepenseAutocomplete called, input:', !!input, 'dropdown:', !!dropdown, 'categorySelect:', !!categorySelect);
+    
     if (!input || !dropdown || !categorySelect) return;
+    
+    // Prevent multiple initializations
+    if (input.dataset.autocompleteInitialized) {
+        console.log('[AUTOCOMPLETE-DEP] Already initialized, skipping');
+        return;
+    }
+    input.dataset.autocompleteInitialized = 'true';
     
     // Make sure dropdown is positioned absolutely
     dropdown.style.position = 'absolute';
@@ -570,6 +587,7 @@ function handleDepenseAutocomplete() {
     dropdown.style.overflowY = 'auto';
     
     input.addEventListener('input', function() {
+        console.log('[AUTOCOMPLETE-DEP] Input event triggered, value:', this.value);
         const value = this.value.toLowerCase().trim();
         
         if (value.length < 2) {
@@ -577,7 +595,7 @@ function handleDepenseAutocomplete() {
             return;
         }
         
-        console.log('[AUTOCOMPLETE] Searching for:', value, 'depenses:', cabinetDepenses.length);
+        console.log('[AUTOCOMPLETE-DEP] Searching for:', value, 'depenses:', cabinetDepenses.length);
         
         if (cabinetDepenses.length === 0) {
             console.log('[AUTOCOMPLETE] No depenses loaded yet');
@@ -588,7 +606,7 @@ function handleDepenseAutocomplete() {
         const sortedDepenses = [...cabinetDepenses].sort((a, b) => new Date(b.date) - new Date(a.date));
         
         const matches = sortedDepenses.filter(d => 
-            d.description && d.description.toLowerCase().includes(value)
+            d.description && d.description.toLowerCase().startsWith(value)
         ).slice(0, 5);
         
         console.log('[AUTOCOMPLETE] Matches found:', matches.length);
@@ -638,6 +656,10 @@ function handleRecetteAutocomplete() {
     const categorySelect = document.getElementById('add-recetteCategory');
     
     if (!input || !dropdown || !categorySelect) return;
+    
+    // Prevent multiple initializations
+    if (input.dataset.autocompleteInitialized) return;
+    input.dataset.autocompleteInitialized = 'true';
     
     // Make sure dropdown is positioned absolutely
     dropdown.style.position = 'absolute';
@@ -1518,15 +1540,14 @@ function renderLogoPreview() {
 }
 
 function init() {
-    console.log('App initialized');
+    console.log('[INIT] App initialized - starting...');
     updateMonthDisplay();
     setDefaultDate();
     setupMobileMonthSelector();
     renderEntries();
     renderCharts();
     updateStats();
-    handleDepenseAutocomplete();
-    handleRecetteAutocomplete();
+    // Autocomplete handlers are initialized in switchAddMode when showing depenses form
 }
 
 // Stub function for VL alerts
@@ -3114,7 +3135,7 @@ if (typeof LLM_CONFIG === 'undefined') {
   var LLM_CONFIG = {};
 }
 
-// CONFIGURATION LLM - Get API key from loaded config files, localStorage or Supabase
+// CONFIGURATION LLM - Get API key from loaded config files or localStorage
 // Try various possible sources
 var groqKey = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key') || '';
 if (typeof LLM_CONFIG !== 'undefined') {
@@ -4443,5 +4464,6 @@ window.deletePDF = deletePDF;
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => initAuth());
 } else {
-    initAuth().then(() => console.log('[AUTH] Init complete'));
+    initAuth();
+    console.log('[AUTH] Init complete');
 }
