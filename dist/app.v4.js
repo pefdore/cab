@@ -4159,10 +4159,10 @@ function editDepense(id) {
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    const recetteForm = document.getElementById('recettesForm');
+    const recetteForm = document.getElementById('add-recette-form');
     if (recetteForm) recetteForm.style.display = 'none';
     
-    const depenseForm = document.getElementById('depensesForm');
+    const depenseForm = document.getElementById('add-depense-form');
     if (depenseForm) depenseForm.style.display = 'block';
     
     document.getElementById('add-depenseDescription').value = depense.description || '';
@@ -4224,10 +4224,10 @@ function editRecette(id) {
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    const depenseForm = document.getElementById('depensesForm');
+    const depenseForm = document.getElementById('add-depense-form');
     if (depenseForm) depenseForm.style.display = 'none';
     
-    const recetteForm = document.getElementById('recettesForm');
+    const recetteForm = document.getElementById('add-recette-form');
     if (recetteForm) recetteForm.style.display = 'block';
     
     document.getElementById('add-recetteDescription').value = recette.description || '';
