@@ -1939,10 +1939,10 @@ window.saveOpenRouterKey = async function() {
     localStorage.setItem('groq_api_key', apiKey);
     localStorage.setItem('openrouter_api_key', apiKey);
     
-    // Also save to Supabase for persistence
+    // Also save to Supabase for persistence (use profiles table)
     if (currentUser && typeof supabase !== 'undefined') {
         try {
-            await supabase.from('users').update({ api_key: apiKey }).eq('id', currentUser.id);
+            await supabase.from('profiles').update({ api_key: apiKey }).eq('id', currentUser.id);
         } catch (e) {
             console.log('[API Key] Error saving to Supabase:', e);
         }
@@ -3085,7 +3085,7 @@ async function loadApiKeyFromSupabase() {
   
   if (currentUser && typeof supabase !== 'undefined') {
     try {
-      const { data, error } = await supabase.from('users').select('api_key').eq('id', currentUser.id).single();
+      const { data, error } = await supabase.from('profiles').select('api_key').eq('id', currentUser.id).single();
       if (data && data.api_key) {
         groqKey = data.api_key;
         localStorage.setItem('groq_api_key', data.api_key);
