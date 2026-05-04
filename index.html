@@ -1774,6 +1774,22 @@ window.attemptLogin = function() {
     <script src="app.v4.js?v=202605041530" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
+      // Fallback: Define showAddEmployeeModal directly in case secretariat.js fails to load
+      window.showAddEmployeeModal = function() {
+        console.log('[FALLBACK] showAddEmployeeModal called');
+        var modal = document.getElementById('add-employee-modal');
+        if (modal) {
+          modal.style.display = 'flex';
+        } else {
+          alert('Erreur: Le formulaire employee n\'est pas trouve');
+        }
+      };
+      
+      // Fallback for saveEmployee
+      window.saveEmployee = function() {
+        alert('Fonction saveEmployee pas encore chargee - verifiez que secretariat.js est bien deploye');
+      };
+      
       // Test if secretariat functions are loaded
       window.testSecretariat = function() {
         console.log('Testing secretariat...');
@@ -1782,21 +1798,24 @@ window.attemptLogin = function() {
         alert('showAddEmployeeModal: ' + typeof window.showAddEmployeeModal);
       };
       
-      // Check if script loaded
+      // Check if script loaded and override with real implementation
       window.addEventListener('load', function() {
         setTimeout(function() {
-          if (typeof window.showAddEmployeeModal !== 'function') {
-            console.error('[DEBUG] showAddEmployeeModal not available!');
-            // Try to load the script dynamically
-            var script = document.createElement('script');
-            script.src = 'secretariat.js?v=202605041815';
-            script.onload = function() {
-              console.log('[DEBUG] Script loaded dynamically');
-              window.showAddEmployeeModal = showAddEmployeeModal;
-            };
-            document.head.appendChild(script);
-          }
-        }, 2000);
+          // The fallback is already set, but we can try to load the real script
+          var script = document.createElement('script');
+          script.src = 'secretariat.js?v=202605041815';
+          script.onload = function() {
+            console.log('[DEBUG] Secretariat script loaded');
+            if (typeof window.showAddEmployeeModal === 'function' && window.showAddEmployeeModal.toString().indexOf('[FALLBACK]') > -1) {
+              // Our fallback is still there, check if the real one was defined
+              console.log('[DEBUG] Using loaded script implementation');
+            }
+          };
+          script.onerror = function() {
+            console.error('[DEBUG] Failed to load secretariat.js');
+          };
+          document.head.appendChild(script);
+        }, 1000);
       });
       
       // Initialize secretariat after DOM and scripts loaded
