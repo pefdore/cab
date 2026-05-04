@@ -117,6 +117,11 @@ try {
     // Initialize autocomplete handlers (must be after DOM is ready)
     init();
     
+    // Initialize secretariat module
+    if (typeof initSecretariatWhenReady === 'function') {
+        initSecretariatWhenReady();
+    }
+    
     console.log('[AUTH] App fully initialized');
 }
 
@@ -4475,3 +4480,40 @@ if (document.readyState === 'loading') {
     initAuth();
     console.log('[AUTH] Init complete');
 }
+
+// ============================================
+// SUB-TABS NAVIGATION
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle sub-tab clicks
+    document.querySelectorAll('.sub-tabs').forEach(tabContainer => {
+        tabContainer.querySelectorAll('.sub-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const parentSection = tab.closest('.cabinet-tab-content');
+                if (!parentSection) return;
+                
+                const targetSubtab = this.dataset.subtab;
+                
+                // Update active tab button
+                tabContainer.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update visible content - check multiple ID patterns
+                parentSection.querySelectorAll('.sub-tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Try different ID patterns
+                let targetContent = document.getElementById('secretariat-' + targetSubtab);
+                if (!targetContent) targetContent = document.getElementById(parentSection.id.replace('cabinet-', '') + '-' + targetSubtab);
+                if (!targetContent) targetContent = document.getElementById(parentSection.id + '-' + targetSubtab);
+                if (!targetContent) targetContent = parentSection.querySelector('.sub-tab-content:nth-child(' + (Array.from(tabContainer.querySelectorAll('.sub-tab')).indexOf(tab) + 2) + ')');
+                
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+            });
+        });
+    });
+});
