@@ -1966,10 +1966,6 @@ window.saveOpenRouterKey = async function() {
     } else {
         console.log('[API Key] Cannot save to Supabase - currentUser or supabase undefined');
     }
-        } catch (e) {
-            console.log('[API Key] Error saving to Supabase:', e);
-        }
-    }
     
     if (status) {
         status.textContent = 'Clé enregistrée!';
