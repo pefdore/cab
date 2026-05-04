@@ -1096,6 +1096,8 @@ function initSecretariat() {
 
 // Expose functions globally
 console.log('[SECRETARIAT] Loading, exposing functions...');
+console.log('[SECRETARIAT] showAddEmployeeModal defined:', typeof showAddEmployeeModal === 'function');
+
 window.showAddEmployeeModal = showAddEmployeeModal;
 window.saveEmployee = saveEmployee;
 window.editEmployee = editEmployee;
@@ -1111,3 +1113,22 @@ window.showAddAstreinteModal = showAddAstreinteModal;
 window.showImportStandardModal = showImportStandardModal;
 window.confirmStandardImport = confirmStandardImport;
 window.switchAnalysisView = switchAnalysisView;
+
+// Also set up button listeners on load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[SECRETARIAT] DOM loaded, setting up button handlers');
+    
+    // Add employee button
+    const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+    if (addEmployeeBtn) {
+        addEmployeeBtn.addEventListener('click', function() {
+            console.log('[SECRETARIAT] Add employee button clicked');
+            if (typeof showAddEmployeeModal === 'function') {
+                showAddEmployeeModal();
+            } else {
+                console.error('[SECRETARIAT] showAddEmployeeModal not defined!');
+                alert('Erreur: Le module secrétariaat n\'est pas chargé. Vérifiez la console.');
+            }
+        });
+    }
+});
