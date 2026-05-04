@@ -5224,6 +5224,12 @@ h2 {
 .depense-item .description {
     font-weight: 500;
     font-size: 0.875rem;
+    display: block;
+}
+
+.depense-item .category {
+    display: block;
+    margin-top: 2px;
 }
 
 .depense-item .category {

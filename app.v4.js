@@ -2681,7 +2681,7 @@ function renderAddDepensesRecettes() {
                 const dateStr = d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '-';
                 return `
                     <div class="depense-item">
-                        <div>
+                        <div class="depense-info">
                             <span class="date-small">${dateStr}</span>
                             <span class="description">${d.description || d.sous_categorie || '-'}</span>
                             <span class="category">${catLabel}</span>
@@ -2707,7 +2707,7 @@ function renderAddDepensesRecettes() {
                 const dateStr = r.date ? new Date(r.date).toLocaleDateString('fr-FR') : '-';
                 return `
                     <div class="depense-item income">
-                        <div>
+                        <div class="depense-info">
                             <span class="date-small">${dateStr}</span>
                             <span class="description">${r.description || '-'}</span>
                             <span class="category">${catLabel}</span>
