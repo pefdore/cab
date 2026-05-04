@@ -12,7 +12,10 @@ let authInitialized = false;
 
 // --- Initialisation du client Supabase ---
 function initAuth() {
+    console.log('[AUTH] initAuth called, authInitialized:', authInitialized);
     if (authInitialized) return;
+    
+    console.log('[AUTH] typeof supabase:', typeof supabase);
     
     if (typeof supabase === 'undefined') {
         console.log('[AUTH] Waiting for Supabase library...');
@@ -22,7 +25,7 @@ function initAuth() {
     
     const { createClient } = supabase;
     supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('[AUTH] Client Supabase initialisé');
+    console.log('[AUTH] Client Supabase initialisé, client:', supabaseClient);
     
     // Écouter les changements d'état d'authentification
     supabaseClient.auth.onAuthStateChange((event, session) => {
