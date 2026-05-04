@@ -3108,9 +3108,6 @@ if (typeof doLogin !== 'undefined') {
     return result;
   };
 }
-  }
-  await loadApiKeyFromSupabase();
-};
 
 console.log('[LLM] groqKey found:', groqKey ? 'YES' : 'NO');
 
