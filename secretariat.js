@@ -10,11 +10,53 @@ let leaves = [];
 let astreintes = [];
 let standardData = [];
 let importedFiles = [];
-let currentPlanningWeek = getWeekNumber(new Date());
+let currentPlanningWeek;
+
+// ============================================
+// UTILITIES
+// ============================================
+
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function getWeekStart(referenceDate, weekNumber) {
+    const simple = new Date(referenceDate.getFullYear(), 0, 1 + (weekNumber - 1) * 7);
+    const dow = simple.getDay();
+    const weekStart = simple;
+    if (dow <= 4) weekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    else weekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    return weekStart;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatMinutes(minutes) {
+    const mins = Math.floor(minutes);
+    const secs = Math.round((minutes - mins) * 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+window.closeModal = closeModal;
 
 // ============================================
 // EMPLOYEES MANAGEMENT
 // ============================================
+
+// Initialize week number after utilities are defined
+currentPlanningWeek = getWeekNumber(new Date());
 
 async function loadEmployees() {
     if (!supabaseClient || !currentUser) return;
@@ -362,14 +404,6 @@ function showAddLeaveModal() {
 // PLANNING MANAGEMENT
 // ============================================
 
-function getWeekNumber(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
-
 function changePlanningWeek(delta) {
     currentPlanningWeek += delta;
     updatePlanningWeekLabel();
@@ -387,15 +421,6 @@ function updatePlanningWeekLabel() {
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
     
     label.textContent = `Semaine du ${dayNames[weekStart.getDay()]} ${weekStart.getDate()} ${monthNames[weekStart.getMonth()]} ${weekStart.getFullYear()}`;
-}
-
-function getWeekStart(referenceDate, weekNumber) {
-    const simple = new Date(referenceDate.getFullYear(), 0, 1 + (weekNumber - 1) * 7);
-    const dow = simple.getDay();
-    const weekStart = simple;
-    if (dow <= 4) weekStart.setDate(simple.getDate() - simple.getDay() + 1);
-    else weekStart.setDate(simple.getDate() + 8 - simple.getDay());
-    return weekStart;
 }
 
 async function loadWeekPlanning() {
@@ -796,12 +821,6 @@ function updateStandardStats() {
     renderTendancesSummary();
 }
 
-function formatMinutes(minutes) {
-    const mins = Math.floor(minutes);
-    const secs = Math.round((minutes - mins) * 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
 function renderHourlyChart() {
     const container = document.getElementById('hourlyChart');
     if (!container) return;
@@ -1049,22 +1068,6 @@ function switchAnalysisView(view) {
         content.classList.add('active');
     }
 }
-
-// ============================================
-// UTILITIES
-// ============================================
-
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-}
-
-window.closeModal = closeModal;
 
 // ============================================
 // INITIALIZATION
