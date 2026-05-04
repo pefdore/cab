@@ -1847,7 +1847,7 @@ function handleSignatureUpload(e) {
 }
 
 // Settings page navigation
-function openSettingsPage(pageName) {
+async function openSettingsPage(pageName) {
     const menu = document.getElementById('settings-menu');
     const backBtn = document.getElementById('settingsBackBtn');
     const title = document.querySelector('#view-settings h2');
@@ -1893,7 +1893,7 @@ function openSettingsPage(pageName) {
         renderLogoPreview();
     } else if (pageName === 'preferences') {
         loadTheme();
-        loadOpenRouterKey();
+        await loadOpenRouterKey();
     }
 }
 
@@ -1964,9 +1964,25 @@ window.saveOpenRouterKey = async function() {
     }, 3000);
 };
 
-window.loadOpenRouterKey = function() {
+window.loadOpenRouterKey = async function() {
     try {
-        const savedKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('groq_api_key');
+        let savedKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('groq_api_key');
+        
+        // If not in localStorage, try loading from Supabase
+        if (!savedKey && currentUser && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient.from('profiles').select('api_key').eq('id', currentUser.id).single();
+                if (data && data.api_key) {
+                    savedKey = data.api_key;
+                    localStorage.setItem('groq_api_key', data.api_key);
+                    localStorage.setItem('openrouter_api_key', data.api_key);
+                    console.log('[LLM] Loaded API key from Supabase in loadOpenRouterKey');
+                }
+            } catch (e) {
+                console.log('[LLM] Error loading API key from Supabase in loadOpenRouterKey:', e);
+            }
+        }
+        
         if (savedKey) {
             const overlay = document.querySelector('.settings-page-overlay');
             const input = overlay ? overlay.querySelector('#openrouterApiKey') : document.getElementById('openrouterApiKey');
