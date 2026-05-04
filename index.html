@@ -1774,24 +1774,37 @@ window.attemptLogin = function() {
     <script src="app.v4.js?v=202605041035" defer></script>
     <script src="secretariat.js?v=202605041215" defer></script>
     <script>
+      // Test if secretariat functions are loaded
+      window.testSecretariat = function() {
+        console.log('Testing secretariat...');
+        console.log('showAddEmployeeModal:', typeof window.showAddEmployeeModal);
+        console.log('initSecretariat:', typeof window.initSecretariat);
+      };
+      
       // Initialize secretariat after DOM and scripts loaded
       document.addEventListener('DOMContentLoaded', function() {
         // Wait a bit for secretariat.js to load
         setTimeout(function() {
+          console.log('[SECRETARIAT] Checking functions...');
+          console.log('[SECRETARIAT] showAddEmployeeModal:', typeof window.showAddEmployeeModal);
+          
           if (typeof initSecretariat === 'function') {
             // Call initSecretariat when user is logged in
             window.initSecretariatWhenReady = function() {
               initSecretariat();
             };
           }
-        }, 500);
+        }, 1000);
       });
       
-      // Also try to init after auth success
+      // Also try loading on load event
       window.addEventListener('load', function() {
-        if (currentUser && typeof initSecretariat === 'function') {
-          initSecretariat();
-        }
+        setTimeout(function() {
+          console.log('[SECRETARIAT] Window load, showAddEmployeeModal:', typeof window.showAddEmployeeModal);
+          if (typeof showAddEmployeeModal !== 'undefined') {
+            console.log('[SECRETARIAT] Function is available!');
+          }
+        }, 500);
       });
     </script>
     <script>
