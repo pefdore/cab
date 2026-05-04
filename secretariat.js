@@ -5,6 +5,12 @@
 // Debug: confirm file is loading
 console.log('[SECRETARIAT] ===== FILE LOADED =====');
 
+// Make functions available immediately globally
+window.showAddEmployeeModal = null;
+window.saveEmployee = null;
+window.editEmployee = null;
+window.deleteEmployee = null;
+
 // Data stores
 let employees = [];
 let contracts = [];
@@ -150,10 +156,7 @@ function getContractLabel(type) {
 }
 
 function showAddEmployeeModal() {
-    document.getElementById('employeeModalTitle').textContent = 'Nouvel Employé';
-    document.getElementById('employeeForm').reset();
-    document.getElementById('employeeStartDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('employeeHoursWeek').value = 35;
+    console.log('[SECRETARIAT] showAddEmployeeModal called');
     document.getElementById('add-employee-modal').style.display = 'flex';
 }
 
@@ -1142,3 +1145,17 @@ function setupButtonHandlers() {
 // Run immediately and on DOMContentLoaded
 setupButtonHandlers();
 document.addEventListener('DOMContentLoaded', setupButtonHandlers);
+
+// Also use event delegation for dynamically shown buttons
+document.addEventListener('click', function(e) {
+    // Handle add employee button
+    const addEmployeeBtn = e.target.closest('#addEmployeeBtn');
+    if (addEmployeeBtn) {
+        console.log('[SECRETARIAT] Button clicked via delegation');
+        if (typeof window.showAddEmployeeModal === 'function') {
+            window.showAddEmployeeModal();
+        } else {
+            console.error('[SECRETARIAT] Function not available');
+        }
+    }
+});
