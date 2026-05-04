@@ -1787,7 +1787,54 @@ window.attemptLogin = function() {
       
       // Fallback for saveEmployee
       window.saveEmployee = function() {
-        alert('Fonction saveEmployee pas encore chargee - verifiez que secretariat.js est bien deploye');
+        console.log('[FALLBACK] saveEmployee called');
+        
+        var lastname = document.getElementById('employeeLastname').value;
+        var firstname = document.getElementById('employeeFirstname').value;
+        
+        if (!lastname || !firstname) {
+          alert('Veuillez remplir le nom et prénom');
+          return;
+        }
+        
+        var employee = {
+          user_id: window.currentUser.id,
+          lastname: lastname,
+          firstname: firstname,
+          email: document.getElementById('employeeEmail').value || null,
+          phone: document.getElementById('employeePhone').value || null,
+          function: document.getElementById('employeeFunction').value,
+          contract_type: document.getElementById('employeeContractType').value,
+          start_date: document.getElementById('employeeStartDate').value,
+          end_date: document.getElementById('employeeEndDate').value || null,
+          hours_per_week: parseInt(document.getElementById('employeeHoursWeek').value) || 35,
+          salary: parseFloat(document.getElementById('employeeSalary').value) || 0,
+          notes: document.getElementById('employeeNotes').value || null
+        };
+        
+        console.log('[FALLBACK] Saving employee:', employee);
+        
+        // Use Supabase directly
+        window.supabaseClient.from('employees')
+          .insert([employee])
+          .select()
+          .then(function(response) {
+            if (response.error) {
+              console.error('[FALLBACK] Error:', response.error);
+              alert('Erreur: ' + response.error.message);
+            } else {
+              console.log('[FALLBACK] Employee saved:', response.data);
+              document.getElementById('add-employee-modal').style.display = 'none';
+              alert('Employé enregistré!');
+              // Reload the page to refresh the list
+              window.location.reload();
+            }
+          });
+      };
+      
+      // Fallback for closeModal
+      window.closeModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
       };
       
       // Test if secretariat functions are loaded
