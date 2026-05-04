@@ -1075,6 +1075,8 @@ function switchAnalysisView(view) {
 
 function initSecretariat() {
     console.log('[SECRETARIAT] Initialisation...');
+    console.log('[SECRETARIAT] supabaseClient:', typeof supabaseClient);
+    console.log('[SECRETARIAT] currentUser:', currentUser);
     
     // Setup file import
     setupStandardFileImport();
@@ -1093,6 +1095,7 @@ function initSecretariat() {
 }
 
 // Expose functions globally
+console.log('[SECRETARIAT] Loading, exposing functions...');
 window.showAddEmployeeModal = showAddEmployeeModal;
 window.saveEmployee = saveEmployee;
 window.editEmployee = editEmployee;
