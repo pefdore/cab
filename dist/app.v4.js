@@ -4672,7 +4672,9 @@ async function handleRelevéUpload(event) {
     if (analysisZone) analysisZone.style.display = 'none';
     
     try {
+        console.log('[RELEVÉ] Starting extraction for file:', file.name, file.type);
         const text = await extractTextFromFile(file);
+        console.log('[RELEVÉ] Extracted text length:', text?.length || 0);
         
         if (!text || text.trim().length < 10) {
             alert('Impossible de lire le document. Veuillez essayer avec un autre fichier.');
@@ -4680,7 +4682,9 @@ async function handleRelevéUpload(event) {
             return;
         }
         
+        console.log('[RELEVÉ] Analyzing with AI...');
         const transactions = await analyzeRelevéWithAI(text);
+        console.log('[RELEVÉ] Found transactions:', transactions.length);
         
         pendingTransactions = transactions.map(t => ({...t, confirmed: false}));
         
@@ -4711,11 +4715,42 @@ async function extractTextFromFile(file) {
 }
 
 async function extractTextFromPDF(file) {
+    console.log('[RELEVÉ] extractTextFromPDF called');
+    console.log('[RELEVÉ] pdfjsLib available:', typeof pdfjsLib !== 'undefined');
+    
+    // Check if pdfjsLib is available
+    if (typeof pdfjsLib !== 'undefined') {
+        console.log('[RELEVÉ] Using pdfjsLib for PDF extraction');
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
+        
+        console.log('[RELEVÉ] PDF extracted via pdfjs, length:', fullText.length);
+        return fullText;
+    }
+    
+    // Fallback: use vision API for PDF
+    console.log('[RELEVÉ] pdfjsLib not available, using vision API fallback');
     const reader = new FileReader();
     return new Promise((resolve, reject) => {
         reader.onload = async function() {
             try {
                 const base64 = reader.result.split(',')[1];
+                const apiKey = groqKey || localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
+                console.log('[RELEVÉ] API key available:', !!apiKey);
+                
+                if (!apiKey) {
+                    reject(new Error('Clé API non configurée'));
+                    return;
+                }
+                
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
                     headers: {
