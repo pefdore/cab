@@ -5027,10 +5027,53 @@ function applyMagicSuggestion(index, description, category, amount) {
     updateTransaction(index, 'category', category);
     updateTransaction(index, 'amount', amount);
     
-    // Mark as applied - show green feedback
+    // Always mark as applied - show green feedback
     const item = document.querySelector(`.transaction-item[data-index="${index}"]`);
     if (item) {
         item.classList.add('suggestion-applied');
+    }
+    
+    // Check for duplicates
+    checkDuplicateTransaction(index);
+}
+
+function checkDuplicateTransaction(index) {
+    const t = pendingTransactions[index];
+    if (!t || !t.description || !t.amount || !t.date) return;
+    
+    const amount = Math.abs(parseFloat(t.amount) || 0);
+    const date = t.date;
+    const descLower = t.description.toLowerCase();
+    
+    const allItems = [
+        ...(cabinetDepenses || []),
+        ...(cabinetRecettes || [])
+    ];
+    
+    const duplicate = allItems.find(item => {
+        const itemAmount = Math.abs(parseFloat(item.amount) || 0);
+        const itemDate = item.date;
+        const itemDescLower = (item.description || '').toLowerCase();
+        
+        return itemAmount === amount && 
+               itemDate === date && 
+               (itemDescLower.includes(descLower) || descLower.includes(itemDescLower));
+    });
+    
+    const item = document.querySelector(`.transaction-item[data-index="${index}"]`);
+    const existingWarning = item?.querySelector('.duplicate-warning');
+    
+    if (duplicate) {
+        if (item && !existingWarning) {
+            const warning = document.createElement('div');
+            warning.className = 'duplicate-warning';
+            warning.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Attention: entrée similaire déjà existante</span>`;
+            item.insertBefore(warning, item.firstChild);
+        }
+    } else {
+        if (existingWarning) {
+            existingWarning.remove();
+        }
     }
 }
 

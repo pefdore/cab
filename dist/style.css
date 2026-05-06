@@ -6995,6 +6995,24 @@ h2 {
     100% { transform: scale(1); }
 }
 
+/* Duplicate Warning */
+.duplicate-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.duplicate-warning svg {
+    flex-shrink: 0;
+}
+
 /* Mobile responsive */
 @media (max-width: 480px) {
     .transaction-item {
