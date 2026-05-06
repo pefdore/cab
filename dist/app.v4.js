@@ -1502,6 +1502,7 @@ function deletePDF(id) {
     
     console.log('[DELETE] Showing modal');
     modal.style.display = 'flex';
+}
 
 function doDelete(id) {
     console.log('[DELETE] doDelete called with id:', id);
