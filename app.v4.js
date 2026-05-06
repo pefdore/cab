@@ -5032,6 +5032,12 @@ function applyMagicSuggestion(index, description, category, amount) {
     updateTransaction(index, 'description', description);
     updateTransaction(index, 'category', category);
     updateTransaction(index, 'amount', amount);
+    
+    // Mark as applied - show green feedback
+    const item = document.querySelector(`.transaction-item[data-index="${index}"]`);
+    if (item) {
+        item.classList.add('suggestion-applied');
+    }
 }
 
 function updateTransaction(index, field, value) {
@@ -5066,6 +5072,8 @@ async function confirmAllTransactions() {
         return;
     }
     
+    console.log('[RELEVÉ] pendingTransactions:', JSON.stringify(pendingTransactions));
+    
     const btn = document.getElementById('confirmAllBtn');
     if (btn) {
         btn.disabled = true;
@@ -5073,21 +5081,31 @@ async function confirmAllTransactions() {
     }
     
     try {
-        const depenses = pendingTransactions.filter(t => t.type === 'dépense').map(t => ({
+        // Check type - could be 'dépense', 'recette', or based on amount sign
+        const depenses = pendingTransactions.filter(t => {
+            const isDepense = t.type === 'dépense' || (t.type !== 'recette' && t.amount < 0);
+            return isDepense;
+        }).map(t => ({
             user_id: currentUser.id,
             description: t.description,
-            amount: Math.abs(t.amount),
-            category: t.category,
-            date: t.date
+            amount: Math.abs(parseFloat(t.amount) || 0),
+            category: t.category || 'services',
+            date: t.date || new Date().toISOString().split('T')[0]
         }));
         
-        const recettes = pendingTransactions.filter(t => t.type === 'recette').map(t => ({
+        const recettes = pendingTransactions.filter(t => {
+            const isRecette = t.type === 'recette' || (t.type !== 'dépense' && t.amount >= 0);
+            return isRecette;
+        }).map(t => ({
             user_id: currentUser.id,
             description: t.description,
-            amount: Math.abs(t.amount),
-            category: t.category,
-            date: t.date
+            amount: Math.abs(parseFloat(t.amount) || 0),
+            category: t.category || 'autres',
+            date: t.date || new Date().toISOString().split('T')[0]
         }));
+        
+        console.log('[RELEVÉ] Depenses to insert:', JSON.stringify(depenses));
+        console.log('[RELEVÉ] Recettes to insert:', JSON.stringify(recettes));
         
         if (depenses.length > 0) {
             const { error } = await supabaseClient

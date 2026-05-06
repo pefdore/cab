@@ -6978,6 +6978,23 @@ h2 {
     75% { transform: rotate(-15deg); }
 }
 
+/* Magic Suggestion Applied */
+.transaction-item.suggestion-applied {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+}
+
+.transaction-item.suggestion-applied .magic-suggestion {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    animation: success-pulse 0.5s ease-out;
+}
+
+@keyframes success-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
 /* Mobile responsive */
 @media (max-width: 480px) {
     .transaction-item {
