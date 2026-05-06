@@ -4845,7 +4845,12 @@ async function extractTextFromImage(file) {
                 
                 console.log('[RELEVÉ] API response status:', response.status);
                 const data = await response.json();
-                console.log('[RELEVÉ] API response:', data);
+                console.log('[RELEVÉ] API response:', JSON.stringify(data));
+                if (data.error) {
+                    console.error('[RELEVÉ] API Error:', data.error);
+                    reject(new Error(data.error.message || 'API Error'));
+                    return;
+                }
                 resolve(data.choices?.[0]?.message?.content || '');
             } catch (e) {
                 reject(e);
