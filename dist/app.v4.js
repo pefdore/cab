@@ -4715,66 +4715,37 @@ async function extractTextFromFile(file) {
 }
 
 async function extractTextFromPDF(file) {
-    console.log('[RELEVÉ] Extracting PDF via OCR.space');
+    console.log('[RELEVÉ] Extracting PDF via Tesseract.js');
     
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('language', 'fr');
-    formData.append('isOverlay', 'false');
-    formData.append('detectOrientation', 'true');
-    formData.append('scale', 'true');
+    const arrayBuffer = await file.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
     
-    const response = await fetch('https://api.ocr.space/parse/pdf', {
-        method: 'POST',
-        headers: {
-            'apikey': 'helloworld'
-        },
-        body: formData
-    });
-    
-    const data = await response.json();
-    console.log('[RELEVÉ] OCR.space response:', JSON.stringify(data));
-    
-    if (data.IsErroredOnProcessing) {
-        throw new Error(data.ErrorMessage[0] || 'OCR failed');
-    }
-    
-    if (data.ParsedResults && data.ParsedResults.length > 0) {
-        return data.ParsedResults.map(r => r.ParsedText).join('\n');
-    }
-    
-    return '';
+    return await performOCR(blob);
 }
 
 async function extractTextFromImage(file) {
-    console.log('[RELEVÉ] Extracting image via OCR.space');
+    console.log('[RELEVÉ] Extracting image via Tesseract.js');
+    return await performOCR(file);
+}
+
+async function performOCR(fileOrBlob) {
+    console.log('[RELEVÉ] Starting Tesseract OCR...');
     
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('language', 'fr');
-    formData.append('isOverlay', 'false');
-    formData.append('detectOrientation', 'true');
-    
-    const response = await fetch('https://api.ocr.space/parse/image', {
-        method: 'POST',
-        headers: {
-            'apikey': 'helloworld'
-        },
-        body: formData
-    });
-    
-    const data = await response.json();
-    console.log('[RELEVÉ] OCR.space response:', JSON.stringify(data));
-    
-    if (data.IsErroredOnProcessing) {
-        throw new Error(data.ErrorMessage[0] || 'OCR failed');
+    try {
+        const result = await Tesseract.recognize(
+            fileOrBlob,
+            'fra+eng',
+            {
+                logger: m => console.log('[TESSERACT]', m.status, m.progress)
+            }
+        );
+        
+        console.log('[RELEVÉ] OCR completed, text length:', result.data.text.length);
+        return result.data.text;
+    } catch (e) {
+        console.error('[RELEVÉ] Tesseract error:', e);
+        throw new Error('OCR échoué: ' + e.message);
     }
-    
-    if (data.ParsedResults && data.ParsedResults.length > 0) {
-        return data.ParsedResults.map(r => r.ParsedText).join('\n');
-    }
-    
-    return '';
 }
 
 // Helper function to get API key dynamically
