@@ -1507,7 +1507,7 @@ function deletePDF(id) {
     }
     
     // Use nice modal on PC
-    alert('DEBUG PC: isMobile=' + isMobile + ', showing modal');
+    let deleteId = id;
     
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
@@ -1516,13 +1516,28 @@ function deletePDF(id) {
     };
     
     console.log('[DELETE] Showing modal');
-    modal.style.display = 'flex';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.zIndex = '999999';
+    
+    // Reset all styles first
+    modal.style.cssText = '';
+    
+    modal.style.display = 'flex !important';
+    modal.style.position = 'fixed !important';
+    modal.style.top = '0 !important';
+    modal.style.left = '0 !important';
+    modal.style.right = '0 !important';
+    modal.style.bottom = '0 !important';
+    modal.style.width = '100vw !important';
+    modal.style.height = '100vh !important';
+    modal.style.zIndex = '9999999 !important';
+    modal.style.background = 'rgba(0,0,0,0.8) !important';
+    modal.style.alignItems = 'center !important';
+    modal.style.justifyContent = 'center !important';
+    
+    // Show the inner card too
+    const modalCard = modal.querySelector('.modal-card');
+    if (modalCard) {
+        modalCard.style.display = 'flex !important';
+    }
 }
 
 function doDelete(id) {
