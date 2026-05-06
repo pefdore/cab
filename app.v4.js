@@ -4827,7 +4827,7 @@ async function extractTextFromImage(file) {
                         messages: [
                             { 
                                 role: 'system', 
-                                content: 'Tu es un assistant qui extrait le texte des relevés bancaires. Reproduis exactement tout le texte visible sur le document, chaque ligne du relevé avec toutes les informations (dates, descriptions, montants).' 
+                                content: 'Tu es un assistant qui extrait le texte des relevés bancaires.' 
                             },
                             {
                                 role: 'user',
@@ -4843,7 +4843,9 @@ async function extractTextFromImage(file) {
                     })
                 });
                 
+                console.log('[RELEVÉ] API response status:', response.status);
                 const data = await response.json();
+                console.log('[RELEVÉ] API response:', data);
                 resolve(data.choices?.[0]?.message?.content || '');
             } catch (e) {
                 reject(e);
