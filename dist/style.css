@@ -6836,6 +6836,115 @@ h2 {
     to { transform: rotate(360deg); }
 }
 
+/* Scan Animation */
+.scan-animation {
+    position: relative;
+    width: 120px;
+    height: 150px;
+    margin: 0 auto;
+}
+
+.scan-document {
+    width: 100%;
+    height: 100%;
+    background: white;
+    border: 2px solid var(--color-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    animation: pulse-document 1s ease-in-out infinite;
+}
+
+@keyframes pulse-document {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.02); opacity: 0.9; }
+}
+
+.scan-line {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+    border-radius: 2px;
+    animation: scan-move 1.5s ease-in-out infinite;
+    box-shadow: 0 0 10px var(--color-primary);
+}
+
+@keyframes scan-move {
+    0% { top: 10px; }
+    50% { top: 130px; }
+    100% { top: 10px; }
+}
+
+.loading-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 16px;
+}
+
+.loading-zone p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+.scan-status {
+    color: var(--color-primary) !important;
+    font-weight: 600;
+    animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Modal for upload options */
+#relevéUploadModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+#relevéUploadModal .modal-content {
+    background: var(--color-bg-primary);
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 320px;
+    text-align: center;
+}
+
+#relevéUploadModal .modal-content h3 {
+    margin: 0 0 20px 0;
+    color: var(--color-text-primary);
+}
+
+#relevéUploadModal .modal-content button {
+    width: 100%;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#relevéUploadModal .modal-content button svg {
+    flex-shrink: 0;
+}
+
 /* Transaction Item Styles */
 .transaction-item {
     background: var(--color-bg-primary);

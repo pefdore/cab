@@ -4663,6 +4663,20 @@ document.addEventListener('DOMContentLoaded', function() {
 // Relevé Bank Analysis Functions
 let pendingTransactions = [];
 
+function showRelevéUploadOptions() {
+    const modal = document.getElementById('relevéUploadModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeRelevéModal() {
+    const modal = document.getElementById('relevéUploadModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 async function handleRelevéUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -5019,7 +5033,11 @@ function isDepenseCategoryLabel(cat) {
 function selectTransactionAutocomplete(index, description, category, amount) {
     updateTransaction(index, 'description', description);
     updateTransaction(index, 'category', category);
-    updateTransaction(index, 'amount', amount);
+    // Only update amount if not already set or if 0
+    const currentAmount = pendingTransactions[index]?.amount;
+    if (!currentAmount || currentAmount === 0) {
+        updateTransaction(index, 'amount', amount);
+    }
 }
 
 function applyMagicSuggestion(index, description, category, amount) {
