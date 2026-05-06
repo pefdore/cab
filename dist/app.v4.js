@@ -4826,42 +4826,58 @@ function renderTransactionsList() {
         { value: 'urssaf', label: 'URSSAF' },
         { value: 'logiciel', label: 'Logiciel' },
         { value: 'services', label: 'Services' },
-        { value: 'charges', label: 'Charges (EDF, eau, assurance)' },
+        { value: 'charges', label: 'Charges' },
         { value: 'consommables', label: 'Consommables' },
         { value: 'materiel', label: 'Matériel' },
-        { value: 'reception', label: 'Réception/Représentation' }
+        { value: 'reception', label: 'Réception' }
     ];
     
     const recetteCategories = [
-        { value: 'participation_associe', label: 'Participation d\'associé' },
+        { value: 'participation_associe', label: 'Participation associé' },
         { value: 'remboursements', label: 'Remboursements' },
         { value: 'autres', label: 'Autres recettes' }
     ];
     
     container.innerHTML = pendingTransactions.map((t, index) => {
-        const isDepense = t.amount < 0;
+        const isDepense = t.type === 'dépense' || t.amount < 0;
         const categories = isDepense ? depenseCategories : recetteCategories;
         const selectedCategory = t.category || (isDepense ? 'services' : 'autres');
         
         return `
             <div class="transaction-item" data-index="${index}">
                 <div class="transaction-row">
-                    <div class="transaction-info">
+                    <div class="transaction-field">
+                        <label>Date</label>
                         <input type="date" class="trans-date" value="${t.date || ''}" onchange="updateTransaction(${index}, 'date', this.value)">
-                        <input type="text" class="trans-description" value="${t.description || ''}" placeholder="Description" onchange="updateTransaction(${index}, 'description', this.value)">
                     </div>
-                    <div class="transaction-amount" style="color: ${isDepense ? '#ef4444' : '#10b981'}">
-                        ${isDepense ? '-' : '+'}${Math.abs(t.amount).toFixed(2)}€
+                    <div class="transaction-field transaction-field-amount">
+                        <label>Montant</label>
+                        <input type="number" class="trans-amount-input" value="${Math.abs(t.amount).toFixed(2)}" step="0.01" onchange="updateTransaction(${index}, 'amount', this.value)">
                     </div>
                 </div>
                 <div class="transaction-row">
-                    <select class="trans-category" onchange="updateTransaction(${index}, 'category', this.value)">
-                        ${categories.map(c => `<option value="${c.value}" ${c.value === selectedCategory ? 'selected' : ''}>${c.label}</option>`).join('')}
-                    </select>
-                    <select class="trans-type" onchange="updateTransaction(${index}, 'type', this.value)">
-                        <option value="dépense" ${t.type === 'dépense' ? 'selected' : ''}>Dépense</option>
-                        <option value="recette" ${t.type === 'recette' ? 'selected' : ''}>Recette</option>
-                    </select>
+                    <div class="transaction-field transaction-field-desc">
+                        <label>Description</label>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" class="trans-description" value="${t.description || ''}" placeholder="Description" oninput="handleTransactionAutocomplete(${index}, this.value)" onchange="updateTransaction(${index}, 'description', this.value)">
+                            <div id="trans-autocomplete-${index}" class="autocomplete-dropdown"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="transaction-row">
+                    <div class="transaction-field">
+                        <label>Catégorie</label>
+                        <select class="trans-category" onchange="updateTransaction(${index}, 'category', this.value)">
+                            ${categories.map(c => `<option value="${c.value}" ${c.value === selectedCategory ? 'selected' : ''}>${c.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="transaction-field">
+                        <label>Type</label>
+                        <select class="trans-type" onchange="updateTransaction(${index}, 'type', this.value)">
+                            <option value="dépense" ${isDepense ? 'selected' : ''}>Dépense</option>
+                            <option value="recette" ${!isDepense ? 'selected' : ''}>Recette</option>
+                        </select>
+                    </div>
                     <button class="btn-icon btn-icon-danger" onclick="removeTransaction(${index})" title="Supprimer">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
@@ -4875,11 +4891,70 @@ function renderTransactionsList() {
     }
 }
 
+function handleTransactionAutocomplete(index, value) {
+    const dropdown = document.getElementById(`trans-autocomplete-${index}`);
+    if (!dropdown || !value || value.length < 2) {
+        if (dropdown) dropdown.innerHTML = '';
+        return;
+    }
+    
+    const searchTerm = value.toLowerCase();
+    const allItems = [
+        ...(cabinetDepenses || []).map(d => ({...d, type: 'depense'})),
+        ...(cabinetRecettes || []).map(r => ({...r, type: 'recette'}))
+    ];
+    
+    const matches = allItems.filter(item => 
+        item.description && item.description.toLowerCase().includes(searchTerm)
+    ).slice(0, 5);
+    
+    if (matches.length === 0) {
+        dropdown.innerHTML = '';
+        return;
+    }
+    
+    dropdown.innerHTML = matches.map(m => {
+        const isDep = m.type === 'depense';
+        const catLabel = isDepenseCategoryLabel(m.category);
+        return `<div class="autocomplete-item" data-description="${m.description}" data-category="${m.category}" data-amount="${m.amount}" onclick="selectTransactionAutocomplete(${index}, '${m.description.replace(/'/g, "\\'")}', '${m.category}', ${m.amount})">
+            <span class="autocomplete-desc">${m.description}</span>
+            <span class="autocomplete-cat">${catLabel}</span>
+        </div>`;
+    }).join('');
+}
+
+function isDepenseCategoryLabel(cat) {
+    const labels = {
+        'masse_salariale': 'Masse salariale',
+        'urssaf': 'URSSAF',
+        'logiciel': 'Logiciel',
+        'services': 'Services',
+        'charges': 'Charges',
+        'consommables': 'Consommables',
+        'materiel': 'Matériel',
+        'reception': 'Réception',
+        'participation_associe': 'Participation associé',
+        'remboursements': 'Remboursements',
+        'autres': 'Autres'
+    };
+    return labels[cat] || cat;
+}
+
+function selectTransactionAutocomplete(index, description, category, amount) {
+    updateTransaction(index, 'description', description);
+    updateTransaction(index, 'category', category);
+    updateTransaction(index, 'amount', amount);
+}
+
 function updateTransaction(index, field, value) {
     if (pendingTransactions[index]) {
         if (field === 'type') {
             pendingTransactions[index].amount = value === 'recette' ? Math.abs(pendingTransactions[index].amount) : -Math.abs(pendingTransactions[index].amount);
             pendingTransactions[index][field] = value;
+        } else if (field === 'amount') {
+            const amount = parseFloat(value) || 0;
+            const isDepense = pendingTransactions[index].type === 'dépense' || pendingTransactions[index].amount < 0;
+            pendingTransactions[index].amount = isDepense ? -Math.abs(amount) : Math.abs(amount);
         } else {
             pendingTransactions[index][field] = value;
         }
