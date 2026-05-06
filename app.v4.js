@@ -1507,6 +1507,8 @@ function deletePDF(id) {
     }
     
     // Use nice modal on PC
+    alert('DEBUG PC: isMobile=' + isMobile + ', showing modal');
+    
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
         closeModal('delete-confirm-modal');
