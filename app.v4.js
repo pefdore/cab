@@ -1512,28 +1512,7 @@ function deletePDF(id) {
     };
     
     console.log('[DELETE] Showing modal');
-    
-    // Reset all styles first
-    modal.style.cssText = '';
-    
-    modal.style.display = 'flex !important';
-    modal.style.position = 'fixed !important';
-    modal.style.top = '0 !important';
-    modal.style.left = '0 !important';
-    modal.style.right = '0 !important';
-    modal.style.bottom = '0 !important';
-    modal.style.width = '100vw !important';
-    modal.style.height = '100vh !important';
-    modal.style.zIndex = '9999999 !important';
-    modal.style.background = 'rgba(0,0,0,0.8) !important';
-    modal.style.alignItems = 'center !important';
-    modal.style.justifyContent = 'center !important';
-    
-    // Show the inner card too
-    const modalCard = modal.querySelector('.modal-card');
-    if (modalCard) {
-        modalCard.style.display = 'flex !important';
-    }
+    modal.style.display = 'flex';
 }
 
 function doDelete(id) {
