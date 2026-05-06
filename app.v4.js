@@ -1461,25 +1461,35 @@ function deletePDF(id) {
     const modal = document.getElementById('delete-confirm-modal');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     
+    if (!modal || !confirmBtn) {
+        console.warn('[DELETE] Modal not found, falling back to confirm()');
+        if (!confirm('Voulez-vous vraiment supprimer cette feuille de compatibilité ?')) return;
+        doDelete(id);
+        return;
+    }
+    
     confirmBtn.onclick = function() {
         closeModal('delete-confirm-modal');
-        
-        supabaseClient
-            .from('comptabilite')
-            .delete()
-            .eq('id', id)
-            .then(({ error }) => {
-                if (error) {
-                    alert('Erreur lors de la suppression: ' + error.message);
-                    return;
-                }
-                
-                history = history.filter(h => String(h.id) !== String(id));
-                renderHistory();
-            });
+        doDelete(id);
     };
     
     modal.style.display = 'flex';
+}
+
+function doDelete(id) {
+    supabaseClient
+        .from('comptabilite')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+            if (error) {
+                alert('Erreur lors de la suppression: ' + error.message);
+                return;
+            }
+            
+            history = history.filter(h => String(h.id) !== String(id));
+            renderHistory();
+        });
 }
 
 function renderHistory() {
