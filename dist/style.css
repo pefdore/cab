@@ -6725,3 +6725,113 @@ h2 {
 .btn-danger:hover {
     background: #b91c1c;
 }
+
+/* Relevé Analysis Styles */
+.releve-analysis-zone {
+    margin: 16px 0;
+    padding: 16px;
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+}
+
+.releve-analysis-zone .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.releve-analysis-zone .section-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--color-text-primary);
+}
+
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.transaction-item {
+    background: var(--color-bg-primary);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.transaction-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.transaction-row:last-child {
+    margin-bottom: 0;
+}
+
+.transaction-info {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+}
+
+.trans-date {
+    width: 130px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+.trans-description {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+.transaction-amount {
+    font-weight: 700;
+    font-size: 16px;
+    min-width: 100px;
+    text-align: right;
+}
+
+.trans-category, .trans-type {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+.loading-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 16px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

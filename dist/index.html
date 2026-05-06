@@ -932,7 +932,32 @@ window.attemptLogin = function() {
                 <div id="cabinet-history" style="display:none;">
                     <div class="section-header">
                         <h2>Historique Cabinet</h2>
+                        <button id="uploadRelevéBtn" class="pdf-btn" onclick="document.getElementById('releveFileInput').click()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            Importer Relevé
+                        </button>
+                        <input type="file" id="releveFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleRelevéUpload(event)">
                     </div>
+                    
+                    <!-- Zone d'analyse du relevé -->
+                    <div id="releveAnalysisZone" style="display:none;" class="releve-analysis-zone">
+                        <div class="section-header">
+                            <h3>Transactions détectées</h3>
+                            <button id="confirmAllBtn" class="btn-primary" onclick="confirmAllTransactions()">Tout confirmer</button>
+                        </div>
+                        <div id="transactionsList" class="transactions-list"></div>
+                    </div>
+                    
+                    <!-- Loading spinner -->
+                    <div id="releveLoading" style="display:none;" class="loading-zone">
+                        <div class="spinner"></div>
+                        <p>Analyse du relevé en cours...</p>
+                    </div>
+                    
                     <div class="cabinet-history-list" id="cabinetHistoryList"></div>
                     <div id="noCabinetHistory" class="no-entries">Aucune entrée de cabinet</div>
                 </div>

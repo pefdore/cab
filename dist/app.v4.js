@@ -4657,3 +4657,336 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Relevé Bank Analysis Functions
+let pendingTransactions = [];
+
+async function handleRelevéUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const loadingZone = document.getElementById('releveLoading');
+    const analysisZone = document.getElementById('releveAnalysisZone');
+    
+    if (loadingZone) loadingZone.style.display = 'block';
+    if (analysisZone) analysisZone.style.display = 'none';
+    
+    try {
+        const text = await extractTextFromFile(file);
+        
+        if (!text || text.trim().length < 10) {
+            alert('Impossible de lire le document. Veuillez essayer avec un autre fichier.');
+            if (loadingZone) loadingZone.style.display = 'none';
+            return;
+        }
+        
+        const transactions = await analyzeRelevéWithAI(text);
+        
+        pendingTransactions = transactions.map(t => ({...t, confirmed: false}));
+        
+        renderTransactionsList();
+        
+        if (loadingZone) loadingZone.style.display = 'none';
+        if (analysisZone) analysisZone.style.display = 'block';
+        
+    } catch (error) {
+        console.error('[RELEVÉ] Error:', error);
+        alert('Erreur lors de l\'analyse: ' + error.message);
+        if (loadingZone) loadingZone.style.display = 'none';
+    }
+    
+    event.target.value = '';
+}
+
+async function extractTextFromFile(file) {
+    const fileType = file.type;
+    
+    if (fileType === 'application/pdf') {
+        return await extractTextFromPDF(file);
+    } else if (fileType.startsWith('image/')) {
+        return await extractTextFromImage(file);
+    }
+    
+    throw new Error('Format de fichier non supporté. Utilisez PDF, JPG ou PNG.');
+}
+
+async function extractTextFromPDF(file) {
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+        reader.onload = async function() {
+            try {
+                const base64 = reader.result.split(',')[1];
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${groqKey || localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.2-11b-vision-preview',
+                        messages: [
+                            { 
+                                role: 'system', 
+                                content: 'Tu es un assistant qui extrait le texte des relevés bancaires. Reproduis exactement tout le texte visible sur le document, chaque ligne du relevé avec toutes les informations (dates, descriptions, montants).' 
+                            },
+                            {
+                                role: 'user',
+                                content: [
+                                    {
+                                        type: 'image_url',
+                                        image_url: { url: `data:${file.type};base64,${base64}` }
+                                    }
+                                ]
+                            }
+                        ],
+                        max_tokens: 4096
+                    })
+                });
+                
+                const data = await response.json();
+                resolve(data.choices?.[0]?.message?.content || '');
+            } catch (e) {
+                reject(e);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function extractTextFromImage(file) {
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+        reader.onload = async function() {
+            try {
+                const base64 = reader.result.split(',')[1];
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${groqKey || localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.2-11b-vision-preview',
+                        messages: [
+                            { 
+                                role: 'system', 
+                                content: 'Tu es un assistant qui extrait le texte des relevés bancaires. Reproduis exactement tout le texte visible sur le document, chaque ligne du relevé avec toutes les informations (dates, descriptions, montants).' 
+                            },
+                            {
+                                role: 'user',
+                                content: [
+                                    {
+                                        type: 'image_url',
+                                        image_url: { url: `data:${file.type};base64,${base64}` }
+                                    }
+                                ]
+                            }
+                        ],
+                        max_tokens: 4096
+                    })
+                });
+                
+                const data = await response.json();
+                resolve(data.choices?.[0]?.message?.content || '');
+            } catch (e) {
+                reject(e);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function analyzeRelevéWithAI(text) {
+    const apiKey = groqKey || localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
+    if (!apiKey) {
+        throw new Error('Clé API non configurée');
+    }
+    
+    const prompt = `Analyse ce relevé bancaire et extrais chaque transaction. Pour chaque ligne, retourne un objet JSON avec:
+- date: la date de l'opération (format YYYY-MM-DD)
+- description: le libellé de l'opération
+- amount: le montant (nombre positif, négatif pour les débits)
+- type: "recette" si c'est un crédit/virement reçu, "dépense" si c'est un débit/prélèvement
+- category: la catégorie propuesta parmi: masse_salariale, urssaf, logiciel, services, charges, consommables, materiel, reception pour les dépenses; participation_associe, remboursements, autres pour les recettes
+
+Retourne UNIQUEMENT un tableau JSON valide sans texte supplémentaire.`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            messages: [
+                { role: 'system', content: prompt },
+                { role: 'user', content: text.substring(0, 8000) }
+            ],
+            max_tokens: 2048
+        })
+    });
+    
+    if (!response.ok) {
+        throw new Error('Erreur lors de l\'analyse IA');
+    }
+    
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    
+    try {
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+        return [];
+    } catch (e) {
+        console.error('[RELEVÉ] Parse error:', e);
+        return [];
+    }
+}
+
+function renderTransactionsList() {
+    const container = document.getElementById('transactionsList');
+    if (!container) return;
+    
+    const depenseCategories = [
+        { value: 'masse_salariale', label: 'Masse salariale' },
+        { value: 'urssaf', label: 'URSSAF' },
+        { value: 'logiciel', label: 'Logiciel' },
+        { value: 'services', label: 'Services' },
+        { value: 'charges', label: 'Charges (EDF, eau, assurance)' },
+        { value: 'consommables', label: 'Consommables' },
+        { value: 'materiel', label: 'Matériel' },
+        { value: 'reception', label: 'Réception/Représentation' }
+    ];
+    
+    const recetteCategories = [
+        { value: 'participation_associe', label: 'Participation d\'associé' },
+        { value: 'remboursements', label: 'Remboursements' },
+        { value: 'autres', label: 'Autres recettes' }
+    ];
+    
+    container.innerHTML = pendingTransactions.map((t, index) => {
+        const isDepense = t.amount < 0;
+        const categories = isDepense ? depenseCategories : recetteCategories;
+        const selectedCategory = t.category || (isDepense ? 'services' : 'autres');
+        
+        return `
+            <div class="transaction-item" data-index="${index}">
+                <div class="transaction-row">
+                    <div class="transaction-info">
+                        <input type="date" class="trans-date" value="${t.date || ''}" onchange="updateTransaction(${index}, 'date', this.value)">
+                        <input type="text" class="trans-description" value="${t.description || ''}" placeholder="Description" onchange="updateTransaction(${index}, 'description', this.value)">
+                    </div>
+                    <div class="transaction-amount" style="color: ${isDepense ? '#ef4444' : '#10b981'}">
+                        ${isDepense ? '-' : '+'}${Math.abs(t.amount).toFixed(2)}€
+                    </div>
+                </div>
+                <div class="transaction-row">
+                    <select class="trans-category" onchange="updateTransaction(${index}, 'category', this.value)">
+                        ${categories.map(c => `<option value="${c.value}" ${c.value === selectedCategory ? 'selected' : ''}>${c.label}</option>`).join('')}
+                    </select>
+                    <select class="trans-type" onchange="updateTransaction(${index}, 'type', this.value)">
+                        <option value="dépense" ${t.type === 'dépense' ? 'selected' : ''}>Dépense</option>
+                        <option value="recette" ${t.type === 'recette' ? 'selected' : ''}>Recette</option>
+                    </select>
+                    <button class="btn-icon btn-icon-danger" onclick="removeTransaction(${index})" title="Supprimer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    if (pendingTransactions.length === 0) {
+        container.innerHTML = '<div class="no-entries">Aucune transaction détectée</div>';
+    }
+}
+
+function updateTransaction(index, field, value) {
+    if (pendingTransactions[index]) {
+        if (field === 'type') {
+            pendingTransactions[index].amount = value === 'recette' ? Math.abs(pendingTransactions[index].amount) : -Math.abs(pendingTransactions[index].amount);
+            pendingTransactions[index][field] = value;
+        } else {
+            pendingTransactions[index][field] = value;
+        }
+        renderTransactionsList();
+    }
+}
+
+function removeTransaction(index) {
+    pendingTransactions.splice(index, 1);
+    renderTransactionsList();
+}
+
+async function confirmAllTransactions() {
+    if (!currentUser || !currentUser.id) {
+        alert('Vous devez être connecté');
+        return;
+    }
+    
+    if (pendingTransactions.length === 0) {
+        alert('Aucune transaction à enregistrer');
+        return;
+    }
+    
+    const btn = document.getElementById('confirmAllBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Enregistrement...';
+    }
+    
+    try {
+        const depenses = pendingTransactions.filter(t => t.type === 'dépense').map(t => ({
+            user_id: currentUser.id,
+            description: t.description,
+            amount: Math.abs(t.amount),
+            category: t.category,
+            date: t.date
+        }));
+        
+        const recettes = pendingTransactions.filter(t => t.type === 'recette').map(t => ({
+            user_id: currentUser.id,
+            description: t.description,
+            amount: Math.abs(t.amount),
+            category: t.category,
+            date: t.date
+        }));
+        
+        if (depenses.length > 0) {
+            const { error } = await supabaseClient
+                .from('cabinet_depenses')
+                .insert(depenses);
+            
+            if (error) throw error;
+        }
+        
+        if (recettes.length > 0) {
+            const { error } = await supabaseClient
+                .from('cabinet_recettes')
+                .insert(recettes);
+            
+            if (error) throw error;
+        }
+        
+        pendingTransactions = [];
+        document.getElementById('releveAnalysisZone').style.display = 'none';
+        
+        await loadCabinetData();
+        renderCabinetHistory();
+        renderComptaSummary();
+        
+        alert(`${depenses.length + recettes.length} transaction(s) enregistrée(s)`);
+        
+    } catch (error) {
+        console.error('[RELEVÉ] Save error:', error);
+        alert('Erreur lors de l\'enregistrement: ' + error.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Tout confirmer';
+        }
+    }
+}
