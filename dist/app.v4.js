@@ -1488,8 +1488,6 @@ function deletePDF(id) {
     }
     
 // Show the nice modal instead of confirm()
-    let deleteId = id; // Store ID for the confirm button
-    
     console.log('[DELETE] Modal found, checking device');
     
     // Check if mobile
@@ -1507,12 +1505,10 @@ function deletePDF(id) {
     }
     
     // Use nice modal on PC
-    let deleteId = id;
-    
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
         closeModal('delete-confirm-modal');
-        doDelete(deleteId);
+        doDelete(id);
     };
     
     console.log('[DELETE] Showing modal');
