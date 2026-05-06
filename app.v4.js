@@ -4738,7 +4738,7 @@ async function extractTextFromPDF(file) {
     // Fallback: use vision API for PDF
     console.log('[RELEVÉ] pdfjsLib not available, using vision API fallback');
     const apiKey = await getAPIKeyForUpload();
-    console.log('[RELEVÉ] API key loaded:', !!apiKey);
+    console.log('[RELEVÉ] API key loaded:', apiKey ? apiKey.substring(0, 10) + '...' : 'NULL');
     
     if (!apiKey) {
         throw new Error('Clé API non configurée. Veuillez configurer votre clé API dans les paramètres.');
@@ -4789,13 +4789,17 @@ async function extractTextFromPDF(file) {
 // Helper function to get API key dynamically
 async function getAPIKeyForUpload() {
     let key = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
-    if (key) return key;
+    if (key) {
+        console.log('[RELEVÉ] Key from localStorage:', key.substring(0, 10) + '...');
+        return key;
+    }
     
-    // Try to load from Supabase
     if (currentUser && supabaseClient) {
         try {
             const { data, error } = await supabaseClient.from('profiles').select('api_key').eq('id', currentUser.id).single();
+            console.log('[RELEVÉ] Data from Supabase:', data);
             if (data && data.api_key) {
+                console.log('[RELEVÉ] Key from Supabase:', data.api_key.substring(0, 10) + '...');
                 localStorage.setItem('groq_api_key', data.api_key);
                 return data.api_key;
             }
