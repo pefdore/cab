@@ -4736,25 +4736,24 @@ async function extractTextFromPDF(file) {
         return fullText;
     }
     
-    // Fallback: use vision API for PDF
+// Fallback: use vision API for PDF
     console.log('[RELEVÉ] pdfjsLib not available, using vision API fallback');
+    const apiKey = await getAPIKeyForUpload();
+    console.log('[RELEVÉ] API key loaded:', !!apiKey);
+    
+    if (!apiKey) {
+        throw new Error('Clé API non configurée. Veuillez configurer votre clé API dans les paramètres.');
+    }
+    
     const reader = new FileReader();
     return new Promise((resolve, reject) => {
         reader.onload = async function() {
             try {
                 const base64 = reader.result.split(',')[1];
-                const apiKey = groqKey || localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
-                console.log('[RELEVÉ] API key available:', !!apiKey);
-                
-                if (!apiKey) {
-                    reject(new Error('Clé API non configurée'));
-                    return;
-                }
-                
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${groqKey || localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key')}`,
+                        'Authorization': `Bearer ${apiKey}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -4788,7 +4787,31 @@ async function extractTextFromPDF(file) {
     });
 }
 
+// Helper function to get API key dynamically
+async function getAPIKeyForUpload() {
+    let key = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
+    if (key) return key;
+    
+    if (currentUser && supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient.from('profiles').select('api_key').eq('id', currentUser.id).single();
+            if (data && data.api_key) {
+                localStorage.setItem('groq_api_key', data.api_key);
+                return data.api_key;
+            }
+        } catch (e) {
+            console.error('[RELEVÉ] Error loading API key:', e);
+        }
+    }
+    return null;
+}
+
 async function extractTextFromImage(file) {
+    const apiKey = await getAPIKeyForUpload();
+    if (!apiKey) {
+        throw new Error('Clé API non configurée. Veuillez configurer votre clé API dans les paramètres.');
+    }
+    
     const reader = new FileReader();
     return new Promise((resolve, reject) => {
         reader.onload = async function() {
@@ -4797,7 +4820,7 @@ async function extractTextFromImage(file) {
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${groqKey || localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key')}`,
+                        'Authorization': `Bearer ${apiKey}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -4832,9 +4855,9 @@ async function extractTextFromImage(file) {
 }
 
 async function analyzeRelevéWithAI(text) {
-    const apiKey = groqKey || localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
+    const apiKey = await getAPIKeyForUpload();
     if (!apiKey) {
-        throw new Error('Clé API non configurée');
+        throw new Error('Clé API non configurée. Veuillez configurer votre clé API dans les paramètres.');
     }
     
     const prompt = `Analyse ce relevé bancaire et extrais chaque transaction. Pour chaque ligne, retourne un objet JSON avec:
