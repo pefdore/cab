@@ -1494,6 +1494,10 @@ function deletePDF(id) {
         return;
     }
     
+    console.log('[DELETE] User confirmed, calling doDelete directly');
+    doDelete(id);
+    return;
+    
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
         closeModal('delete-confirm-modal');
