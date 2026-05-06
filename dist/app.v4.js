@@ -4715,87 +4715,77 @@ async function extractTextFromFile(file) {
 }
 
 async function extractTextFromPDF(file) {
-    console.log('[RELEVÉ] extractTextFromPDF called');
-    console.log('[RELEVÉ] pdfjsLib available:', typeof pdfjsLib !== 'undefined');
+    console.log('[RELEVÉ] Extracting PDF via OCR.space');
     
-    // Check if pdfjsLib is available
-    if (typeof pdfjsLib !== 'undefined') {
-        console.log('[RELEVÉ] Using pdfjsLib for PDF extraction');
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
-        let fullText = '';
-        
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join(' ');
-            fullText += pageText + '\n';
-        }
-        
-        console.log('[RELEVÉ] PDF extracted via pdfjs, length:', fullText.length);
-        return fullText;
-    }
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('language', 'fr');
+    formData.append('isOverlay', 'false');
+    formData.append('detectOrientation', 'true');
+    formData.append('scale', 'true');
     
-// Fallback: use vision API for PDF
-    console.log('[RELEVÉ] pdfjsLib not available, using vision API fallback');
-    const apiKey = await getAPIKeyForUpload();
-    console.log('[RELEVÉ] API key loaded:', !!apiKey);
-    
-    if (!apiKey) {
-        throw new Error('Clé API non configurée. Veuillez configurer votre clé API dans les paramètres.');
-    }
-    
-    const reader = new FileReader();
-    return new Promise((resolve, reject) => {
-        reader.onload = async function() {
-            try {
-                const base64 = reader.result.split(',')[1];
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'llama-3.2-11b-vision-preview',
-                        messages: [
-                            { 
-                                role: 'system', 
-                                content: 'Tu es un assistant qui extrait le texte des relevés bancaires. Reproduis exactement tout le texte visible sur le document, chaque ligne du relevé avec toutes les informations (dates, descriptions, montants).' 
-                            },
-                            {
-                                role: 'user',
-                                content: [
-                                    {
-                                        type: 'image_url',
-                                        image_url: { url: `data:${file.type};base64,${base64}` }
-                                    }
-                                ]
-                            }
-                        ],
-                        max_tokens: 4096
-                    })
-                });
-                
-                const data = await response.json();
-                resolve(data.choices?.[0]?.message?.content || '');
-            } catch (e) {
-                reject(e);
-            }
-        };
-        reader.readAsDataURL(file);
+    const response = await fetch('https://api.ocr.space/parse/pdf', {
+        method: 'POST',
+        headers: {
+            'apikey': 'helloworld'
+        },
+        body: formData
     });
+    
+    const data = await response.json();
+    console.log('[RELEVÉ] OCR.space response:', JSON.stringify(data));
+    
+    if (data.IsErroredOnProcessing) {
+        throw new Error(data.ErrorMessage[0] || 'OCR failed');
+    }
+    
+    if (data.ParsedResults && data.ParsedResults.length > 0) {
+        return data.ParsedResults.map(r => r.ParsedText).join('\n');
+    }
+    
+    return '';
+}
+
+async function extractTextFromImage(file) {
+    console.log('[RELEVÉ] Extracting image via OCR.space');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('language', 'fr');
+    formData.append('isOverlay', 'false');
+    formData.append('detectOrientation', 'true');
+    
+    const response = await fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        headers: {
+            'apikey': 'helloworld'
+        },
+        body: formData
+    });
+    
+    const data = await response.json();
+    console.log('[RELEVÉ] OCR.space response:', JSON.stringify(data));
+    
+    if (data.IsErroredOnProcessing) {
+        throw new Error(data.ErrorMessage[0] || 'OCR failed');
+    }
+    
+    if (data.ParsedResults && data.ParsedResults.length > 0) {
+        return data.ParsedResults.map(r => r.ParsedText).join('\n');
+    }
+    
+    return '';
 }
 
 // Helper function to get API key dynamically
 async function getAPIKeyForUpload() {
-    let key = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
-    if (key) return key;
-    
+    // Always fetch fresh from Supabase to avoid stale localStorage
     if (currentUser && supabaseClient) {
         try {
             const { data, error } = await supabaseClient.from('profiles').select('api_key').eq('id', currentUser.id).single();
+            console.log('[RELEVÉ] Data from Supabase:', data);
             if (data && data.api_key) {
+                console.log('[RELEVÉ] Key from Supabase:', data.api_key.substring(0, 10) + '...');
                 localStorage.setItem('groq_api_key', data.api_key);
                 return data.api_key;
             }
@@ -4804,54 +4794,6 @@ async function getAPIKeyForUpload() {
         }
     }
     return null;
-}
-
-async function extractTextFromImage(file) {
-    const apiKey = await getAPIKeyForUpload();
-    if (!apiKey) {
-        throw new Error('Clé API non configurée. Veuillez configurer votre clé API dans les paramètres.');
-    }
-    
-    const reader = new FileReader();
-    return new Promise((resolve, reject) => {
-        reader.onload = async function() {
-            try {
-                const base64 = reader.result.split(',')[1];
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'llama-3.2-11b-vision-preview',
-                        messages: [
-                            { 
-                                role: 'system', 
-                                content: 'Tu es un assistant qui extrait le texte des relevés bancaires. Reproduis exactement tout le texte visible sur le document, chaque ligne du relevé avec toutes les informations (dates, descriptions, montants).' 
-                            },
-                            {
-                                role: 'user',
-                                content: [
-                                    {
-                                        type: 'image_url',
-                                        image_url: { url: `data:${file.type};base64,${base64}` }
-                                    }
-                                ]
-                            }
-                        ],
-                        max_tokens: 4096
-                    })
-                });
-                
-                const data = await response.json();
-                resolve(data.choices?.[0]?.message?.content || '');
-            } catch (e) {
-                reject(e);
-            }
-        };
-        reader.readAsDataURL(file);
-    });
 }
 
 async function analyzeRelevéWithAI(text) {
