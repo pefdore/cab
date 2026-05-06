@@ -1522,10 +1522,14 @@ function doDelete(id) {
             history = history.filter(h => String(h.id) !== String(id));
             renderHistory();
             
-            // Show success modal
+            // Show success modal - use alert as backup if modal doesn't show
             const successModal = document.getElementById('success-modal');
             if (successModal) {
                 successModal.style.display = 'flex';
+                successModal.style.position = 'fixed';
+                successModal.style.zIndex = '9999999';
+            } else {
+                alert('Feuille de comptabilité supprimée avec succès!');
             }
         })
         .catch(err => {
