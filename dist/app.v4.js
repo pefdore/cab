@@ -1492,6 +1492,16 @@ function deletePDF(id) {
     
     console.log('[DELETE] Modal found, showing nice modal');
     
+    // Use confirm() as fallback since modal doesn't show on mobile
+    if (!confirm('Voulez-vous vraiment supprimer cette feuille de compatibilité ? Cette action est irréversible.')) {
+        console.log('[DELETE] User cancelled');
+        return;
+    }
+    
+    console.log('[DELETE] User confirmed, calling doDelete');
+    doDelete(id);
+    return;
+    
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
         closeModal('delete-confirm-modal');
@@ -1500,14 +1510,12 @@ function deletePDF(id) {
     
     console.log('[DELETE] Showing modal');
     modal.style.display = 'flex';
-    
-    // Force reflow to ensure display change is applied
-    void modal.offsetWidth;
-    
-    modal.style.visibility = 'visible';
-    modal.style.opacity = '1';
     modal.style.position = 'fixed';
-    modal.style.zIndex = '99999';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.zIndex = '999999';
 }
 
 function doDelete(id) {
