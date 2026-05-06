@@ -552,6 +552,41 @@ function switchAddMode(mode) {
     }
 }
 
+function switchHistoryMode(mode) {
+    var btns = document.querySelectorAll('.dashboard-switcher .switch-btn');
+    for (var i = 0; i < btns.length; i++) {
+        if (btns[i].dataset.mode === mode) {
+            btns[i].classList.add('active');
+        } else {
+            btns[i].classList.remove('active');
+        }
+    }
+    
+    var cotationHistory = document.getElementById('cotation-history');
+    var cabinetHistory = document.getElementById('cabinet-history');
+    
+    if (mode === 'cotation') {
+        console.log('[HISTORY] Switching to COTATION');
+        if (cabinetHistory) {
+            cabinetHistory.style.display = 'none';
+        }
+        if (cotationHistory) {
+            cotationHistory.style.display = 'block';
+        }
+    } else {
+        console.log('[HISTORY] Switching to CABINET');
+        if (cotationHistory) {
+            cotationHistory.style.display = 'none';
+        }
+        if (cabinetHistory) {
+            cabinetHistory.style.display = 'block';
+            renderCabinetHistory();
+        }
+    }
+}
+
+window.switchHistoryMode = switchHistoryMode;
+
 function switchAddDepenseRecette(type) {
     var btns = document.querySelectorAll('.depense-recette-toggle .switch-btn');
     for (var i = 0; i < btns.length; i++) {
@@ -1572,6 +1607,42 @@ function renderHistory() {
             </div>
         </div>
     `).join('');
+}
+
+function renderCabinetHistory() {
+    const container = document.getElementById('cabinetHistoryList');
+    const noCabinetHistory = document.getElementById('noCabinetHistory');
+    
+    if (!container) return;
+    
+    if (cabinetDepenses.length === 0 && cabinetRecettes.length === 0) {
+        container.innerHTML = '';
+        if (noCabinetHistory) noCabinetHistory.style.display = 'block';
+        return;
+    }
+    
+    if (noCabinetHistory) noCabinetHistory.style.display = 'none';
+    
+    const allEntries = [
+        ...cabinetDepenses.map(d => ({...d, type: 'depense'})),
+        ...cabinetRecettes.map(r => ({...r, type: 'recette'}))
+    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    container.innerHTML = allEntries.slice(0, 50).map(entry => {
+        const isDepense = entry.type === 'depense';
+        return `
+            <div class="history-item-compact">
+                <div class="history-item-left">
+                    <span class="history-month-compact">${entry.date ? new Date(entry.date).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : '-'}</span>
+                    <span class="history-date-compact">${entry.date ? new Date(entry.date).toLocaleDateString('fr-FR') : '-'}</span>
+                </div>
+                <div class="history-item-right">
+                    <span class="history-amount-compact" style="color: ${isDepense ? '#ef4444' : '#10b981'}">${isDepense ? '-' : '+'}${entry.amount.toFixed(2)}€</span>
+                    <span class="history-count-compact">${isDepense ? (entry.category || 'Dépense') : (entry.category || 'Recette')}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function renderLogoPreview() {
