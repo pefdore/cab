@@ -1487,8 +1487,10 @@ function deletePDF(id) {
         return;
     }
     
-    // Show the nice modal instead of confirm()
+// Show the nice modal instead of confirm()
     let deleteId = id; // Store ID for the confirm button
+    
+    console.log('[DELETE] Modal found, showing nice modal');
     
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
@@ -1498,13 +1500,14 @@ function deletePDF(id) {
     
     console.log('[DELETE] Showing modal');
     modal.style.display = 'flex';
+    
+    // Force reflow to ensure display change is applied
+    void modal.offsetWidth;
+    
     modal.style.visibility = 'visible';
     modal.style.opacity = '1';
     modal.style.position = 'fixed';
     modal.style.zIndex = '99999';
-    
-    // Debug: check styles
-    alert('DEBUG: display=' + modal.style.display + ', visibility=' + modal.style.visibility + ', zIndex=' + modal.style.zIndex);
 }
 
 function doDelete(id) {
