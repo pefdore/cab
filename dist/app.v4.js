@@ -1490,9 +1490,6 @@ function deletePDF(id) {
     // Show the nice modal instead of confirm()
     let deleteId = id; // Store ID for the confirm button
     
-    // Debug: check if modal exists in DOM
-    alert('DEBUG: Modal exists=' + (modal !== null) + ', confirmBtn exists=' + (confirmBtn !== null));
-    
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
         closeModal('delete-confirm-modal');
@@ -1505,6 +1502,9 @@ function deletePDF(id) {
     modal.style.opacity = '1';
     modal.style.position = 'fixed';
     modal.style.zIndex = '99999';
+    
+    // Debug: check styles
+    alert('DEBUG: display=' + modal.style.display + ', visibility=' + modal.style.visibility + ', zIndex=' + modal.style.zIndex);
 }
 
 function doDelete(id) {
