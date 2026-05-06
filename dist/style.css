@@ -6948,6 +6948,36 @@ h2 {
     color: var(--color-text-secondary);
 }
 
+/* Magic Suggestion */
+.magic-suggestion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-size: 13px;
+    margin: -12px -12px 12px -12px;
+    transition: background 0.2s;
+}
+
+.magic-suggestion:hover {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+}
+
+.magic-suggestion svg {
+    flex-shrink: 0;
+    animation: sparkle 1.5s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(15deg); }
+    75% { transform: rotate(-15deg); }
+}
+
 /* Mobile responsive */
 @media (max-width: 480px) {
     .transaction-item {

@@ -580,7 +580,9 @@ function switchHistoryMode(mode) {
         }
         if (cabinetHistory) {
             cabinetHistory.style.display = 'block';
-            renderCabinetHistory();
+            loadCabinetData().then(() => {
+                renderCabinetHistory();
+            });
         }
     }
 }
@@ -4843,8 +4845,20 @@ function renderTransactionsList() {
         const categories = isDepense ? depenseCategories : recetteCategories;
         const selectedCategory = t.category || (isDepense ? 'services' : 'autres');
         
+        // Check for magic suggestion
+        const magicSuggestion = findSimilarDescription(t.description);
+        const suggestionHtml = magicSuggestion ? `
+            <div class="magic-suggestion" onclick="applyMagicSuggestion(${index}, '${magicSuggestion.description.replace(/'/g, "\\'")}', '${magicSuggestion.category}', ${magicSuggestion.amount})">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+                <span>Suggestion: <strong>${magicSuggestion.description}</strong></span>
+            </div>
+        ` : '';
+        
         return `
             <div class="transaction-item" data-index="${index}">
+                ${suggestionHtml}
                 <div class="transaction-row">
                     <div class="transaction-field">
                         <label>Date</label>
@@ -4914,13 +4928,81 @@ function handleTransactionAutocomplete(index, value) {
     }
     
     dropdown.innerHTML = matches.map(m => {
-        const isDep = m.type === 'depense';
         const catLabel = isDepenseCategoryLabel(m.category);
         return `<div class="autocomplete-item" data-description="${m.description}" data-category="${m.category}" data-amount="${m.amount}" onclick="selectTransactionAutocomplete(${index}, '${m.description.replace(/'/g, "\\'")}', '${m.category}', ${m.amount})">
             <span class="autocomplete-desc">${m.description}</span>
             <span class="autocomplete-cat">${catLabel}</span>
         </div>`;
     }).join('');
+}
+
+// Find similar descriptions (magic suggestion)
+function findSimilarDescription(ocrDescription) {
+    if (!ocrDescription || !cabinetDepenses?.length && !cabinetRecettes?.length) return null;
+    
+    const allItems = [
+        ...(cabinetDepenses || []).map(d => ({...d, type: 'depense'})),
+        ...(cabinetRecettes || []).map(r => ({...r, type: 'recette'}))
+    ];
+    
+    const ocrLower = ocrDescription.toLowerCase();
+    
+    // First try exact substring match (case insensitive)
+    let match = allItems.find(item => 
+        item.description && ocrLower.includes(item.description.toLowerCase())
+    );
+    if (match) return match;
+    
+    // Then try reverse - description in OCR
+    match = allItems.find(item => 
+        item.description && item.description.toLowerCase().includes(ocrLower)
+    );
+    if (match) return match;
+    
+    // Then try fuzzy match - word by word
+    const ocrWords = ocrLower.split(/\s+/).filter(w => w.length > 3);
+    for (const word of ocrWords) {
+        match = allItems.find(item => 
+            item.description && item.description.toLowerCase().includes(word)
+        );
+        if (match) return match;
+    }
+    
+    // Try Levenshtein distance for similar words
+    for (const item of allItems) {
+        if (!item.description) continue;
+        const itemWords = item.description.toLowerCase().split(/\s+/);
+        for (const itemWord of itemWords) {
+            if (itemWord.length < 4) continue;
+            for (const ocrWord of ocrWords) {
+                if (levenshteinDistance(itemWord, ocrWord) <= 2) {
+                    return item;
+                }
+            }
+        }
+    }
+    
+    return null;
+}
+
+function levenshteinDistance(a, b) {
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
 }
 
 function isDepenseCategoryLabel(cat) {
@@ -4941,6 +5023,12 @@ function isDepenseCategoryLabel(cat) {
 }
 
 function selectTransactionAutocomplete(index, description, category, amount) {
+    updateTransaction(index, 'description', description);
+    updateTransaction(index, 'category', category);
+    updateTransaction(index, 'amount', amount);
+}
+
+function applyMagicSuggestion(index, description, category, amount) {
     updateTransaction(index, 'description', description);
     updateTransaction(index, 'category', category);
     updateTransaction(index, 'amount', amount);
