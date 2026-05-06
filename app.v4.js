@@ -1457,21 +1457,29 @@ function deletePDF(id) {
         alert('Document non trouvé');
         return;
     }
-    if (!confirm('Voulez-vous vraiment supprimer cette feuille de cotation?')) return;
     
-    supabaseClient
-        .from('comptabilite')
-        .delete()
-        .eq('id', id)
-        .then(({ error }) => {
-            if (error) {
-                alert('Erreur lors de la suppression: ' + error.message);
-                return;
-            }
-            
-            history = history.filter(h => h.id !== id);
-            renderHistory();
-        });
+    const modal = document.getElementById('delete-confirm-modal');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    
+    confirmBtn.onclick = function() {
+        closeModal('delete-confirm-modal');
+        
+        supabaseClient
+            .from('comptabilite')
+            .delete()
+            .eq('id', id)
+            .then(({ error }) => {
+                if (error) {
+                    alert('Erreur lors de la suppression: ' + error.message);
+                    return;
+                }
+                
+                history = history.filter(h => String(h.id) !== String(id));
+                renderHistory();
+            });
+    };
+    
+    modal.style.display = 'flex';
 }
 
 function renderHistory() {

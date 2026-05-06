@@ -6701,3 +6701,27 @@ h2 {
 .btn-secondary:hover {
     background: var(--color-bg-subtle);
 }
+
+.modal-header-warning {
+    background: #fef2f2;
+    border-bottom: 1px solid #fecaca;
+}
+
+.modal-header-warning h3 {
+    color: #dc2626;
+}
+
+.btn-danger {
+    padding: 10px 20px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
