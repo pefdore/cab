@@ -1487,21 +1487,13 @@ function deletePDF(id) {
         return;
     }
     
-    // Show confirm() first as backup (in case modal is not visible)
-    const userConfirmed = confirm('Voulez-vous vraiment supprimer cette feuille de compatibilité ?');
-    if (!userConfirmed) {
-        console.log('[DELETE] User cancelled via confirm');
-        return;
-    }
-    
-    console.log('[DELETE] User confirmed, calling doDelete directly');
-    doDelete(id);
-    return;
+    // Show the nice modal instead of confirm()
+    let deleteId = id; // Store ID for the confirm button
     
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
         closeModal('delete-confirm-modal');
-        doDelete(id);
+        doDelete(deleteId);
     };
     
     console.log('[DELETE] Showing modal');
