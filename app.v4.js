@@ -1521,7 +1521,12 @@ function doDelete(id) {
             console.log('[DELETE] Success, removing from history');
             history = history.filter(h => String(h.id) !== String(id));
             renderHistory();
-            alert('Feuille de comptabilité supprimée avec succès!');
+            
+            // Show success modal
+            const successModal = document.getElementById('success-modal');
+            if (successModal) {
+                successModal.style.display = 'flex';
+            }
         })
         .catch(err => {
             console.error('[DELETE] Catch error:', err);

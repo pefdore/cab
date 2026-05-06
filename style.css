@@ -2214,6 +2214,52 @@ h2 {
     .mobile-bottom-nav {
         display: none;
     }
+    
+    /* Documents page - Desktop */
+    #view-history {
+        padding: 32px 40px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    #view-history .section-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+    }
+    
+    #view-history .section-header h2 {
+        font-size: 1.75rem;
+    }
+    
+    #view-history .pdf-btn {
+        width: auto;
+        padding: 12px 24px;
+    }
+    
+    #view-history .history-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    #view-history .history-item-compact {
+        flex-direction: column;
+        padding: 24px;
+        text-align: center;
+    }
+    
+    #view-history .history-item-left,
+    #view-history .history-item-right {
+        align-items: center;
+    }
+    
+    #view-history .history-actions-compact {
+        width: 100%;
+        justify-content: center;
+        margin-top: 12px;
+    }
 }
 
 .mobile-nav-item {
