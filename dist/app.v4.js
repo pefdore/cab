@@ -1456,8 +1456,17 @@ function downloadPDF(id) {
 }
 
 function deletePDF(id) {
-    console.log('[DELETE] Looking for id:', id);
-    const record = history.find(h => String(h.id) === String(id));
+    console.log('[DELETE] deletePDF called with id:', id, 'history length:', history ? history.length : 0);
+    
+    if (!id) {
+        console.error('[DELETE] No id provided');
+        alert('Erreur: ID manquant');
+        return;
+    }
+    
+    const record = history ? history.find(h => String(h.id) === String(id)) : null;
+    console.log('[DELETE] Found record:', record);
+    
     if (!record) {
         alert('Document non trouvé');
         return;
@@ -1465,35 +1474,57 @@ function deletePDF(id) {
     
     const modal = document.getElementById('delete-confirm-modal');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
+    console.log('[DELETE] Modal:', modal, 'ConfirmBtn:', confirmBtn);
     
     if (!modal || !confirmBtn) {
         console.warn('[DELETE] Modal not found, falling back to confirm()');
-        if (!confirm('Voulez-vous vraiment supprimer cette feuille de compatibilité ?')) return;
+        if (!confirm('Voulez-vous vraiment supprimer cette feuille de compatibilité ?')) {
+            console.log('[DELETE] User cancelled');
+            return;
+        }
+        console.log('[DELETE] User confirmed, calling doDelete');
         doDelete(id);
         return;
     }
     
     confirmBtn.onclick = function() {
+        console.log('[DELETE] Confirm button clicked');
         closeModal('delete-confirm-modal');
         doDelete(id);
     };
     
+    console.log('[DELETE] Showing modal');
     modal.style.display = 'flex';
 }
 
 function doDelete(id) {
+    console.log('[DELETE] doDelete called with id:', id);
+    console.log('[DELETE] supabaseClient:', supabaseClient);
+    
+    if (!supabaseClient) {
+        alert('Erreur: Client Supabase non initialisé. Veuillez vous reconnecter.');
+        return;
+    }
+    
     supabaseClient
         .from('comptabilite')
         .delete()
         .eq('id', id)
         .then(({ error }) => {
             if (error) {
+                console.error('[DELETE] Error:', error);
                 alert('Erreur lors de la suppression: ' + error.message);
                 return;
             }
             
+            console.log('[DELETE] Success, removing from history');
             history = history.filter(h => String(h.id) !== String(id));
             renderHistory();
+            alert('Feuille de comptabilité supprimée avec succès!');
+        })
+        .catch(err => {
+            console.error('[DELETE] Catch error:', err);
+            alert('Erreur lors de la suppression: ' + err.message);
         });
 }
 
