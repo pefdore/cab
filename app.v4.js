@@ -4788,12 +4788,7 @@ async function extractTextFromPDF(file) {
 
 // Helper function to get API key dynamically
 async function getAPIKeyForUpload() {
-    let key = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
-    if (key) {
-        console.log('[RELEVÉ] Key from localStorage:', key.substring(0, 10) + '...');
-        return key;
-    }
-    
+    // Always fetch fresh from Supabase to avoid stale localStorage
     if (currentUser && supabaseClient) {
         try {
             const { data, error } = await supabaseClient.from('profiles').select('api_key').eq('id', currentUser.id).single();
