@@ -1490,18 +1490,23 @@ function deletePDF(id) {
 // Show the nice modal instead of confirm()
     let deleteId = id; // Store ID for the confirm button
     
-    console.log('[DELETE] Modal found, showing nice modal');
+    console.log('[DELETE] Modal found, checking device');
     
-    // Use confirm() as fallback since modal doesn't show on mobile
-    if (!confirm('Voulez-vous vraiment supprimer cette feuille de compatibilité ? Cette action est irréversible.')) {
-        console.log('[DELETE] User cancelled');
+    // Check if mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+        // Use confirm() on mobile since modal doesn't show
+        if (!confirm('Voulez-vous vraiment supprimer cette feuille de compatibilité ? Cette action est irréversible.')) {
+            console.log('[DELETE] User cancelled');
+            return;
+        }
+        console.log('[DELETE] User confirmed, calling doDelete');
+        doDelete(id);
         return;
     }
     
-    console.log('[DELETE] User confirmed, calling doDelete');
-    doDelete(id);
-    return;
-    
+    // Use nice modal on PC
     confirmBtn.onclick = function() {
         console.log('[DELETE] Confirm button clicked');
         closeModal('delete-confirm-modal');
