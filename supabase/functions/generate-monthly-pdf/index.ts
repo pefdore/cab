@@ -45,174 +45,160 @@ const TEMPLATE_HTML = `<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Honoraires - {{month}} {{year}}</title>
+    <title>Template Honoraires</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        @page { size: A4; margin: 0; }
-        body { font-family: 'Arial', sans-serif; font-size: 10pt; line-height: 1.4; color: #000; background: #fff; }
-        .page { width: 210mm; min-height: 297mm; padding: 15mm 20mm; position: relative; page-break-after: always; }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #000; }
-        .logo-section { display: flex; align-items: center; gap: 15px; }
-        .logo { width: 60px; height: 60px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14pt; background: #f0f0f0; }
-        .logo-text { font-size: 11pt; font-weight: bold; }
-        .header-info { text-align: right; font-size: 9pt; }
-        .title { text-align: center; font-size: 16pt; font-weight: bold; margin: 10px 0 5px 0; color: #000; text-transform: uppercase; letter-spacing: 1px; }
-        .subtitle { text-align: center; font-size: 11pt; margin-bottom: 20px; color: #333; font-weight: bold; }
+        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; color: #000; padding: 20mm; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 14pt; font-weight: bold; }
+        .header p { font-size: 9pt; }
+        .title { text-align: center; font-size: 16pt; font-weight: bold; margin: 15px 0; }
+        .subtitle { text-align: center; font-size: 12pt; margin-bottom: 20px; }
         .section { margin-bottom: 15px; }
-        .section-title { font-weight: bold; font-size: 10pt; margin-bottom: 8px; color: #000; text-transform: uppercase; border-bottom: 1px solid #999; padding-bottom: 3px; }
-        .references { font-size: 8pt; margin-bottom: 15px; padding: 8px 10px; background: #f5f5f5; border: 1px solid #ccc; }
-        .references p { margin-bottom: 3px; line-height: 1.3; }
-        .designation { font-size: 10pt; margin-bottom: 15px; padding: 10px; background: #fafafa; border: 1px solid #ddd; }
-        .designation p { margin-bottom: 4px; line-height: 1.4; }
-        .designation strong { color: #000; }
+        .section-title { font-weight: bold; font-size: 10pt; margin-bottom: 8px; }
+        .references { font-size: 8pt; margin-bottom: 15px; }
+        .references p { margin-bottom: 3px; }
+        .designation { font-size: 9pt; margin-bottom: 15px; }
+        .designation p { margin-bottom: 3px; }
         table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10pt; }
-        th { background: #444; color: white; padding: 6px 8px; text-align: center; font-weight: bold; border: 1px solid #333; }
-        td { padding: 6px 8px; border: 1px solid #ddd; text-align: center; }
-        td.left { text-align: left; }
-        td.right { text-align: right; font-family: 'Courier New', monospace; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .total-row { font-weight: bold; background: #e0e0e0 !important; border-top: 2px solid #000; }
-        .total-row td { font-size: 11pt; }
-        .grand-total { font-size: 13pt; font-weight: bold; margin: 15px 0; text-align: right; padding: 10px 15px; background: #e8e8e8; border: 2px solid #000; }
-        .service-title { font-weight: bold; font-size: 11pt; margin: 15px 0 8px 0; color: #000; padding: 6px 10px; background: #ddd; border-left: 4px solid #000; }
-        .signature { margin-top: 30px; font-size: 10pt; padding-top: 15px; border-top: 1px solid #666; }
-        .signature p { margin-bottom: 8px; line-height: 1.5; }
-        .signature-date { font-style: italic; color: #555; }
-        .footer { position: absolute; bottom: 15mm; left: 20mm; right: 20mm; text-align: center; font-size: 8pt; color: #888; border-top: 1px solid #ccc; padding-top: 8px; }
+        th { background: #eee; padding: 5px; text-align: left; font-weight: bold; }
+        td { padding: 5px; border-bottom: 1px solid #ddd; }
+        .total-row { font-weight: bold; background: #f5f5f5; }
+        .signature { margin-top: 30px; font-size: 10pt; }
+        .signature p { margin-bottom: 8px; }
+        .page-break { page-break-after: always; }
+        .service-title { font-weight: bold; font-size: 11pt; margin: 15px 0 5px 0; color: #333; }
+        .grand-total { font-size: 12pt; font-weight: bold; margin: 20px 0; text-align: right; }
         .patient-table { font-size: 9pt; }
-        .patient-table th { font-size: 9pt; background: #555; color: white; }
-        .patient-table td { font-size: 9pt; padding: 5px 6px; }
-        .alert { background: #fffacd; border: 1px solid #ffd700; padding: 8px 12px; margin: 12px 0; font-size: 9pt; border-radius: 3px; }
-        .alert strong { color: #b8860b; }
-        .amount { font-weight: bold; color: #000; }
-        .text-right { text-align: right; }
+        .patient-table th { font-size: 9pt; }
+        .patient-table td { font-size: 9pt; padding: 4px; }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="header">
-            <div class="logo-section">
-                <div class="logo">CH</div>
-                <div class="logo-text">CENTRE HOSPITALIER<br>SAINT JEAN</div>
-            </div>
-            <div class="header-info">
-                <p>63, Faubourg de Rennes<br>35130 LA GUERCHE DE BRETAGNE</p>
-                <p>Tel: 02 XX XX XX XX | Fax: 02 XX XX XX XX</p>
-            </div>
-        </div>
-        <div class="title">État des Honoraires Médicaux</div>
-        <div class="subtitle">En Services de Médecine - SSR</div>
-        <div class="section references">
-            <p><strong>RÉFÉRENCES LÉGALES :</strong></p>
-            <p>• Application de la loi 2021-502 du 26 avril 2021 (article 19)</p>
-            <p>• Articles L 6146-2 et L 6146-41 du Code de la santé publique</p>
-            <p>• Honoraires fixés à 100% de la valeur de l'acte conventionné</p>
-            <p>• Redevance de 10% pour participation aux frais de structure</p>
-        </div>
-        <div class="section designation">
-            <p><strong>DÉSIGNATION :</strong> {{doctorName}}</p>
-            <p>Médecin généraliste, autorisé à exercer dans l'établissement.</p>
-        </div>
-        <div class="section">
-            <p class="section-title">État des sommes dues pour le mois de : <strong>{{month}}</strong></p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Désignation</th>
-                        <th class="right">Nombre</th>
-                        <th class="right">Prix</th>
-                        <th class="right">Montant</th>
-                    </tr>
-                </thead>
-                <tbody>{{tableMedecin}}</tbody>
-            </table>
-            <table style="width: 50%; margin-left: auto;">
-                <tr class="total-row"><td>Montant total</td><td class="right amount">{{totalMedico}} €</td></tr>
-                <tr><td>Retenue 10%</td><td class="right">{{retention10}} €</td></tr>
-                <tr class="total-row"><td><strong>Montant à verser</strong></td><td class="right amount">{{netAPayer}} €</td></tr>
-            </table>
-        </div>
-        <div class="signature">
-            <p>Arrete le présent mémoire à la somme de : <strong>{{montantEnLettres}}</strong> euros</p>
-            <p class="signature-date">La Guerche de Bretagne, le {{date}}</p>
-            <br><br><p><strong>{{doctorNameShort}}</strong></p>
-        </div>
-        <div class="footer">Page 1/3 | {{generationDate}}</div>
+    <div class="header">
+        <h1>CENTRE HOSPITALIER SAINT JEAN</h1>
+        <p>63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE</p>
     </div>
-    <div class="page-break"></div>
-    <div class="page">
-        <div class="header">
-            <div class="logo-section">
-                <div class="logo">CH</div>
-                <div class="logo-text">CENTRE HOSPITALIER<br>SAINT JEAN</div>
-            </div>
-            <div class="header-info">
-                <p>63, Faubourg de Rennes<br>35130 LA GUERCHE DE BRETAGNE</p>
-                <p>Tel: 02 XX XX XX XX | Fax: 02 XX XX XX XX</p>
-            </div>
-        </div>
-        <div class="title">État des Honoraires Médicaux</div>
-        <div class="subtitle">En EHPAD - Contrat pluriannuel</div>
-        <div class="section references">
-            <p><strong>RÉFÉRENCES LÉGALES :</strong></p>
-            <p>• Contrat pluriannuel d'Objectif et de Moyens - 29 juin 2020</p>
-            <p>• Articles L 313-11, L 313-12, L313-12-2 du Code de l'Action Sociale</p>
-        </div>
-        <div class="section designation">
-            <p><strong>DÉSIGNATION :</strong> {{doctorName}}</p>
-            <p>Médecin généraliste, autorisé à exercer dans l'établissement.</p>
-        </div>
-        <div class="section">
-            <p class="section-title">État des sommes dues pour le mois de : <strong>{{month}}</strong></p>
-            {{tableEHPAD}}
-            <div class="grand-total">MONTANT TOTAL : {{totalEhpad}} €</div>
-        </div>
-        <div class="signature">
-            <p>Arrete le présent mémoire à la somme de : <strong>{{montantEhpadEnLettres}}</strong> euros</p>
-            <p class="signature-date">La Guerche de Bretagne, le {{date}}</p>
-            <br><br><p><strong>{{doctorNameShort}}</strong></p>
-        </div>
-        <div class="footer">Page 2/3 | {{generationDate}}</div>
+    
+    <div class="title">HONORAIRES MÉDICAUX</div>
+    <div class="subtitle">EN SERVICES DE MÉDECINE - SSR</div>
+    
+    <div class="section references">
+        <p><strong>RÉFÉRENCES :</strong></p>
+        <p>Application de la loi 2021-502 du 26 avril 2021 (notamment l'article 19)</p>
+        <p>Application des articles L 6146-2 et L 6146-41 du Code de la santé publique</p>
+        <p>Les honoraires sont fixé 100% de la valeur de l'acte conventionné.</p>
+        <p>Sur ces honoraires est due à l'établissement une redevance de 10% pour</p>
+        <p>participation aux frais de structure, de personnel et d'équipements hospitaliers de l'établissement.</p>
     </div>
+    
+    <div class="section designation">
+        <p><strong>DÉSIGNATION :</strong> {{doctorName}}</p>
+        <p>Médecin généraliste, autorisé à exercer dans l'établissement.</p>
+    </div>
+    
+    <div class="section">
+        <p><strong>ETAT DES SOMMES DUES POUR LE MOIS DE : {{month}}</strong></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th>Nombre</th>
+                    <th>Prix</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{tableMedecin}}
+            </tbody>
+        </table>
+        <table>
+            <tr class="total-row">
+                <td>Montant total</td>
+                <td></td>
+                <td></td>
+                <td>{{totalMedico}}</td>
+            </tr>
+            <tr>
+                <td>Retenue 10%</td>
+                <td></td>
+                <td></td>
+                <td>{{retention10}}</td>
+            </tr>
+            <tr class="total-row">
+                <td>Montant à verser</td>
+                <td></td>
+                <td></td>
+                <td>{{netAPayer}}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="signature">
+        <p>Arrêt le présent mémoire à la somme de : {{montantEnLettres}} €</p>
+        <p>La Guerche de Bretagne, le {{date}}</p>
+        <p>{{doctorNameShort}}</p>
+    </div>
+    
     <div class="page-break"></div>
-    <div class="page">
-        <div class="header">
-            <div class="logo-section">
-                <div class="logo">CH</div>
-                <div class="logo-text">CENTRE HOSPITALIER<br>SAINT JEAN</div>
-            </div>
-            <div class="header-info">
-                <p>63, Faubourg de Rennes<br>35130 LA GUERCHE DE BRETAGNE</p>
-            </div>
-        </div>
-        <div class="title">Détail des Actes Médicaux</div>
-        <div class="subtitle">Pour le mois de {{month}}</div>
-        <div class="section">
-            <p class="section-title">LISTE COMPLETE DES INTERVENTIONS</p>
-            <table class="patient-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Medecin</th>
-                        <th>Nom Patient</th>
-                        <th>Lieu</th>
-                        <th>Cotation</th>
-                    </tr>
-                </thead>
-                <tbody>{{patientList}}</tbody>
-            </table>
-            <div style="margin-top: 20px; text-align: center; font-size: 9pt; color: #666;">
-                <p>Total interventions : {{totalVisits}} | Total : {{totalAmount}} €</p>
-            </div>
-        </div>
-        <div class="signature">
-            <p>Document certifie conforme</p>
-            <p class="signature-date">Genere le {{generationDate}}</p>
-        </div>
-        <div class="footer">Page 3/3 | {{generationDate}}</div>
+    
+    <div class="header">
+        <h1>CENTRE HOSPITALIER SAINT JEAN</h1>
+        <p>63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE</p>
+    </div>
+    
+    <div class="title">HONORAIRES MÉDICAUX</div>
+    <div class="subtitle">EN SERVICES DE MÉDECINE - SSR</div>
+    
+    <div class="section references">
+        <p><strong>RÉFÉRENCES :</strong></p>
+        <p>contrat pluriannuel d'Objectif et de Moyens signés le 29 juin 2020</p>
+        <p>Articles L 313-11, L 313-12, L313-12-2 du Code de l'Action Sociale et des Familles</p>
+    </div>
+    
+    <div class="section designation">
+        <p><strong>DÉSIGNATION :</strong> {{doctorName}}</p>
+        <p>Médecin généraliste, autorisé à exercer dans l'établissement.</p>
+    </div>
+    
+    <div class="section">
+        <p><strong>ETAT DES SOMMES DUES POUR LE MOIS DE : {{month}}</strong></p>
+        {{tableEHPAD}}
+        <div class="grand-total">MONTANT TOTAL : {{totalEhpad}} €</div>
+    </div>
+    
+    <div class="signature">
+        <p>Arrêt le présent mémoire à la somme de : {{montantEhpadEnLettres}} €</p>
+        <p>La Guerche de Bretagne, le {{date}}</p>
+        <p>{{doctorNameShort}}</p>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <div class="header">
+        <h1>CENTRE HOSPITALIER SAINT JEAN</h1>
+        <p>63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE</p>
+    </div>
+    
+    <div class="section">
+        <p><strong>DÉTAIL DES ACTES - {{month}}</strong></p>
+        <table class="patient-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Medecin</th>
+                    <th>Nom Patient</th>
+                    <th>Lieu</th>
+                    <th>Cotation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{patientList}}
+            </tbody>
+        </table>
     </div>
 </body>
-</html>`;
+</html>`
 
 function numberToLetters(n: number): string {
   const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf']
@@ -404,30 +390,35 @@ Deno.serve(async (req) => {
         .replace(/{{totalEhpad}}/g, totalEhpad.toFixed(2))
         .replace(/{{montantEhpadEnLettres}}/g, numberToLetters(totalEhpad))
         .replace(/{{patientList}}/g, patientList)
+
+      const totalAmount = passages.reduce((sum, p) => sum + (parseFloat(String(p.amount)) || 0), 0)
+
+      html = html
         .replace(/{{year}}/g, prevYear.toString())
         .replace(/{{generationDate}}/g, dateStr)
         .replace(/{{monthKey}}/g, monthKey)
         .replace(/{{totalVisits}}/g, passages.length.toString())
         .replace(/{{totalAmount}}/g, totalAmount.toFixed(2))
+      // Generate PDF using html2pdf
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `honoraires_${monthName}_${prevYear}_${doctorNameShort}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        }
+      };
 
-      // Generate PDF from HTML using jsPDF
-      const doc = new jsPDF()
-      doc.setFont('helvetica')
+      // Use html2pdf to generate PDF from HTML
+      const pdfData = await html2pdf().set(opt).from(html).toPdf().output('datauristring')
       
-      // Simple approach: add HTML content as text
-      // This is a fallback since html2pdf might not work in Edge Functions
-      // For now, we use the previous approach but with the template logic
-      
-      // Actually, let's just use the simple PDF generation without html2pdf
-      // since it's more reliable in Edge Functions
-      
-      const pdfBase64 = doc.output('datauristring')
-      const pdfData = pdfBase64
-      
-      // For now, return the HTML for preview
-      // In production, you'd use a proper HTML-to-PDF service
-      
-      const totalAmount = passages.reduce((sum, p) => sum + (parseFloat(String(p.amount)) || 0), 0)
       
       // Store in database - use HTML as preview
       const { data: existing } = await supabase
