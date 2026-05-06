@@ -1498,6 +1498,10 @@ function deletePDF(id) {
     
     console.log('[DELETE] Showing modal');
     modal.style.display = 'flex';
+    modal.style.visibility = 'visible';
+    modal.style.opacity = '1';
+    modal.style.position = 'fixed';
+    modal.style.zIndex = '99999';
 }
 
 function doDelete(id) {
