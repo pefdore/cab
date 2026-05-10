@@ -2284,15 +2284,6 @@ window.attemptLogin = function() {
         }
       };
 
-      // Close FAB menu when clicking outside
-      document.addEventListener('click', function(e) {
-        const fab = document.getElementById('fabContainer');
-        const fabMain = fab.querySelector('.fab-main');
-        if (fab.classList.contains('open') && !fab.contains(e.target)) {
-          fab.classList.remove('open');
-        }
-      });
-
       // View navigation function
       window.navigateToView = function(viewName) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
