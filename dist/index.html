@@ -2291,6 +2291,14 @@ window.attemptLogin = function() {
         }
       };
 
+      // Close FAB menu when clicking outside (only when menu is open)
+      window.addEventListener('click', function(e) {
+        const fab = document.getElementById('fabContainer');
+        if (fab && fab.classList.contains('open') && !fab.contains(e.target)) {
+          fab.classList.remove('open');
+        }
+      });
+
       
     </script>
 </body>
