@@ -7150,7 +7150,7 @@ h2 {
 /* ===== FAB - Floating Action Button ===== */
 .fab-container {
     position: fixed;
-    bottom: 80px;
+    bottom: 90px;
     right: 24px;
     z-index: 999;
     display: flex;
@@ -7248,7 +7248,7 @@ h2 {
 /* Mobile FAB adjustments */
 @media (max-width: 768px) {
     .fab-container {
-        bottom: 70px;
+        bottom: 80px;
         right: 16px;
     }
 
