@@ -7146,3 +7146,115 @@ h2 {
         font-size: 13px;
     }
 }
+
+/* ===== FAB - Floating Action Button ===== */
+.fab-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.fab-main {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+    transition: all 0.2s ease;
+}
+
+.fab-main:hover {
+    background: var(--color-primary-hover);
+    transform: scale(1.05);
+}
+
+.fab-main svg {
+    transition: transform 0.3s ease;
+}
+
+.fab-container.open .fab-main svg {
+    transform: rotate(45deg);
+}
+
+.fab-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.fab-container.open .fab-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.fab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--color-bg-elevated);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.fab-menu-item:hover {
+    background: var(--color-primary-subtle);
+    transform: translateX(-4px);
+}
+
+.fab-menu-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.fab-menu-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+/* Mobile FAB adjustments */
+@media (max-width: 768px) {
+    .fab-container {
+        bottom: 80px;
+        right: 16px;
+    }
+
+    .fab-main {
+        width: 52px;
+        height: 52px;
+    }
+
+    .fab-menu-item {
+        padding: 8px 12px;
+    }
+
+    .fab-menu-label {
+        font-size: 12px;
+    }
+}
