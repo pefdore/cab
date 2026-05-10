@@ -4859,6 +4859,7 @@ function renderTransactionsList() {
         const categories = isDepense ? depenseCategories : recetteCategories;
         const selectedCategory = t.category || (isDepense ? 'services' : 'autres');
         
+        // Check for magic suggestion
         const magicSuggestion = findSimilarDescription(t.description);
         const suggestionHtml = magicSuggestion ? `
             <div class="magic-suggestion" onclick="applyMagicSuggestion(${index}, '${magicSuggestion.description.replace(/'/g, "\\'")}', '${magicSuggestion.category}', ${magicSuggestion.amount})">
@@ -4949,6 +4950,7 @@ function handleTransactionAutocomplete(index, value) {
     }).join('');
 }
 
+// Find similar descriptions (magic suggestion)
 function findSimilarDescription(ocrDescription) {
     if (!ocrDescription || !cabinetDepenses?.length && !cabinetRecettes?.length) return null;
     
@@ -4959,16 +4961,19 @@ function findSimilarDescription(ocrDescription) {
     
     const ocrLower = ocrDescription.toLowerCase();
     
+    // First try exact substring match (case insensitive)
     let match = allItems.find(item => 
         item.description && ocrLower.includes(item.description.toLowerCase())
     );
     if (match) return match;
     
+    // Then try reverse - description in OCR
     match = allItems.find(item => 
         item.description && item.description.toLowerCase().includes(ocrLower)
     );
     if (match) return match;
     
+    // Then try fuzzy match - word by word
     const ocrWords = ocrLower.split(/\s+/).filter(w => w.length > 3);
     for (const word of ocrWords) {
         match = allItems.find(item => 
@@ -4977,6 +4982,7 @@ function findSimilarDescription(ocrDescription) {
         if (match) return match;
     }
     
+    // Try Levenshtein distance for similar words
     for (const item of allItems) {
         if (!item.description) continue;
         const itemWords = item.description.toLowerCase().split(/\s+/);
@@ -5136,6 +5142,7 @@ async function confirmAllTransactions() {
     }
     
     try {
+        // Check type - could be 'dépense', 'recette', or based on amount sign
         const depenses = pendingTransactions.filter(t => {
             const isDepense = t.type === 'dépense' || (t.type !== 'recette' && t.amount < 0);
             return isDepense;
