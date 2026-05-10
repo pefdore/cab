@@ -2241,83 +2241,57 @@ window.attemptLogin = function() {
         fab.classList.toggle('open');
       };
 
+      // Use the existing switchView from app.v4.js for proper view loading
       window.fabAction = function(action) {
         const fab = document.getElementById('fabContainer');
         fab.classList.remove('open');
 
-        switch(action) {
-          case 'passage':
-            navigateToView('add');
-            if (typeof switchAddMode === 'function') {
-              switchAddMode('passages');
-            }
-            break;
-          case 'flux':
-            navigateToView('add');
-            if (typeof switchAddMode === 'function') {
-              switchAddMode('depenses');
-            }
-            break;
-          case 'releve':
-            navigateToView('cabinet');
-            setTimeout(() => {
-              if (typeof showRelevéUploadOptions === 'function') {
-                showRelevéUploadOptions();
-              } else {
-                const btn = document.getElementById('uploadRelevéBtn');
-                if (btn) btn.click();
+        // Use switchView from app.v4.js which properly handles view initialization
+        if (typeof switchView === 'function') {
+          switch(action) {
+            case 'passage':
+              switchView('add');
+              if (typeof switchAddMode === 'function') {
+                switchAddMode('passages');
               }
-            }, 300);
-            break;
-          case 'contrat':
-            navigateToView('cabinet');
-            setTimeout(() => {
-              const remplacantsTab = document.querySelector('[data-subtab="remplacants"]');
-              if (remplacantsTab) {
-                document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
-                remplacantsTab.classList.add('active');
-                document.getElementById('stocks-remplacants').classList.add('active');
+              break;
+            case 'flux':
+              switchView('add');
+              if (typeof switchAddMode === 'function') {
+                switchAddMode('depenses');
               }
-            }, 300);
-            break;
+              break;
+            case 'releve':
+              switchView('cabinet');
+              setTimeout(() => {
+                if (typeof showRelevéUploadOptions === 'function') {
+                  showRelevéUploadOptions();
+                } else {
+                  const btn = document.getElementById('uploadRelevéBtn');
+                  if (btn) btn.click();
+                }
+              }, 300);
+              break;
+            case 'contrat':
+              switchView('cabinet');
+              setTimeout(() => {
+                const remplacantsTab = document.querySelector('[data-subtab="remplacants"]');
+                if (remplacantsTab) {
+                  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+                  document.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
+                  remplacantsTab.classList.add('active');
+                  document.getElementById('stocks-remplacants').classList.add('active');
+                }
+              }, 300);
+              break;
+          }
+        } else {
+          // Fallback to custom navigation if switchView not available
+          navigateToView(action === 'passage' || action === 'flux' ? 'add' : 'cabinet');
         }
       };
 
-      // View navigation function
-      window.navigateToView = function(viewName) {
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.querySelectorAll('.mobile-nav-item').forEach(m => m.classList.remove('active'));
-
-        const targetView = document.getElementById('view-' + viewName);
-        if (targetView) {
-          targetView.classList.add('active');
-        }
-
-        document.querySelectorAll('[data-view="' + viewName + '"]').forEach(el => {
-          el.classList.add('active');
-        });
-
-        // Update mobile page title
-        const mobileTitle = document.getElementById('mobilePageTitle');
-        if (mobileTitle) {
-          const titles = {
-            'dashboard': 'Dashboard',
-            'add': 'Ajouter',
-            'history': 'Documents',
-            'cabinet': 'Cabinet',
-            'settings': 'Paramètres'
-          };
-          mobileTitle.textContent = titles[viewName] || viewName;
-        }
-
-        // Hide FAB on certain views if needed
-        const fab = document.getElementById('fabContainer');
-        if (fab) {
-          fab.style.display = 'flex';
-        }
-      };
+      
     </script>
 </body>
 </html>
