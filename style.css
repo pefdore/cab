@@ -7152,11 +7152,16 @@ h2 {
     position: fixed;
     bottom: 80px;
     right: 24px;
-    z-index: 1000;
+    z-index: 999;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 12px;
+    pointer-events: none;
+}
+
+.fab-main, .fab-menu-item {
+    pointer-events: auto;
 }
 
 .fab-main {
@@ -7195,12 +7200,14 @@ h2 {
     visibility: hidden;
     transform: translateY(-20px);
     transition: all 0.3s ease;
+    pointer-events: none;
 }
 
 .fab-container.open .fab-menu {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    pointer-events: auto;
 }
 
 .fab-menu-item {
