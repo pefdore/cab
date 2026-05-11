@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-kpFWVFGg.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-CU6EYv4s.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1000,6 +1000,28 @@ window.attemptLogin = function() {
                         <p class="scan-status">Numérisation en cours</p>
                     </div>
                     
+                    <!-- Documents Filter -->
+                    <div class="documents-filter-section" style="margin-bottom: 16px; padding: 16px; background: var(--color-bg-subtle); border-radius: 12px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <h3 style="font-size: 1rem; margin: 0;">Documents</h3>
+                            <button class="btn-primary" style="padding: 6px 12px; font-size: 0.8125rem;" onclick="openDocumentModal()">
+                                + Ajouter
+                            </button>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <button class="doc-filter-btn active" data-filter="all" onclick="filterDocuments('all')">Tous</button>
+                            <button class="doc-filter-btn" data-filter="01" onclick="filterDocuments('01')">01 Juridique</button>
+                            <button class="doc-filter-btn" data-filter="02" onclick="filterDocuments('02')">02 Immobilier</button>
+                            <button class="doc-filter-btn" data-filter="03" onclick="filterDocuments('03')">03 RH</button>
+                            <button class="doc-filter-btn" data-filter="04" onclick="filterDocuments('04')">04 Exploitation</button>
+                            <button class="doc-filter-btn" data-filter="05" onclick="filterDocuments('05')">05 Comptabilité</button>
+                            <button class="doc-filter-btn" data-filter="06" onclick="filterDocuments('06')">06 Fiscalité</button>
+                            <button class="doc-filter-btn" data-filter="07" onclick="filterDocuments('07')">07 Correspondance</button>
+                        </div>
+                    </div>
+                    
+                    <div id="documentsList" class="documents-list"></div>
+                    
                     <div class="cabinet-history-list" id="cabinetHistoryList"></div>
                     <div id="noCabinetHistory" class="no-entries">Aucune entrée de cabinet</div>
                 </div>
@@ -1868,12 +1890,66 @@ window.attemptLogin = function() {
                     <span class="fab-menu-icon">📄</span>
                     <span class="fab-menu-label">Ajouter un contrat de remplacement</span>
                 </div>
+                <div class="fab-menu-item" onclick="fabAction('document')">
+                    <span class="fab-menu-icon">📁</span>
+                    <span class="fab-menu-label">Ajouter un document</span>
+                </div>
             </div>
             <button class="fab-main" onclick="toggleFabMenu()">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="fabIcon">
                     <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
             </button>
+        </div>
+
+        <!-- Document Upload Modal -->
+        <div id="document-upload-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3>Ajouter un document</h3>
+                    <button class="modal-close" onclick="closeDocumentModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Sélectionner un fichier</label>
+                        <input type="file" id="docUploadInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" onchange="handleDocumentSelect(event)">
+                        <p style="font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 4px;">PDF, JPG, PNG, DOC, XLS (max 10MB)</p>
+                    </div>
+                    <div id="docSelectedFile" style="display: none; padding: 12px; background: var(--color-bg-subtle); border-radius: 8px; margin-bottom: 16px;">
+                        <strong>Fichier sélectionné:</strong> <span id="docFileName"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Catégorie</label>
+                        <select id="docCategory" onchange="updateDocSubcategories()">
+                            <option value="">Sélectionner une catégorie...</option>
+                            <option value="01">01 – JURIDIQUE ET ADMINISTRATION</option>
+                            <option value="02">02 – IMMOBILIER ET LOCAUX</option>
+                            <option value="03">03 – RESSOURCES HUMAINES</option>
+                            <option value="04">04 – EXPLOITATION ET SERVICES</option>
+                            <option value="05">05 – COMPTABILITÉ ET BANQUE</option>
+                            <option value="06">06 – FISCALITÉ</option>
+                            <option value="07">07 – CORRESPONDANCE</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="docSubcategoryGroup" style="display: none;">
+                        <label>Sous-catégorie</label>
+                        <select id="docSubcategory">
+                            <option value="">Sélectionner...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description (optionnel)</label>
+                        <input type="text" id="docDescription" placeholder="Courte description du document">
+                    </div>
+                    <button id="saveDocumentBtn" class="btn-primary" style="width: 100%; margin-top: 16px;" onclick="saveUploadedDocument()" disabled>
+                        Enregistrer le document
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Mobile Bottom Navbar -->
@@ -1929,6 +2005,14 @@ window.attemptLogin = function() {
             console.log('Caches cleared');
           });
         });
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
+    <script>
+      window.pdfjsLib = window.pdfjsLib || pdfjsLib;
+      console.log('[INIT] pdfjsLib:', typeof window.pdfjsLib);
+      if (window.pdfjsLib) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
       }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -2284,6 +2368,13 @@ window.attemptLogin = function() {
                 }
               }, 300);
               break;
+            case 'document':
+              if (typeof openDocumentModal === 'function') {
+                openDocumentModal();
+              } else {
+                document.getElementById('document-upload-modal').style.display = 'flex';
+              }
+              break;
           }
         } else {
           // Fallback to custom navigation if switchView not available
@@ -2298,6 +2389,252 @@ window.attemptLogin = function() {
           fab.classList.remove('open');
         }
       });
+
+      // Document Upload Functions
+      const docCategories = {
+        '01': [
+          { value: '1.1', label: '1.1 Statuts' },
+          { value: '1.2', label: '1.2 Assemblées Générales (AG)' },
+          { value: '1.3', label: '1.3 Registres' },
+          { value: '1.4', label: '1.4 Assurances' }
+        ],
+        '02': [
+          { value: '2.1', label: '2.1 Bail' },
+          { value: '2.2', label: '2.2 Énergie' },
+          { value: '2.3', label: '2.3 Maintenance' },
+          { value: '2.4', label: '2.4 Taxes Locales' }
+        ],
+        '03': [
+          { value: '3.1', label: '3.1 Contrats' },
+          { value: '3.2', label: '3.2 Paie' },
+          { value: '3.3', label: '3.3 Organismes Sociaux' },
+          { value: '3.4', label: '3.4 Santé au Travail' }
+        ],
+        '04': [
+          { value: '4.1', label: '4.1 Télécoms & IT' },
+          { value: '4.2', label: '4.2 Fournitures' },
+          { value: '4.3', label: '4.3 Petit Matériel' },
+          { value: '4.4', label: '4.4 Documentation' }
+        ],
+        '05': [
+          { value: '5.1', label: '5.1 Banque' },
+          { value: '5.2', label: '5.2 Appels de Fonds' },
+          { value: '5.3', label: '5.3 Immobilisations' },
+          { value: '5.4', label: '5.4 Honoraires' }
+        ],
+        '06': [
+          { value: '6.1', label: '6.1 Déclarations 2036' },
+          { value: '6.2', label: '6.2 TVA' },
+          { value: '6.3', label: '6.3 Taxe sur les Salaires' }
+        ],
+        '07': [
+          { value: '7.1', label: '7.1 Fournisseurs' },
+          { value: '7.2', label: '7.2 Divers' }
+        ]
+      };
+
+      let selectedDocFile = null;
+
+      window.openDocumentModal = function() {
+        document.getElementById('document-upload-modal').style.display = 'flex';
+        // Reset form
+        document.getElementById('docUploadInput').value = '';
+        document.getElementById('docCategory').value = '';
+        document.getElementById('docSubcategory').innerHTML = '<option value="">Sélectionner...</option>';
+        document.getElementById('docSubcategoryGroup').style.display = 'none';
+        document.getElementById('docDescription').value = '';
+        document.getElementById('docSelectedFile').style.display = 'none';
+        document.getElementById('saveDocumentBtn').disabled = true;
+        selectedDocFile = null;
+      };
+
+      window.closeDocumentModal = function() {
+        document.getElementById('document-upload-modal').style.display = 'none';
+      };
+
+      window.handleDocumentSelect = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          selectedDocFile = file;
+          document.getElementById('docFileName').textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+          document.getElementById('docSelectedFile').style.display = 'block';
+          checkDocFormComplete();
+        }
+      };
+
+      window.updateDocSubcategories = function() {
+        const category = document.getElementById('docCategory').value;
+        const subcategorySelect = document.getElementById('docSubcategory');
+        const subcategoryGroup = document.getElementById('docSubcategoryGroup');
+        
+        subcategorySelect.innerHTML = '<option value="">Sélectionner...</option>';
+        
+        if (category && docCategories[category]) {
+          docCategories[category].forEach(sub => {
+            const option = document.createElement('option');
+            option.value = sub.value;
+            option.textContent = sub.label;
+            subcategorySelect.appendChild(option);
+          });
+          subcategoryGroup.style.display = 'block';
+        } else {
+          subcategoryGroup.style.display = 'none';
+        }
+        checkDocFormComplete();
+      };
+
+      window.checkDocFormComplete = function() {
+        const category = document.getElementById('docCategory').value;
+        const subcategory = document.getElementById('docSubcategory').value;
+        const btn = document.getElementById('saveDocumentBtn');
+        btn.disabled = !(selectedDocFile && category && subcategory);
+      };
+
+      document.getElementById('docSubcategory').addEventListener('change', checkDocFormComplete);
+
+      window.saveUploadedDocument = async function() {
+        if (!selectedDocFile) return;
+        
+        const category = document.getElementById('docCategory').value;
+        const subcategory = document.getElementById('docSubcategory').value;
+        const description = document.getElementById('docDescription').value;
+        
+        const btn = document.getElementById('saveDocumentBtn');
+        btn.disabled = true;
+        btn.textContent = 'Enregistrement...';
+        
+        try {
+          // Upload to Supabase Storage
+          const fileName = selectedDocFile.name;
+          const fileExt = fileName.split('.').pop();
+          const newFileName = `${new Date().toISOString().split('T')[0]}_${Date.now()}.${fileExt}`;
+          
+          const { data, error } = await window.supabaseClient.storage
+            .from('documents')
+            .upload(newFileName, selectedDocFile);
+          
+          if (error) throw error;
+          
+          // Get public URL
+          const { data: urlData } = window.supabaseClient.storage
+            .from('documents')
+            .getPublicUrl(newFileName);
+          
+          // Save to documents table
+          const { error: insertError } = await window.supabaseClient
+            .from('documents')
+            .insert({
+              user_id: (await window.supabaseClient.auth.getUser()).data.user.id,
+              file_name: fileName,
+              file_url: urlData.publicUrl,
+              category: category + ' - ' + subcategory,
+              description: description || fileName,
+              doc_type: 'cabinet'
+            });
+          
+          if (insertError) throw insertError;
+          
+          alert('Document enregistré avec succès!');
+          closeDocumentModal();
+          switchView('history');
+          
+        } catch (err) {
+          console.error('Error saving document:', err);
+          alert('Erreur lors de l\'enregistrement: ' + err.message);
+        }
+        
+        btn.disabled = false;
+        btn.textContent = 'Enregistrer le document';
+      };
+
+      // Close modal on outside click
+      document.getElementById('document-upload-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeDocumentModal();
+      });
+
+      // Document Loading and Filtering
+      let allDocuments = [];
+      let currentDocFilter = 'all';
+
+      window.loadDocuments = async function() {
+        try {
+          const { data, error } = await window.supabaseClient
+            .from('documents')
+            .select('*')
+            .eq('doc_type', 'cabinet')
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          allDocuments = data || [];
+          renderDocuments();
+        } catch (err) {
+          console.error('Error loading documents:', err);
+        }
+      };
+
+      window.renderDocuments = function() {
+        const container = document.getElementById('documentsList');
+        if (!container) return;
+        
+        let filteredDocs = allDocuments;
+        if (currentDocFilter !== 'all') {
+          filteredDocs = allDocuments.filter(doc => doc.category && doc.category.startsWith(currentDocFilter));
+        }
+        
+        if (filteredDocs.length === 0) {
+          container.innerHTML = '<div class="no-entries" style="padding: 24px;">Aucun document</div>';
+          return;
+        }
+        
+        container.innerHTML = filteredDocs.map(doc => {
+          const date = new Date(doc.created_at).toLocaleDateString('fr-FR');
+          return `
+            <div class="document-item">
+              <div class="document-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </div>
+              <div class="document-info">
+                <div class="document-name">${doc.file_name}</div>
+                <div class="document-meta">${date} • ${doc.description || ''}</div>
+              </div>
+              <span class="document-category-badge">${doc.category || ''}</span>
+              <div class="document-actions">
+                <button class="btn-icon" onclick="window.open('${doc.file_url}', '_blank')" title="Voir">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      window.filterDocuments = function(filter) {
+        currentDocFilter = filter;
+        document.querySelectorAll('.doc-filter-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+        renderDocuments();
+      };
+
+      // Load documents when switching to history view in cabinet mode
+      const originalSwitchHistoryMode = window.switchHistoryMode;
+      window.switchHistoryMode = function(mode) {
+        if (originalSwitchHistoryMode) originalSwitchHistoryMode(mode);
+        if (mode === 'cabinet') {
+          setTimeout(() => {
+            if (typeof loadDocuments === 'function') {
+              loadDocuments();
+            }
+          }, 500);
+        }
+      };
 
       
     </script>

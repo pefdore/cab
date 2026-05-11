@@ -7265,3 +7265,102 @@ h2 {
         font-size: 12px;
     }
 }
+
+/* ===== Document Filter Buttons ===== */
+.doc-filter-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-elevated);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.doc-filter-btn:hover {
+    background: var(--color-bg-subtle);
+}
+
+.doc-filter-btn.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+/* ===== Documents List ===== */
+.documents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--color-bg-elevated);
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+}
+
+.document-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary-subtle);
+    border-radius: 8px;
+    color: var(--color-primary);
+}
+
+.document-info {
+    flex: 1;
+}
+
+.document-name {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--color-text);
+}
+
+.document-meta {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+}
+
+.document-category-badge {
+    padding: 4px 8px;
+    background: var(--color-bg-subtle);
+    border-radius: 6px;
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+}
+
+.document-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--color-bg-subtle);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+}

@@ -4731,12 +4731,55 @@ async function extractTextFromFile(file) {
 }
 
 async function extractTextFromPDF(file) {
-    console.log('[RELEVÉ] Extracting PDF via Tesseract.js');
+    console.log('[RELEVÉ] Extracting PDF via pdf.js + Tesseract.js');
+    
+    let pdfjsLib = window.pdfjsLib;
+    console.log('[RELEVÉ] pdfjsLib:', typeof pdfjsLib, !!pdfjsLib);
+    
+    if (!pdfjsLib) {
+        console.error('[RELEVÉ] pdf.js not loaded');
+        throw new Error('pdf.js n\'est pas chargé. Veuillez rafraîchir la page.');
+    }
     
     const arrayBuffer = await file.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+    const loadingTask = pdfjsLib.getDocument({
+        data: arrayBuffer,
+        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/cmaps/',
+        cMapPacked: true
+    });
+    const pdf = await loadingTask.promise;
+    console.log('[RELEVÉ] PDF loaded, pages:', pdf.numPages);
     
-    return await performOCR(blob);
+    let fullText = '';
+    
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        console.log('[RELEVÉ] Processing page', pageNum, 'of', pdf.numPages);
+        
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 2.0 });
+        
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+        
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        
+        const result = await Tesseract.recognize(
+            blob,
+            'fra+eng',
+            {
+                logger: m => console.log('[TESSERACT]', m.status, m.progress)
+            }
+        );
+        
+        fullText += result.data.text + '\n';
+    }
+    
+    console.log('[RELEVÉ] OCR completed, total text length:', fullText.length);
+    return fullText;
 }
 
 async function extractTextFromImage(file) {
