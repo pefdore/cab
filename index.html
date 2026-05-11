@@ -2738,17 +2738,27 @@ window.attemptLogin = function() {
 
       window.loadDocuments = async function() {
         try {
+          console.log('[DOC] Loading documents from table...');
           const { data, error } = await window.supabaseClient
             .from('documents')
             .select('*')
             .eq('doc_type', 'cabinet')
             .order('created_at', { ascending: false });
           
-          if (error) throw error;
+          if (error) {
+            console.error('[DOC] Load error:', error);
+            throw error;
+          }
+          
+          console.log('[DOC] Loaded documents:', data);
           allDocuments = data || [];
           renderDocuments();
         } catch (err) {
-          console.error('Error loading documents:', err);
+          console.error('[DOC] Error loading documents:', err);
+          const container = document.getElementById('documentsList');
+          if (container) {
+            container.innerHTML = '<div class="no-entries" style="padding: 24px;">Erreur: ' + err.message + '</div>';
+          }
         }
       };
 
