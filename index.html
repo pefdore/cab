@@ -2664,11 +2664,16 @@ window.attemptLogin = function() {
           const { data: bucketData, error: bucketError } = await window.supabaseClient.storage.listBuckets();
           console.log('[DOC] Available buckets:', bucketData?.map(b => b.id));
           
-          if (bucketError) {
-            console.error('[DOC] Bucket list error:', bucketError);
+          // If no bucket, try to create it
+          if (!bucketData || bucketData.length === 0) {
+            console.log('[DOC] No buckets found, creating one...');
+            const { error: createError } = await window.supabaseClient.storage.createBucket('documents', { public: true });
+            if (createError && createError.message !== 'Bucket already exists') {
+              console.error('[DOC] Create bucket error:', createError);
+            }
           }
           
-          // Upload to Supabase Storage
+          // Try upload
           const fileName = selectedDocFile.name;
           const fileExt = fileName.split('.').pop();
           const newFileName = `${new Date().toISOString().split('T')[0]}_${Date.now()}.${fileExt}`;
