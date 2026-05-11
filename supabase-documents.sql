@@ -1,3 +1,10 @@
--- Add new columns to existing documents table
-ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_date DATE;
-ALTER TABLE documents ADD COLUMN IF NOT EXISTS annotation TEXT;
+-- Check if bucket exists, if not create it
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'documents') THEN
+        INSERT INTO storage.buckets (id, name, public) VALUES ('documents', 'documents', true);
+    END IF;
+END $$;
+
+-- Verify it exists
+SELECT id, name, public FROM storage.buckets WHERE id = 'documents';
