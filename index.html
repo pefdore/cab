@@ -2539,6 +2539,7 @@ window.attemptLogin = function() {
           updateDocSubcategories();
           setTimeout(() => {
             document.getElementById('docSubcategory').value = suggestedCategory.subcategory.value;
+            document.getElementById('docDescription').value = suggestedCategory.subcategory.desc;
             checkDocFormComplete();
           }, 100);
           document.getElementById('docAutoCategory').style.display = 'none';
@@ -2581,11 +2582,12 @@ window.attemptLogin = function() {
         } else {
           resultsDiv.innerHTML = results.slice(0, 10).map(r => {
             const catColors = categoryColors[r.category];
-            return `<div class="doc-search-result" onclick="selectDocCategory('${r.category}', '${r.subcategory.value}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: 8px;">
-              <span style="width: 8px; height: 8px; border-radius: 50%; background: ${catColors.border}; flex-shrink: 0;"></span>
+            return `<div class="doc-search-result" onclick="selectDocCategory('${r.category}', '${r.subcategory.value}', '${r.subcategory.desc.replace(/'/g, "\\'")}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid var(--color-border); display: flex; align-items: flex-start; gap: 8px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: ${catColors.border}; flex-shrink: 0; margin-top: 4px;"></span>
               <div>
                 <div style="font-weight: 500; font-size: 0.8125rem;">${r.subcategory.label}</div>
                 <div style="font-size: 0.6875rem; color: var(--color-text-secondary);">${r.label}</div>
+                <div style="font-size: 0.6875rem; color: var(--color-text-tertiary); margin-top: 2px; font-style: italic;">${r.subcategory.desc}</div>
               </div>
             </div>`;
           }).join('');
@@ -2593,11 +2595,14 @@ window.attemptLogin = function() {
         resultsDiv.style.display = 'block';
       };
 
-      window.selectDocCategory = function(category, subcategory) {
+      window.selectDocCategory = function(category, subcategory, description) {
         document.getElementById('docCategory').value = category;
         updateDocSubcategories();
         setTimeout(() => {
           document.getElementById('docSubcategory').value = subcategory;
+          if (description) {
+            document.getElementById('docDescription').value = description;
+          }
           checkDocFormComplete();
         }, 100);
         document.getElementById('docSearch').value = '';
