@@ -2659,7 +2659,7 @@ window.attemptLogin = function() {
         btn.disabled = true;
         btn.textContent = 'Enregistrement...';
         
-try {
+        try {
           // Upload to Supabase Storage
           const fileName = selectedDocFile.name;
           const fileExt = fileName.split('.').pop();
@@ -2673,7 +2673,7 @@ try {
             await window.supabaseClient.storage.createBucket('documents', { public: true });
             console.log('[DOC] Bucket created');
           } catch (bucketErr) {
-            console.log('[DOC] Cannot create bucket (may already exist or no permission):', bucketErr.message);
+            console.log('[DOC] Cannot create bucket:', bucketErr.message);
           }
           
           // Now try upload
@@ -2683,23 +2683,12 @@ try {
           
           if (error) {
             console.error('[DOC] Upload error:', error);
-            // More helpful error message
             if (error.message.includes('bucket')) {
-              alert('Erreur: Le bucket "documents" n\'existe pas. Veuillez le créer dans Supabase Dashboard > Storage > New Bucket (nom: documents, public: coché)');
+              alert('Erreur: Le bucket "documents" n\'existe pas. Veuillez le créer dans Supabase Dashboard > Storage > New Bucket');
             } else {
               alert('Erreur lors de l\'upload: ' + error.message);
             }
             throw error;
-          }
-          
-          // Now try upload
-          const { data, error } = await window.supabaseClient.storage
-            .from('documents')
-            .upload(newFileName, selectedDocFile);
-          
-          if (error) {
-            console.error('[DOC] Upload error:', error);
-            throw new Error(error.message || 'Upload failed');
           }
           
           console.log('[DOC] Upload success:', data);
