@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-CU6EYv4s.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-ClGZI3Uo.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1923,16 +1923,21 @@ window.attemptLogin = function() {
                         <strong>Fichier sélectionné:</strong> <span id="docFileName"></span>
                     </div>
                     <div class="form-group">
+                        <label>Rechercher dans les catégories</label>
+                        <input type="text" id="docSearch" placeholder="Tapez pour rechercher (ex: bail, facture, contrat...)" oninput="searchDocCategories()">
+                        <div id="docSearchResults" style="display: none; max-height: 150px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: 8px; margin-top: 4px; background: var(--color-bg-elevated);"></div>
+                    </div>
+                    <div class="form-group">
                         <label>Catégorie</label>
                         <select id="docCategory" onchange="updateDocSubcategories()">
                             <option value="">Sélectionner une catégorie...</option>
-                            <option value="01">01 – JURIDIQUE ET ADMINISTRATION</option>
-                            <option value="02">02 – IMMOBILIER ET LOCAUX</option>
-                            <option value="03">03 – RESSOURCES HUMAINES</option>
-                            <option value="04">04 – EXPLOITATION ET SERVICES</option>
-                            <option value="05">05 – COMPTABILITÉ ET BANQUE</option>
-                            <option value="06">06 – FISCALITÉ</option>
-                            <option value="07">07 – CORRESPONDANCE</option>
+                            <option value="01" data-color="#6366f1">01 – JURIDIQUE ET ADMINISTRATION</option>
+                            <option value="02" data-color="#10b981">02 – IMMOBILIER ET LOCAUX</option>
+                            <option value="03" data-color="#f59e0b">03 – RESSOURCES HUMAINES</option>
+                            <option value="04" data-color="#ec4899">04 – EXPLOITATION ET SERVICES</option>
+                            <option value="05" data-color="#8b5cf6">05 – COMPTABILITÉ ET BANQUE</option>
+                            <option value="06" data-color="#ef4444">06 – FISCALITÉ</option>
+                            <option value="07" data-color="#6b7280">07 – CORRESPONDANCE</option>
                         </select>
                     </div>
                     <div class="form-group" id="docSubcategoryGroup" style="display: none;">
@@ -1943,7 +1948,11 @@ window.attemptLogin = function() {
                     </div>
                     <div class="form-group">
                         <label>Description (optionnel)</label>
-                        <input type="text" id="docDescription" placeholder="Courte description du document">
+                        <input type="text" id="docDescription" placeholder="Courte description du document" oninput="onDocDescriptionChange()">
+                    </div>
+                    <div id="docAutoCategory" style="display: none; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.8125rem;">
+                        <strong>Catégorie recommandée:</strong> <span id="docSuggestedCategory"></span>
+                        <button type="button" onclick="applySuggestedCategory()" style="margin-left: 8px; padding: 4px 8px; border: none; background: rgba(255,255,255,0.3); border-radius: 4px; cursor: pointer;">Appliquer</button>
                     </div>
                     <button id="saveDocumentBtn" class="btn-primary" style="width: 100%; margin-top: 16px;" onclick="saveUploadedDocument()" disabled>
                         Enregistrer le document
@@ -2393,59 +2402,73 @@ window.attemptLogin = function() {
       // Document Upload Functions
       const docCategories = {
         '01': [
-          { value: '1.1', label: '1.1 Statuts' },
-          { value: '1.2', label: '1.2 Assemblées Générales (AG)' },
-          { value: '1.3', label: '1.3 Registres' },
-          { value: '1.4', label: '1.4 Assurances' }
+          { value: '1.1', label: '1.1 Statuts', keywords: ['statuts', 'constitution', 'création', 'sas', 'sarl'], desc: 'Statuts constitutifs et modifications successives' },
+          { value: '1.2', label: '1.2 Assemblées Générales (AG)', keywords: ['ag', 'assemblée', 'pv', 'procès-verbal', 'gestion', 'rapport'], desc: 'Procès-verbaux, feuilles de présence, rapports de gestion' },
+          { value: '1.3', label: '1.3 Registres', keywords: ['registre', 'décisions', 'parts', 'social'], desc: 'Registre des décisions, registre des parts sociales' },
+          { value: '1.4', label: '1.4 Assurances', keywords: ['assurance', 'rc', 'responsabilité', 'multirisque', 'locaux'], desc: 'Contrat Responsabilité Civile et protection des locaux' }
         ],
         '02': [
-          { value: '2.1', label: '2.1 Bail' },
-          { value: '2.2', label: '2.2 Énergie' },
-          { value: '2.3', label: '2.3 Maintenance' },
-          { value: '2.4', label: '2.4 Taxes Locales' }
+          { value: '2.1', label: '2.1 Bail', keywords: ['bail', 'loyer', 'locataire', 'propriétaire', 'commercial', 'professionnel', 'état des lieux'], desc: 'Contrat de bail professionnel ou commercial, état des lieux' },
+          { value: '2.2', label: '2.2 Énergie', keywords: ['électricité', ' EDF', 'engie', 'gaz', 'eau', 'facture', 'energie'], desc: 'Factures d\'électricité, de gaz et d\'eau' },
+          { value: '2.3', label: '2.3 Maintenance', keywords: ['maintenance', 'entretien', 'ménage', 'chaudière', 'ascenseur', 'extincteur', 'nettoyage'], desc: 'Contrat de ménage, entretien de la chaudière, ascenseur, extincteurs' },
+          { value: '2.4', label: '2.4 Taxes Locales', keywords: ['taxe foncière', 'cfe', 'impôt', 'foncière'], desc: 'Avis de Taxe Foncière ou de CFE' }
         ],
         '03': [
-          { value: '3.1', label: '3.1 Contrats' },
-          { value: '3.2', label: '3.2 Paie' },
-          { value: '3.3', label: '3.3 Organismes Sociaux' },
-          { value: '3.4', label: '3.4 Santé au Travail' }
+          { value: '3.1', label: '3.1 Contrats', keywords: ['contrat', 'travail', 'cdi', 'cdd', 'avenant', 'fiche de poste', 'embauche'], desc: 'Contrats de travail, avenants, fiches de poste' },
+          { value: '3.2', label: '3.2 Paie', keywords: ['bulletin', 'salaire', 'paie', 'pay'], desc: 'Bulletins de salaire mensuels' },
+          { value: '3.3', label: '3.3 Organismes Sociaux', keywords: ['urssaf', 'retraite', 'prévoyance', 'mutuelle', 'social', 'cotisation'], desc: 'Déclarations URSSAF, Retraite, Prévoyance, Mutuelle' },
+          { value: '3.4', label: '3.4 Santé au Travail', keywords: ['médecine', 'duerp', 'risque', 'travail', 'santé', 'sécurité'], desc: 'Visites médicales, DUERP' }
         ],
         '04': [
-          { value: '4.1', label: '4.1 Télécoms & IT' },
-          { value: '4.2', label: '4.2 Fournitures' },
-          { value: '4.3', label: '4.3 Petit Matériel' },
-          { value: '4.4', label: '4.4 Documentation' }
+          { value: '4.1', label: '4.1 Télécoms & IT', keywords: ['internet', 'télécom', 'info', 'informatique', 'maintenance', 'logiciel', 'licence', 'orange', 'sfr', 'free'], desc: 'Abonnements Internet, maintenance informatique, licences logiciels' },
+          { value: '4.2', label: '4.2 Fournitures', keywords: ['fourniture', 'papeterie', 'bureau', 'consommable', 'médical', 'produit'], desc: 'Papeterie, consommables médicaux ou de bureau, produits d\'entretien' },
+          { value: '4.3', label: '4.3 Petit Matériel', keywords: ['matériel', 'équipement', 'achat', 'petit'], desc: 'Factures d\'achat de biens < 500 € HT' },
+          { value: '4.4', label: '4.4 Documentation', keywords: ['revue', 'abonnement', 'documentation', 'presse'], desc: 'Abonnements aux revues professionnelles communes' }
         ],
         '05': [
-          { value: '5.1', label: '5.1 Banque' },
-          { value: '5.2', label: '5.2 Appels de Fonds' },
-          { value: '5.3', label: '5.3 Immobilisations' },
-          { value: '5.4', label: '5.4 Honoraires' }
+          { value: '5.1', label: '5.1 Banque', keywords: ['banque', 'relevé', 'crédit', 'prêt', 'emprunt', 'compte'], desc: 'Relevés bancaires mensuels, contrats de prêts' },
+          { value: '5.2', label: '5.2 Appels de Fonds', keywords: ['appel de fonds', 'apport', 'virement', 'associé'], desc: 'Justificatifs des virements effectués par chaque associé' },
+          { value: '5.3', label: '5.3 Immobilisations', keywords: ['immobilisation', 'amortissement', 'investissement', 'bien'], desc: 'Factures d\'achats importants (> 500 € HT) et tableaux d\'amortissement' },
+          { value: '5.4', label: '5.4 Honoraires', keywords: ['honoraire', 'expert', 'comptable', 'avocat', 'commissaire'], desc: 'Factures de l\'expert-comptable, de l\'avocat ou du commissaire aux comptes' }
         ],
         '06': [
-          { value: '6.1', label: '6.1 Déclarations 2036' },
-          { value: '6.2', label: '6.2 TVA' },
-          { value: '6.3', label: '6.3 Taxe sur les Salaires' }
+          { value: '6.1', label: '6.1 Déclarations 2036', keywords: ['2036', 'déclaration', 'scm'], desc: 'Copies des déclarations annuelles de la SCM' },
+          { value: '6.2', label: '6.2 TVA', keywords: ['tva', 'ca3', 'ca12', 'déclaration'], desc: 'Déclarations CA3 ou CA12' },
+          { value: '6.3', label: '6.3 Taxe sur les Salaires', keywords: ['taxe salaire', 'salarié'], desc: 'Avis de paiement si applicable' }
         ],
         '07': [
-          { value: '7.1', label: '7.1 Fournisseurs' },
-          { value: '7.2', label: '7.2 Divers' }
+          { value: '7.1', label: '7.1 Fournisseurs', keywords: ['fournisseur', 'devis', 'réclamation', 'courrier'], desc: 'Devis non retenus, courriers de réclamation' },
+          { value: '7.2', label: '7.2 Divers', keywords: ['divers', 'autre', 'courrier', 'administration'], desc: 'Courriers reçus, échanges avec l\'administration non classified ailleurs' }
         ]
       };
 
+      const categoryColors = {
+        '01': { bg: 'rgba(99, 102, 241, 0.15)', border: '#6366f1' },
+        '02': { bg: 'rgba(16, 185, 129, 0.15)', border: '#10b981' },
+        '03': { bg: 'rgba(245, 158, 11, 0.15)', border: '#f59e0b' },
+        '04': { bg: 'rgba(236, 72, 153, 0.15)', border: '#ec4899' },
+        '05': { bg: 'rgba(139, 92, 246, 0.15)', border: '#8b5cf6' },
+        '06': { bg: 'rgba(239, 68, 68, 0.15)', border: '#ef4444' },
+        '07': { bg: 'rgba(107, 114, 128, 0.15)', border: '#6b7280' }
+      };
+
       let selectedDocFile = null;
+      let suggestedCategory = null;
 
       window.openDocumentModal = function() {
         document.getElementById('document-upload-modal').style.display = 'flex';
-        // Reset form
         document.getElementById('docUploadInput').value = '';
         document.getElementById('docCategory').value = '';
+        document.getElementById('docSearch').value = '';
         document.getElementById('docSubcategory').innerHTML = '<option value="">Sélectionner...</option>';
         document.getElementById('docSubcategoryGroup').style.display = 'none';
         document.getElementById('docDescription').value = '';
         document.getElementById('docSelectedFile').style.display = 'none';
+        document.getElementById('docSearchResults').style.display = 'none';
+        document.getElementById('docAutoCategory').style.display = 'none';
         document.getElementById('saveDocumentBtn').disabled = true;
         selectedDocFile = null;
+        suggestedCategory = null;
       };
 
       window.closeDocumentModal = function() {
@@ -2458,7 +2481,119 @@ window.attemptLogin = function() {
           selectedDocFile = file;
           document.getElementById('docFileName').textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
           document.getElementById('docSelectedFile').style.display = 'block';
+          
+          // Auto-categorize based on filename
+          autoCategorize(file.name);
           checkDocFormComplete();
+        }
+      };
+
+      window.autoCategorize = function(text) {
+        const searchText = text.toLowerCase();
+        let bestMatch = null;
+        let bestScore = 0;
+
+        for (const [catKey, subcats] of Object.entries(docCategories)) {
+          for (const sub of subcats) {
+            let score = 0;
+            for (const kw of sub.keywords) {
+              if (searchText.includes(kw.toLowerCase())) {
+                score += kw.length;
+              }
+            }
+            if (score > bestScore) {
+              bestScore = score;
+              bestMatch = { category: catKey, subcategory: sub };
+            }
+          }
+        }
+
+        if (bestMatch) {
+          suggestedCategory = bestMatch;
+          const autoCatDiv = document.getElementById('docAutoCategory');
+          const catColors = categoryColors[bestMatch.category];
+          autoCatDiv.style.background = catColors.bg;
+          autoCatDiv.style.border = '1px solid ' + catColors.border;
+          autoCatDiv.style.display = 'block';
+          document.getElementById('docSuggestedCategory').textContent = bestMatch.subcategory.label + ' - ' + bestMatch.subcategory.desc;
+        }
+      };
+
+      window.applySuggestedCategory = function() {
+        if (suggestedCategory) {
+          document.getElementById('docCategory').value = suggestedCategory.category;
+          updateDocSubcategories();
+          setTimeout(() => {
+            document.getElementById('docSubcategory').value = suggestedCategory.subcategory.value;
+            checkDocFormComplete();
+          }, 100);
+          document.getElementById('docAutoCategory').style.display = 'none';
+        }
+      };
+
+      window.searchDocCategories = function() {
+        const searchText = document.getElementById('docSearch').value.toLowerCase();
+        const resultsDiv = document.getElementById('docSearchResults');
+        
+        if (searchText.length < 2) {
+          resultsDiv.style.display = 'none';
+          return;
+        }
+
+        const results = [];
+        for (const [catKey, subcats] of Object.entries(docCategories)) {
+          const catLabel = {
+            '01': '01 – JURIDIQUE ET ADMINISTRATION',
+            '02': '02 – IMMOBILIER ET LOCAUX',
+            '03': '03 – RESSOURCES HUMAINES',
+            '04': '04 – EXPLOITATION ET SERVICES',
+            '05': '05 – COMPTABILITÉ ET BANQUE',
+            '06': '06 – FISCALITÉ',
+            '07': '07 – CORRESPONDANCE'
+          }[catKey];
+
+          const catColors = categoryColors[catKey];
+
+          for (const sub of subcats) {
+            const fullText = (catLabel + ' ' + sub.label + ' ' + sub.desc + ' ' + sub.keywords.join(' ')).toLowerCase();
+            if (fullText.includes(searchText)) {
+              results.push({ category: catKey, subcategory: sub, label: catLabel });
+            }
+          }
+        }
+
+        if (results.length === 0) {
+          resultsDiv.innerHTML = '<div style="padding: 12px; color: var(--color-text-secondary);">Aucun résultat</div>';
+        } else {
+          resultsDiv.innerHTML = results.slice(0, 10).map(r => {
+            const catColors = categoryColors[r.category];
+            return `<div class="doc-search-result" onclick="selectDocCategory('${r.category}', '${r.subcategory.value}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: 8px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: ${catColors.border}; flex-shrink: 0;"></span>
+              <div>
+                <div style="font-weight: 500; font-size: 0.8125rem;">${r.subcategory.label}</div>
+                <div style="font-size: 0.6875rem; color: var(--color-text-secondary);">${r.label}</div>
+              </div>
+            </div>`;
+          }).join('');
+        }
+        resultsDiv.style.display = 'block';
+      };
+
+      window.selectDocCategory = function(category, subcategory) {
+        document.getElementById('docCategory').value = category;
+        updateDocSubcategories();
+        setTimeout(() => {
+          document.getElementById('docSubcategory').value = subcategory;
+          checkDocFormComplete();
+        }, 100);
+        document.getElementById('docSearch').value = '';
+        document.getElementById('docSearchResults').style.display = 'none';
+      };
+
+      window.onDocDescriptionChange = function() {
+        const desc = document.getElementById('docDescription').value;
+        if (desc && desc.length > 2) {
+          autoCategorize(desc);
         }
       };
 
@@ -2588,6 +2723,7 @@ window.attemptLogin = function() {
         
         container.innerHTML = filteredDocs.map(doc => {
           const date = new Date(doc.created_at).toLocaleDateString('fr-FR');
+          const catClass = doc.category ? 'cat-' + doc.category.split('-')[0].trim() : '';
           return `
             <div class="document-item">
               <div class="document-icon">
@@ -2600,7 +2736,7 @@ window.attemptLogin = function() {
                 <div class="document-name">${doc.file_name}</div>
                 <div class="document-meta">${date} • ${doc.description || ''}</div>
               </div>
-              <span class="document-category-badge">${doc.category || ''}</span>
+              <span class="document-category-badge ${catClass}">${doc.category || ''}</span>
               <div class="document-actions">
                 <button class="btn-icon" onclick="window.open('${doc.file_url}', '_blank')" title="Voir">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

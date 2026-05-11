@@ -7288,6 +7288,14 @@ h2 {
     border-color: var(--color-primary);
 }
 
+.doc-filter-btn[data-filter="01"].active { background: #6366f1; border-color: #6366f1; }
+.doc-filter-btn[data-filter="02"].active { background: #10b981; border-color: #10b981; }
+.doc-filter-btn[data-filter="03"].active { background: #f59e0b; border-color: #f59e0b; }
+.doc-filter-btn[data-filter="04"].active { background: #ec4899; border-color: #ec4899; }
+.doc-filter-btn[data-filter="05"].active { background: #8b5cf6; border-color: #8b5cf6; }
+.doc-filter-btn[data-filter="06"].active { background: #ef4444; border-color: #ef4444; }
+.doc-filter-btn[data-filter="07"].active { background: #6b7280; border-color: #6b7280; }
+
 /* ===== Documents List ===== */
 .documents-list {
     display: flex;
@@ -7340,6 +7348,14 @@ h2 {
     font-size: 0.6875rem;
     color: var(--color-text-secondary);
 }
+
+.document-category-badge.cat-01 { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+.document-category-badge.cat-02 { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.document-category-badge.cat-03 { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.document-category-badge.cat-04 { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+.document-category-badge.cat-05 { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+.document-category-badge.cat-06 { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.document-category-badge.cat-07 { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
 
 .document-actions {
     display: flex;
