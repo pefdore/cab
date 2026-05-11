@@ -2659,8 +2659,8 @@ window.attemptLogin = function() {
         btn.disabled = true;
         btn.textContent = 'Enregistrement...';
         
-        try {
-          // Upload to Supabase Storage - try different approach
+try {
+          // Upload to Supabase Storage
           const fileName = selectedDocFile.name;
           const fileExt = fileName.split('.').pop();
           const newFileName = `${new Date().toISOString().split('T')[0]}_${Date.now()}.${fileExt}`;
@@ -2668,12 +2668,28 @@ window.attemptLogin = function() {
           console.log('[DOC] Starting upload to bucket: documents');
           console.log('[DOC] File:', fileName, 'Size:', selectedDocFile.size);
           
-          // First try to create bucket (might fail if already exists, that's ok)
+          // Try to create bucket - if it fails (permissions), we'll tell user to create manually
           try {
             await window.supabaseClient.storage.createBucket('documents', { public: true });
-            console.log('[DOC] Bucket created or already exists');
-          } catch (e) {
-            console.log('[DOC] Bucket creation:', e.message);
+            console.log('[DOC] Bucket created');
+          } catch (bucketErr) {
+            console.log('[DOC] Cannot create bucket (may already exist or no permission):', bucketErr.message);
+          }
+          
+          // Now try upload
+          const { data, error } = await window.supabaseClient.storage
+            .from('documents')
+            .upload(newFileName, selectedDocFile);
+          
+          if (error) {
+            console.error('[DOC] Upload error:', error);
+            // More helpful error message
+            if (error.message.includes('bucket')) {
+              alert('Erreur: Le bucket "documents" n\'existe pas. Veuillez le créer dans Supabase Dashboard > Storage > New Bucket (nom: documents, public: coché)');
+            } else {
+              alert('Erreur lors de l\'upload: ' + error.message);
+            }
+            throw error;
           }
           
           // Now try upload
