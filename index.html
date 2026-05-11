@@ -1923,36 +1923,48 @@ window.attemptLogin = function() {
                         <strong>Fichier sélectionné:</strong> <span id="docFileName"></span>
                     </div>
                     <div class="form-group">
-                        <label>Rechercher dans les catégories</label>
-                        <input type="text" id="docSearch" placeholder="Tapez pour rechercher (ex: bail, facture, contrat...)" oninput="searchDocCategories()">
+                        <label>Rechercher dans les catégories et descriptions</label>
+                        <input type="text" id="docSearch" placeholder="Tapez pour rechercher (ex: bail, facture, contrat, edf...)" oninput="searchDocCategories()">
                         <div id="docSearchResults" style="display: none; max-height: 150px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: 8px; margin-top: 4px; background: var(--color-bg-elevated);"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Catégorie</label>
-                        <select id="docCategory" onchange="updateDocSubcategories()">
-                            <option value="">Sélectionner une catégorie...</option>
-                            <option value="01" data-color="#6366f1">01 – JURIDIQUE ET ADMINISTRATION</option>
-                            <option value="02" data-color="#10b981">02 – IMMOBILIER ET LOCAUX</option>
-                            <option value="03" data-color="#f59e0b">03 – RESSOURCES HUMAINES</option>
-                            <option value="04" data-color="#ec4899">04 – EXPLOITATION ET SERVICES</option>
-                            <option value="05" data-color="#8b5cf6">05 – COMPTABILITÉ ET BANQUE</option>
-                            <option value="06" data-color="#ef4444">06 – FISCALITÉ</option>
-                            <option value="07" data-color="#6b7280">07 – CORRESPONDANCE</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Catégorie</label>
+                            <select id="docCategory" onchange="updateDocSubcategories()">
+                                <option value="">Sélectionner...</option>
+                                <option value="01" data-color="#6366f1">01 – JURIDIQUE ET ADMINISTRATION</option>
+                                <option value="02" data-color="#10b981">02 – IMMOBILIER ET LOCAUX</option>
+                                <option value="03" data-color="#f59e0b">03 – RESSOURCES HUMAINES</option>
+                                <option value="04" data-color="#ec4899">04 – EXPLOITATION ET SERVICES</option>
+                                <option value="05" data-color="#8b5cf6">05 – COMPTABILITÉ ET BANQUE</option>
+                                <option value="06" data-color="#ef4444">06 – FISCALITÉ</option>
+                                <option value="07" data-color="#6b7280">07 – CORRESPONDANCE</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="docSubcategoryGroup" style="display: none;">
+                            <label>Sous-catégorie</label>
+                            <select id="docSubcategory">
+                                <option value="">Sélectionner...</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group" id="docSubcategoryGroup" style="display: none;">
-                        <label>Sous-catégorie</label>
-                        <select id="docSubcategory">
-                            <option value="">Sélectionner...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Description (optionnel)</label>
-                        <input type="text" id="docDescription" placeholder="Courte description du document" oninput="onDocDescriptionChange()">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date du document</label>
+                            <input type="date" id="docDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="docDescription" placeholder="Courte description (ex: Facture EDF janvier 2024)" oninput="onDocDescriptionChange()">
+                        </div>
                     </div>
                     <div id="docAutoCategory" style="display: none; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.8125rem;">
                         <strong>Catégorie recommandée:</strong> <span id="docSuggestedCategory"></span>
                         <button type="button" onclick="applySuggestedCategory()" style="margin-left: 8px; padding: 4px 8px; border: none; background: rgba(255,255,255,0.3); border-radius: 4px; cursor: pointer;">Appliquer</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Annotation (optionnel)</label>
+                        <textarea id="docAnnotation" rows="2" placeholder="Notes personnelles, observations..." style="width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 8px; font-family: inherit; font-size: 0.875rem; resize: vertical;"></textarea>
                     </div>
                     <button id="saveDocumentBtn" class="btn-primary" style="width: 100%; margin-top: 16px;" onclick="saveUploadedDocument()" disabled>
                         Enregistrer le document
@@ -2463,6 +2475,8 @@ window.attemptLogin = function() {
         document.getElementById('docSubcategory').innerHTML = '<option value="">Sélectionner...</option>';
         document.getElementById('docSubcategoryGroup').style.display = 'none';
         document.getElementById('docDescription').value = '';
+        document.getElementById('docDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('docAnnotation').value = '';
         document.getElementById('docSelectedFile').style.display = 'none';
         document.getElementById('docSearchResults').style.display = 'none';
         document.getElementById('docAutoCategory').style.display = 'none';
@@ -2633,6 +2647,8 @@ window.attemptLogin = function() {
         const category = document.getElementById('docCategory').value;
         const subcategory = document.getElementById('docSubcategory').value;
         const description = document.getElementById('docDescription').value;
+        const docDate = document.getElementById('docDate').value;
+        const annotation = document.getElementById('docAnnotation').value;
         
         const btn = document.getElementById('saveDocumentBtn');
         btn.disabled = true;
@@ -2664,6 +2680,8 @@ window.attemptLogin = function() {
               file_url: urlData.publicUrl,
               category: category + ' - ' + subcategory,
               description: description || fileName,
+              doc_date: docDate || null,
+              annotation: annotation || null,
               doc_type: 'cabinet'
             });
           
