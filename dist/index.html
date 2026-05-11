@@ -2688,20 +2688,6 @@ window.attemptLogin = function() {
           
           console.log('[DOC] Upload success:', data);
           
-          console.log('[DOC] Starting upload to bucket: documents');
-          console.log('[DOC] File:', fileName, 'Size:', selectedDocFile.size);
-          
-          const { data, error } = await window.supabaseClient.storage
-            .from('documents')
-            .upload(newFileName, selectedDocFile);
-          
-          if (error) {
-            console.error('[DOC] Upload error:', error);
-            throw new Error(error.message || 'Upload failed');
-          }
-          
-          console.log('[DOC] Upload success:', data);
-          
           // Get public URL
           const { data: urlData } = window.supabaseClient.storage
             .from('documents')
