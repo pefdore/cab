@@ -1988,7 +1988,7 @@ window.attemptLogin = function() {
                     <input type="hidden" id="edit-doc-id">
                     <div class="form-group">
                         <label>Nom du fichier</label>
-                        <input type="text" id="edit-doc-filename" disabled style="background: var(--color-bg-subtle);">
+                        <input type="text" id="edit-doc-filename" placeholder="Nom du fichier">
                     </div>
                     <div class="form-group">
                         <label>Catégorie</label>
@@ -2934,6 +2934,7 @@ window.attemptLogin = function() {
 
       window.saveDocumentEdit = async function() {
         const docId = document.getElementById('edit-doc-id').value;
+        const fileName = document.getElementById('edit-doc-filename').value;
         const description = document.getElementById('edit-doc-description').value;
         const category = document.getElementById('edit-doc-category').value;
         const subcategory = document.getElementById('edit-doc-subcategory').value;
@@ -2943,6 +2944,7 @@ window.attemptLogin = function() {
           const { error } = await window.supabaseClient
             .from('documents')
             .update({
+              file_name: fileName,
               description: description,
               category: category + ' - ' + subcategory,
               annotation: annotation
