@@ -1973,6 +1973,57 @@ window.attemptLogin = function() {
             </div>
         </div>
 
+        <!-- Document Edit Modal -->
+        <div id="document-edit-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3>Modifier le document</h3>
+                    <button class="modal-close" onclick="closeEditDocumentModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-doc-id">
+                    <div class="form-group">
+                        <label>Nom du fichier</label>
+                        <input type="text" id="edit-doc-filename" disabled style="background: var(--color-bg-subtle);">
+                    </div>
+                    <div class="form-group">
+                        <label>Catégorie</label>
+                        <select id="edit-doc-category" onchange="updateEditDocSubcategories()">
+                            <option value="">Sélectionner...</option>
+                            <option value="01">01 – JURIDIQUE ET ADMINISTRATION</option>
+                            <option value="02">02 – IMMOBILIER ET LOCAUX</option>
+                            <option value="03">03 – RESSOURCES HUMAINES</option>
+                            <option value="04">04 – EXPLOITATION ET SERVICES</option>
+                            <option value="05">05 – COMPTABILITÉ ET BANQUE</option>
+                            <option value="06">06 – FISCALITÉ</option>
+                            <option value="07">07 – CORRESPONDANCE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Sous-catégorie</label>
+                        <select id="edit-doc-subcategory">
+                            <option value="">Sélectionner...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="edit-doc-description" placeholder="Description">
+                    </div>
+                    <div class="form-group">
+                        <label>Annotation</label>
+                        <textarea id="edit-doc-annotation" rows="2" placeholder="Notes..." style="width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 8px; font-family: inherit; font-size: 0.875rem; resize: vertical;"></textarea>
+                    </div>
+                    <button class="btn-primary" style="width: 100%; margin-top: 16px;" onclick="saveDocumentEdit()">
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Mobile Bottom Navbar -->
         <nav class="mobile-bottom-nav">
             <a href="#" class="mobile-nav-item active" data-view="dashboard">
@@ -2799,7 +2850,7 @@ window.attemptLogin = function() {
           const date = new Date(doc.created_at).toLocaleDateString('fr-FR');
           const catClass = doc.category ? 'cat-' + doc.category.split('-')[0].trim() : '';
           return `
-            <div class="document-item">
+            <div class="document-item" data-doc-id="${doc.id}">
               <div class="document-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -2812,6 +2863,12 @@ window.attemptLogin = function() {
               </div>
               <span class="document-category-badge ${catClass}">${doc.category || ''}</span>
               <div class="document-actions">
+                <button class="btn-icon" onclick="editDocument('${doc.id}')" title="Modifier">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
                 <button class="btn-icon" onclick="window.open('${doc.file_url}', '_blank')" title="Voir">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -2819,10 +2876,123 @@ window.attemptLogin = function() {
                     <line x1="10" y1="14" x2="21" y2="3"/>
                   </svg>
                 </button>
+                <button class="btn-icon btn-delete" onclick="deleteDocument('${doc.id}')" title="Supprimer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
               </div>
             </div>
           `;
         }).join('');
+      };
+
+      window.editDocument = function(docId) {
+        const doc = allDocuments.find(d => d.id === docId);
+        if (!doc) return;
+        
+        // Show edit modal
+        document.getElementById('edit-doc-id').value = doc.id;
+        document.getElementById('edit-doc-filename').value = doc.file_name;
+        document.getElementById('edit-doc-description').value = doc.description || '';
+        document.getElementById('edit-doc-category').value = doc.category || '';
+        document.getElementById('edit-doc-annotation').value = doc.annotation || '';
+        
+        // Parse category and subcategory
+        if (doc.category) {
+          const parts = doc.category.split(' - ');
+          if (parts.length >= 1) {
+            document.getElementById('edit-doc-category').value = parts[0];
+            updateEditDocSubcategories();
+          }
+          if (parts.length >= 2) {
+            setTimeout(() => {
+              document.getElementById('edit-doc-subcategory').value = parts[1];
+            }, 100);
+          }
+        }
+        
+        document.getElementById('document-edit-modal').style.display = 'flex';
+      };
+
+      window.updateEditDocSubcategories = function() {
+        const category = document.getElementById('edit-doc-category').value;
+        const subcategorySelect = document.getElementById('edit-doc-subcategory');
+        
+        subcategorySelect.innerHTML = '<option value="">Sélectionner...</option>';
+        
+        if (category && docCategories[category]) {
+          docCategories[category].forEach(sub => {
+            const option = document.createElement('option');
+            option.value = sub.value;
+            option.textContent = sub.label;
+            subcategorySelect.appendChild(option);
+          });
+        }
+      };
+
+      window.saveDocumentEdit = async function() {
+        const docId = document.getElementById('edit-doc-id').value;
+        const description = document.getElementById('edit-doc-description').value;
+        const category = document.getElementById('edit-doc-category').value;
+        const subcategory = document.getElementById('edit-doc-subcategory').value;
+        const annotation = document.getElementById('edit-doc-annotation').value;
+        
+        try {
+          const { error } = await window.supabaseClient
+            .from('documents')
+            .update({
+              description: description,
+              category: category + ' - ' + subcategory,
+              annotation: annotation
+            })
+            .eq('id', docId);
+          
+          if (error) throw error;
+          
+          alert('Document mis à jour!');
+          document.getElementById('document-edit-modal').style.display = 'none';
+          loadDocuments();
+        } catch (err) {
+          console.error('Error updating document:', err);
+          alert('Erreur: ' + err.message);
+        }
+      };
+
+      window.closeEditDocumentModal = function() {
+        document.getElementById('document-edit-modal').style.display = 'none';
+      };
+
+      window.deleteDocument = async function(docId) {
+        if (!confirm('Voulez-vous vraiment supprimer ce document?')) return;
+        
+        try {
+          // Delete from storage first
+          const doc = allDocuments.find(d => d.id === docId);
+          if (doc && doc.file_url) {
+            // Extract file path from URL
+            const urlParts = doc.file_url.split('/storage/v1/object/');
+            if (urlParts.length > 1) {
+              const filePath = urlParts[1];
+              await window.supabaseClient.storage.from('documents').remove([filePath]);
+            }
+          }
+          
+          // Delete from database
+          const { error } = await window.supabaseClient
+            .from('documents')
+            .delete()
+            .eq('id', docId);
+          
+          if (error) throw error;
+          
+          alert('Document supprimé!');
+          loadDocuments();
+        } catch (err) {
+          console.error('Error deleting document:', err);
+          alert('Erreur: ' + err.message);
+        }
       };
 
       window.filterDocuments = function(filter) {

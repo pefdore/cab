@@ -7380,3 +7380,8 @@ h2 {
     background: var(--color-primary-subtle);
     color: var(--color-primary);
 }
+
+.btn-icon.btn-delete:hover {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
