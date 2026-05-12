@@ -2837,12 +2837,49 @@ window.attemptLogin = function() {
       const originalSwitchHistoryMode = window.switchHistoryMode;
       window.switchHistoryMode = function(mode) {
         if (originalSwitchHistoryMode) originalSwitchHistoryMode(mode);
+        console.log('[DOC] switchHistoryMode called with mode:', mode);
         if (mode === 'cabinet') {
           setTimeout(() => {
+            console.log('[DOC] About to call loadDocuments');
             if (typeof loadDocuments === 'function') {
               loadDocuments();
+            } else {
+              console.log('[DOC] loadDocuments not found!');
             }
           }, 500);
+        }
+      };
+
+      // Also load documents when filter button is clicked
+      window.filterDocuments = function(filter) {
+        currentDocFilter = filter;
+        document.querySelectorAll('.doc-filter-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+        renderDocuments();
+      };
+
+      // Load documents when clicking the "+ Ajouter" button
+      window.openDocumentModal = function() {
+        document.getElementById('document-upload-modal').style.display = 'flex';
+        document.getElementById('docUploadInput').value = '';
+        document.getElementById('docCategory').value = '';
+        document.getElementById('docSearch').value = '';
+        document.getElementById('docSubcategory').innerHTML = '<option value="">Sélectionner...</option>';
+        document.getElementById('docSubcategoryGroup').style.display = 'none';
+        document.getElementById('docDescription').value = '';
+        document.getElementById('docDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('docAnnotation').value = '';
+        document.getElementById('docSelectedFile').style.display = 'none';
+        document.getElementById('docSearchResults').style.display = 'none';
+        document.getElementById('docAutoCategory').style.display = 'none';
+        document.getElementById('saveDocumentBtn').disabled = true;
+        selectedDocFile = null;
+        suggestedCategory = null;
+        
+        // Also refresh documents list when opening modal
+        if (typeof loadDocuments === 'function') {
+          loadDocuments();
         }
       };
 
