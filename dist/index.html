@@ -2851,16 +2851,14 @@ window.attemptLogin = function() {
       };
 
       // Also load documents when the documents section becomes visible
-      // Call loadDocuments on page load if we're already on cabinet view
+      // Call loadDocuments on page load
       window.addEventListener('load', function() {
         setTimeout(() => {
-          console.log('[DOC] Page loaded, checking if we need to load documents');
-          // Check if documents container exists and is visible
-          const docContainer = document.getElementById('documentsList');
-          if (docContainer && docContainer.offsetParent !== null) {
-            if (typeof loadDocuments === 'function') {
-              loadDocuments();
-            }
+          console.log('[DOC] Page loaded, calling loadDocuments directly');
+          if (typeof loadDocuments === 'function') {
+            loadDocuments();
+          } else {
+            console.log('[DOC] loadDocuments function not found!');
           }
         }, 2000);
       });
