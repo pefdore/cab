@@ -2739,10 +2739,28 @@ window.attemptLogin = function() {
       window.loadDocuments = async function() {
         try {
           console.log('[DOC] Loading documents from table...');
+          
+          // First check if table exists
+          const { data: testData, error: testError } = await window.supabaseClient
+            .from('documents')
+            .select('id')
+            .limit(1);
+          
+          console.log('[DOC] Table check:', { data: testData, error: testError });
+          
+          if (testError) {
+            console.error('[DOC] Table might not exist:', testError);
+            const container = document.getElementById('documentsList');
+            if (container) {
+              container.innerHTML = '<div class="no-entries" style="padding: 24px;">Table non trouvée: ' + testError.message + '</div>';
+            }
+            return;
+          }
+          
+          // Now load all documents
           const { data, error } = await window.supabaseClient
             .from('documents')
             .select('*')
-            .eq('doc_type', 'cabinet')
             .order('created_at', { ascending: false });
           
           if (error) {
@@ -2751,6 +2769,7 @@ window.attemptLogin = function() {
           }
           
           console.log('[DOC] Loaded documents:', data);
+          console.log('[DOC] Number of documents:', data?.length || 0);
           allDocuments = data || [];
           renderDocuments();
         } catch (err) {

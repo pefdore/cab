@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS documents (
     doc_type TEXT DEFAULT 'cabinet',
     doc_date DATE,
     annotation TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Enable RLS
