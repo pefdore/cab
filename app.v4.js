@@ -842,60 +842,48 @@ function setupModalAutocomplete() {
 }
 
 function handlePatientSearchModal(e) {
+    console.log('[MODAL] handlePatientSearchModal called', e.target.value);
     const query = e.target.value.toLowerCase();
     const dropdown = document.getElementById('autocomplete-dropdown-modal');
-    if (!dropdown) return;
+    if (!dropdown) {
+        console.log('[MODAL] ERROR: dropdown not found');
+        return;
+    }
+    
+    console.log('[MODAL] patients:', patients?.length, 'query:', query);
     
     if (!patients || patients.length === 0) {
         dropdown.innerHTML = '<div class="autocomplete-item">Patients en cours de chargement...</div>';
-        dropdown.classList.add('active');
+        dropdown.style.display = 'block';
         return;
     }
     
     if (query.length < 2) {
-        dropdown.classList.remove('active');
+        dropdown.style.display = 'none';
         return;
     }
     
     const matches = patients.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
+    console.log('[MODAL] matches:', matches.length);
     
     if (matches.length === 0) {
-        dropdown.classList.remove('active');
+        dropdown.style.display = 'none';
         return;
     }
     
     dropdown.innerHTML = matches.map(p => {
-        const patientEntries = entries.filter(en => en.patientId === p.id);
-        const passageCount = patientEntries.length;
-        const lastEntry = patientEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-        const lastDate = lastEntry ? new Date(lastEntry.date).toLocaleDateString('fr-FR') : '-';
-        const lastLocation = lastEntry?.location || '';
-        const locationColor = getLocationColor(lastLocation);
-        const locationBadge = lastLocation ? `<span class="location-badge" style="background:${locationColor}">${lastLocation}</span>` : '';
-        
-        return `
-            <div class="autocomplete-item" data-name="${p.name}" data-location="${lastLocation}">
-                <div class="autocomplete-patient-name">${p.name}</div>
-                <div class="autocomplete-patient-info">${passageCount} passage${passageCount !== 1 ? 's' : ''} · Dernier: ${lastDate}${locationBadge ? ' · ' + locationBadge : ''}</div>
-            </div>
-        `;
+        return `<div class="autocomplete-item" onclick="selectPatientFromModal('${p.name.replace(/'/g, "\\'")}', '${p.lastLocation || ''}')">${p.name}</div>`;
     }).join('');
     
-    dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const name = item.dataset.name;
-            const location = item.dataset.location;
-            
-            document.getElementById('patientNameModal').value = name;
-            
-            if (location) {
-                const locationSelect = document.getElementById('visitLocationModal');
-                if (locationSelect) locationSelect.value = location;
-            }
-            
-            dropdown.classList.remove('active');
-        });
-    });
+    dropdown.style.display = 'block';
+}
+
+function selectPatientFromModal(name, location) {
+    document.getElementById('patientNameModal').value = name;
+    if (location) {
+        document.getElementById('visitLocationModal').value = location;
+    }
+    document.getElementById('autocomplete-dropdown-modal').style.display = 'none';
 }
 
 let currentMonthAddModal = new Date();
