@@ -802,11 +802,55 @@ window.openPassageModal = function() {
         const form = document.getElementById('entryFormModal');
         if (form) form.reset();
         document.getElementById('amountDisplayModal').textContent = '0€';
+        
+        // Render VL list in modal
+        renderRecentVLForAddModal();
+        
         setTimeout(() => {
             document.getElementById('patientNameModal')?.focus();
         }, 100);
     }
 };
+
+function renderRecentVLForAddModal() {
+    const container = document.getElementById('recentVLListModal');
+    if (!container) return;
+
+    const vlOnly = vlHistory.filter(v => v.cotation === 'VL' || v.cotation === 'VL+MD');
+
+    if (vlOnly.length === 0) {
+        container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucune VL récente</p>';
+        return;
+    }
+
+    const now = new Date();
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+    const recentVL = vlOnly
+            .filter(v => new Date(v.date) > ninetyDaysAgo)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 10);
+
+    if (recentVL.length === 0) {
+        container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucune VL récente (plus de 90 jours)</p>';
+        return;
+    }
+
+    container.innerHTML = recentVL.map(v => {
+        const vlDate = new Date(v.date);
+        const nextDate = getNextQuarterDate(v.date);
+        const daysUntil = Math.ceil((nextDate - now) / (24 * 60 * 60 * 1000));
+        const isEligible = daysUntil <= 0;
+
+        return `
+            <div class="recent-vl-item compact">
+                <span class="vl-patient">${v.patientName}</span>
+                <span class="vl-dates">${vlDate.toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})} → ${nextDate.toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})}</span>
+                <span class="vl-badge ${isEligible ? 'eligible' : ''}">${isEligible ? '✓' : daysUntil}</span>
+            </div>
+        `;
+    }).join('');
+}
 
 window.closePassageModal = function() {
     const modal = document.getElementById('passage-add-modal');
@@ -867,6 +911,22 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
 document.getElementById('passage-add-modal')?.addEventListener('click', function(e) {
     if (e.target === this) closePassageModal();
 });
+
+window.showVLRulesPopupModal = function() {
+    document.getElementById('vl-rules-popup-modal').style.display = 'flex';
+};
+
+window.closeVLRulesPopupModal = function() {
+    document.getElementById('vl-rules-popup-modal').style.display = 'none';
+};
+
+document.getElementById('vl-rules-popup-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeVLRulesPopupModal();
+});
+
+window.showCotationManagerModal = function() {
+    document.getElementById('cotation-manager-popup').style.display = 'flex';
+};
 
 // --- Month management ---
 let currentMonthAdd = new Date();
