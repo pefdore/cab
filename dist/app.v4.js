@@ -823,6 +823,8 @@ function setupModalAutocomplete() {
     const patientInput = document.getElementById('patientNameModal');
     if (!patientInput) return;
     
+    console.log('[MODAL] Setting up autocomplete, patients:', patients.length);
+    
     // Remove old listener if exists to avoid duplicates
     patientInput.removeEventListener('input', handlePatientSearchModal);
     
@@ -839,6 +841,8 @@ function handlePatientSearchModal(e) {
     const dropdown = document.getElementById('autocomplete-dropdown-modal');
     if (!dropdown) return;
     
+    console.log('[MODAL] Searching for:', query, 'patients:', patients.length);
+    
     if (query.length < 2) {
         dropdown.classList.remove('active');
         return;
@@ -846,7 +850,12 @@ function handlePatientSearchModal(e) {
     
     const matches = patients.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
     
+    console.log('[MODAL] Matches:', matches.length);
+    
     if (matches.length === 0) {
+        dropdown.classList.remove('active');
+        return;
+    }
         dropdown.classList.remove('active');
         return;
     }
@@ -1076,8 +1085,70 @@ document.getElementById('vl-rules-popup-modal')?.addEventListener('click', funct
 });
 
 window.showCotationManagerModal = function() {
-    document.getElementById('cotation-manager-popup').style.display = 'flex';
+    document.getElementById('cotation-manager-popup-modal').style.display = 'flex';
+    renderCotationListModal();
 };
+
+window.closeCotationManagerModal = function() {
+    document.getElementById('cotation-manager-popup-modal').style.display = 'none';
+};
+
+document.getElementById('cotation-manager-popup-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeCotationManagerModal();
+});
+
+function renderCotationListModal() {
+    const container = document.getElementById('cotation-manager-list-modal');
+    if (!container) return;
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = settings.customCotations || [];
+    
+    if (customCotations.length === 0) {
+        container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucune cotation personnalisée</p>';
+        return;
+    }
+    
+    container.innerHTML = customCotations.map((c, index) => `
+        <div class="cotation-item">
+            <span class="cotation-key">${c.key}</span>
+            <span class="cotation-amount">${parseFloat(c.amount).toFixed(2)}€</span>
+            <button class="delete-cotation-btn" onclick="deleteCotationModal(${index})">×</button>
+        </div>
+    `).join('');
+}
+
+window.deleteCotationModal = function(index) {
+    let settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    if (!settings.customCotations) settings.customCotations = [];
+    settings.customCotations.splice(index, 1);
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    populateCotationSelect();
+    populateModalCotationSelect();
+    renderCotationListModal();
+};
+
+document.getElementById('addNewCotationModal')?.addEventListener('click', function() {
+    const key = document.getElementById('newCotationKeyModal').value.trim();
+    const amount = parseFloat(document.getElementById('newCotationAmountModal').value);
+    
+    if (!key || isNaN(amount)) {
+        alert('Veuillez entrer une clé et un montant');
+        return;
+    }
+    
+    let settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    if (!settings.customCotations) settings.customCotations = [];
+    settings.customCotations.push({ key, amount });
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    
+    document.getElementById('newCotationKeyModal').value = '';
+    document.getElementById('newCotationAmountModal').value = '';
+    
+    populateCotationSelect();
+    populateModalCotationSelect();
+    renderCotationListModal();
+});
 
 // --- Month management ---
 let currentMonthAdd = new Date();

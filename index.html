@@ -2088,6 +2088,28 @@ window.attemptLogin = function() {
 </button>
                     </form>
 
+                    <!-- Cotation Manager Popup for Modal -->
+                    <div id="cotation-manager-popup-modal" class="popup-overlay" style="display: none;">
+                        <div class="popup-card">
+                            <div class="popup-header">
+                                <h3>Mes Cotations</h3>
+                                <button class="popup-close" onclick="closeCotationManagerModal()">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="popup-body">
+                                <div id="cotation-manager-list-modal"></div>
+                                <div class="add-cotation-form">
+                                    <input type="text" id="newCotationKeyModal" placeholder="Nouvelle clé (ex: VG+MD)">
+                                    <input type="number" id="newCotationAmountModal" placeholder="Montant" step="0.01">
+                                    <button id="addNewCotationModal" class="add-btn">Ajouter</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Recent VL Section -->
                     <div class="recent-vl-section" style="margin-top: 24px;">
                         <div class="recent-vl-header">
@@ -2258,7 +2280,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v4.js?v=202605130950" defer></script>
+    <script src="app.v4.js?v=202605131000" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
       // Fallback: Define showAddEmployeeModal directly in case secretariat.js fails to load
