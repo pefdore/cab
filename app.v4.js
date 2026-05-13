@@ -883,7 +883,8 @@ function handlePatientSearchModal(e) {
         if (passageCount > 0) {
             const lastEntry = patientEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
             const lastDate = new Date(lastEntry.date).toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'});
-            lastInfo = ` · ${passageCount} passage${passageCount !== 1 ? 's' : ''} · ${lastDate} · ${lastEntry.location}`;
+            const locationColor = getLocationColor(lastEntry.location);
+            lastInfo = ` <span style="background:${locationColor}; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">${lastEntry.location}</span> · ${passageCount} passage${passageCount !== 1 ? 's' : ''} · ${lastDate}`;
         }
         return `<div class="autocomplete-item" onclick="selectPatientFromModal('${p.name.replace(/'/g, "\\'")}')">${p.name}${lastInfo}</div>`;
     }).join('');
