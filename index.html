@@ -2040,7 +2040,7 @@ window.attemptLogin = function() {
                         <div class="form-group">
                             <label>Patient</label>
                             <div class="autocomplete-wrapper">
-                                <input type="text" id="patientNameModal" required placeholder="NOM Prénom">
+                                <input type="text" id="patientNameModal" required placeholder="NOM Prénom" oninput="handlePatientSearchModal({target:this})" onfocus="handlePatientSearchModal({target:this})">
                                 <div id="autocomplete-dropdown-modal" class="autocomplete-dropdown"></div>
                             </div>
                         </div>

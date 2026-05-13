@@ -803,14 +803,6 @@ window.openPassageModal = async function() {
         if (form) form.reset();
         document.getElementById('amountDisplayModal').textContent = '0€';
         
-        // Load patients if not loaded
-        if (!patients || patients.length === 0) {
-            await loadPatients();
-        }
-        
-        // Setup autocomplete for modal
-        setupModalAutocomplete();
-        
         // Render entries for modal
         updateMonthDisplayModal();
         renderEntriesForModal();
@@ -818,6 +810,7 @@ window.openPassageModal = async function() {
         // Render VL list in modal (load if needed)
         loadVLHistory().then(() => renderRecentVLForAddModal());
         
+        // Focus on patient input
         setTimeout(() => {
             document.getElementById('patientNameModal')?.focus();
         }, 100);
