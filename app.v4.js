@@ -856,9 +856,6 @@ function handlePatientSearchModal(e) {
         dropdown.classList.remove('active');
         return;
     }
-        dropdown.classList.remove('active');
-        return;
-    }
     
     dropdown.innerHTML = matches.map(p => {
         const patientEntries = entries.filter(en => en.patientId === p.id);
