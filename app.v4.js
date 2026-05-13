@@ -785,6 +785,96 @@ function handleRecetteAutocomplete() {
 window.switchAddMode = switchAddMode;
 window.switchAddDepenseRecette = switchAddDepenseRecette;
 
+// --- Passage Modal Functions ---
+function populateModalCotationSelect() {
+    const modalSelect = document.getElementById('cotationModal');
+    const originalSelect = document.getElementById('cotation');
+    if (!modalSelect || !originalSelect) return;
+    
+    modalSelect.innerHTML = originalSelect.innerHTML;
+}
+
+window.openPassageModal = function() {
+    const modal = document.getElementById('passage-add-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        populateModalCotationSelect();
+        const form = document.getElementById('entryFormModal');
+        if (form) form.reset();
+        document.getElementById('amountDisplayModal').textContent = '0€';
+        setTimeout(() => {
+            document.getElementById('patientNameModal')?.focus();
+        }, 100);
+    }
+};
+
+window.closePassageModal = function() {
+    const modal = document.getElementById('passage-add-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+document.getElementById('cotationModal')?.addEventListener('change', function() {
+    const value = this.value;
+    if (value && value !== '__manage__') {
+        const parts = value.split('|');
+        const amount = parts[1] || '0';
+        document.getElementById('amountDisplayModal').textContent = parseFloat(amount).toFixed(2) + '€';
+    } else {
+        document.getElementById('amountDisplayModal').textContent = '0€';
+    }
+});
+
+document.getElementById('entryFormModal')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const patientName = document.getElementById('patientNameModal').value;
+    const visitDate = document.getElementById('visitDateModal').value;
+    const visitLocation = document.getElementById('visitLocationModal').value;
+    const cotationValue = document.getElementById('cotationModal').value;
+    
+    if (!patientName || !visitDate || !visitLocation || !cotationValue || cotationValue === '__manage__') {
+        alert('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    const parts = cotationValue.split('|');
+    const cotation = parts[0];
+    const amount = parts[1] || '0';
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('passages')
+            .insert([{
+                patient_name: patientName,
+                visit_date: visitDate,
+                location: visitLocation,
+                cotation: cotation,
+                amount: parseFloat(amount),
+                user_id: currentUser.id
+            }]);
+        
+        if (error) throw error;
+        
+        closePassageModal();
+        loadPassages();
+        loadDashboardData();
+        alert('Passage ajouté avec succès');
+    } catch (err) {
+        console.error('Erreur:', err);
+        alert('Erreur lors de l\'ajout: ' + err.message);
+    }
+});
+
+document.getElementById('passage-add-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closePassageModal();
+});
+
+// Handle Add button click (both desktop and mobile)
+window.handleAddClick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    openPassageModal();
+};
+
 // --- Month management ---
 let currentMonthAdd = new Date();
 
@@ -1889,7 +1979,12 @@ function setupEventListeners() {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const view = item.dataset.view;
-            switchView(view);
+            // Open passage modal instead of "add" view
+            if (view === 'add') {
+                openPassageModal();
+            } else {
+                switchView(view);
+            }
         });
     });
     
@@ -1903,7 +1998,12 @@ function setupEventListeners() {
             document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
             
-            switchView(view);
+            // Open passage modal instead of "add" view
+            if (view === 'add') {
+                openPassageModal();
+            } else {
+                switchView(view);
+            }
         });
     });
     
