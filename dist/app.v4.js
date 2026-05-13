@@ -801,6 +801,11 @@ window.openPassageModal = async function() {
         populateModalCotationSelect();
         const form = document.getElementById('entryFormModal');
         if (form) form.reset();
+        
+        // Set default date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('visitDateModal').value = today;
+        
         document.getElementById('amountDisplayModal').textContent = '0€';
         
         // Render entries for modal
@@ -872,7 +877,15 @@ function handlePatientSearchModal(e) {
     }
     
     dropdown.innerHTML = matches.map(p => {
-        return `<div class="autocomplete-item" onclick="selectPatientFromModal('${p.name.replace(/'/g, "\\'")}')">${p.name}</div>`;
+        const patientEntries = entries.filter(en => en.patientName === p.name);
+        const passageCount = patientEntries.length;
+        let lastInfo = '';
+        if (passageCount > 0) {
+            const lastEntry = patientEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+            const lastDate = new Date(lastEntry.date).toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'});
+            lastInfo = ` · ${passageCount} passage${passageCount !== 1 ? 's' : ''} · ${lastDate} · ${lastEntry.location}`;
+        }
+        return `<div class="autocomplete-item" onclick="selectPatientFromModal('${p.name.replace(/'/g, "\\'")}')">${p.name}${lastInfo}</div>`;
     }).join('');
     
     dropdown.style.display = 'block';
