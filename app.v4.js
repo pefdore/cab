@@ -794,7 +794,7 @@ function populateModalCotationSelect() {
     modalSelect.innerHTML = originalSelect.innerHTML;
 }
 
-window.openPassageModal = function() {
+window.openPassageModal = async function() {
     const modal = document.getElementById('passage-add-modal');
     if (modal) {
         modal.style.display = 'flex';
@@ -802,6 +802,11 @@ window.openPassageModal = function() {
         const form = document.getElementById('entryFormModal');
         if (form) form.reset();
         document.getElementById('amountDisplayModal').textContent = '0€';
+        
+        // Load patients if not loaded
+        if (!patients || patients.length === 0) {
+            await loadPatients();
+        }
         
         // Setup autocomplete for modal
         setupModalAutocomplete();
@@ -823,9 +828,7 @@ function setupModalAutocomplete() {
     const patientInput = document.getElementById('patientNameModal');
     if (!patientInput) return;
     
-    console.log('[MODAL] Setting up autocomplete, patients:', patients.length);
-    
-    // Remove old listener if exists to avoid duplicates
+    // Remove old listener to avoid duplicates
     patientInput.removeEventListener('input', handlePatientSearchModal);
     
     patientInput.addEventListener('input', handlePatientSearchModal);
@@ -841,7 +844,11 @@ function handlePatientSearchModal(e) {
     const dropdown = document.getElementById('autocomplete-dropdown-modal');
     if (!dropdown) return;
     
-    console.log('[MODAL] Searching for:', query, 'patients:', patients.length);
+    if (!patients || patients.length === 0) {
+        dropdown.innerHTML = '<div class="autocomplete-item">Patients en cours de chargement...</div>';
+        dropdown.classList.add('active');
+        return;
+    }
     
     if (query.length < 2) {
         dropdown.classList.remove('active');
@@ -849,8 +856,6 @@ function handlePatientSearchModal(e) {
     }
     
     const matches = patients.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
-    
-    console.log('[MODAL] Matches:', matches.length);
     
     if (matches.length === 0) {
         dropdown.classList.remove('active');
