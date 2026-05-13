@@ -2117,6 +2117,41 @@ window.attemptLogin = function() {
                         <div id="recentVLListModal" class="recent-vl-list"></div>
                     </div>
 
+                    <!-- Passages du mois dans le modal -->
+                    <div class="entries-section" id="add-passages-section-modal" style="margin-top: 24px;">
+                        <div class="entries-header">
+                            <h3>Passages du mois</h3>
+                            <div class="month-selector">
+                                <button id="prevMonthAddModal" onclick="changeMonthModal(-1)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M15 18l-6-6 6-6"/>
+                                    </svg>
+                                </button>
+                                <span id="currentMonthAddModal">Mai 2026</span>
+                                <button id="nextMonthAddModal" onclick="changeMonthModal(1)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18l6-6-6-6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="entries-table-wrapper">
+                            <table class="entries-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Patient</th>
+                                        <th>Lieu</th>
+                                        <th>Cotation</th>
+                                        <th>Montant</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="entriesBodyModal"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- VL Rules Popup -->
                     <div id="vl-rules-popup-modal" class="popup-overlay" style="display: none;">
                         <div class="popup-card">
@@ -2234,7 +2269,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v4.js?v=202605130930" defer></script>
+    <script src="app.v4.js?v=202605130940" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
       // Fallback: Define showAddEmployeeModal directly in case secretariat.js fails to load
