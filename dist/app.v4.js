@@ -868,13 +868,6 @@ document.getElementById('passage-add-modal')?.addEventListener('click', function
     if (e.target === this) closePassageModal();
 });
 
-// Handle Add button click (both desktop and mobile)
-window.handleAddClick = function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    openPassageModal();
-};
-
 // --- Month management ---
 let currentMonthAdd = new Date();
 
@@ -1979,12 +1972,7 @@ function setupEventListeners() {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const view = item.dataset.view;
-            // Open passage modal instead of "add" view
-            if (view === 'add') {
-                openPassageModal();
-            } else {
-                switchView(view);
-            }
+            switchView(view);
         });
     });
     
@@ -1998,12 +1986,7 @@ function setupEventListeners() {
             document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
             
-            // Open passage modal instead of "add" view
-            if (view === 'add') {
-                openPassageModal();
-            } else {
-                switchView(view);
-            }
+            switchView(view);
         });
     });
     

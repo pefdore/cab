@@ -174,7 +174,7 @@ window.attemptLogin = function() {
                     </svg>
                     Dashboard
                 </a>
-                <a href="#" class="nav-item" data-view="add" onclick="handleAddClick(event)">
+                <a href="#" class="nav-item" data-view="add">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
                         <line x1="8" y1="12" x2="16" y2="12"/>
@@ -2090,7 +2090,7 @@ window.attemptLogin = function() {
                 </svg>
                 <span>Dashboard</span>
             </a>
-            <a href="#" class="mobile-nav-item" data-view="add" onclick="handleAddClick(event)">
+            <a href="#" class="mobile-nav-item" data-view="add">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
                     <line x1="8" y1="12" x2="16" y2="12"/>
@@ -2148,7 +2148,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v4.js?v=202605130900" defer></script>
+    <script src="app.v4.js?v=202605130910" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
       // Fallback: Define showAddEmployeeModal directly in case secretariat.js fails to load
@@ -2458,19 +2458,6 @@ window.attemptLogin = function() {
       window.fabAction = function(action) {
         const fab = document.getElementById('fabContainer');
         fab.classList.remove('open');
-
-        // Open passage modal instead of switching to add view
-        if (action === 'passage') {
-          if (typeof openPassageModal === 'function') {
-            openPassageModal();
-          } else {
-            switchView('add');
-            if (typeof switchAddMode === 'function') {
-              switchAddMode('passages');
-            }
-          }
-          return;
-        }
 
         // Use switchView from app.v4.js which properly handles view initialization
         if (typeof switchView === 'function') {
