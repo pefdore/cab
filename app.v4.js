@@ -872,18 +872,55 @@ function handlePatientSearchModal(e) {
     }
     
     dropdown.innerHTML = matches.map(p => {
-        return `<div class="autocomplete-item" onclick="selectPatientFromModal('${p.name.replace(/'/g, "\\'")}', '${p.lastLocation || ''}')">${p.name}</div>`;
+        return `<div class="autocomplete-item" onclick="selectPatientFromModal('${p.name.replace(/'/g, "\\'")}')">${p.name}</div>`;
     }).join('');
     
     dropdown.style.display = 'block';
 }
 
-function selectPatientFromModal(name, location) {
+function selectPatientFromModal(name) {
     document.getElementById('patientNameModal').value = name;
-    if (location) {
-        document.getElementById('visitLocationModal').value = location;
-    }
     document.getElementById('autocomplete-dropdown-modal').style.display = 'none';
+    
+    // Find patient's last visit to pre-fill location and cotation
+    const patientEntries = entries.filter(en => en.patientName === name);
+    if (patientEntries.length > 0) {
+        const lastEntry = patientEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        
+        // Pre-fill location
+        if (lastEntry.location) {
+            document.getElementById('visitLocationModal').value = lastEntry.location;
+        }
+        
+        // Pre-fill cotation
+        if (lastEntry.cotation) {
+            const cotationSelect = document.getElementById('cotationModal');
+            if (cotationSelect) {
+                // Try to find matching option
+                let found = false;
+                for (let i = 0; i < cotationSelect.options.length; i++) {
+                    if (cotationSelect.options[i].textContent.startsWith(lastEntry.cotation)) {
+                        cotationSelect.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                // If not found, add it
+                if (!found && lastEntry.cotation) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = lastEntry.cotation + '|' + lastEntry.amount;
+                    newOpt.textContent = lastEntry.cotation + ' - ' + parseFloat(lastEntry.amount).toFixed(2) + '€';
+                    cotationSelect.appendChild(newOpt);
+                    cotationSelect.value = newOpt.value;
+                }
+                // Update amount display
+                const amountDisplay = document.getElementById('amountDisplayModal');
+                if (amountDisplay) {
+                    amountDisplay.textContent = parseFloat(lastEntry.amount).toFixed(2) + '€';
+                }
+            }
+        }
+    }
 }
 
 let currentMonthAddModal = new Date();
