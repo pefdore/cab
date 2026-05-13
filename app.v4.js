@@ -806,9 +806,132 @@ window.openPassageModal = function() {
         // Render VL list in modal
         renderRecentVLForAddModal();
         
+        // Setup autocomplete for modal
+        setupModalAutocomplete();
+        
+        // Render current month patients
+        renderCurrentMonthPatientsModal();
+        
         setTimeout(() => {
             document.getElementById('patientNameModal')?.focus();
         }, 100);
+    }
+};
+
+function setupModalAutocomplete() {
+    const patientInput = document.getElementById('patientNameModal');
+    if (!patientInput) return;
+    
+    // Remove old listener if exists to avoid duplicates
+    patientInput.removeEventListener('input', handlePatientSearchModal);
+    
+    patientInput.addEventListener('input', handlePatientSearchModal);
+    patientInput.addEventListener('focus', () => {
+        if (patientInput.value.length >= 2) {
+            handlePatientSearchModal({ target: patientInput });
+        }
+    });
+}
+
+function handlePatientSearchModal(e) {
+    const query = e.target.value.toLowerCase();
+    const dropdown = document.getElementById('autocomplete-dropdown-modal');
+    if (!dropdown) return;
+    
+    if (query.length < 2) {
+        dropdown.classList.remove('active');
+        return;
+    }
+    
+    const matches = patients.filter(p => p.name.toLowerCase().includes(query)).slice(0, 5);
+    
+    if (matches.length === 0) {
+        dropdown.classList.remove('active');
+        return;
+    }
+    
+    dropdown.innerHTML = matches.map(p => {
+        const patientEntries = entries.filter(en => en.patientId === p.id);
+        const passageCount = patientEntries.length;
+        const lastEntry = patientEntries.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        const lastDate = lastEntry ? new Date(lastEntry.date).toLocaleDateString('fr-FR') : '-';
+        const lastLocation = lastEntry?.location || '';
+        const locationColor = getLocationColor(lastLocation);
+        const locationBadge = lastLocation ? `<span class="location-badge" style="background:${locationColor}">${lastLocation}</span>` : '';
+        
+        return `
+            <div class="autocomplete-item" data-name="${p.name}" data-location="${lastLocation}">
+                <div class="autocomplete-patient-name">${p.name}</div>
+                <div class="autocomplete-patient-info">${passageCount} passage${passageCount !== 1 ? 's' : ''} · Dernier: ${lastDate}${locationBadge ? ' · ' + locationBadge : ''}</div>
+            </div>
+        `;
+    }).join('');
+    
+    dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const name = item.dataset.name;
+            const location = item.dataset.location;
+            
+            document.getElementById('patientNameModal').value = name;
+            
+            if (location) {
+                const locationSelect = document.getElementById('visitLocationModal');
+                if (locationSelect) locationSelect.value = location;
+            }
+            
+            dropdown.classList.remove('active');
+        });
+    });
+    
+    dropdown.classList.add('active');
+}
+
+function renderCurrentMonthPatientsModal() {
+    const container = document.getElementById('currentMonthPatientsModal');
+    if (!container) return;
+    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    const monthEntries = entries.filter(e => {
+        const entryDate = new Date(e.date);
+        return entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear;
+    });
+    
+    const patientCounts = {};
+    monthEntries.forEach(e => {
+        if (!patientCounts[e.patientName]) {
+            patientCounts[e.patientName] = { count: 0, location: e.location, cotation: e.cotation, date: e.date };
+        }
+        patientCounts[e.patientName].count++;
+    });
+    
+    const sortedPatients = Object.entries(patientCounts)
+        .sort((a, b) => a[0].localeCompare(b[0]));
+    
+    if (sortedPatients.length === 0) {
+        container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucun patient ce mois</p>';
+        return;
+    }
+    
+    container.innerHTML = sortedPatients.map(([name, data]) => {
+        const locationColor = getLocationColor(data.location);
+        return `
+            <div class="current-month-patient-item" onclick="fillPatientFromModal('${name.replace(/'/g, "\\'")}', '${data.location}')">
+                <span class="patient-name">${name}</span>
+                <span class="patient-visit-count">${data.count}x</span>
+                <span class="patient-location" style="background:${locationColor}">${data.location}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+window.fillPatientFromModal = function(name, location) {
+    document.getElementById('patientNameModal').value = name;
+    if (location) {
+        const locationSelect = document.getElementById('visitLocationModal');
+        if (locationSelect) locationSelect.value = location;
     }
 };
 
@@ -910,6 +1033,14 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
 
 document.getElementById('passage-add-modal')?.addEventListener('click', function(e) {
     if (e.target === this) closePassageModal();
+});
+
+// Close modal autocomplete when clicking outside
+document.addEventListener('click', (e) => {
+    const modalWrapper = e.target.closest('#patientNameModal')?.closest('.autocomplete-wrapper');
+    if (!modalWrapper) {
+        document.getElementById('autocomplete-dropdown-modal')?.classList.remove('active');
+    }
 });
 
 window.showVLRulesPopupModal = function() {
