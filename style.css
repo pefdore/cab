@@ -1479,17 +1479,18 @@ h2 {
 /* ========== ADD FORM - DESKTOP ========== */
 .add-form {
     background: var(--color-bg-elevated);
-    border-radius: var(--radius-lg);
+    border-radius: 16px;
     border: 1px solid var(--color-border);
     padding: 32px;
     margin-bottom: 32px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .add-form h2 {
     font-size: var(--text-xl);
     font-weight: 700;
     color: var(--color-text);
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
 .form-group {
@@ -1509,18 +1510,20 @@ h2 {
     width: 100%;
     padding: 14px 16px;
     font-size: var(--text-base);
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: 1.5px solid var(--color-border);
+    border-radius: 12px;
     background: var(--color-bg);
     color: var(--color-text);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition: all var(--transition-fast);
+    height: 52px;
+    box-sizing: border-box;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-light);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(99, 102, 241, 0.08);
 }
 
 .form-group input::placeholder {
@@ -1537,6 +1540,16 @@ h2 {
 
 .form-row:has(.form-group:only-child) {
     grid-template-columns: 1fr;
+}
+
+/* Ensure all form inputs have consistent height */
+.form-group input[type="date"],
+.form-group input[type="number"],
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group select {
+    height: 52px;
 }
 
 /* Amount display */
@@ -1558,22 +1571,23 @@ h2 {
     font-size: var(--text-base);
     font-weight: 600;
     color: white;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    transition: all 0.2s ease;
     margin-top: 8px;
+    height: 52px;
 }
 
 .submit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
 }
 
 .submit-btn:active {
@@ -1592,13 +1606,13 @@ h2 {
 
 .autocomplete-dropdown {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 4px);
     left: 0;
     right: 0;
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     z-index: 100;
     max-height: 240px;
     overflow-y: auto;
@@ -2445,13 +2459,20 @@ h2 {
     }
     
     .add-cotation-form .add-btn {
-        padding: 14px 20px;
-        background: var(--color-primary);
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: white;
         border: none;
         border-radius: 10px;
         font-weight: 600;
         cursor: pointer;
+        transition: all 0.2s ease;
+        height: 44px;
+    }
+    
+    .add-cotation-form .add-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
     
     /* Manage cotations button */
@@ -2460,19 +2481,20 @@ h2 {
         align-items: center;
         gap: 8px;
         margin-top: 10px;
-        padding: 10px 14px;
+        padding: 12px 16px;
         background: var(--color-bg-subtle);
-        border: 1px dashed var(--color-border);
-        border-radius: 8px;
+        border: 1.5px dashed var(--color-border);
+        border-radius: 10px;
         color: var(--color-text-secondary);
-        font-size: 0.85rem;
+        font-size: 0.875rem;
+        font-weight: 500;
         cursor: pointer;
         width: 100%;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
     }
     
     .manage-cotations-btn:hover {
-        background: var(--color-bg-muted);
+        background: var(--color-primary-subtle);
         border-color: var(--color-primary);
         color: var(--color-primary);
     }
@@ -3361,6 +3383,7 @@ h2 {
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
         overflow: hidden;
         animation: popupSlideIn 0.3s ease-out;
+        border: 1px solid var(--color-border);
     }
     
     @keyframes popupSlideIn {
@@ -4518,7 +4541,7 @@ h2 {
     color: var(--color-text);
     margin: 0;
     font-weight: 700;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -4556,26 +4579,28 @@ h2 {
 
 .login-form .form-group input {
     padding: 14px 16px;
-    border: 2px solid var(--color-border);
-    border-radius: 10px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 12px;
     font-size: 16px;
     font-family: inherit;
     width: 100%;
     box-sizing: border-box;
+    height: 52px;
+    transition: all 0.2s ease;
 }
 
 .login-form .form-group input:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(99, 102, 241, 0.08);
 }
 
 .login-form .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: white;
     border: none;
     padding: 14px;
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -4585,10 +4610,14 @@ h2 {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     user-select: none;
+    height: 52px;
+    transition: all 0.2s ease;
 }
 
 .login-form .btn-primary:hover {
-    opacity: 0.9;
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .login-toggle {
@@ -4616,12 +4645,20 @@ h2 {
 
 .login-form select {
     padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 12px;
     font-size: 16px;
     font-family: inherit;
     background: white;
     cursor: pointer;
+    height: 52px;
+    transition: all 0.2s ease;
+}
+
+.login-form select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(99, 102, 241, 0.08);
 }
 
 .login-form select:focus {
@@ -4631,8 +4668,9 @@ h2 {
 }
 
 .form-row-auth {
-    display: flex;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
 }
 
 .form-row-auth .form-group {
@@ -5260,28 +5298,41 @@ h2 {
 
 .depenses-form {
     background: var(--color-bg-subtle);
-    padding: 20px;
-    border-radius: 12px;
+    padding: 24px;
+    border-radius: 16px;
     margin-bottom: 20px;
+    border: 1px solid var(--color-border);
 }
 
 .depenses-form .form-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
 .depenses-form .form-group {
     flex: 1;
+    margin-bottom: 0;
 }
 
 .depenses-form input, .depenses-form select {
     width: 100%;
-    padding: 10px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 12px;
+    font-size: 15px;
     font-family: inherit;
+    height: 52px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    background: var(--color-bg);
+}
+
+.depenses-form input:focus, .depenses-form select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
 .document-item {
@@ -6620,13 +6671,14 @@ h2 {
 
 .modal-card {
     background: var(--color-bg-elevated);
-    border-radius: 12px;
+    border-radius: 20px;
     width: 90%;
     max-width: 500px;
     max-height: 90vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    border: 1px solid var(--color-border);
 }
 
 .modal-header {
