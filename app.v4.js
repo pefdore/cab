@@ -826,13 +826,22 @@ window.openPassageModal = async function() {
 
 function setupModalAutocomplete() {
     const patientInput = document.getElementById('patientNameModal');
-    if (!patientInput) return;
+    if (!patientInput) {
+        console.log('[MODAL] ERROR: patientNameModal not found');
+        return;
+    }
+    
+    console.log('[MODAL] Setting up autocomplete for patientInput');
     
     // Remove old listener to avoid duplicates
     patientInput.removeEventListener('input', handlePatientSearchModal);
     
-    patientInput.addEventListener('input', handlePatientSearchModal);
+    patientInput.addEventListener('input', function(e) {
+        console.log('[MODAL] Input event triggered, value:', e.target.value);
+        handlePatientSearchModal(e);
+    });
     patientInput.addEventListener('focus', () => {
+        console.log('[MODAL] Focus event');
         if (patientInput.value.length >= 2) {
             handlePatientSearchModal({ target: patientInput });
         }
