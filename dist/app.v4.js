@@ -803,18 +803,15 @@ window.openPassageModal = function() {
         if (form) form.reset();
         document.getElementById('amountDisplayModal').textContent = '0€';
         
-        // Render VL list in modal
-        renderRecentVLForAddModal();
-        
         // Setup autocomplete for modal
         setupModalAutocomplete();
-        
-        // Render current month patients
-        renderCurrentMonthPatientsModal();
         
         // Render entries for modal
         updateMonthDisplayModal();
         renderEntriesForModal();
+        
+        // Render VL list in modal (load if needed)
+        loadVLHistory().then(() => renderRecentVLForAddModal());
         
         setTimeout(() => {
             document.getElementById('patientNameModal')?.focus();
@@ -886,58 +883,7 @@ function handlePatientSearchModal(e) {
             dropdown.classList.remove('active');
         });
     });
-    
-    dropdown.classList.add('active');
 }
-
-function renderCurrentMonthPatientsModal() {
-    const container = document.getElementById('currentMonthPatientsModal');
-    if (!container) return;
-    
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    const monthEntries = entries.filter(e => {
-        const entryDate = new Date(e.date);
-        return entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear;
-    });
-    
-    const patientCounts = {};
-    monthEntries.forEach(e => {
-        if (!patientCounts[e.patientName]) {
-            patientCounts[e.patientName] = { count: 0, location: e.location, cotation: e.cotation, date: e.date };
-        }
-        patientCounts[e.patientName].count++;
-    });
-    
-    const sortedPatients = Object.entries(patientCounts)
-        .sort((a, b) => a[0].localeCompare(b[0]));
-    
-    if (sortedPatients.length === 0) {
-        container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucun patient ce mois</p>';
-        return;
-    }
-    
-    container.innerHTML = sortedPatients.map(([name, data]) => {
-        const locationColor = getLocationColor(data.location);
-        return `
-            <div class="current-month-patient-item" onclick="fillPatientFromModal('${name.replace(/'/g, "\\'")}', '${data.location}')">
-                <span class="patient-name">${name}</span>
-                <span class="patient-visit-count">${data.count}x</span>
-                <span class="patient-location" style="background:${locationColor}">${data.location}</span>
-            </div>
-        `;
-    }).join('');
-}
-
-window.fillPatientFromModal = function(name, location) {
-    document.getElementById('patientNameModal').value = name;
-    if (location) {
-        const locationSelect = document.getElementById('visitLocationModal');
-        if (locationSelect) locationSelect.value = location;
-    }
-};
 
 let currentMonthAddModal = new Date();
 
