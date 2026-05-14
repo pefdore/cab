@@ -658,8 +658,8 @@ function handleDepenseAutocomplete() {
         const sortedDepenses = [...cabinetDepenses].sort((a, b) => new Date(b.date) - new Date(a.date));
         
         const matches = sortedDepenses.filter(d => 
-            d.description && d.description.toLowerCase().includes(value)
-        ).slice(0, 10);
+            d.description && d.description.toLowerCase().startsWith(value)
+        ).slice(0, 15);
         
         console.log('[AUTOCOMPLETE] Matches found:', matches.length);
         
@@ -740,8 +740,8 @@ function handleRecetteAutocomplete() {
         const sortedRecettes = [...cabinetRecettes].sort((a, b) => new Date(b.date) - new Date(a.date));
         
         const matches = sortedRecettes.filter(r => 
-            r.description && r.description.toLowerCase().includes(value)
-        ).slice(0, 10);
+            r.description && r.description.toLowerCase().startsWith(value)
+        ).slice(0, 15);
         
         if (matches.length === 0) {
             dropdown.classList.remove('active');
