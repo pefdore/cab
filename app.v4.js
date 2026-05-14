@@ -5089,9 +5089,15 @@ async function handleRelevéUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
+    const loadingZoneModal = document.getElementById('releveLoadingModal');
+    const analysisZoneModal = document.getElementById('releveAnalysisModal');
+    const uploadBody = document.getElementById('releveUploadBody');
     const loadingZone = document.getElementById('releveLoading');
     const analysisZone = document.getElementById('releveAnalysisZone');
     
+    if (uploadBody) uploadBody.style.display = 'none';
+    if (loadingZoneModal) loadingZoneModal.style.display = 'block';
+    if (analysisZoneModal) analysisZoneModal.style.display = 'none';
     if (loadingZone) loadingZone.style.display = 'block';
     if (analysisZone) analysisZone.style.display = 'none';
     
@@ -5102,6 +5108,8 @@ async function handleRelevéUpload(event) {
         
         if (!text || text.trim().length < 10) {
             alert('Impossible de lire le document. Veuillez essayer avec un autre fichier.');
+            if (uploadBody) uploadBody.style.display = 'block';
+            if (loadingZoneModal) loadingZoneModal.style.display = 'none';
             if (loadingZone) loadingZone.style.display = 'none';
             return;
         }
@@ -5114,12 +5122,16 @@ async function handleRelevéUpload(event) {
         
         renderTransactionsList();
         
+        if (loadingZoneModal) loadingZoneModal.style.display = 'none';
+        if (analysisZoneModal) analysisZoneModal.style.display = 'block';
         if (loadingZone) loadingZone.style.display = 'none';
         if (analysisZone) analysisZone.style.display = 'block';
         
     } catch (error) {
         console.error('[RELEVÉ] Error:', error);
         alert('Erreur lors de l\'analyse: ' + error.message);
+        if (uploadBody) uploadBody.style.display = 'block';
+        if (loadingZoneModal) loadingZoneModal.style.display = 'none';
         if (loadingZone) loadingZone.style.display = 'none';
     }
     
@@ -5286,7 +5298,8 @@ Retourne UNIQUEMENT un tableau JSON valide sans texte supplémentaire.`;
 
 function renderTransactionsList() {
     const container = document.getElementById('transactionsList');
-    if (!container) return;
+    const containerModal = document.getElementById('transactionsListModal');
+    if (!container && !containerModal) return;
     
     const depenseCategories = [
         { value: 'masse_salariale', label: 'Masse salariale' },
@@ -5305,12 +5318,13 @@ function renderTransactionsList() {
         { value: 'autres', label: 'Autres recettes' }
     ];
     
-    container.innerHTML = pendingTransactions.map((t, index) => {
+    const html = pendingTransactions.length === 0 
+        ? '<div class="no-entries">Aucune transaction détectée</div>'
+        : pendingTransactions.map((t, index) => {
         const isDepense = t.type === 'dépense' || t.amount < 0;
         const categories = isDepense ? depenseCategories : recetteCategories;
         const selectedCategory = t.category || (isDepense ? 'services' : 'autres');
         
-        // Check for magic suggestion
         const magicSuggestion = findSimilarDescription(t.description);
         const suggestionHtml = magicSuggestion ? `
             <div class="magic-suggestion" onclick="applyMagicSuggestion(${index}, '${magicSuggestion.description.replace(/'/g, "\\'")}', '${magicSuggestion.category}', ${magicSuggestion.amount})">
@@ -5365,9 +5379,8 @@ function renderTransactionsList() {
         `;
     }).join('');
     
-    if (pendingTransactions.length === 0) {
-        container.innerHTML = '<div class="no-entries">Aucune transaction détectée</div>';
-    }
+    if (container) container.innerHTML = html;
+    if (containerModal) containerModal.innerHTML = html;
 }
 
 function handleTransactionAutocomplete(index, value) {
