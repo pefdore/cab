@@ -5524,7 +5524,11 @@ function selectTransactionAutocomplete(index, description, category, amount) {
 function applyMagicSuggestion(index, description, category, amount) {
     updateTransaction(index, 'description', description);
     updateTransaction(index, 'category', category);
-    updateTransaction(index, 'amount', amount);
+    
+    // Determine type based on category
+    const depenseCategories = ['masse_salariale', 'urssaf', 'logiciel', 'services', 'charges', 'consommables', 'materiel', 'reception'];
+    const isDepense = depenseCategories.includes(category);
+    updateTransaction(index, 'type', isDepense ? 'dépense' : 'recette');
     
     // Always mark as applied - show green feedback
     const item = document.querySelector(`.transaction-item[data-index="${index}"]`);
@@ -5715,6 +5719,7 @@ async function confirmSingleTransaction(index) {
 
 function addNewTransaction() {
     const today = new Date().toISOString().split('T')[0];
+    const newIndex = pendingTransactions.length;
     pendingTransactions.push({
         date: today,
         amount: 0,
@@ -5725,6 +5730,20 @@ function addNewTransaction() {
     });
     renderTransactionsList();
     updatePendingCount();
+    
+    // Scroll to the new transaction in modal
+    setTimeout(() => {
+        const modalTransactionsList = document.getElementById('transactionsListModal');
+        if (modalTransactionsList) {
+            const items = modalTransactionsList.querySelectorAll('.transaction-item');
+            const lastItem = items[items.length - 1];
+            if (lastItem) {
+                lastItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const firstInput = lastItem.querySelector('input');
+                if (firstInput) firstInput.focus();
+            }
+        }
+    }, 100);
 }
 
 function updatePendingCount() {
