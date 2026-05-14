@@ -5748,19 +5748,9 @@ function addNewTransaction() {
 
 function updatePendingCount() {
     const count = pendingTransactions.filter(t => !t.confirmed).length;
-    const modalAnalysis = document.getElementById('releveAnalysisModal');
-    if (modalAnalysis) {
-        const header = modalAnalysis.querySelector('div');
-        if (header) {
-            const existingCount = header.querySelector('.pending-count');
-            if (existingCount) existingCount.remove();
-            if (count > 0) {
-                const badge = document.createElement('span');
-                badge.className = 'pending-count';
-                badge.style.cssText = 'background: var(--color-primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;';
-                badge.textContent = count + ' en attente';
-                header.querySelector('h4').appendChild(badge);
-            }
-        }
+    const badge = document.getElementById('pendingCountBadge');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline' : 'none';
     }
 }

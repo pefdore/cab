@@ -7479,3 +7479,37 @@ h2 {
     background: var(--color-danger-bg);
     color: var(--color-danger);
 }
+
+/* Relevé Upload Modal Responsive */
+@media (max-width: 480px) {
+    #releve-upload-modal .modal-card {
+        max-width: 95%;
+        margin: 8px;
+    }
+    
+    #releve-upload-modal .modal-header {
+        padding: 12px 16px;
+    }
+    
+    #releve-upload-modal .modal-header h3 {
+        font-size: 1rem;
+    }
+    
+    #releve-upload-modal .modal-body {
+        padding: 16px;
+    }
+    
+    #releve-upload-modal [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+    
+    #releve-upload-modal [style*="grid-template-columns"] button {
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        padding: 12px 16px !important;
+    }
+    
+    #transactionsListModal {
+        max-height: 250px !important;
+    }
+}
