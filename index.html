@@ -3041,7 +3041,7 @@ window.attemptLogin = function() {
         }
         
         container.innerHTML = filteredDocs.map(doc => {
-          const date = new Date(doc.created_at).toLocaleDateString('fr-FR');
+          const date = doc.doc_date ? new Date(doc.doc_date).toLocaleDateString('fr-FR') : (doc.created_at ? new Date(doc.created_at).toLocaleDateString('fr-FR') : '');
           const catClass = doc.category ? 'cat-' + doc.category.split('-')[0].trim() : '';
           return `
             <div class="document-item" data-doc-id="${doc.id}">
@@ -3052,8 +3052,8 @@ window.attemptLogin = function() {
                 </svg>
               </div>
               <div class="document-info">
-                <div class="document-name">${doc.file_name}</div>
-                <div class="document-meta">${date} • ${doc.description || ''}</div>
+                <div class="document-name">${date} ${doc.description ? '• ' + doc.description : ''}</div>
+                ${doc.annotation ? `<div class="document-meta" style="font-style: italic; color: var(--color-text-secondary); margin-top: 4px;">${doc.annotation}</div>` : ''}
               </div>
               <span class="document-category-badge ${catClass}">${doc.category || ''}</span>
               <div class="document-actions">
