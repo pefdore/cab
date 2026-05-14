@@ -5121,6 +5121,7 @@ async function handleRelevéUpload(event) {
         pendingTransactions = transactions.map(t => ({...t, confirmed: false}));
         
         renderTransactionsList();
+        updatePendingCount();
         
         if (loadingZoneModal) loadingZoneModal.style.display = 'none';
         if (analysisZoneModal) analysisZoneModal.style.display = 'block';
@@ -5324,6 +5325,7 @@ function renderTransactionsList() {
         const isDepense = t.type === 'dépense' || t.amount < 0;
         const categories = isDepense ? depenseCategories : recetteCategories;
         const selectedCategory = t.category || (isDepense ? 'services' : 'autres');
+        const isConfirmed = t.confirmed === true;
         
         const magicSuggestion = findSimilarDescription(t.description);
         const suggestionHtml = magicSuggestion ? `
@@ -5336,23 +5338,23 @@ function renderTransactionsList() {
         ` : '';
         
         return `
-            <div class="transaction-item" data-index="${index}">
+            <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''}">
                 ${suggestionHtml}
                 <div class="transaction-row">
                     <div class="transaction-field">
                         <label>Date</label>
-                        <input type="date" class="trans-date" value="${t.date || ''}" onchange="updateTransaction(${index}, 'date', this.value)">
+                        <input type="date" class="trans-date" value="${t.date || ''}" onchange="updateTransaction(${index}, 'date', this.value)" ${isConfirmed ? 'disabled' : ''}>
                     </div>
                     <div class="transaction-field transaction-field-amount">
                         <label>Montant</label>
-                        <input type="number" class="trans-amount-input" value="${Math.abs(t.amount).toFixed(2)}" step="0.01" onchange="updateTransaction(${index}, 'amount', this.value)">
+                        <input type="number" class="trans-amount-input" value="${Math.abs(t.amount).toFixed(2)}" step="0.01" onchange="updateTransaction(${index}, 'amount', this.value)" ${isConfirmed ? 'disabled' : ''}>
                     </div>
                 </div>
                 <div class="transaction-row">
                     <div class="transaction-field transaction-field-desc">
                         <label>Description</label>
                         <div class="autocomplete-wrapper">
-                            <input type="text" class="trans-description" value="${t.description || ''}" placeholder="Description" oninput="handleTransactionAutocomplete(${index}, this.value)" onchange="updateTransaction(${index}, 'description', this.value)">
+                            <input type="text" class="trans-description" value="${t.description || ''}" placeholder="Description" oninput="handleTransactionAutocomplete(${index}, this.value)" onchange="updateTransaction(${index}, 'description', this.value)" ${isConfirmed ? 'disabled' : ''}>
                             <div id="trans-autocomplete-${index}" class="autocomplete-dropdown"></div>
                         </div>
                     </div>
@@ -5360,17 +5362,26 @@ function renderTransactionsList() {
                 <div class="transaction-row">
                     <div class="transaction-field">
                         <label>Catégorie</label>
-                        <select class="trans-category" onchange="updateTransaction(${index}, 'category', this.value)">
+                        <select class="trans-category" onchange="updateTransaction(${index}, 'category', this.value)" ${isConfirmed ? 'disabled' : ''}>
                             ${categories.map(c => `<option value="${c.value}" ${c.value === selectedCategory ? 'selected' : ''}>${c.label}</option>`).join('')}
                         </select>
                     </div>
                     <div class="transaction-field">
                         <label>Type</label>
-                        <select class="trans-type" onchange="updateTransaction(${index}, 'type', this.value)">
+                        <select class="trans-type" onchange="updateTransaction(${index}, 'type', this.value)" ${isConfirmed ? 'disabled' : ''}>
                             <option value="dépense" ${isDepense ? 'selected' : ''}>Dépense</option>
                             <option value="recette" ${!isDepense ? 'selected' : ''}>Recette</option>
                         </select>
                     </div>
+                    ${isConfirmed ? `
+                        <button class="btn-icon" style="color: var(--color-success);" title="Confirmé">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        </button>
+                    ` : `
+                        <button class="btn-icon" style="color: var(--color-success);" onclick="confirmSingleTransaction(${index})" title="Confirmer">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        </button>
+                    `}
                     <button class="btn-icon btn-icon-danger" onclick="removeTransaction(${index})" title="Supprimer">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
@@ -5664,6 +5675,73 @@ async function confirmAllTransactions() {
         if (btn) {
             btn.disabled = false;
             btn.textContent = 'Tout confirmer';
+        }
+    }
+}
+
+async function confirmSingleTransaction(index) {
+    if (!currentUser || !currentUser.id) {
+        alert('Vous devez être connecté');
+        return;
+    }
+    
+    const t = pendingTransactions[index];
+    if (!t) return;
+    
+    const isDepense = t.type === 'dépense' || (t.type !== 'recette' && t.amount < 0);
+    const record = {
+        user_id: currentUser.id,
+        description: t.description,
+        amount: Math.abs(parseFloat(t.amount) || 0),
+        category: t.category || (isDepense ? 'services' : 'autres'),
+        date: t.date || new Date().toISOString().split('T')[0]
+    };
+    
+    try {
+        const table = isDepense ? 'cabinet_depenses' : 'cabinet_recettes';
+        const { error } = await window.supabase.from(table).insert(record);
+        
+        if (error) throw error;
+        
+        pendingTransactions[index].confirmed = true;
+        renderTransactionsList();
+        
+        updatePendingCount();
+    } catch (error) {
+        console.error('[RELEVÉ] Save single error:', error);
+        alert('Erreur lors de l\'enregistrement: ' + error.message);
+    }
+}
+
+function addNewTransaction() {
+    const today = new Date().toISOString().split('T')[0];
+    pendingTransactions.push({
+        date: today,
+        amount: 0,
+        description: '',
+        category: 'services',
+        type: 'dépense',
+        confirmed: false
+    });
+    renderTransactionsList();
+    updatePendingCount();
+}
+
+function updatePendingCount() {
+    const count = pendingTransactions.filter(t => !t.confirmed).length;
+    const modalAnalysis = document.getElementById('releveAnalysisModal');
+    if (modalAnalysis) {
+        const header = modalAnalysis.querySelector('div');
+        if (header) {
+            const existingCount = header.querySelector('.pending-count');
+            if (existingCount) existingCount.remove();
+            if (count > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'pending-count';
+                badge.style.cssText = 'background: var(--color-primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;';
+                badge.textContent = count + ' en attente';
+                header.querySelector('h4').appendChild(badge);
+            }
         }
     }
 }
