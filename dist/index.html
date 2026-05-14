@@ -980,141 +980,18 @@ window.attemptLogin = function() {
 
             <!-- History View -->
             <section id="view-history" class="view">
-                <!-- Mode Switcher -->
-                <div class="dashboard-switcher">
-                    <button class="switch-btn active" data-mode="cotation" onclick="switchHistoryMode('cotation')">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                        </svg>
-                        Cotation
-                    </button>
-                    <button class="switch-btn" data-mode="cabinet" onclick="switchHistoryMode('cabinet')">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                        Cabinet
-                    </button>
-                </div>
+                <h2>Documents</h2>
                 
-                <!-- Cotation History -->
-                <div id="cotation-history">
-                    <div class="section-header">
-                        <h2>Feuilles de comptabilité</h2>
-                        <button id="generatePdfBtn" class="pdf-btn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14,2 14,8 20,8"/>
-                            </svg>
-                            Générer PDF
-                        </button>
-                    </div>
-                    <div class="history-list" id="historyList"></div>
-                    <div id="noHistory" class="no-entries">Aucune feuille générée</div>
+                <div class="section-header" style="margin-top: 24px;">
+                    <h3>Feuilles de comptabilité</h3>
                 </div>
+                <div class="history-list" id="historyList"></div>
+                <div id="noHistory" class="no-entries">Aucune feuille générée</div>
                 
-<!-- Cabinet History -->
-                <div id="cabinet-history" style="display:none;">
-                    <div class="section-header">
-                        <h2>Historique Cabinet</h2>
-                        <button id="uploadRelevéBtn" class="pdf-btn" onclick="showRelevéUploadOptions()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
-                            </svg>
-                            Importer Relevé
-                        </button>
-                        <input type="file" id="releveFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleRelevéUpload(event)">
-                        <input type="file" id="releveCameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleRelevéUpload(event)">
-                        
-                        <div id="relevéUploadModal" class="modal" style="display:none;">
-                            <div class="modal-content">
-                                <h3>Importer un relevé</h3>
-                                <button class="btn-primary" onclick="document.getElementById('releveFileInput').click(); closeRelevéModal();">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                                        <polyline points="21 15 16 10 5 21"/>
-                                    </svg>
-                                    Choisir une photo
-                                </button>
-                                <button class="btn-primary" onclick="document.getElementById('releveCameraInput').click(); closeRelevéModal();">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                        <circle cx="12" cy="13" r="4"/>
-                                    </svg>
-                                    Prendre une photo
-                                </button>
-                                <button class="btn-secondary" onclick="document.getElementById('releveFileInput').click(); closeRelevéModal();">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                        <polyline points="14 2 14 8 20 8"/>
-                                    </svg>
-                                    Choisir un PDF
-                                </button>
-                                <button class="btn-secondary" onclick="closeRelevéModal()">Annuler</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Zone d'analyse du relevé -->
-                    <div id="releveAnalysisZone" style="display:none;" class="releve-analysis-zone">
-                        <div class="section-header">
-                            <h3>Transactions détectées</h3>
-                            <button id="confirmAllBtn" class="btn-primary" onclick="confirmAllTransactions()">Tout confirmer</button>
-                        </div>
-                        <div id="transactionsList" class="transactions-list"></div>
-                    </div>
-                    
-                    <!-- Loading spinner -->
-                    <div id="releveLoading" style="display:none;" class="loading-zone">
-                        <div class="scan-animation">
-                            <div class="scan-line"></div>
-                            <div class="scan-document">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                    <polyline points="14 2 14 8 20 8"/>
-                                    <line x1="16" y1="13" x2="8" y2="13"/>
-                                    <line x1="16" y1="17" x2="8" y2="17"/>
-                                    <polyline points="10 9 9 9 8 9"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <p>Analyse du relevé en cours...</p>
-                        <p class="scan-status">Numérisation en cours</p>
-                    </div>
-                    
-                    <!-- Documents Filter -->
-                    <div class="documents-filter-section" style="margin-bottom: 16px; padding: 16px; background: var(--color-bg-subtle); border-radius: 12px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                            <h3 style="font-size: 1rem; margin: 0;">Documents</h3>
-                            <button class="btn-primary" style="padding: 6px 12px; font-size: 0.8125rem;" onclick="openDocumentModal()">
-                                + Ajouter
-                            </button>
-                        </div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                            <button class="doc-filter-btn active" data-filter="all" onclick="filterDocuments('all')">Tous</button>
-                            <button class="doc-filter-btn" data-filter="01" onclick="filterDocuments('01')">01 Juridique</button>
-                            <button class="doc-filter-btn" data-filter="02" onclick="filterDocuments('02')">02 Immobilier</button>
-                            <button class="doc-filter-btn" data-filter="03" onclick="filterDocuments('03')">03 RH</button>
-                            <button class="doc-filter-btn" data-filter="04" onclick="filterDocuments('04')">04 Exploitation</button>
-                            <button class="doc-filter-btn" data-filter="05" onclick="filterDocuments('05')">05 Comptabilité</button>
-                            <button class="doc-filter-btn" data-filter="06" onclick="filterDocuments('06')">06 Fiscalité</button>
-                            <button class="doc-filter-btn" data-filter="07" onclick="filterDocuments('07')">07 Correspondance</button>
-                            <select id="docSortSelect" onchange="sortDocuments(this.value)" style="margin-left: auto; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.75rem; background: var(--color-bg-elevated);">
-                                <option value="date-desc">Plus récent</option>
-                                <option value="date-asc">Plus ancien</option>
-                                <option value="category">Catégorie</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div id="documentsList" class="documents-list"></div>
-                    
-                    <div class="cabinet-history-list" id="cabinetHistoryList"></div>
-                    <div id="noCabinetHistory" class="no-entries">Aucune entrée de cabinet</div>
+                <div class="section-header" style="margin-top: 24px;">
+                    <h3>Documents importés</h3>
                 </div>
+                <div id="documentsList" class="documents-list"></div>
             </section>
 
             <!-- Settings View -->
@@ -1967,10 +1844,6 @@ window.attemptLogin = function() {
                 <div class="fab-menu-item" onclick="fabAction('passage')">
                     <span class="fab-menu-icon">🩺</span>
                     <span class="fab-menu-label">Ajouter un passage</span>
-                </div>
-                <div class="fab-menu-item" onclick="fabAction('flux')">
-                    <span class="fab-menu-icon">💰</span>
-                    <span class="fab-menu-label">Ajouter un flux financier cabinet</span>
                 </div>
                 <div class="fab-menu-item" onclick="fabAction('releve')">
                     <span class="fab-menu-icon">🏦</span>
