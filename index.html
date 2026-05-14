@@ -982,15 +982,28 @@ window.attemptLogin = function() {
             <section id="view-history" class="view">
                 <h2>Documents</h2>
                 
-                <div class="section-header" style="margin-top: 24px;">
-                    <h3>Feuilles de comptabilité</h3>
+                <!-- Filter and Sort -->
+                <div class="documents-filter-section" style="margin: 16px 0; padding: 16px; background: var(--color-bg-subtle); border-radius: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                        <button class="doc-filter-btn active" data-filter="all" onclick="filterDocuments('all')">Tous</button>
+                        <button class="doc-filter-btn" data-filter="comptabilite" onclick="filterDocuments('comptabilite')">Feuilles de comptabilité</button>
+                        <button class="doc-filter-btn" data-filter="01" onclick="filterDocuments('01')">01 Juridique</button>
+                        <button class="doc-filter-btn" data-filter="02" onclick="filterDocuments('02')">02 Immobilier</button>
+                        <button class="doc-filter-btn" data-filter="03" onclick="filterDocuments('03')">03 RH</button>
+                        <button class="doc-filter-btn" data-filter="04" onclick="filterDocuments('04')">04 Exploitation</button>
+                        <button class="doc-filter-btn" data-filter="05" onclick="filterDocuments('05')">05 Comptabilité</button>
+                        <button class="doc-filter-btn" data-filter="06" onclick="filterDocuments('06')">06 Fiscalité</button>
+                        <button class="doc-filter-btn" data-filter="07" onclick="filterDocuments('07')">07 Correspondance</button>
+                        <select id="docSortSelect" onchange="sortDocuments(this.value)" style="margin-left: auto; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.75rem; background: var(--color-bg-elevated);">
+                            <option value="date-desc">Plus récent</option>
+                            <option value="date-asc">Plus ancien</option>
+                            <option value="category">Catégorie</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="history-list" id="historyList"></div>
-                <div id="noHistory" class="no-entries">Aucune feuille générée</div>
                 
-                <div class="section-header" style="margin-top: 24px;">
-                    <h3>Documents importés</h3>
-                </div>
+                <div id="historyList" class="history-list"></div>
+                <div id="noHistory" class="no-entries" style="display:none;">Aucune feuille générée</div>
                 <div id="documentsList" class="documents-list"></div>
             </section>
 
@@ -2997,11 +3010,28 @@ window.attemptLogin = function() {
 
       window.renderDocuments = function() {
         const container = document.getElementById('documentsList');
+        const historyContainer = document.getElementById('historyList');
+        const noHistoryEl = document.getElementById('noHistory');
+        
+        // Show/hide accounting sheets based on filter
+        if (currentDocFilter === 'comptabilite' || currentDocFilter === 'all') {
+          if (historyContainer) historyContainer.style.display = 'block';
+          // Render accounting sheets if history data is loaded
+          if (typeof renderHistory === 'function' && typeof history !== 'undefined' && history.length > 0) {
+            renderHistory();
+          }
+        } else {
+          if (historyContainer) historyContainer.style.display = 'none';
+          if (noHistoryEl) noHistoryEl.style.display = 'none';
+        }
+        
         if (!container) return;
         
         let filteredDocs = allDocuments;
-        if (currentDocFilter !== 'all') {
+        if (currentDocFilter !== 'all' && currentDocFilter !== 'comptabilite') {
           filteredDocs = allDocuments.filter(doc => doc.category && doc.category.startsWith(currentDocFilter));
+        } else if (currentDocFilter === 'comptabilite') {
+          filteredDocs = [];
         }
         
         const sortSelect = document.getElementById('docSortSelect');
@@ -3022,8 +3052,11 @@ window.attemptLogin = function() {
           return 0;
         });
         
-        if (filteredDocs.length === 0) {
+        if (filteredDocs.length === 0 && currentDocFilter !== 'comptabilite' && currentDocFilter !== 'all') {
           container.innerHTML = '<div class="no-entries" style="padding: 24px;">Aucun document</div>';
+          return;
+        } else if (filteredDocs.length === 0) {
+          container.innerHTML = '';
           return;
         }
         
