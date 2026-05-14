@@ -7379,18 +7379,23 @@ h2 {
 
 .document-info {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .document-name {
     font-weight: 500;
     font-size: 0.875rem;
     color: var(--color-text);
+    word-break: break-word;
 }
 
 .document-meta {
     font-size: 0.75rem;
     color: var(--color-text-secondary);
     margin-top: 2px;
+    word-break: break-word;
 }
 
 .document-category-badge {
@@ -7399,6 +7404,25 @@ h2 {
     border-radius: 6px;
     font-size: 0.6875rem;
     color: var(--color-text-secondary);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .document-item {
+        flex-wrap: wrap;
+    }
+    .document-info {
+        flex: 1 1 calc(100% - 60px);
+        min-width: calc(100% - 60px);
+    }
+    .document-category-badge {
+        order: -1;
+        margin-bottom: 4px;
+    }
+    .document-actions {
+        margin-left: auto;
+    }
 }
 
 .document-category-badge.cat-01 { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
