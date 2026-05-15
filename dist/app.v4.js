@@ -1095,7 +1095,7 @@ window.deleteEntryModal = async function(id) {
         
         renderEntriesForModal();
         loadData();
-        loadDashboardData();
+        loadData();
     } catch (err) {
         console.error('Erreur:', err);
         alert('Erreur lors de la suppression');
@@ -1211,7 +1211,7 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
         
         closePassageModal();
         loadData();
-        loadDashboardData();
+        loadData();
         alert('Passage ajouté avec succès');
     } catch (err) {
         console.error('Erreur:', err);
