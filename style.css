@@ -5861,6 +5861,333 @@ h2 {
     color: var(--color-success);
 }
 
+.remplacant-card.unavailable .availability {
+    color: var(--color-danger);
+}
+
+.remplacant-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+.remplacant-card-actions button {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.remplacant-card-actions button:hover {
+    background: var(--color-bg-subtle);
+}
+
+.remplacant-card-actions button.primary {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.remplacant-card-actions button.primary:hover {
+    background: var(--color-primary-hover);
+}
+
+/* Remplaçants Header */
+.remplacants-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.remplacants-search {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    max-width: 400px;
+}
+
+.remplacants-search input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.remplacants-search .btn-icon {
+    padding: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg);
+    cursor: pointer;
+}
+
+.remplacants-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Remplaçant Details */
+.remplacant-details-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.remplacant-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--color-primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.remplacant-info h4 {
+    margin: 0 0 4px;
+    font-size: 1.125rem;
+}
+
+.remplacant-info p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.remplacant-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.remplacant-detail-item {
+    padding: 12px;
+    background: var(--color-bg-subtle);
+    border-radius: 8px;
+}
+
+.remplacant-detail-item label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 4px;
+}
+
+.remplacant-detail-item span {
+    font-weight: 500;
+}
+
+.remplacant-section {
+    margin-top: 20px;
+}
+
+.remplacant-section h4 {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+/* Contrat Styles */
+.contrat-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.contrat-status.brouillon {
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
+}
+
+.contrat-status.envoye {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.contrat-status.signe {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.contrat-status.refuse {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.contrat-status.termine {
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+}
+
+.contrats-list {
+    margin-top: 16px;
+}
+
+.contrat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.contrat-item-info h5 {
+    margin: 0 0 4px;
+    font-size: 0.875rem;
+}
+
+.contrat-item-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.contrat-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.contrat-item-actions button {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    cursor: pointer;
+}
+
+.contrat-item-actions button:hover {
+    background: var(--color-bg-subtle);
+}
+
+.contrat-item-actions button.primary {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+/* Contract Details */
+.contrat-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.contrat-details-info h4 {
+    margin: 0 0 4px;
+}
+
+.contrat-details-info p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.contrat-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.contrat-detail-item {
+    padding: 12px;
+    background: var(--color-bg-subtle);
+    border-radius: 8px;
+}
+
+.contrat-detail-item label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 4px;
+}
+
+.contrat-detail-item span {
+    font-weight: 500;
+}
+
+.contrat-conditions {
+    padding: 12px;
+    background: var(--color-bg-subtle);
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.contrat-conditions h5 {
+    margin: 0 0 8px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+}
+
+.contrat-conditions p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Availability */
+.availability-calendar {
+    margin-top: 12px;
+}
+
+.availability-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.availability-item.available {
+    border-left: 3px solid var(--color-success);
+}
+
+.availability-item.unavailable {
+    border-left: 3px solid var(--color-danger);
+}
+
 /* Inventory */
 .inventory-filters {
     display: flex;
