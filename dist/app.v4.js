@@ -659,7 +659,7 @@ function handleDepenseAutocomplete() {
         
         const matches = sortedDepenses.filter(d => 
             d.description && d.description.toLowerCase().startsWith(value)
-        ).slice(0, 5);
+        ).slice(0, 15);
         
         console.log('[AUTOCOMPLETE] Matches found:', matches.length);
         
@@ -740,8 +740,8 @@ function handleRecetteAutocomplete() {
         const sortedRecettes = [...cabinetRecettes].sort((a, b) => new Date(b.date) - new Date(a.date));
         
         const matches = sortedRecettes.filter(r => 
-            r.description && r.description.toLowerCase().includes(value)
-        ).slice(0, 5);
+            r.description && r.description.toLowerCase().startsWith(value)
+        ).slice(0, 15);
         
         if (matches.length === 0) {
             dropdown.classList.remove('active');
@@ -4245,6 +4245,153 @@ function formatComparison(current, previous, isCurrency = false) {
     }
     return `<span class="${cls}">${arrow} ${Math.abs(diff).toFixed(0)}%</span>`;
 }
+
+const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+function populateMonthSelectors() {
+    const passagesSelect = document.getElementById('passagesMonthSelect');
+    const vlSelect = document.getElementById('vlMonthSelect');
+    
+    const months = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({
+            month: d.getMonth(),
+            year: d.getFullYear(),
+            label: monthNames[d.getMonth()] + ' ' + d.getFullYear()
+        });
+    }
+    
+    const options = months.map(m => `<option value="${m.year}-${m.month}">${m.label}</option>`).join('');
+    
+    if (passagesSelect) passagesSelect.innerHTML = options;
+    if (vlSelect) vlSelect.innerHTML = options;
+}
+
+function renderPassagesList() {
+    const container = document.getElementById('recentList');
+    if (!container) return;
+    
+    const select = document.getElementById('passagesMonthSelect');
+    const [year, month] = (select?.value || '').split('-').map(Number);
+    
+    const monthEntries = entries.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === month && d.getFullYear() === year;
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (monthEntries.length === 0) {
+        container.innerHTML = '<div class="no-entries">Aucun passage ce mois</div>';
+        return;
+    }
+    
+    container.innerHTML = monthEntries.map(e => `
+        <div class="recent-item">
+            <div class="recent-info">
+                <span class="recent-patient">${e.patientName}</span>
+                <span class="recent-date">${e.date} - ${e.location}</span>
+            </div>
+            <span class="recent-amount">${(e.amount || 0).toFixed(2)}€</span>
+        </div>
+    `).join('');
+    
+    container.querySelectorAll('.recent-item').forEach((item, index) => {
+        item.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--color-bg-subtle);
+            border-radius: 12px;
+            margin-bottom: ${index < monthEntries.length - 1 ? '8px' : '0'};
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        `;
+    });
+    
+    container.querySelectorAll('.recent-info').forEach(info => {
+        info.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+    });
+    
+    container.querySelectorAll('.recent-patient').forEach(patient => {
+        patient.style.cssText = 'font-weight: 600; color: var(--color-text); font-size: 14px;';
+    });
+    
+    container.querySelectorAll('.recent-date').forEach(date => {
+        date.style.cssText = 'font-size: 12px; color: var(--color-text-secondary);';
+    });
+    
+    container.querySelectorAll('.recent-amount').forEach(amount => {
+        amount.style.cssText = 'font-weight: 700; color: #10b981; font-size: 16px;';
+    });
+}
+
+function renderVLList() {
+    const container = document.getElementById('vlList');
+    if (!container) return;
+    
+    const select = document.getElementById('vlMonthSelect');
+    const [year, month] = (select?.value || '').split('-').map(Number);
+    
+    const vlEntries = entries.filter(e => {
+        const d = new Date(e.date);
+        return (e.cotation === 'VL' || e.cotation === 'VL+MD') && d.getMonth() === month && d.getFullYear() === year;
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (vlEntries.length === 0) {
+        container.innerHTML = '<div class="no-entries">Aucune VL ce mois</div>';
+        return;
+    }
+    
+    container.innerHTML = vlEntries.map(e => `
+        <div class="recent-item">
+            <div class="recent-info">
+                <span class="recent-patient">${e.patientName}</span>
+                <span class="recent-date">${e.date}</span>
+            </div>
+            <span class="recent-amount">${(e.amount || 0).toFixed(2)}€</span>
+        </div>
+    `).join('');
+    
+    container.querySelectorAll('.recent-item').forEach((item, index) => {
+        item.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--color-bg-elevated);
+            border-radius: 12px;
+            margin-bottom: ${index < vlEntries.length - 1 ? '8px' : '0'};
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        `;
+    });
+    
+    container.querySelectorAll('.recent-info').forEach(info => {
+        info.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+    });
+    
+    container.querySelectorAll('.recent-patient').forEach(patient => {
+        patient.style.cssText = 'font-weight: 600; color: var(--color-text); font-size: 14px;';
+    });
+    
+    container.querySelectorAll('.recent-date').forEach(date => {
+        date.style.cssText = 'font-size: 12px; color: var(--color-text-secondary);';
+    });
+    
+    container.querySelectorAll('.recent-amount').forEach(amount => {
+        amount.style.cssText = 'font-weight: 700; color: #f59e0b; font-size: 16px;';
+    });
+    
+    if (typeof populateMonthSelectors === 'function') populateMonthSelectors();
+    if (typeof renderPassagesList === 'function') renderPassagesList();
+    if (typeof renderVLList === 'function') renderVLList();
+}
+
+window.populateMonthSelectors = populateMonthSelectors;
+window.renderPassagesList = renderPassagesList;
+window.renderVLList = renderVLList;
 
 function renderEntries() {
     console.log('[ENTRIES] renderEntries called, entries:', entries?.length || 0, 'currentMonth:', currentMonthAdd.getMonth());

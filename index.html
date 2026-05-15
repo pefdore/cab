@@ -415,10 +415,21 @@ window.attemptLogin = function() {
                     </div>
                 </div>
 
-                <div class="stats-grid extra-stats" id="vlStats"></div>
+                <div class="vl-section">
+                    <h3>Véhicules Légers</h3>
+                    <div class="month-selector">
+                        <select id="vlMonthSelect" onchange="renderVLList()">
+                        </select>
+                    </div>
+                    <div class="recent-list" id="vlList"></div>
+                </div>
 
                 <div class="recent-section">
-                    <h3>Passages du mois en cours</h3>
+                    <h3>Passages</h3>
+                    <div class="month-selector">
+                        <select id="passagesMonthSelect" onchange="renderPassagesList()">
+                        </select>
+                    </div>
                     <div class="recent-list" id="recentList"></div>
                 </div>
                 </div>

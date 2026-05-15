@@ -1185,6 +1185,50 @@ h2 {
     flex-shrink: 0;
 }
 
+/* ===== MONTH SELECTOR ===== */
+.month-selector {
+    margin-bottom: 16px;
+}
+
+.month-selector select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    cursor: pointer;
+}
+
+.month-selector select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* ===== VL SECTION ===== */
+.vl-section {
+    background: var(--color-warning-bg);
+    border: 1px solid var(--color-warning-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.vl-section h3 {
+    font-size: var(--text-base);
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vl-section h3::before {
+    content: "🚗";
+}
+
 /* ===== RECENT SECTION ===== */
 .recent-section {
     background: var(--color-bg-elevated);
