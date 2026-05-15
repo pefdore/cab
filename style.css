@@ -1629,6 +1629,9 @@ h2 {
     cursor: pointer;
     border-bottom: 1px solid var(--color-border-subtle);
     transition: background var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .autocomplete-item:last-child {
@@ -1638,12 +1641,6 @@ h2 {
 .autocomplete-item:hover,
 .autocomplete-item.selected {
     background: var(--color-primary-subtle);
-}
-
-.autocomplete-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 .autocomplete-desc {
@@ -1660,12 +1657,25 @@ h2 {
 
 .autocomplete-patient-name {
     font-weight: 600;
+    font-size: 0.9375rem;
     margin-bottom: 2px;
+    color: var(--color-text);
 }
 
 .autocomplete-patient-info {
-    font-size: var(--text-sm);
+    font-size: 0.8125rem;
     color: var(--color-text-secondary);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.autocomplete-patient-info .location-badge {
+    font-size: 0.6875rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
 }
 
 /* VL Status Info in Add view */
@@ -3296,44 +3306,23 @@ h2 {
     }
     
     .autocomplete-dropdown {
-        position: fixed;
-        top: auto;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        max-height: 60vh;
-        border-radius: 20px 20px 0 0;
-        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
-        z-index: 10000;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: -4px;
+        right: -4px;
+        background: var(--color-bg-elevated);
+        border: 1px solid var(--color-border);
+        border-radius: 14px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        max-height: 280px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         display: none;
-        animation: slideUp 0.25s ease-out;
-    }
-    
-    @keyframes slideUp {
-        from {
-            transform: translateY(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
     }
     
     .autocomplete-dropdown.active {
         display: block;
-    }
-    
-    .autocomplete-dropdown::before {
-        content: '';
-        display: block;
-        width: 40px;
-        height: 4px;
-        background: var(--color-border);
-        border-radius: 2px;
-        margin: 10px auto;
     }
     
     .autocomplete-item {
