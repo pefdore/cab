@@ -417,20 +417,42 @@ window.attemptLogin = function() {
 
                 <div class="vl-section">
                     <h3>Véhicules Légers</h3>
-                    <div class="month-selector">
-                        <select id="vlMonthSelect" onchange="renderVLList()">
-                        </select>
-                    </div>
-                    <div class="recent-list" id="vlList"></div>
+                    <p style="font-size: 0.6875rem; color: var(--color-text-secondary); margin-bottom: 8px;">
+                        Patients avec VL récemment.
+                    </p>
+                    <div id="dashboardVLList" class="recent-vl-list" style="max-height: 150px; overflow-y: auto;"></div>
                 </div>
 
                 <div class="recent-section">
-                    <h3>Passages</h3>
-                    <div class="month-selector">
-                        <select id="passagesMonthSelect" onchange="renderPassagesList()">
-                        </select>
+                    <h3>Passages du mois</h3>
+                    <div class="entries-header" style="margin-bottom: 8px;">
+                        <div class="month-selector">
+                            <button id="prevMonthDash" onclick="changeMonthDashboard(-1)" style="padding: 4px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M15 18l-6-6 6-6"/>
+                                </svg>
+                            </button>
+                            <span id="currentMonthDash" style="font-size: 0.875rem;">Mai 2026</span>
+                            <button id="nextMonthDash" onclick="changeMonthDashboard(1)" style="padding: 4px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="recent-list" id="recentList"></div>
+                    <div class="entries-table-wrapper" style="max-height: 250px; overflow-y: auto;">
+                        <table class="entries-table" style="font-size: 0.75rem;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 6px 4px;">Date</th>
+                                    <th style="padding: 6px 4px;">Patient</th>
+                                    <th style="padding: 6px 4px;">Cotation</th>
+                                    <th style="padding: 6px 4px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboardEntriesBody"></tbody>
+                        </table>
+                    </div>
                 </div>
                 </div>
 

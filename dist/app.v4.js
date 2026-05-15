@@ -991,6 +991,14 @@ function renderEntriesForModal() {
     }).join('');
 }
 
+function renderDashboardLists() {
+    updateMonthDisplayDashboard();
+    renderEntriesForDashboard();
+    renderVLForDashboard();
+}
+
+window.renderDashboardLists = renderDashboardLists;
+
 window.deleteEntryModal = async function(id) {
     if (!confirm('Supprimer ce passage?')) return;
     
@@ -2877,7 +2885,11 @@ function switchView(viewName) {
     // Load data for specific views
     if (viewName === 'dashboard') {
         updateStats();
-        renderRecentList();
+        if (vlHistory && vlHistory.length > 0) {
+            renderDashboardLists();
+        } else {
+            loadVLHistory().then(() => renderDashboardLists());
+        }
         renderCharts();
     } else if (viewName === 'history') {
         renderHistory();
