@@ -1034,7 +1034,7 @@ function renderEntriesForModal() {
     const monthEntries = entries.filter(e => {
         const d = new Date(e.date);
         return d.getFullYear() === year && d.getMonth() === month;
-    }).sort((a, b) => new Date(a.date) - new Date(b.date));
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
     
     if (monthEntries.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Aucun passage ce mois</td></tr>';
@@ -1088,7 +1088,7 @@ function renderEntriesForDashboard() {
     const monthEntries = entries.filter(e => {
         const d = new Date(e.date);
         return d.getFullYear() === year && d.getMonth() === month;
-    }).sort((a, b) => new Date(a.date) - new Date(b.date));
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
     
     if (monthEntries.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Aucun passage ce mois</td></tr>';
@@ -4273,7 +4273,7 @@ async function generatePDF() {
         
         y += 10;
         
-        const sortedEntries = [...monthEntries].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const sortedEntries = [...monthEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
         
         sortedEntries.forEach((e, i) => {
             if (y > 270) {
