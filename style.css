@@ -4299,18 +4299,27 @@ h2 {
     
     /* Cabinet tabs mobile */
     .cabinet-tabs {
-        gap: 6px;
+        gap: 4px;
         margin-bottom: 16px;
         padding: 4px;
         background: var(--color-bg-muted);
         border-radius: 12px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    
+    .cabinet-tabs::-webkit-scrollbar {
+        display: none;
     }
     
     .cabinet-tab {
         flex: 1;
-        padding: 10px 8px;
-        font-size: 0.75rem;
-        border-radius: 10px;
+        min-width: 70px;
+        padding: 8px 6px;
+        font-size: 0.65rem;
+        border-radius: 8px;
+        white-space: nowrap;
     }
     
     .compta-summary {
