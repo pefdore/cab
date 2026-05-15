@@ -295,13 +295,16 @@ async function loadUserSettings() {
     try {
         const { data } = await supabaseClient
             .from('user_settings')
-            .select('key, value')
-            .eq('user_id', currentUser.id);
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .single();
         
         if (data) {
-            data.forEach(s => {
-                settings[s.key] = s.value;
-            });
+            for (const [key, value] of Object.entries(data)) {
+                if (key !== 'user_id' && key !== 'id') {
+                    settings[key] = value;
+                }
+            }
         }
         renderLogoPreview();
         loadTheme();
@@ -339,30 +342,9 @@ function applyCotationVisibility() {
 }
 
 async function saveCotationSetting(enabled) {
-    if (!currentUser) return;
-    
     const value = enabled ? 'true' : 'false';
     settings.cotation_enabled = value;
-    
-    try {
-        const { error } = await supabaseClient
-            .from('user_settings')
-            .upsert({
-                user_id: currentUser.id,
-                key: 'cotation_enabled',
-                value: value
-            }, {
-                onConflict: 'user_id,key'
-            });
-        
-        if (error) {
-            console.error('[COTATION] Error saving setting:', error);
-        } else {
-            console.log('[COTATION] Setting saved:', value);
-        }
-    } catch (e) {
-        console.error('[COTATION] Exception saving setting:', e);
-    }
+    await saveSetting('cotation_enabled', value);
 }
 
 // --- Setup des écouteurs d'événements ---
