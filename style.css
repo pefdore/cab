@@ -3131,16 +3131,17 @@ h2 {
     
     .autocomplete-dropdown {
         position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
+        top: calc(100% + 6px);
+        left: -4px;
+        right: -4px;
         background: var(--color-bg-elevated);
         border: 1px solid var(--color-border);
         border-radius: 12px;
-        box-shadow: var(--shadow-lg);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         z-index: 1000;
-        max-height: 240px;
+        max-height: 280px;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         display: none;
     }
     
@@ -3149,16 +3150,23 @@ h2 {
     }
     
     .autocomplete-item {
-        padding: 14px 16px;
+        padding: 12px 14px;
         font-size: 0.9375rem;
         border-bottom: 1px solid var(--color-border-subtle);
         cursor: pointer;
         transition: background var(--transition-fast);
+        min-height: 48px;
+        display: flex;
+        align-items: center;
     }
     
     .autocomplete-item:hover,
     .autocomplete-item.selected {
         background: var(--color-primary-subtle);
+    }
+    
+    .autocomplete-item:last-child {
+        border-bottom: none;
     }
     
     .form-row {
@@ -3288,33 +3296,57 @@ h2 {
     }
     
     .autocomplete-dropdown {
-        position: absolute;
-        top: 100%;
+        position: fixed;
+        top: auto;
+        bottom: 0;
         left: 0;
         right: 0;
-        background: var(--color-bg-elevated);
-        border: 1px solid var(--color-border);
-        border-radius: 14px;
-        box-shadow: var(--shadow-lg);
-        z-index: 1000;
-        max-height: 240px;
+        max-height: 60vh;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         display: none;
+        animation: slideUp 0.25s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
     
     .autocomplete-dropdown.active {
         display: block;
     }
     
+    .autocomplete-dropdown::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: var(--color-border);
+        border-radius: 2px;
+        margin: 10px auto;
+    }
+    
     .autocomplete-item {
         padding: 14px 16px;
-        font-size: 0.9375rem;
+        font-size: 1rem;
         border-bottom: 1px solid var(--color-border-subtle);
         cursor: pointer;
+        min-height: 52px;
     }
     
     .autocomplete-item:last-child {
         border-bottom: none;
+        padding-bottom: max(14px, env(safe-area-inset-bottom));
     }
     
     /* VL Info Button */
