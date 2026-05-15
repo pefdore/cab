@@ -1175,15 +1175,36 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
     const amount = parts[1] || '0';
     
     try {
+        let patientId = patients.find(p => p.name.toLowerCase() === patientName.toLowerCase())?.id;
+        
+        if (!patientId) {
+            const { data: newPatient, error: patientError } = await supabaseClient
+                .from('patients')
+                .insert([{ user_id: currentUser.id, name: patientName }])
+                .select()
+                .single();
+            
+            if (patientError) {
+                alert('Erreur patient: ' + patientError.message);
+                return;
+            }
+            patientId = newPatient.id;
+            await loadPatients();
+        }
+        
+        const dateObj = new Date(visitDate);
+        const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+        
         const { data, error } = await supabaseClient
             .from('passages')
             .insert([{
-                patient_name: patientName,
-                visit_date: visitDate,
+                user_id: currentUser.id,
+                patient_id: patientId,
+                date: visitDate,
                 location: visitLocation,
                 cotation: cotation,
                 amount: parseFloat(amount),
-                user_id: currentUser.id
+                month_key: monthKey
             }]);
         
         if (error) throw error;
