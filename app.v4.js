@@ -305,8 +305,63 @@ async function loadUserSettings() {
         }
         renderLogoPreview();
         loadTheme();
+        applyCotationVisibility();
     } catch (e) {
         console.error('[AUTH] Erreur chargement settings:', e);
+    }
+}
+
+function applyCotationVisibility() {
+    const cotationEnabled = settings.cotation_enabled === 'true';
+    const cotationDash = document.getElementById('cotation-dashboard');
+    const addPassagesSection = document.getElementById('add-passages-section');
+    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    
+    const toggleCheckbox = document.getElementById('cotationEnabled');
+    if (toggleCheckbox) {
+        toggleCheckbox.checked = cotationEnabled;
+    }
+    
+    if (cotationDash) {
+        cotationDash.style.display = cotationEnabled ? 'block' : 'none';
+        cotationDash.style.visibility = cotationEnabled ? 'visible' : 'hidden';
+    }
+    
+    if (addPassagesSection) {
+        addPassagesSection.style.display = cotationEnabled ? 'block' : 'none';
+    }
+    
+    if (addPassagesSectionModal) {
+        addPassagesSectionModal.style.display = cotationEnabled ? 'block' : 'none';
+    }
+    
+    console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);
+}
+
+async function saveCotationSetting(enabled) {
+    if (!currentUser) return;
+    
+    const value = enabled ? 'true' : 'false';
+    settings.cotation_enabled = value;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('user_settings')
+            .upsert({
+                user_id: currentUser.id,
+                key: 'cotation_enabled',
+                value: value
+            }, {
+                onConflict: 'user_id,key'
+            });
+        
+        if (error) {
+            console.error('[COTATION] Error saving setting:', error);
+        } else {
+            console.log('[COTATION] Setting saved:', value);
+        }
+    } catch (e) {
+        console.error('[COTATION] Exception saving setting:', e);
     }
 }
 
@@ -2843,6 +2898,18 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
         document.documentElement.setAttribute('data-theme', theme);
         await saveSetting('theme', theme);
     });
+});
+
+// Cotation enabled toggle - wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', () => {
+    const cotationToggle = document.getElementById('cotationEnabled');
+    if (cotationToggle) {
+        cotationToggle.addEventListener('change', async function() {
+            const enabled = this.checked;
+            await saveCotationSetting(enabled);
+            applyCotationVisibility();
+        });
+    }
 });
 
 // Load saved theme
