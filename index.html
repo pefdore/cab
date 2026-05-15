@@ -1353,10 +1353,11 @@ window.attemptLogin = function() {
             <section id="view-cabinet" class="view">
                 <h2>Gestion Cabinet</h2>
                 
-                <div class="cabinet-tabs">
+<div class="cabinet-tabs">
                     <button class="cabinet-tab active" data-tab="secretariat">Secrétariat</button>
                     <button class="cabinet-tab" data-tab="reunions">Réunions</button>
-                    <button class="cabinet-tab" data-tab="stocks">Stocks & Remplaçants</button>
+                    <button class="cabinet-tab" data-tab="stocks">Stocks</button>
+                    <button class="cabinet-tab" data-tab="remplacants">Remplaçons</button>
                 </div>
                 
                 <!-- Secrétariat -->
@@ -1824,37 +1825,11 @@ window.attemptLogin = function() {
                 <!-- Stocks & Remplaissants -->
                 <div id="cabinet-stocks" class="cabinet-tab-content">
                     <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="remplacants">Remplaçants</button>
-                        <button class="sub-tab" data-subtab="stocks">Gestion Stocks</button>
+                        <button class="sub-tab active" data-subtab="stocks">Gestion Stocks</button>
                         <button class="sub-tab" data-subtab="commande">Commande IA</button>
                     </div>
                     
-<div id="stocks-remplacants" class="sub-tab-content active">
-                        <div class="remplacants-header">
-                            <div class="remplacants-search">
-                                <input type="text" id="remplacant-search-input" placeholder="Rechercher un remplaçant..." oninput="searchRemplacants(this.value)">
-                                <button class="btn-icon" onclick="searchRemplacants('')">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                                </button>
-                            </div>
-                            <div class="remplacants-actions">
-                                <button class="action-btn primary" onclick="openCreateRemplacantModal()">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                    Nouveau remplaçant
-                                </button>
-                            </div>
-                        </div>
-                        <div id="remplacantsList" class="remplacants-grid"></div>
-                        <div id="noRemplacants" class="no-entries" style="display:none;">
-                            <p>Aucun remplaçant trouvé</p>
-                            <button class="action-btn" onclick="openCreateRemplacantModal()">Ajouter un remplaçant</button>
-                        </div>
-                    </div>
-                            <div id="remplacantsList" class="remplacants-grid"></div>
-                        </div>
-                    </div>
-                    
-                    <div id="stocks-inventory" class="sub-tab-content">
+                    <div id="stocks-inventory" class="sub-tab-content active">
                         <div class="module-card">
                             <h3>Gestion des Stocks</h3>
                             <p class="module-desc">Inventaire du petit matériel, consommables et azote</p>
@@ -1905,6 +1880,29 @@ window.attemptLogin = function() {
                                 <div class="budget-tips" id="budgetTips"></div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Remplaçons -->
+                <div id="cabinet-remplacants" class="cabinet-tab-content">
+                    <div class="remplacants-header">
+                        <div class="remplacants-search">
+                            <input type="text" id="remplacant-search-input" placeholder="Rechercher un remplaçant..." oninput="searchRemplacants(this.value)">
+                            <button class="btn-icon" onclick="searchRemplacants('')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            </button>
+                        </div>
+                        <div class="remplacants-actions">
+                            <button class="action-btn primary" onclick="openCreateRemplacantModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Nouveau remplaçant
+                            </button>
+                        </div>
+                    </div>
+                    <div id="remplacantsList" class="remplacants-grid"></div>
+                    <div id="noRemplacants" class="no-entries" style="display:none;">
+                        <p>Aucun remplaçant trouvé</p>
+                        <button class="action-btn" onclick="openCreateRemplacantModal()">Ajouter un remplaçant</button>
                     </div>
                 </div>
             </section>
