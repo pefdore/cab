@@ -991,6 +991,93 @@ function renderEntriesForModal() {
     }).join('');
 }
 
+let currentMonthDashboard = new Date();
+
+function updateMonthDisplayDashboard() {
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const display = document.getElementById('currentMonthDash');
+    if (display) {
+        display.textContent = monthNames[currentMonthDashboard.getMonth()] + ' ' + currentMonthDashboard.getFullYear();
+    }
+}
+
+window.changeMonthDashboard = function(delta) {
+    currentMonthDashboard.setMonth(currentMonthDashboard.getMonth() + delta);
+    updateMonthDisplayDashboard();
+    renderEntriesForDashboard();
+};
+
+function renderEntriesForDashboard() {
+    const tbody = document.getElementById('dashboardEntriesBody');
+    if (!tbody) return;
+    
+    const year = currentMonthDashboard.getFullYear();
+    const month = currentMonthDashboard.getMonth();
+    
+    const monthEntries = entries.filter(e => {
+        const d = new Date(e.date);
+        return d.getFullYear() === year && d.getMonth() === month;
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    if (monthEntries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Aucun passage ce mois</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = monthEntries.map(e => {
+        const locationColor = getLocationColor(e.location);
+        return `
+            <tr>
+                <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})}</td>
+                <td>${e.patientName}</td>
+                <td><span class="location-badge" style="background:${locationColor}">${e.location}</span></td>
+                <td>${e.cotation}</td>
+                <td>${parseFloat(e.amount).toFixed(2)}€</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderVLForDashboard() {
+    const container = document.getElementById('dashboardVLList');
+    if (!container) return;
+    
+    if (!vlHistory || vlHistory.length === 0) {
+        container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucune VL récente</p>';
+        return;
+    }
+    
+    const vlOnly = vlHistory.filter(v => v.cotation === 'VL' || v.cotation === 'VL+MD');
+
+    const now = new Date();
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+    const recentVL = vlOnly
+            .filter(v => new Date(v.date) > ninetyDaysAgo)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 10);
+
+    if (recentVL.length === 0) {
+        container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucune VL récente (plus de 90 jours)</p>';
+        return;
+    }
+
+    container.innerHTML = recentVL.map(v => {
+        const vlDate = new Date(v.date);
+        const nextDate = getNextQuarterDate(v.date);
+        const daysUntil = Math.ceil((nextDate - now) / (24 * 60 * 60 * 1000));
+        const isEligible = daysUntil <= 0;
+
+        return `
+            <div class="recent-vl-item compact">
+                <span class="vl-patient">${v.patientName}</span>
+                <span class="vl-dates">${vlDate.toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})} → ${nextDate.toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})}</span>
+                <span class="vl-badge ${isEligible ? 'eligible' : ''}">${isEligible ? '✓' : daysUntil}</span>
+            </div>
+        `;
+    }).join('');
+}
+
 function renderDashboardLists() {
     updateMonthDisplayDashboard();
     renderEntriesForDashboard();
