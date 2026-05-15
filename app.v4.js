@@ -312,7 +312,12 @@ async function loadUserSettings() {
 }
 
 function applyCotationVisibility() {
+    console.log('[COTATION] applyCotationVisibility called');
+    console.log('[COTATION] settings:', settings);
+    
     const cotationEnabled = settings.cotation_enabled === 'true';
+    console.log('[COTATION] cotationEnabled:', cotationEnabled);
+    
     const cotationDash = document.getElementById('cotation-dashboard');
     const addPassagesSection = document.getElementById('add-passages-section');
     const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
@@ -323,15 +328,18 @@ function applyCotationVisibility() {
     }
     
     if (cotationDash) {
+        console.log('[COTATION] Setting cotation-dashboard display to:', cotationEnabled ? 'block' : 'none');
         cotationDash.style.display = cotationEnabled ? 'block' : 'none';
         cotationDash.style.visibility = cotationEnabled ? 'visible' : 'hidden';
     }
     
     if (addPassagesSection) {
+        console.log('[COTATION] Setting add-passages-section display to:', cotationEnabled ? 'block' : 'none');
         addPassagesSection.style.display = cotationEnabled ? 'block' : 'none';
     }
     
     if (addPassagesSectionModal) {
+        console.log('[COTATION] Setting add-passages-section-modal display to:', cotationEnabled ? 'block' : 'none');
         addPassagesSectionModal.style.display = cotationEnabled ? 'block' : 'none';
     }
     
@@ -339,12 +347,20 @@ function applyCotationVisibility() {
 }
 
 async function saveCotationSetting(enabled) {
+    console.log('[COTATION] saveCotationSetting called with:', enabled);
+    console.log('[COTATION] currentUser:', currentUser ? currentUser.id : 'null');
+    
     const value = enabled ? 'true' : 'false';
     settings.cotation_enabled = value;
     
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('[COTATION] No currentUser, returning');
+        return;
+    }
     
     try {
+        console.log('[COTATION] Attempting upsert with:', { user_id: currentUser.id, key: 'cotation_enabled', value });
+        
         const { error } = await supabaseClient
             .from('user_settings')
             .upsert({
