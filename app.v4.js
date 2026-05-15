@@ -2900,17 +2900,12 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
     });
 });
 
-// Cotation enabled toggle - wait for DOM to be ready
-document.addEventListener('DOMContentLoaded', () => {
-    const cotationToggle = document.getElementById('cotationEnabled');
-    if (cotationToggle) {
-        cotationToggle.addEventListener('change', async function() {
-            const enabled = this.checked;
-            await saveCotationSetting(enabled);
-            applyCotationVisibility();
-        });
-    }
-});
+// Cotation enabled toggle - using global function
+window.toggleCotationEnabled = async function(enabled) {
+    console.log('[COTATION] Toggle called, enabled:', enabled);
+    await saveCotationSetting(enabled);
+    applyCotationVisibility();
+};
 
 // Load saved theme
 async function loadTheme() {
