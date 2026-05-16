@@ -6604,10 +6604,464 @@ async function sendInvitation() {
 }
 
 // ============================================
+// GESTION DES OFFRES
+// ============================================
+
+let offres = [];
+let candidatures = [];
+let historiqueRemplacements = [];
+
+function switchReplacementTab(tabName) {
+    document.querySelectorAll('#cabinet-remplacants .replacement-sub-tabs .sub-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`#cabinet-remplacants .replacement-sub-tabs .sub-tab[data-subtab="${tabName}"]`)?.classList.add('active');
+    
+    document.querySelectorAll('#cabinet-remplacants .replacement-sub-content').forEach(c => c.classList.remove('active'));
+    document.getElementById(`remplacants-${tabName}`)?.classList.add('active');
+    
+    if (tabName === 'offres') loadOffres();
+    else if (tabName === 'candidatures') loadCandidatures();
+    else if (tabName === 'historique') loadHistorique();
+}
+
+async function loadOffres() {
+    if (!supabaseClient || !currentUser) return;
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('offres_remplacement')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        offres = data || [];
+        renderOffres();
+    } catch (e) {
+        console.error('[OFFRES] Erreur chargement:', e);
+    }
+}
+
+function renderOffres() {
+    const container = document.getElementById('offresList');
+    const noResults = document.getElementById('noOffres');
+    
+    if (!container) return;
+    
+    if (offres.length === 0) {
+        container.innerHTML = '';
+        if (noResults) noResults.style.display = 'block';
+        return;
+    }
+    
+    if (noResults) noResults.style.display = 'none';
+    
+    container.innerHTML = offres.map(o => {
+        const dateDebut = o.date_debut ? new Date(o.date_debut).toLocaleDateString('fr-FR') : '';
+        const dateFin = o.date_fin ? new Date(o.date_fin).toLocaleDateString('fr-FR') : '';
+        const dates = dateFin ? `${dateDebut} - ${dateFin}` : `À partir du ${dateDebut}`;
+        
+        return `
+        <div class="offre-card">
+            <div class="offre-card-header">
+                <h4>${o.titre}</h4>
+                <span class="status ${o.statut}">${o.statut === 'active' ? 'Active' : o.statut === 'fermee' ? 'Fermée' : 'Pourvue'}</span>
+            </div>
+            <div class="dates">📅 ${dates}</div>
+            <div class="lieu">📍 ${o.lieu}</div>
+            <div class="details">
+                ${o.specialite ? '🩺 ' + o.specialite : ''}
+                ${o.tarif_journalier ? ' | 💰 ' + o.tarif_journalier + '€/jour' : ''}
+            </div>
+            <span class="retrocession">${o.retrocession}% rétrocession</span>
+            <div class="offre-card-actions">
+                <button onclick="viewOffreDetails('${o.id}')">Voir détails</button>
+                <button onclick="editOffre('${o.id}')">Modifier</button>
+                <button class="primary" onclick="openOffreModal('${o.id}')">Dupliquer</button>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function openOffreModal(offreId = null) {
+    document.getElementById('offre-modal-title').textContent = offreId ? 'Modifier l\'offre' : 'Nouvelle offre de remplacement';
+    document.getElementById('offre-id').value = '';
+    document.getElementById('offre-titre').value = '';
+    document.getElementById('offre-description').value = '';
+    document.getElementById('offre-date-debut').value = '';
+    document.getElementById('offre-date-fin').value = '';
+    document.getElementById('offre-lieu').value = '';
+    document.getElementById('offre-specialite').value = '';
+    document.getElementById('offre-adresse-cabinet').value = '';
+    document.getElementById('offre-description-cabinet').value = '';
+    document.getElementById('offre-description-activite').value = '';
+    document.getElementById('offre-retrocession').value = '70';
+    document.getElementById('offre-tarif').value = '';
+    document.getElementById('offre-statut').value = 'active';
+    
+    if (offreId) {
+        const o = offres.find(x => x.id === offreId);
+        if (o) {
+            document.getElementById('offre-id').value = o.id;
+            document.getElementById('offre-titre').value = o.titre || '';
+            document.getElementById('offre-description').value = o.description || '';
+            document.getElementById('offre-date-debut').value = o.date_debut || '';
+            document.getElementById('offre-date-fin').value = o.date_fin || '';
+            document.getElementById('offre-lieu').value = o.lieu || '';
+            document.getElementById('offre-specialite').value = o.specialite || '';
+            document.getElementById('offre-adresse-cabinet').value = o.adresse_cabinet || '';
+            document.getElementById('offre-description-cabinet').value = o.description_cabinet || '';
+            document.getElementById('offre-description-activite').value = o.description_activite || '';
+            document.getElementById('offre-retrocession').value = o.retrocession || '70';
+            document.getElementById('offre-tarif').value = o.tarif_journalier || '';
+            document.getElementById('offre-statut').value = o.statut || 'active';
+        }
+    }
+    
+    document.getElementById('offre-modal').style.display = 'flex';
+}
+
+function closeOffreModal() {
+    document.getElementById('offre-modal').style.display = 'none';
+}
+
+async function saveOffre() {
+    if (!supabaseClient || !currentUser) return;
+    
+    const id = document.getElementById('offre-id').value;
+    const titre = document.getElementById('offre-titre').value.trim();
+    const dateDebut = document.getElementById('offre-date-debut').value;
+    
+    if (!titre || !dateDebut) {
+        showError('Veuillez entrer le titre et la date de début');
+        return;
+    }
+    
+    const data = {
+        user_id: currentUser.id,
+        titre,
+        description: document.getElementById('offre-description').value.trim() || null,
+        date_debut: dateDebut,
+        date_fin: document.getElementById('offre-date-fin').value || null,
+        lieu: document.getElementById('offre-lieu').value.trim(),
+        specialite: document.getElementById('offre-specialite').value.trim() || null,
+        adresse_cabinet: document.getElementById('offre-adresse-cabinet').value.trim() || null,
+        description_cabinet: document.getElementById('offre-description-cabinet').value.trim() || null,
+        description_activite: document.getElementById('offre-description-activite').value.trim() || null,
+        retrocession: parseFloat(document.getElementById('offre-retrocession').value) || 70,
+        tarif_journalier: parseFloat(document.getElementById('offre-tarif').value) || null,
+        statut: document.getElementById('offre-statut').value,
+        updated_at: new Date().toISOString()
+    };
+    
+    try {
+        let result;
+        if (id) {
+            result = await supabaseClient.from('offres_remplacement').update(data).eq('id', id);
+        } else {
+            result = await supabaseClient.from('offres_remplacement').insert(data);
+        }
+        
+        if (result.error) throw result.error;
+        
+        closeOffreModal();
+        await loadOffres();
+        showToast(id ? 'Offre mise à jour' : 'Offre créée');
+    } catch (e) {
+        console.error('[OFFRES] Erreur:', e);
+        showError('Erreur: ' + e.message);
+    }
+}
+
+function viewOffreDetails(offreId) {
+    const o = offres.find(x => x.id === offreId);
+    if (!o) return;
+    
+    const dateDebut = o.date_debut ? new Date(o.date_debut).toLocaleDateString('fr-FR') : '';
+    const dateFin = o.date_fin ? new Date(o.date_fin).toLocaleDateString('fr-FR') : 'Non définie';
+    
+    document.getElementById('offre-details-title').textContent = o.titre;
+    document.getElementById('offre-details-body').innerHTML = `
+        <div class="offre-details-header" style="margin-bottom: 20px;">
+            <span class="status ${o.statut}" style="display:inline-block;padding:4px 12px;border-radius:4px;font-size:0.875rem;">
+                ${o.statut === 'active' ? 'Active' : o.statut === 'fermee' ? 'Fermée' : 'Pourvue'}
+            </span>
+        </div>
+        
+        <div class="details-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div>
+                <label style="font-size:0.75rem;color:var(--color-text-tertiary);text-transform:uppercase;">Période</label>
+                <p style="margin:4px 0;font-weight:500;">${dateDebut} - ${dateFin}</p>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--color-text-tertiary);text-transform:uppercase;">Lieu</label>
+                <p style="margin:4px 0;font-weight:500;">${o.lieu}</p>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--color-text-tertiary);text-transform:uppercase;">Spécialité</label>
+                <p style="margin:4px 0;font-weight:500;">${o.specialite || 'Toutes'}</p>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:var(--color-text-tertiary);text-transform:uppercase;">Rétrocession</label>
+                <p style="margin:4px 0;font-weight:500;">${o.retrocession}%</p>
+            </div>
+        </div>
+        
+        ${o.description ? `
+        <div style="margin-bottom:16px;">
+            <label style="font-size:0.75rem;color:var(--color-text-tertiary);text-transform:uppercase;">Description</label>
+            <p style="margin:4px 0;">${o.description}</p>
+        </div>
+        ` : ''}
+        
+        ${o.adresse_cabinet ? `
+        <div style="margin-bottom:16px;">
+            <label style="font-size:0.75rem;color:var(--color-text-tertiary);text-transform:uppercase;">Adresse du cabinet</label>
+            <p style="margin:4px 0;">${o.adresse_cabinet}</p>
+        </div>
+        ` : ''}
+        
+        ${o.description_cabinet ? `
+        <div style="margin-bottom:16px;">
+            <label style="font-size:0.75rem;color:var(--color-text-tertiary);text-transform:uppercase;">Description du cabinet</label>
+            <p style="margin:4px 0;">${o.description_cabinet}</p>
+        </div>
+        ` : ''}
+        
+        ${o.description_activite ? `
+        <div style="margin-bottom:16px;">
+            <label style="font-size:0.75rem;color:var(--color-text-tertiary);text-transform:uppercase;">Activité</label>
+            <p style="margin:4px 0;">${o.description_activite}</p>
+        </div>
+        ` : ''}
+        
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--color-border);">
+            <button class="btn-primary" onclick="editOffre('${o.id}'); closeOffreDetailsModal();">Modifier l'offre</button>
+            <button class="btn-secondary" onclick="closeOffreDetailsModal()" style="margin-left:8px;">Fermer</button>
+        </div>
+    `;
+    
+    document.getElementById('offre-details-modal').style.display = 'flex';
+}
+
+function closeOffreDetailsModal() {
+    document.getElementById('offre-details-modal').style.display = 'none';
+}
+
+function editOffre(offreId) {
+    openOffreModal(offreId);
+}
+
+// ============================================
+// GESTION DES CANDIDATURES
+// ============================================
+
+async function loadCandidatures() {
+    if (!supabaseClient || !currentUser) return;
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('candidatures')
+            .select('*, offres_remplacement(titre, lieu), remplacants(nom, prenom, email, telephone, specialite)')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        candidatures = data || [];
+        renderCandidatures();
+        updateCandidaturesBadge();
+    } catch (e) {
+        console.error('[CANDIDATURES] Erreur chargement:', e);
+    }
+}
+
+function renderCandidatures(filter = '') {
+    const container = document.getElementById('candidaturesList');
+    const noResults = document.getElementById('noCandidatures');
+    
+    if (!container) return;
+    
+    let filtered = candidatures;
+    if (filter) {
+        filtered = candidatures.filter(c => c.statut === filter);
+    }
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '';
+        if (noResults) noResults.style.display = 'block';
+        return;
+    }
+    
+    if (noResults) noResults.style.display = 'none';
+    
+    container.innerHTML = filtered.map(c => {
+        const r = c.remplacants;
+        const o = c.offres_remplacement;
+        const initials = r ? (r.prenom?.[0] || '') + (r.nom?.[0] || '') : '?';
+        const statusLabel = c.statut === 'en_attente' ? 'En attente' : c.statut === 'acceptee' ? 'Acceptée' : 'Refusée';
+        
+        return `
+        <div class="candidature-card">
+            <div class="avatar">${initials}</div>
+            <div class="info">
+                <div class="name">${r ? r.prenom + ' ' + r.nom : 'Inconnu'}</div>
+                <div class="details">
+                    ${r?.specialite || ''} ${r?.email ? '| ' + r.email : ''} ${r?.telephone ? '| ' + r.telephone : ''}
+                </div>
+                ${c.message ? `<div class="message">"${c.message}"</div>` : ''}
+                <span class="status-badge ${c.statut}">${statusLabel}</span>
+            </div>
+            <div class="actions">
+                ${c.statut === 'en_attente' ? `
+                <button class="btn-primary" style="padding:8px 16px;font-size:0.8125rem;" onclick="accepterCandidature('${c.id}')">Accepter</button>
+                <button class="btn-secondary" style="padding:8px 16px;font-size:0.8125rem;color:var(--color-danger);" onclick="refuserCandidature('${c.id}')">Refuser</button>
+                ` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function updateCandidaturesBadge() {
+    const badge = document.getElementById('candidatures-badge');
+    const pendingCount = candidatures.filter(c => c.statut === 'en_attente').length;
+    if (badge) {
+        badge.textContent = pendingCount;
+        badge.style.display = pendingCount > 0 ? 'inline' : 'none';
+    }
+}
+
+function filterCandidatures(status) {
+    renderCandidatures(status);
+}
+
+async function accepterCandidature(candidatureId) {
+    if (!confirm('Accepter cette candidature ?')) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('candidatures')
+            .update({ statut: 'acceptee', date_reponse: new Date().toISOString().split('T')[0] })
+            .eq('id', candidatureId);
+        
+        if (error) throw error;
+        
+        await loadCandidatures();
+        showToast('Candidature acceptée');
+    } catch (e) {
+        console.error('[CANDIDATURES] Erreur:', e);
+        showError('Erreur: ' + e.message);
+    }
+}
+
+async function refuserCandidature(candidatureId) {
+    if (!confirm('Refuser cette candidature ?')) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('candidatures')
+            .update({ statut: 'refusee', date_reponse: new Date().toISOString().split('T')[0] })
+            .eq('id', candidatureId);
+        
+        if (error) throw error;
+        
+        await loadCandidatures();
+        showToast('Candidature refusée');
+    } catch (e) {
+        console.error('[CANDIDATURES] Erreur:', e);
+        showError('Erreur: ' + e.message);
+    }
+}
+
+// ============================================
+// HISTORIQUE DES REMPLACEMENTS
+// ============================================
+
+async function loadHistorique() {
+    if (!supabaseClient || !currentUser) return;
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('historique_remplacements')
+            .select('*, remplacants(nom, prenom)')
+            .eq('user_id', currentUser.id)
+            .order('date_debut', { ascending: false });
+        
+        if (error) throw error;
+        historiqueRemplacements = data || [];
+        renderHistorique();
+    } catch (e) {
+        console.error('[HISTORIQUE] Erreur chargement:', e);
+    }
+}
+
+function renderHistorique() {
+    const container = document.getElementById('historiqueList');
+    const noResults = document.getElementById('noHistorique');
+    
+    if (!container) return;
+    
+    // Calculate stats
+    const totalRemplacements = historiqueRemplacements.length;
+    const totalJours = historiqueRemplacements.reduce((sum, h) => sum + (h.total_jour || 0), 0);
+    const totalMontant = historiqueRemplacements.reduce((sum, h) => sum + (h.montant_total || 0), 0);
+    
+    const totalEl = document.getElementById('total-remplacements');
+    const joursEl = document.getElementById('total-jours');
+    const montantEl = document.getElementById('total-montant');
+    
+    if (totalEl) totalEl.textContent = totalRemplacements;
+    if (joursEl) joursEl.textContent = totalJours;
+    if (montantEl) montantEl.textContent = totalMontant.toFixed(0) + '€';
+    
+    if (historiqueRemplacements.length === 0) {
+        container.innerHTML = '';
+        if (noResults) noResults.style.display = 'block';
+        return;
+    }
+    
+    if (noResults) noResults.style.display = 'none';
+    
+    container.innerHTML = historiqueRemplacements.map(h => {
+        const r = h.remplacants;
+        const dateDebut = h.date_debut ? new Date(h.date_debut).toLocaleDateString('fr-FR') : '';
+        const dateFin = h.date_fin ? new Date(h.date_fin).toLocaleDateString('fr-FR') : 'En cours';
+        const initials = r ? (r.prenom?.[0] || '') + (r.nom?.[0] || '') : '?';
+        
+        return `
+        <div class="historique-card">
+            <div class="avatar">${initials}</div>
+            <div class="info">
+                <div class="name">${r ? r.prenom + ' ' + r.nom : 'Inconnu'}</div>
+                <div class="periode">${dateDebut} - ${dateFin}</div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-label">Jours: </span>
+                        <span class="stat-value">${h.total_jour || '-'}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Rétrocession: </span>
+                        <span class="stat-value">${h.retrocession || '-'}%</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Total: </span>
+                        <span class="stat-value">${h.montant_total ? h.montant_total.toFixed(2) + '€' : '-'}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="eval">
+                ${h.eval_note ? '<div class="eval-note">' + '★'.repeat(h.eval_note) + '</div>' : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+// ============================================
 // INIT
 // ============================================
 
 async function initRemplacements() {
     await loadRemplacants();
     await loadContrats();
+    await loadOffres();
 }

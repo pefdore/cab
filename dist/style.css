@@ -5907,6 +5907,389 @@ h2 {
     background: var(--color-primary-hover);
 }
 
+/* Replacement Module Tabs */
+.replacement-sub-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--color-bg-subtle);
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.replacement-sub-tabs .sub-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.replacement-sub-tabs .sub-tab:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
+}
+
+.replacement-sub-tabs .sub-tab.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.replacement-sub-tabs .badge {
+    background: var(--color-danger);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.replacement-sub-content {
+    display: none;
+}
+
+.replacement-sub-content.active {
+    display: block;
+}
+
+/* Offres Grid */
+.offres-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.offre-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: all 0.2s;
+}
+
+.offre-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+.offre-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.offre-card h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text);
+}
+
+.offre-card .status {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.offre-card .status.active {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.offre-card .status.fermee {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.offre-card .status.pourvue {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.offre-card .dates {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.offre-card .lieu {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.offre-card .details {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 12px;
+}
+
+.offre-card .retrocession {
+    display: inline-block;
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.offre-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+/* Candidatures List */
+.candidatures-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.candidature-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.candidature-card .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.candidature-card .info {
+    flex: 1;
+}
+
+.candidature-card .name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.candidature-card .details {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+}
+
+.candidature-card .message {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    padding: 8px 12px;
+    background: var(--color-bg-subtle);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.candidature-card .status-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.candidature-card .status-badge.en_attente {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.candidature-card .status-badge.acceptee {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.candidature-card .status-badge.refusee {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.candidature-card .actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Historique List */
+.historique-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.historique-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.historique-card .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-lilias-bg);
+    color: var(--color-lilias);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.historique-card .info {
+    flex: 1;
+}
+
+.historique-card .name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.historique-card .periode {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+}
+
+.historique-card .stats {
+    display: flex;
+    gap: 16px;
+}
+
+.historique-card .stat {
+    font-size: 0.8125rem;
+}
+
+.historique-card .stat-label {
+    color: var(--color-text-tertiary);
+}
+
+.historique-card .stat-value {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.historique-card .eval {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.historique-card .eval-note {
+    font-size: 1.25rem;
+    color: var(--color-warning);
+}
+
+/* Stats Summary */
+.stats-summary {
+    display: flex;
+    gap: 24px;
+}
+
+.stats-summary .stat-item {
+    text-align: center;
+    padding: 12px 20px;
+    background: var(--color-bg-subtle);
+    border-radius: 8px;
+}
+
+.stats-summary .stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.stats-summary .stat-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Section Header */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.section-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.section-header .remplacants-search {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    max-width: 400px;
+}
+
+.section-header .remplacants-search input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.section-header .remplacants-search input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* Filter Group */
+.filter-group select {
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--color-bg);
+    cursor: pointer;
+}
+
 /* Remplaçants Header */
 .remplacants-header {
     display: flex;

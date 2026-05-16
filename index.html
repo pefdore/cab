@@ -1885,24 +1885,106 @@ window.attemptLogin = function() {
 
                 <!-- Remplaçant -->
                 <div id="cabinet-remplacants" class="cabinet-tab-content">
-                    <div class="remplacants-header">
-                        <div class="remplacants-search">
-                            <input type="text" id="remplacant-search-input" placeholder="Rechercher un remplaçant..." oninput="searchRemplacants(this.value)">
-                            <button class="btn-icon" onclick="searchRemplacants('')">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <!-- Sub-tabs for replacement module -->
+                    <div class="sub-tabs replacement-sub-tabs">
+                        <button class="sub-tab active" data-subtab="offres" onclick="switchReplacementTab('offres')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                            Offres
+                        </button>
+                        <button class="sub-tab" data-subtab="candidatures" onclick="switchReplacementTab('candidatures')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Candidatures
+                            <span id="candidatures-badge" class="badge" style="display:none;">0</span>
+                        </button>
+                        <button class="sub-tab" data-subtab="remplacants" onclick="switchReplacementTab('remplacants')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Remplaçons
+                        </button>
+                        <button class="sub-tab" data-subtab="historique" onclick="switchReplacementTab('historique')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Historique
+                        </button>
+                    </div>
+                    
+                    <!-- OFFRES SECTION -->
+                    <div id="remplacants-offres" class="replacement-sub-content active">
+                        <div class="section-header">
+                            <h3>Mes offres de remplacement</h3>
+                            <button class="action-btn primary" onclick="openOffreModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Nouvelle offre
                             </button>
                         </div>
-                        <div class="remplacants-actions">
+                        <div id="offresList" class="offres-grid"></div>
+                        <div id="noOffres" class="no-entries" style="display:none;">
+                            <p>Aucune offre de remplacement publiée</p>
+                            <button class="action-btn" onclick="openOffreModal()">Créer une offre</button>
+                        </div>
+                    </div>
+                    
+                    <!-- CANDIDATURES SECTION -->
+                    <div id="remplacants-candidatures" class="replacement-sub-content">
+                        <div class="section-header">
+                            <h3>Candidatures reçues</h3>
+                            <div class="filter-group">
+                                <select id="candidature-filter" onchange="filterCandidatures(this.value)">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="en_attente">En attente</option>
+                                    <option value="acceptee">Acceptée</option>
+                                    <option value="refusee">Refusée</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="candidaturesList" class="candidatures-list"></div>
+                        <div id="noCandidatures" class="no-entries" style="display:none;">
+                            <p>Aucune candidature reçue</p>
+                        </div>
+                    </div>
+                    
+                    <!-- REMPLAÇONS SECTION (Contacts) -->
+                    <div id="remplacants-liste" class="replacement-sub-content">
+                        <div class="section-header">
+                            <div class="remplacants-search">
+                                <input type="text" id="remplacant-search-input" placeholder="Rechercher un remplaçant..." oninput="searchRemplacants(this.value)">
+                                <button class="btn-icon" onclick="searchRemplacants('')">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                                </button>
+                            </div>
                             <button class="action-btn primary" onclick="openCreateRemplacantModal()">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                 Nouveau remplaçant
                             </button>
                         </div>
+                        <div id="remplacantsList" class="remplacants-grid"></div>
+                        <div id="noRemplacants" class="no-entries" style="display:none;">
+                            <p>Aucun remplaçant trouvé</p>
+                            <button class="action-btn" onclick="openCreateRemplacantModal()">Ajouter un remplaçant</button>
+                        </div>
                     </div>
-                    <div id="remplacantsList" class="remplacants-grid"></div>
-                    <div id="noRemplacants" class="no-entries" style="display:none;">
-                        <p>Aucun remplaçant trouvé</p>
-                        <button class="action-btn" onclick="openCreateRemplacantModal()">Ajouter un remplaçant</button>
+                    
+                    <!-- HISTORIQUE SECTION -->
+                    <div id="remplacants-historique" class="replacement-sub-content">
+                        <div class="section-header">
+                            <h3>Historique des remplacements</h3>
+                            <div class="stats-summary" id="historique-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value" id="total-remplacements">0</span>
+                                    <span class="stat-label">Remplacements</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="total-jours">0</span>
+                                    <span class="stat-label">Jours</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="total-montant">0€</span>
+                                    <span class="stat-label">Total</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="historiqueList" class="historique-list"></div>
+                        <div id="noHistorique" class="no-entries" style="display:none;">
+                            <p>Aucun historique de remplacement</p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -2082,6 +2164,96 @@ window.attemptLogin = function() {
                         <button class="btn-primary" onclick="sendInvitation()">Envoyer l'invitation</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Offre Modal - Create/Edit -->
+        <div id="offre-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 id="offre-modal-title">Nouvelle offre de remplacement</h3>
+                    <button class="modal-close" onclick="closeOffreModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="offre-id">
+                    <div class="form-group">
+                        <label>Titre *</label>
+                        <input type="text" id="offre-titre" placeholder="Ex: Remplacement médecin généraliste - Juin 2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="offre-description" rows="3" placeholder="Description du remplacement..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date de début *</label>
+                            <input type="date" id="offre-date-debut" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date de fin</label>
+                            <input type="date" id="offre-date-fin">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Lieu *</label>
+                            <input type="text" id="offre-lieu" placeholder="Ville" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Spécialité requise</label>
+                            <input type="text" id="offre-specialite" placeholder="Ex: Médecine générale">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Adresse du cabinet</label>
+                        <input type="text" id="offre-adresse-cabinet" placeholder="Adresse complète du cabinet">
+                    </div>
+                    <div class="form-group">
+                        <label>Description du cabinet</label>
+                        <textarea id="offre-description-cabinet" rows="2" placeholder="Équipements, secrétariat, etc."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Description de l'activité</label>
+                        <textarea id="offre-description-activite" rows="2" placeholder="Type de patientèle, consultations, urgences..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Rétrocession (%)</label>
+                            <input type="number" id="offre-retrocession" value="70" min="0" max="100" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Tarif journalier (€)</label>
+                            <input type="number" id="offre-tarif" placeholder="Ex: 350" min="0" step="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Statut</label>
+                        <select id="offre-statut">
+                            <option value="active">Active</option>
+                            <option value="fermee">Fermée</option>
+                            <option value="pourvue">Pourvue</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="closeOffreModal()">Annuler</button>
+                        <button class="btn-primary" onclick="saveOffre()">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Offre Details Modal -->
+        <div id="offre-details-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 id="offre-details-title">Détails de l'offre</h3>
+                    <button class="modal-close" onclick="closeOffreDetailsModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body" id="offre-details-body"></div>
             </div>
         </div>
 
