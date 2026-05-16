@@ -132,6 +132,11 @@ try {
         initSecretariatWhenReady();
     }
     
+    // Initialize replacements module
+    if (typeof initRemplacements === 'function') {
+        initRemplacements();
+    }
+    
     console.log('[AUTH] App fully initialized');
 }
 
@@ -305,8 +310,79 @@ async function loadUserSettings() {
         }
         renderLogoPreview();
         loadTheme();
+        applyCotationVisibility();
     } catch (e) {
         console.error('[AUTH] Erreur chargement settings:', e);
+    }
+}
+
+function applyCotationVisibility() {
+    console.log('[COTATION] applyCotationVisibility called');
+    console.log('[COTATION] settings:', settings);
+    
+    const cotationEnabled = settings.cotation_enabled === 'true';
+    console.log('[COTATION] cotationEnabled:', cotationEnabled);
+    
+    const cotationDash = document.getElementById('cotation-dashboard');
+    const addPassagesSection = document.getElementById('add-passages-section');
+    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    
+    const toggleCheckbox = document.getElementById('cotationEnabled');
+    if (toggleCheckbox) {
+        toggleCheckbox.checked = cotationEnabled;
+    }
+    
+    if (cotationDash) {
+        console.log('[COTATION] Setting cotation-dashboard display to:', cotationEnabled ? 'block' : 'none');
+        cotationDash.style.display = cotationEnabled ? 'block' : 'none';
+        cotationDash.style.visibility = cotationEnabled ? 'visible' : 'hidden';
+    }
+    
+    if (addPassagesSection) {
+        console.log('[COTATION] Setting add-passages-section display to:', cotationEnabled ? 'block' : 'none');
+        addPassagesSection.style.display = cotationEnabled ? 'block' : 'none';
+    }
+    
+    if (addPassagesSectionModal) {
+        console.log('[COTATION] Setting add-passages-section-modal display to:', cotationEnabled ? 'block' : 'none');
+        addPassagesSectionModal.style.display = cotationEnabled ? 'block' : 'none';
+    }
+    
+    console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);
+}
+
+async function saveCotationSetting(enabled) {
+    console.log('[COTATION] saveCotationSetting called with:', enabled);
+    console.log('[COTATION] currentUser:', currentUser ? currentUser.id : 'null');
+    
+    const value = enabled ? 'true' : 'false';
+    settings.cotation_enabled = value;
+    
+    if (!currentUser) {
+        console.log('[COTATION] No currentUser, returning');
+        return;
+    }
+    
+    try {
+        console.log('[COTATION] Attempting upsert with:', { user_id: currentUser.id, key: 'cotation_enabled', value });
+        
+        const { error } = await supabaseClient
+            .from('user_settings')
+            .upsert({
+                user_id: currentUser.id,
+                key: 'cotation_enabled',
+                value: value
+            }, {
+                onConflict: 'user_id,key'
+            });
+        
+        if (error) {
+            console.error('[COTATION] Error saving:', error);
+        } else {
+            console.log('[COTATION] Saved:', value);
+        }
+    } catch (e) {
+        console.error('[COTATION] Exception:', e);
     }
 }
 
@@ -374,6 +450,10 @@ function showLoginForm() {
 }
 
 function showError(message) {
+    alert(message);
+}
+
+function showToast(message) {
     alert(message);
 }
 
@@ -2865,6 +2945,13 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
         await saveSetting('theme', theme);
     });
 });
+
+// Cotation enabled toggle - using global function
+window.toggleCotationEnabled = async function(enabled) {
+    console.log('[COTATION] Toggle called, enabled:', enabled);
+    await saveCotationSetting(enabled);
+    applyCotationVisibility();
+};
 
 // Load saved theme
 async function loadTheme() {
@@ -6020,4 +6107,507 @@ function updatePendingCount() {
         badge.textContent = count;
         badge.style.display = count > 0 ? 'inline' : 'none';
     }
+}
+
+// ============================================
+// GESTION DES REMPLACANTS
+// ============================================
+
+let remplacants = [];
+let contrats = [];
+let disponibilites = [];
+
+async function loadRemplacants() {
+    if (!supabaseClient || !currentUser) return;
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('remplacants')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('nom', { ascending: true });
+        
+        if (error) throw error;
+        remplacants = data || [];
+        renderRemplacants();
+    } catch (e) {
+        console.error('[REMPLACANTS] Erreur chargement:', e);
+    }
+}
+
+function renderRemplacants(searchTerm = '') {
+    const container = document.getElementById('remplacantsList');
+    const noResults = document.getElementById('noRemplacants');
+    
+    if (!container) return;
+    
+    const filtered = remplacants.filter(r => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return r.nom?.toLowerCase().includes(term) || 
+               r.prenom?.toLowerCase().includes(term) ||
+               r.email?.toLowerCase().includes(term);
+    });
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '';
+        if (noResults) noResults.style.display = 'block';
+        return;
+    }
+    
+    if (noResults) noResults.style.display = 'none';
+    
+    container.innerHTML = filtered.map(r => `
+        <div class="remplacant-card ${r.disponible ? '' : 'unavailable'}">
+            <div class="name">${r.prenom} ${r.nom}</div>
+            <div class="contact">${r.email || '—'} | ${r.telephone || '—'}</div>
+            <div class="availability">${r.disponible ? '✓ Disponible' : '✗ Non disponible'}</div>
+            <div class="remplacant-card-actions">
+                <button onclick="openRemplacantDetails('${r.id}')">Voir</button>
+                <button onclick="editRemplacant('${r.id}')">Modifier</button>
+                <button class="primary" onclick="openContratModal(null, '${r.id}')">Contrat</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function searchRemplacants(term) {
+    renderRemplacants(term);
+}
+
+function openCreateRemplacantModal() {
+    document.getElementById('remplacant-modal-title').textContent = 'Nouveau remplaçant';
+    document.getElementById('remplacant-id').value = '';
+    document.getElementById('remplacant-nom').value = '';
+    document.getElementById('remplacant-prenom').value = '';
+    document.getElementById('remplacant-email').value = '';
+    document.getElementById('remplacant-telephone').value = '';
+    document.getElementById('remplacant-adresse').value = '';
+    document.getElementById('remplacant-date-naissance').value = '';
+    document.getElementById('remplacant-rpps').value = '';
+    document.getElementById('remplacant-specialite').value = '';
+    document.getElementById('remplacant-notes').value = '';
+    document.getElementById('remplacant-disponible').checked = true;
+    document.getElementById('remplacant-modal').style.display = 'flex';
+}
+
+function editRemplacant(id) {
+    const r = remplacants.find(x => x.id === id);
+    if (!r) return;
+    
+    document.getElementById('remplacant-modal-title').textContent = 'Modifier le remplaçant';
+    document.getElementById('remplacant-id').value = r.id;
+    document.getElementById('remplacant-nom').value = r.nom || '';
+    document.getElementById('remplacant-prenom').value = r.prenom || '';
+    document.getElementById('remplacant-email').value = r.email || '';
+    document.getElementById('remplacant-telephone').value = r.telephone || '';
+    document.getElementById('remplacant-adresse').value = r.adresse || '';
+    document.getElementById('remplacant-date-naissance').value = r.date_naissance || '';
+    document.getElementById('remplacant-rpps').value = r.rpps || '';
+    document.getElementById('remplacant-specialite').value = r.specialite || '';
+    document.getElementById('remplacant-notes').value = r.notes || '';
+    document.getElementById('remplacant-disponible').checked = r.disponible !== false;
+    document.getElementById('remplacant-modal').style.display = 'flex';
+}
+
+function closeRemplacantModal() {
+    document.getElementById('remplacant-modal').style.display = 'none';
+}
+
+async function saveRemplacant() {
+    if (!supabaseClient || !currentUser) return;
+    
+    const id = document.getElementById('remplacant-id').value;
+    const nom = document.getElementById('remplacant-nom').value.trim();
+    const prenom = document.getElementById('remplacant-prenom').value.trim();
+    
+    if (!nom || !prenom) {
+        showError('Veuillez entrer le nom et le prénom');
+        return;
+    }
+    
+    const data = {
+        user_id: currentUser.id,
+        nom,
+        prenom,
+        email: document.getElementById('remplacant-email').value.trim() || null,
+        telephone: document.getElementById('remplacant-telephone').value.trim() || null,
+        adresse: document.getElementById('remplacant-adresse').value.trim() || null,
+        date_naissance: document.getElementById('remplacant-date-naissance').value || null,
+        rpps: document.getElementById('remplacant-rpps').value.trim() || null,
+        specialite: document.getElementById('remplacant-specialite').value.trim() || null,
+        notes: document.getElementById('remplacant-notes').value.trim() || null,
+        disponible: document.getElementById('remplacant-disponible').checked,
+        updated_at: new Date().toISOString()
+    };
+    
+    try {
+        let result;
+        if (id) {
+            result = await supabaseClient.from('remplacants').update(data).eq('id', id);
+        } else {
+            result = await supabaseClient.from('remplacants').insert(data);
+        }
+        
+        if (result.error) throw result.error;
+        
+        closeRemplacantModal();
+        await loadRemplacants();
+        showToast(id ? 'Remplaçant mis à jour' : 'Remplaçant créé');
+    } catch (e) {
+        console.error('[REMPLACANTS] Erreur:', e);
+        showError('Erreur: ' + e.message);
+    }
+}
+
+async function openRemplacantDetails(id) {
+    const r = remplacants.find(x => x.id === id);
+    if (!r) return;
+    
+    document.getElementById('remplacant-details-title').textContent = `${r.prenom} ${r.nom}`;
+    
+    const contratsRemplacant = contrats.filter(c => c.remplacant_id === id);
+    
+    document.getElementById('remplacant-details-body').innerHTML = `
+        <div class="remplacant-details-header">
+            <div class="remplacant-avatar">${r.prenom?.[0] || ''}${r.nom?.[0] || ''}</div>
+            <div class="remplacant-info">
+                <h4>${r.prenom} ${r.nom}</h4>
+                <p>${r.specialite || 'Médecin remplaçant'}</p>
+            </div>
+            <span class="contrat-status ${r.disponible ? 'signe' : 'refuse'}">${r.disponible ? 'Disponible' : 'Indisponible'}</span>
+        </div>
+        
+        <div class="remplacant-details-grid">
+            <div class="remplacant-detail-item">
+                <label>Email</label>
+                <span>${r.email || '—'}</span>
+            </div>
+            <div class="remplacant-detail-item">
+                <label>Téléphone</label>
+                <span>${r.telephone || '—'}</span>
+            </div>
+            <div class="remplacant-detail-item">
+                <label>Adresse</label>
+                <span>${r.adresse || '—'}</span>
+            </div>
+            <div class="remplacant-detail-item">
+                <label>RPPS</label>
+                <span>${r.rpps || '—'}</span>
+            </div>
+            <div class="remplacant-detail-item">
+                <label>Date de naissance</label>
+                <span>${r.date_naissance ? new Date(r.date_naissance).toLocaleDateString('fr-FR') : '—'}</span>
+            </div>
+            <div class="remplacant-detail-item">
+                <label>Créé le</label>
+                <span>${new Date(r.created_at).toLocaleDateString('fr-FR')}</span>
+            </div>
+        </div>
+        
+        ${r.notes ? `<div class="remplacant-section">
+            <h4>Notes</h4>
+            <p>${r.notes}</p>
+        </div>` : ''}
+        
+        <div class="remplacant-section">
+            <h4>Contrats (${contratsRemplacant.length})</h4>
+            ${contratsRemplacant.length > 0 ? `
+                <div class="contrats-list">
+                    ${contratsRemplacant.map(c => `
+                        <div class="contrat-item">
+                            <div class="contrat-item-info">
+                                <h5>${c.titre}</h5>
+                                <p>${formatDate(c.date_debut)} - ${c.date_fin ? formatDate(c.date_fin) : 'En cours'}</p>
+                            </div>
+                            <div class="contrat-item-actions">
+                                <span class="contrat-status ${c.statut}">${getStatutLabel(c.statut)}</span>
+                                <button onclick="openContratDetails('${c.id}')">Voir</button>
+                                ${c.statut === 'brouillon' ? `<button class="primary" onclick="inviterSigner('${c.id}', '${r.email}')">Envoyer</button>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--color-text-secondary);">Aucun contrat</p>'}
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="deleteRemplacant('${r.id}')" style="color: var(--color-danger);">Supprimer</button>
+            <button class="btn-secondary" onclick="closeRemplacantDetailsModal()">Fermer</button>
+            <button class="btn-primary" onclick="editRemplacant('${r.id}'); closeRemplacantDetailsModal();">Modifier</button>
+            <button class="btn-primary" onclick="openContratModal(null, '${r.id}'); closeRemplacantDetailsModal();">Nouveau contrat</button>
+        </div>
+    `;
+    
+    document.getElementById('remplacant-details-modal').style.display = 'flex';
+}
+
+function closeRemplacantDetailsModal() {
+    document.getElementById('remplacant-details-modal').style.display = 'none';
+}
+
+async function deleteRemplacant(id) {
+    if (!confirm('Voulez-vous vraiment supprimer ce remplaçant ?')) return;
+    
+    try {
+        const { error } = await supabaseClient.from('remplacants').delete().eq('id', id);
+        if (error) throw error;
+        
+        closeRemplacantDetailsModal();
+        await loadRemplacants();
+        showToast('Remplaçant supprimé');
+    } catch (e) {
+        console.error('[REMPLACANTS] Erreur suppression:', e);
+        showError('Erreur: ' + e.message);
+    }
+}
+
+// ============================================
+// GESTION DES CONTRATS
+// ============================================
+
+async function loadContrats() {
+    if (!supabaseClient || !currentUser) return;
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('contrats_remplacement')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('date_debut', { ascending: false });
+        
+        if (error) throw error;
+        contrats = data || [];
+    } catch (e) {
+        console.error('[CONTRATS] Erreur chargement:', e);
+    }
+}
+
+function getStatutLabel(statut) {
+    const labels = {
+        'brouillon': 'Brouillon',
+        'envoye': 'Envoyé',
+        'signe': 'Signé',
+        'refuse': 'Refusé',
+        'termine': 'Terminé'
+    };
+    return labels[statut] || statut;
+}
+
+function formatDate(date) {
+    if (!date) return '—';
+    return new Date(date).toLocaleDateString('fr-FR');
+}
+
+function openContratModal(contratId = null, remplacantId = null) {
+    document.getElementById('contrat-modal-title').textContent = 'Nouveau contrat';
+    document.getElementById('contrat-id').value = '';
+    document.getElementById('contrat-remplacant-id').value = remplacantId || '';
+    document.getElementById('contrat-titre').value = '';
+    document.getElementById('contrat-date-debut').value = '';
+    document.getElementById('contrat-date-fin').value = '';
+    document.getElementById('contrat-periode-essai').value = '';
+    document.getElementById('contrat-tarif').value = '';
+    document.getElementById('contrat-conditions').value = '';
+    document.getElementById('contrat-statut').value = 'brouillon';
+    
+    if (contratId) {
+        const c = contrats.find(x => x.id === contratId);
+        if (c) {
+            document.getElementById('contrat-modal-title').textContent = 'Modifier le contrat';
+            document.getElementById('contrat-id').value = c.id;
+            document.getElementById('contrat-remplacant-id').value = c.remplacant_id;
+            document.getElementById('contrat-titre').value = c.titre || '';
+            document.getElementById('contrat-date-debut').value = c.date_debut || '';
+            document.getElementById('contrat-date-fin').value = c.date_fin || '';
+            document.getElementById('contrat-periode-essai').value = c.periode_essai || '';
+            document.getElementById('contrat-tarif').value = c.tarif_journalier || '';
+            document.getElementById('contrat-conditions').value = c.conditions || '';
+            document.getElementById('contrat-statut').value = c.statut || 'brouillon';
+        }
+    }
+    
+    document.getElementById('contrat-modal').style.display = 'flex';
+}
+
+function closeContratModal() {
+    document.getElementById('contrat-modal').style.display = 'none';
+}
+
+async function saveContrat() {
+    if (!supabaseClient || !currentUser) return;
+    
+    const id = document.getElementById('contrat-id').value;
+    const remplacantId = document.getElementById('contrat-remplacant-id').value;
+    const titre = document.getElementById('contrat-titre').value.trim();
+    const dateDebut = document.getElementById('contrat-date-debut').value;
+    
+    if (!titre || !dateDebut) {
+        showError('Veuillez entrer le titre et la date de début');
+        return;
+    }
+    
+    if (!remplacantId) {
+        showError('Veuillez sélectionner un remplaçant');
+        return;
+    }
+    
+    const data = {
+        user_id: currentUser.id,
+        remplacant_id: remplacantId,
+        titre,
+        date_debut: dateDebut,
+        date_fin: document.getElementById('contrat-date-fin').value || null,
+        periode_essai: document.getElementById('contrat-periode-essai').value || null,
+        tarif_journalier: parseFloat(document.getElementById('contrat-tarif').value) || null,
+        conditions: document.getElementById('contrat-conditions').value.trim() || null,
+        statut: document.getElementById('contrat-statut').value,
+        updated_at: new Date().toISOString()
+    };
+    
+    try {
+        let result;
+        if (id) {
+            result = await supabaseClient.from('contrats_remplacement').update(data).eq('id', id);
+        } else {
+            result = await supabaseClient.from('contrats_remplacement').insert(data);
+        }
+        
+        if (result.error) throw result.error;
+        
+        closeContratModal();
+        await loadContrats();
+        await loadRemplacants();
+        showToast(id ? 'Contrat mis à jour' : 'Contrat créé');
+    } catch (e) {
+        console.error('[CONTRATS] Erreur:', e);
+        showError('Erreur: ' + e.message);
+    }
+}
+
+async function openContratDetails(id) {
+    const c = contrats.find(x => x.id === id);
+    if (!c) return;
+    
+    const r = remplacants.find(x => x.id === c.remplacant_id);
+    
+    document.getElementById('contrat-details-title').textContent = c.titre;
+    
+    document.getElementById('contrat-details-body').innerHTML = `
+        <div class="contrat-details-header">
+            <div class="contrat-details-info">
+                <h4>${c.titre}</h4>
+                <p>${r ? r.prenom + ' ' + r.nom : 'Remplaçant inconnu'}</p>
+            </div>
+            <span class="contrat-status ${c.statut}">${getStatutLabel(c.statut)}</span>
+        </div>
+        
+        <div class="contrat-details-grid">
+            <div class="contrat-detail-item">
+                <label>Date de début</label>
+                <span>${formatDate(c.date_debut)}</span>
+            </div>
+            <div class="contrat-detail-item">
+                <label>Date de fin</label>
+                <span>${formatDate(c.date_fin) || 'Non définie'}</span>
+            </div>
+            <div class="contrat-detail-item">
+                <label>Période d'essai</label>
+                <span>${formatDate(c.periode_essai) || 'Non définie'}</span>
+            </div>
+            <div class="contrat-detail-item">
+                <label>Tarif journalier</label>
+                <span>${c.tarif_journalier ? c.tarif_journalier + '€' : '—'}</span>
+            </div>
+        </div>
+        
+        ${c.conditions ? `
+            <div class="contrat-conditions">
+                <h5>Conditions</h5>
+                <p>${c.conditions}</p>
+            </div>
+        ` : ''}
+        
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="deleteContrat('${c.id}')" style="color: var(--color-danger);">Supprimer</button>
+            <button class="btn-secondary" onclick="closeContratDetailsModal()">Fermer</button>
+            <button class="btn-secondary" onclick="openContratDetails('${c.id}'); closeContratDetailsModal(); editRemplacant('${c.remplacant_id}');">Voir remplaçant</button>
+            ${c.statut === 'brouillon' ? `<button class="btn-primary" onclick="inviterSigner('${c.id}', '${r?.email}')">Envoyer pour signature</button>` : ''}
+            <button class="btn-primary" onclick="openContratModal('${c.id}'); closeContratDetailsModal();">Modifier</button>
+        </div>
+    `;
+    
+    document.getElementById('contrat-details-modal').style.display = 'flex';
+}
+
+function closeContratDetailsModal() {
+    document.getElementById('contrat-details-modal').style.display = 'none';
+}
+
+async function deleteContrat(id) {
+    if (!confirm('Voulez-vous vraiment supprimer ce contrat ?')) return;
+    
+    try {
+        const { error } = await supabaseClient.from('contrats_remplacement').delete().eq('id', id);
+        if (error) throw error;
+        
+        closeContratDetailsModal();
+        await loadContrats();
+        showToast('Contrat supprimé');
+    } catch (e) {
+        console.error('[CONTRATS] Erreur suppression:', e);
+        showError('Erreur: ' + e.message);
+    }
+}
+
+function inviterSigner(contratId, email) {
+    document.getElementById('invitation-contrat-id').value = contratId;
+    document.getElementById('invitation-email').value = email || '';
+    document.getElementById('invitation-modal').style.display = 'flex';
+}
+
+function closeInvitationModal() {
+    document.getElementById('invitation-modal').style.display = 'none';
+}
+
+async function sendInvitation() {
+    const contratId = document.getElementById('invitation-contrat-id').value;
+    const email = document.getElementById('invitation-email').value.trim();
+    const message = document.getElementById('invitation-message').value.trim();
+    
+    if (!email) {
+        showError('Veuillez entrer un email');
+        return;
+    }
+    
+    try {
+        const token = crypto.randomUUID();
+        const { error } = await supabaseClient
+            .from('contrats_remplacement')
+            .update({ 
+                statut: 'envoye',
+                signataire_token: token,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', contratId);
+        
+        if (error) throw error;
+        
+        await loadContrats();
+        closeInvitationModal();
+        showToast('Invitation envoyée à ' + email);
+        
+    } catch (e) {
+        console.error('[INVITATION] Erreur:', e);
+        showError('Erreur: ' + e.message);
+    }
+}
+
+// ============================================
+// INIT
+// ============================================
+
+async function initRemplacements() {
+    await loadRemplacants();
+    await loadContrats();
 }

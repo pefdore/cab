@@ -11,14 +11,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Cotation">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon-192.svg">
-    <link rel="apple-touch-icon" href="icon-192.svg">
+    <link rel="manifest" href="/assets/manifest-BGmaG6wq.json">
+    <link rel="icon" type="image/svg+xml" href="/assets/icon-192-mySIpaht.svg">
+    <link rel="apple-touch-icon" href="/assets/icon-192-mySIpaht.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=99">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" crossorigin href="/assets/main-BweOOi-K.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1224,6 +1224,20 @@ window.attemptLogin = function() {
                 <!-- Préférences Page -->
                 <div id="settings-page-preferences" class="settings-page" style="display: none;">
                     <div class="settings-section">
+                        <h3>Cotation hors cabinet</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Activer</span>
+                                <span class="preference-desc">Afficher les sections de gestion des passages et du DAB</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="cotationEnabled" onchange="toggleCotationEnabled(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
                         <h3>Apparence</h3>
                         <div class="preference-item">
                             <div class="preference-info">
@@ -1339,10 +1353,11 @@ window.attemptLogin = function() {
             <section id="view-cabinet" class="view">
                 <h2>Gestion Cabinet</h2>
                 
-                <div class="cabinet-tabs">
+<div class="cabinet-tabs">
                     <button class="cabinet-tab active" data-tab="secretariat">Secrétariat</button>
                     <button class="cabinet-tab" data-tab="reunions">Réunions</button>
-                    <button class="cabinet-tab" data-tab="stocks">Stocks & Remplaçants</button>
+                    <button class="cabinet-tab" data-tab="stocks">Stocks</button>
+                    <button class="cabinet-tab" data-tab="remplacants">Remplaçant</button>
                 </div>
                 
                 <!-- Secrétariat -->
@@ -1810,25 +1825,11 @@ window.attemptLogin = function() {
                 <!-- Stocks & Remplaissants -->
                 <div id="cabinet-stocks" class="cabinet-tab-content">
                     <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="remplacants">Remplaçants</button>
-                        <button class="sub-tab" data-subtab="stocks">Gestion Stocks</button>
+                        <button class="sub-tab active" data-subtab="stocks">Gestion Stocks</button>
                         <button class="sub-tab" data-subtab="commande">Commande IA</button>
                     </div>
                     
-                    <div id="stocks-remplacants" class="sub-tab-content active">
-                        <div class="module-card">
-                            <h3>Gestion des Remplaçants</h3>
-                            <p class="module-desc">Suivi des remplaçants, disponibilités et contacts</p>
-                            <div class="module-actions">
-                                <button class="action-btn">Liste remplaçants</button>
-                                <button class="action-btn">Ajouter un remplaçant</button>
-                                <button class="action-btn">Disponibilités</button>
-                            </div>
-                            <div id="remplacantsList" class="remplacants-grid"></div>
-                        </div>
-                    </div>
-                    
-                    <div id="stocks-inventory" class="sub-tab-content">
+                    <div id="stocks-inventory" class="sub-tab-content active">
                         <div class="module-card">
                             <h3>Gestion des Stocks</h3>
                             <p class="module-desc">Inventaire du petit matériel, consommables et azote</p>
@@ -1881,8 +1882,208 @@ window.attemptLogin = function() {
                         </div>
                     </div>
                 </div>
+
+                <!-- Remplaçant -->
+                <div id="cabinet-remplacants" class="cabinet-tab-content">
+                    <div class="remplacants-header">
+                        <div class="remplacants-search">
+                            <input type="text" id="remplacant-search-input" placeholder="Rechercher un remplaçant..." oninput="searchRemplacants(this.value)">
+                            <button class="btn-icon" onclick="searchRemplacants('')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            </button>
+                        </div>
+                        <div class="remplacants-actions">
+                            <button class="action-btn primary" onclick="openCreateRemplacantModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Nouveau remplaçant
+                            </button>
+                        </div>
+                    </div>
+                    <div id="remplacantsList" class="remplacants-grid"></div>
+                    <div id="noRemplacants" class="no-entries" style="display:none;">
+                        <p>Aucun remplaçant trouvé</p>
+                        <button class="action-btn" onclick="openCreateRemplacantModal()">Ajouter un remplaçant</button>
+                    </div>
+                </div>
             </section>
         </main>
+
+        <!-- Remplaçant Modal - Create/Edit -->
+        <div id="remplacant-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 id="remplacant-modal-title">Nouveau remplaçant</h3>
+                    <button class="modal-close" onclick="closeRemplacantModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="remplacant-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nom *</label>
+                            <input type="text" id="remplacant-nom" placeholder="Nom" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Prénom *</label>
+                            <input type="text" id="remplacant-prenom" placeholder="Prénom" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="remplacant-email" placeholder="email@exemple.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone</label>
+                            <input type="tel" id="remplacant-telephone" placeholder="06 00 00 00 00">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Adresse</label>
+                        <input type="text" id="remplacant-adresse" placeholder="Adresse complète">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date de naissance</label>
+                            <input type="date" id="remplacant-date-naissance">
+                        </div>
+                        <div class="form-group">
+                            <label>N° RPPS</label>
+                            <input type="text" id="remplacant-rpps" placeholder="N° RPPS">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Spécialité</label>
+                        <input type="text" id="remplacant-specialite" placeholder="Spécialité médicale">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="remplacant-notes" rows="3" placeholder="Notes..."></textarea>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="remplacant-disponible" checked style="width: auto;">
+                        <label for="remplacant-disponible" style="margin: 0;">Disponible</label>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="closeRemplacantModal()">Annuler</button>
+                        <button class="btn-primary" onclick="saveRemplacant()">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remplaçant Details Modal -->
+        <div id="remplacant-details-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 id="remplacant-details-title">Fiche remplaçant</h3>
+                    <button class="modal-close" onclick="closeRemplacantDetailsModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body" id="remplacant-details-body"></div>
+            </div>
+        </div>
+
+        <!-- Contrat Modal - Create/Edit -->
+        <div id="contrat-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 id="contrat-modal-title">Nouveau contrat</h3>
+                    <button class="modal-close" onclick="closeContratModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="contrat-id">
+                    <input type="hidden" id="contrat-remplacant-id">
+                    <div class="form-group">
+                        <label>Titre du contrat *</label>
+                        <input type="text" id="contrat-titre" placeholder="Ex: Remplacement Dr Martin - Mai 2026" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date de début *</label>
+                            <input type="date" id="contrat-date-debut" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date de fin</label>
+                            <input type="date" id="contrat-date-fin">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Période d'essai</label>
+                            <input type="date" id="contrat-periode-essai">
+                        </div>
+                        <div class="form-group">
+                            <label>Tarif journalier (€)</label>
+                            <input type="number" id="contrat-tarif" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Conditions</label>
+                        <textarea id="contrat-conditions" rows="4" placeholder="Conditions du remplacement..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Statut</label>
+                        <select id="contrat-statut">
+                            <option value="brouillon">Brouillon</option>
+                            <option value="envoye">Envoyé pour signature</option>
+                            <option value="signe">Signé</option>
+                            <option value="refuse">Refusé</option>
+                            <option value="termine">Terminé</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="closeContratModal()">Annuler</button>
+                        <button class="btn-primary" onclick="saveContrat()">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contrat Details Modal -->
+        <div id="contrat-details-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 id="contrat-details-title">Contrat</h3>
+                    <button class="modal-close" onclick="closeContratDetailsModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body" id="contrat-details-body"></div>
+            </div>
+        </div>
+
+        <!-- Invitation Modal -->
+        <div id="invitation-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>Inviter à signer</h3>
+                    <button class="modal-close" onclick="closeInvitationModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 16px; color: var(--color-text-secondary);">Envoyer une invitation au remplaçant pour signer le contrat.</p>
+                    <input type="hidden" id="invitation-contrat-id">
+                    <div class="form-group">
+                        <label>Email du remplaçant</label>
+                        <input type="email" id="invitation-email" placeholder="email@exemple.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Message (optionnel)</label>
+                        <textarea id="invitation-message" rows="3" placeholder="Message personnalisé..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="closeInvitationModal()">Annuler</button>
+                        <button class="btn-primary" onclick="sendInvitation()">Envoyer l'invitation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- FAB - Floating Action Button -->
         <div class="fab-container" id="fabContainer">
