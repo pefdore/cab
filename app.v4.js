@@ -295,7 +295,17 @@ async function loadUserProfile() {
 }
 
 async function loadUserSettings() {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('[COTATION] No currentUser, trying localStorage only');
+        // Try to load from localStorage even without user
+        const localCotationEnabled = localStorage.getItem('cotation_enabled');
+        if (localCotationEnabled) {
+            settings.cotation_enabled = localCotationEnabled;
+            console.log('[COTATION] Loaded from localStorage (no user):', localCotationEnabled);
+        }
+        applyCotationVisibility();
+        return;
+    }
     
     // First try to load from localStorage as backup
     const localCotationEnabled = localStorage.getItem('cotation_enabled');
@@ -2966,6 +2976,7 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
 // Cotation enabled toggle - using global function
 window.toggleCotationEnabled = async function(enabled) {
     console.log('[COTATION] Toggle called, enabled:', enabled);
+    console.log('[COTATION] currentUser at toggle:', currentUser ? currentUser.id : 'null');
     await saveCotationSetting(enabled);
     applyCotationVisibility();
 };
