@@ -2660,46 +2660,35 @@ h2 {
         position: fixed;
         top: 16px;
         left: 16px;
-        right: 16px;
         z-index: 1001;
-        padding: 0;
-        background: transparent;
-        border: none;
+        padding: 12px;
+        background: var(--color-bg-elevated);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
         cursor: pointer;
-        text-align: left;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-    
-    .overlay-back-btn .back-arrow {
-        font-size: 1.2rem;
-        color: var(--color-text-secondary);
         display: flex;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-fast);
     }
     
-    .overlay-back-btn .back-arrow::before {
-        content: '←';
-    }
-    
-    .overlay-back-btn .page-title {
-        font-size: 1.5rem;
-        font-weight: 700;
+    .overlay-back-btn svg {
         color: var(--color-text);
     }
     
     .overlay-back-btn:active {
         opacity: 0.7;
+        transform: scale(0.95);
     }
     
     .settings-page-overlay h2 {
-        margin-top: 80px;
+        margin-top: 72px;
         margin-bottom: 24px;
-        font-size: 1.75rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--color-text);
+        padding-left: 52px;
     }
     
     .settings-page-overlay .mobile-logout-btn {
