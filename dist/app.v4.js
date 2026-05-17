@@ -297,6 +297,13 @@ async function loadUserProfile() {
 async function loadUserSettings() {
     if (!currentUser) return;
     
+    // First try to load from localStorage as backup
+    const localCotationEnabled = localStorage.getItem('cotation_enabled');
+    if (localCotationEnabled) {
+        settings.cotation_enabled = localCotationEnabled;
+        console.log('[COTATION] Loaded from localStorage:', localCotationEnabled);
+    }
+    
     try {
         const { data } = await supabaseClient
             .from('user_settings')
@@ -306,6 +313,10 @@ async function loadUserSettings() {
         if (data) {
             data.forEach(s => {
                 settings[s.key] = s.value;
+                // Update localStorage if Supabase has newer value
+                if (s.key === 'cotation_enabled') {
+                    localStorage.setItem('cotation_enabled', s.value);
+                }
             });
         }
         renderLogoPreview();
@@ -313,6 +324,8 @@ async function loadUserSettings() {
         applyCotationVisibility();
     } catch (e) {
         console.error('[AUTH] Erreur chargement settings:', e);
+        // Still apply visibility with localStorage value
+        applyCotationVisibility();
     }
 }
 
@@ -320,7 +333,7 @@ function applyCotationVisibility() {
     console.log('[COTATION] applyCotationVisibility called');
     console.log('[COTATION] settings:', settings);
     
-    const cotationEnabled = settings.cotation_enabled === 'true';
+    const cotationEnabled = settings.cotation_enabled === 'true' || settings.cotation_enabled === true;
     console.log('[COTATION] cotationEnabled:', cotationEnabled);
     
     const cotationDash = document.getElementById('cotation-dashboard');
@@ -358,6 +371,10 @@ async function saveCotationSetting(enabled) {
     const value = enabled ? 'true' : 'false';
     settings.cotation_enabled = value;
     
+    // Always save to localStorage as backup
+    localStorage.setItem('cotation_enabled', value);
+    console.log('[COTATION] Saved to localStorage:', value);
+    
     if (!currentUser) {
         console.log('[COTATION] No currentUser, returning');
         return;
@@ -379,7 +396,7 @@ async function saveCotationSetting(enabled) {
         if (error) {
             console.error('[COTATION] Error saving:', error);
         } else {
-            console.log('[COTATION] Saved:', value);
+            console.log('[COTATION] Saved to Supabase:', value);
         }
     } catch (e) {
         console.error('[COTATION] Exception:', e);
