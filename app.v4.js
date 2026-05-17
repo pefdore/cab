@@ -507,10 +507,11 @@ function initCotationVisibility() {
         toggleBtn.addEventListener('click', function() {
             const currentValue = localStorage.getItem('cotation_enabled') === 'true';
             const newValue = !currentValue;
-            console.log('[COTATION] Button click, toggling from', currentValue, 'to', newValue);
+            console.log('[COTATION] Button click, currentValue:', currentValue, 'newValue:', newValue);
             window.toggleCotationEnabled(newValue);
         });
         
+        // Update button immediately
         updateToggleButton();
     };
     
