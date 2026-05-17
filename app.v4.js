@@ -510,11 +510,14 @@ function initCotationVisibility() {
         
         // Remove the inline onchange to prevent auto-trigger
         toggleCheckbox.removeAttribute('onchange');
-        toggleCheckbox.addEventListener('change', function() {
+        toggleCheckbox.addEventListener('change', function(e) {
+            console.log('[COTATION] Checkbox change event fired, checked:', this.checked, 'isProgrammaticChange:', isProgrammaticChange);
             if (isProgrammaticChange) {
                 isProgrammaticChange = false;
+                console.log('[COTATION] Skipping programmatic change');
                 return;
             }
+            console.log('[COTATION] Calling toggleCotationEnabled');
             window.toggleCotationEnabled(this.checked);
         });
         
