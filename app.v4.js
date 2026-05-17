@@ -495,42 +495,52 @@ function showToast(message) {
 
 // Apply cotation visibility immediately on page load (before auth)
 function initCotationVisibility() {
-    // Wait for DOM to be ready
     const checkAndApply = () => {
-        const toggleCheckbox = document.getElementById('cotationEnabled');
+        const toggleBtn = document.getElementById('cotationToggleBtn');
         
-        if (!toggleCheckbox) {
+        if (!toggleBtn) {
             setTimeout(checkAndApply, 100);
             return;
         }
         
-        const localValue = localStorage.getItem('cotation_enabled');
-        console.log('[COTATION] Loading - localStorage.getItem:', localValue);
+        // Add click handler
+        toggleBtn.addEventListener('click', function() {
+            const currentValue = localStorage.getItem('cotation_enabled') === 'true';
+            const newValue = !currentValue;
+            console.log('[COTATION] Button click, toggling from', currentValue, 'to', newValue);
+            window.toggleCotationEnabled(newValue);
+        });
         
-        const localCotationEnabled = localValue === 'true';
-        console.log('[COTATION] Loading - Setting checkbox.checked to:', localCotationEnabled);
-        
-        toggleCheckbox.checked = localCotationEnabled;
-        
-        const cotationDash = document.getElementById('cotation-dashboard');
-        const addPassagesSection = document.getElementById('add-passages-section');
-        const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-        
-        if (cotationDash) {
-            cotationDash.style.display = localCotationEnabled ? 'block' : 'none';
-            cotationDash.style.visibility = localCotationEnabled ? 'visible' : 'hidden';
-        }
-        
-        if (addPassagesSection) {
-            addPassagesSection.style.display = localCotationEnabled ? 'block' : 'none';
-        }
-        
-        if (addPassagesSectionModal) {
-            addPassagesSectionModal.style.display = localCotationEnabled ? 'block' : 'none';
-        }
+        updateToggleButton();
     };
     
     checkAndApply();
+}
+
+function updateToggleButton() {
+    const toggleBtn = document.getElementById('cotationToggleBtn');
+    if (!toggleBtn) return;
+    
+    const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+    toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
+    toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
+    
+    const cotationDash = document.getElementById('cotation-dashboard');
+    const addPassagesSection = document.getElementById('add-passages-section');
+    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    
+    if (cotationDash) {
+        cotationDash.style.display = isEnabled ? 'block' : 'none';
+        cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
+    }
+    
+    if (addPassagesSection) {
+        addPassagesSection.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (addPassagesSectionModal) {
+        addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+    }
 }
 
 // Call immediately on script load
@@ -3037,6 +3047,7 @@ window.toggleCotationEnabled = async function(enabled) {
     console.log('[COTATION] currentUser at toggle:', currentUser ? currentUser.id : 'null');
     await saveCotationSetting(enabled);
     applyCotationVisibility();
+    updateToggleButton();
 };
 
 // Load saved theme
