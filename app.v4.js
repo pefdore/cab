@@ -498,20 +498,24 @@ function initCotationVisibility() {
     // Wait for DOM to be ready
     const checkAndApply = () => {
         const toggleCheckbox = document.getElementById('cotationEnabled');
+        console.log('[COTATION] initCotationVisibility - checkbox found:', !!toggleCheckbox);
+        
         if (!toggleCheckbox) {
             // DOM not ready, try again in 100ms
             setTimeout(checkAndApply, 100);
             return;
         }
         
-        const localCotationEnabled = localStorage.getItem('cotation_enabled') === 'true';
-        console.log('[COTATION] initCotationVisibility, localStorage value:', localStorage.getItem('cotation_enabled'));
+        const localValue = localStorage.getItem('cotation_enabled');
+        const localCotationEnabled = localValue === 'true';
+        console.log('[COTATION] initCotationVisibility, localStorage value:', localValue);
+        console.log('[COTATION] Setting checkbox.checked to:', localCotationEnabled);
+        
+        toggleCheckbox.checked = localCotationEnabled;
         
         const cotationDash = document.getElementById('cotation-dashboard');
         const addPassagesSection = document.getElementById('add-passages-section');
         const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-        
-        toggleCheckbox.checked = localCotationEnabled;
         
         if (cotationDash) {
             cotationDash.style.display = localCotationEnabled ? 'block' : 'none';
@@ -527,6 +531,7 @@ function initCotationVisibility() {
         }
     };
     
+    // Also try immediately in case DOM is already ready
     checkAndApply();
 }
 
