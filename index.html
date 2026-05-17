@@ -1230,7 +1230,7 @@ window.attemptLogin = function() {
                                 <span class="preference-label">Activer</span>
                                 <span class="preference-desc">Afficher les sections de gestion des passages et du DAB</span>
                             </div>
-                            <button id="cotationToggleBtn" class="btn-secondary" style="min-width: 100px; min-height: 44px; padding: 8px 16px; touch-action: manipulation; cursor: pointer;" onclick="event.preventDefault(); window.toggleCotationEnabled(localStorage.getItem('cotation_enabled') !== 'true');">...</button>
+                            <button id="cotationToggleBtn" type="button" onclick="(function(){window.toggleCotationEnabled(localStorage.getItem('cotation_enabled')!=='true')})()" style="min-width: 100px; min-height: 44px; padding: 8px 16px; -webkit-tap-highlight-color: transparent;">...</button>
                         </div>
                     </div>
                     
@@ -2650,7 +2650,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v4.js?v=202605131000" defer></script>
+    <script src="app.v4.js?v=202605180050" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
       // Fallback: Define showAddEmployeeModal directly in case secretariat.js fails to load
