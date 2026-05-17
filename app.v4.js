@@ -400,32 +400,9 @@ async function saveCotationSetting(enabled) {
         }
     } catch (e) {
         console.error('[COTATION] Exception:', e);
-    }
+}
 }
     
-    try {
-        console.log('[COTATION] Attempting upsert with:', { user_id: currentUser.id, key: 'cotation_enabled', value });
-        
-        const { error } = await supabaseClient
-            .from('user_settings')
-            .upsert({
-                user_id: currentUser.id,
-                key: 'cotation_enabled',
-                value: value
-            }, {
-                onConflict: 'user_id,key'
-            });
-        
-        if (error) {
-            console.error('[COTATION] Error saving:', error);
-        } else {
-            console.log('[COTATION] Saved:', value);
-        }
-    } catch (e) {
-        console.error('[COTATION] Exception:', e);
-    }
-}
-
 // --- Setup des écouteurs d'événements ---
 function setupAuthListeners() {
     console.log('[AUTH] Setup des listeners');
