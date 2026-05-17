@@ -508,19 +508,7 @@ function initCotationVisibility() {
             return;
         }
         
-        // Remove the inline onchange to prevent auto-trigger
-        toggleCheckbox.removeAttribute('onchange');
-        toggleCheckbox.addEventListener('change', function(e) {
-            console.log('[COTATION] Checkbox change event fired, checked:', this.checked, 'isProgrammaticChange:', isProgrammaticChange);
-            if (isProgrammaticChange) {
-                isProgrammaticChange = false;
-                console.log('[COTATION] Skipping programmatic change');
-                return;
-            }
-            console.log('[COTATION] Calling toggleCotationEnabled');
-            window.toggleCotationEnabled(this.checked);
-        });
-        
+        // Just set checked without adding event listener - we'll handle clicks directly
         const localValue = localStorage.getItem('cotation_enabled');
         const localCotationEnabled = localValue === 'true';
         console.log('[COTATION] initCotationVisibility, localStorage value:', localValue);
@@ -545,6 +533,9 @@ function initCotationVisibility() {
         if (addPassagesSectionModal) {
             addPassagesSectionModal.style.display = localCotationEnabled ? 'block' : 'none';
         }
+        
+        // Reset flag after setting
+        isProgrammaticChange = false;
     };
     
     // Also try immediately in case DOM is already ready
@@ -3042,6 +3033,12 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
         await saveSetting('theme', theme);
     });
 });
+
+// Cotation toggle handler - wrapper to handle the checkbox change
+window.handleCotationToggle = function(checkbox) {
+    console.log('[COTATION] handleCotationToggle called, checked:', checkbox.checked);
+    window.toggleCotationEnabled(checkbox.checked);
+};
 
 // Cotation enabled toggle - using global function
 window.toggleCotationEnabled = async function(enabled) {
