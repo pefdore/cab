@@ -504,10 +504,20 @@ function initCotationVisibility() {
         }
         
         // Add click handler
-        toggleBtn.addEventListener('click', function() {
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             const currentValue = localStorage.getItem('cotation_enabled') === 'true';
             const newValue = !currentValue;
             console.log('[COTATION] Button click, currentValue:', currentValue, 'newValue:', newValue);
+            window.toggleCotationEnabled(newValue);
+        });
+        
+        // Also handle touch for mobile (removes 300ms delay)
+        toggleBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            const currentValue = localStorage.getItem('cotation_enabled') === 'true';
+            const newValue = !currentValue;
+            console.log('[COTATION] Button touchend, currentValue:', currentValue, 'newValue:', newValue);
             window.toggleCotationEnabled(newValue);
         });
         
