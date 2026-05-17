@@ -2085,6 +2085,32 @@ h2 {
     transform: translateX(22px);
 }
 
+/* Cotation Toggle Button */
+.cotation-toggle-btn {
+    min-width: 100px;
+    min-height: 40px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--color-text-muted);
+    color: var(--color-text-inverse);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cotation-toggle-btn:hover {
+    transform: scale(1.02);
+}
+
+.cotation-toggle-btn.active {
+    background: var(--color-success);
+    color: white;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
 /* Data Export */
 .export-buttons {
     display: flex;

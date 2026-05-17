@@ -503,8 +503,28 @@ function initCotationVisibility() {
             return;
         }
         
-        // Update button immediately
-        updateToggleButton();
+        // Set initial button state
+        const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+        toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
+        toggleBtn.classList.toggle('active', isEnabled);
+        
+        // Set initial visibility
+        const cotationDash = document.getElementById('cotation-dashboard');
+        const addPassagesSection = document.getElementById('add-passages-section');
+        const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+        
+        if (cotationDash) {
+            cotationDash.style.display = isEnabled ? 'block' : 'none';
+            cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
+        }
+        
+        if (addPassagesSection) {
+            addPassagesSection.style.display = isEnabled ? 'block' : 'none';
+        }
+        
+        if (addPassagesSectionModal) {
+            addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+        }
     };
     
     checkAndApply();

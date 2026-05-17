@@ -1230,7 +1230,7 @@ window.attemptLogin = function() {
                                 <span class="preference-label">Activer</span>
                                 <span class="preference-desc">Afficher les sections de gestion des passages et du DAB</span>
                             </div>
-                            <button id="cotationToggleBtn" type="button" onclick="var e=localStorage.getItem('cotation_enabled')!=='true';localStorage.setItem('cotation_enabled',e?'true':'false');this.textContent=e?'Activé':'Désactivé';this.style.background=e?'var(--color-success)':'var(--color-text-subtle)';document.getElementById('cotation-dashboard').style.display=e?'block':'none';document.getElementById('cotation-dashboard').style.visibility=e?'visible':'hidden';document.getElementById('add-passages-section').style.display=e?'block':'none';document.getElementById('add-passages-section-modal').style.display=e?'block':'none'" style="min-width: 100px; min-height: 44px; padding: 8px 16px; -webkit-tap-highlight-color: transparent;">...</button>
+                            <button id="cotationToggleBtn" type="button" class="cotation-toggle-btn" onclick="var e=localStorage.getItem('cotation_enabled')!=='true';localStorage.setItem('cotation_enabled',e?'true':'false');this.textContent=e?'Activé':'Désactivé';this.classList.toggle('active',e);document.getElementById('cotation-dashboard').style.display=e?'block':'none';document.getElementById('cotation-dashboard').style.visibility=e?'visible':'hidden';document.getElementById('add-passages-section').style.display=e?'block':'none';document.getElementById('add-passages-section-modal').style.display=e?'block':'none'">Désactivé</button>
                         </div>
                     </div>
                     
@@ -2650,7 +2650,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v4.js?v=202605180100" defer></script>
+    <script src="app.v4.js?v=202605180110" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
       // Fallback: Define showAddEmployeeModal directly in case secretariat.js fails to load
