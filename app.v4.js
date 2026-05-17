@@ -536,6 +536,8 @@ function updateToggleButton() {
     }
 }
 
+window.updateToggleButton = updateToggleButton;
+
 // Call immediately on script load
 initCotationVisibility();
 

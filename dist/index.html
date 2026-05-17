@@ -1230,7 +1230,7 @@ window.attemptLogin = function() {
                                 <span class="preference-label">Activer</span>
                                 <span class="preference-desc">Afficher les sections de gestion des passages et du DAB</span>
                             </div>
-                            <button id="cotationToggleBtn" type="button" onclick="(function(){window.toggleCotationEnabled(localStorage.getItem('cotation_enabled')!=='true')})()" style="min-width: 100px; min-height: 44px; padding: 8px 16px; -webkit-tap-highlight-color: transparent;">...</button>
+                            <button id="cotationToggleBtn" type="button" onclick="(function(){window.toggleCotationEnabled(localStorage.getItem('cotation_enabled')!=='true');window.updateToggleButton&&window.updateToggleButton()})()" style="min-width: 100px; min-height: 44px; padding: 8px 16px; -webkit-tap-highlight-color: transparent;">...</button>
                         </div>
                     </div>
                     
