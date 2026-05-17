@@ -494,6 +494,8 @@ function showToast(message) {
 }
 
 // Apply cotation visibility immediately on page load (before auth)
+let isProgrammaticChange = false;
+
 function initCotationVisibility() {
     // Wait for DOM to be ready
     const checkAndApply = () => {
@@ -506,11 +508,22 @@ function initCotationVisibility() {
             return;
         }
         
+        // Remove the inline onchange to prevent auto-trigger
+        toggleCheckbox.removeAttribute('onchange');
+        toggleCheckbox.addEventListener('change', function() {
+            if (isProgrammaticChange) {
+                isProgrammaticChange = false;
+                return;
+            }
+            window.toggleCotationEnabled(this.checked);
+        });
+        
         const localValue = localStorage.getItem('cotation_enabled');
         const localCotationEnabled = localValue === 'true';
         console.log('[COTATION] initCotationVisibility, localStorage value:', localValue);
         console.log('[COTATION] Setting checkbox.checked to:', localCotationEnabled);
         
+        isProgrammaticChange = true;
         toggleCheckbox.checked = localCotationEnabled;
         
         const cotationDash = document.getElementById('cotation-dashboard');
