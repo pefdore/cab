@@ -495,30 +495,39 @@ function showToast(message) {
 
 // Apply cotation visibility immediately on page load (before auth)
 function initCotationVisibility() {
-    const localCotationEnabled = localStorage.getItem('cotation_enabled') === 'true';
-    console.log('[COTATION] initCotationVisibility, localStorage value:', localStorage.getItem('cotation_enabled'));
-    
-    const cotationDash = document.getElementById('cotation-dashboard');
-    const addPassagesSection = document.getElementById('add-passages-section');
-    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-    const toggleCheckbox = document.getElementById('cotationEnabled');
-    
-    if (toggleCheckbox) {
+    // Wait for DOM to be ready
+    const checkAndApply = () => {
+        const toggleCheckbox = document.getElementById('cotationEnabled');
+        if (!toggleCheckbox) {
+            // DOM not ready, try again in 100ms
+            setTimeout(checkAndApply, 100);
+            return;
+        }
+        
+        const localCotationEnabled = localStorage.getItem('cotation_enabled') === 'true';
+        console.log('[COTATION] initCotationVisibility, localStorage value:', localStorage.getItem('cotation_enabled'));
+        
+        const cotationDash = document.getElementById('cotation-dashboard');
+        const addPassagesSection = document.getElementById('add-passages-section');
+        const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+        
         toggleCheckbox.checked = localCotationEnabled;
-    }
+        
+        if (cotationDash) {
+            cotationDash.style.display = localCotationEnabled ? 'block' : 'none';
+            cotationDash.style.visibility = localCotationEnabled ? 'visible' : 'hidden';
+        }
+        
+        if (addPassagesSection) {
+            addPassagesSection.style.display = localCotationEnabled ? 'block' : 'none';
+        }
+        
+        if (addPassagesSectionModal) {
+            addPassagesSectionModal.style.display = localCotationEnabled ? 'block' : 'none';
+        }
+    };
     
-    if (cotationDash) {
-        cotationDash.style.display = localCotationEnabled ? 'block' : 'none';
-        cotationDash.style.visibility = localCotationEnabled ? 'visible' : 'hidden';
-    }
-    
-    if (addPassagesSection) {
-        addPassagesSection.style.display = localCotationEnabled ? 'block' : 'none';
-    }
-    
-    if (addPassagesSectionModal) {
-        addPassagesSectionModal.style.display = localCotationEnabled ? 'block' : 'none';
-    }
+    checkAndApply();
 }
 
 // Call immediately on script load
@@ -538,7 +547,7 @@ window.showApp = onAuthSuccess;
 let currentDate = new Date();
 let entries = [];
 let patients = [];
-let settings = { logo: null, signature: null };
+let settings = { logo: null, signature: null, cotation_enabled: localStorage.getItem('cotation_enabled') || null };
 let vlHistory = [];
 let history = [];
 let selectedPatientId = null;
