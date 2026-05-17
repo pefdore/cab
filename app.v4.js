@@ -343,7 +343,16 @@ function applyCotationVisibility() {
     console.log('[COTATION] applyCotationVisibility called');
     console.log('[COTATION] settings:', settings);
     
-    const cotationEnabled = settings.cotation_enabled === 'true' || settings.cotation_enabled === true;
+    // Use settings value if available, otherwise fall back to localStorage
+    let cotationEnabled = settings.cotation_enabled === 'true' || settings.cotation_enabled === true;
+    
+    // Fallback to localStorage
+    if (!cotationEnabled && settings.cotation_enabled === undefined) {
+        const localValue = localStorage.getItem('cotation_enabled');
+        cotationEnabled = localValue === 'true';
+        console.log('[COTATION] Using localStorage fallback:', localValue);
+    }
+    
     console.log('[COTATION] cotationEnabled:', cotationEnabled);
     
     const cotationDash = document.getElementById('cotation-dashboard');
@@ -483,6 +492,37 @@ function showError(message) {
 function showToast(message) {
     alert(message);
 }
+
+// Apply cotation visibility immediately on page load (before auth)
+function initCotationVisibility() {
+    const localCotationEnabled = localStorage.getItem('cotation_enabled') === 'true';
+    console.log('[COTATION] initCotationVisibility, localStorage value:', localStorage.getItem('cotation_enabled'));
+    
+    const cotationDash = document.getElementById('cotation-dashboard');
+    const addPassagesSection = document.getElementById('add-passages-section');
+    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    const toggleCheckbox = document.getElementById('cotationEnabled');
+    
+    if (toggleCheckbox) {
+        toggleCheckbox.checked = localCotationEnabled;
+    }
+    
+    if (cotationDash) {
+        cotationDash.style.display = localCotationEnabled ? 'block' : 'none';
+        cotationDash.style.visibility = localCotationEnabled ? 'visible' : 'hidden';
+    }
+    
+    if (addPassagesSection) {
+        addPassagesSection.style.display = localCotationEnabled ? 'block' : 'none';
+    }
+    
+    if (addPassagesSectionModal) {
+        addPassagesSectionModal.style.display = localCotationEnabled ? 'block' : 'none';
+    }
+}
+
+// Call immediately on script load
+initCotationVisibility();
 
 // Exposer les fonctions pour les onclick HTML
 window.doLogin = doLogin;
