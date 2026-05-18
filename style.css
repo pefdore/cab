@@ -2656,54 +2656,70 @@ h2 {
     }
     
     .overlay-back-btn {
-        position: fixed;
-        top: 16px;
-        left: 12px;
-        z-index: 1001;
-        padding: 8px;
-        background: var(--color-bg-elevated);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-full);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: var(--shadow-sm);
-        transition: all var(--transition-fast);
-    }
-    
-    .overlay-back-btn svg {
-        color: var(--color-text);
-    }
-    
-    .overlay-back-btn:active {
-        opacity: 0.7;
-        transform: scale(0.95);
+        display: none;
     }
     
     .settings-page-overlay h2 {
-        position: absolute;
-        top: 16px;
-        left: 52px;
-        right: 16px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         margin: 0;
-        padding: 0;
+        padding: 16px;
         font-size: 1.25rem;
         font-weight: 700;
         color: var(--color-text);
-        background: transparent;
+        background: var(--color-bg);
         z-index: 10;
-        height: 40px;
+        min-height: 56px;
         display: flex;
         align-items: center;
+        box-sizing: border-box;
+        border-bottom: 1px solid var(--color-border);
+    }
+    
+    .settings-page-overlay h2 .back-link {
+        display: none;
+    }
+    
+    .settings-page-overlay h2 .page-title {
+        display: block;
+    }
+    
+    /* Sous-page: breadcrumb visible */
+    .settings-page-overlay .show-back h2 {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 12px 16px;
+        min-height: 64px;
+    }
+    
+    .settings-page-overlay .show-back h2 .back-link {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--color-text-secondary);
+        cursor: pointer;
+    }
+    
+    .settings-page-overlay .show-back h2 .back-link svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .settings-page-overlay .show-back h2 .page-title {
+        font-size: 1.1rem;
     }
     
     .settings-page-overlay .settings-menu {
-        padding: 68px 16px 16px;
+        padding: 72px 16px 16px;
     }
     
     .settings-page-overlay .settings-page {
-        padding: 68px 16px 16px;
+        padding: 72px 16px 16px;
     }
     
     .settings-page-overlay .settings-page .settings-section {

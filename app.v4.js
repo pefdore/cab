@@ -3246,43 +3246,15 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
-                            // Add back button for all sub-pages
-                            let backBtn = overlay.querySelector('.overlay-back-btn');
-                            if (!backBtn) {
-                                backBtn = document.createElement('button');
-                                backBtn.className = 'overlay-back-btn';
-                                overlay.insertBefore(backBtn, overlay.firstChild);
-                            }
-                            backBtn.style.display = 'flex';
-                            backBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`;
-                            backBtn.onclick = () => {
-                                // Show menu, hide all pages
-                                const menu = overlay.querySelector('.settings-menu');
-                                if (menu) menu.style.display = 'flex';
-                                overlay.querySelectorAll('.settings-page').forEach(p => {
-                                    p.style.display = 'none';
-                                    p.classList.remove('active');
-                                });
-                                // Hide back button
-                                const btn = overlay.querySelector('.overlay-back-btn');
-                                if (btn) btn.style.display = 'none';
-                                // Show logout button again
-                                const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-                                if (logoutBtn) logoutBtn.style.display = 'flex';
-                                // Show and reset h2 title
-                                const h2 = overlay.querySelector('h2');
-                                if (h2) {
-                                    h2.style.display = 'block';
-                                    h2.textContent = 'Paramètres';
-                                }
-                            };
+                            // Show sub-page header with back link
+                            overlay.classList.add('show-back');
                             
                             // Show and update h2 title in overlay
                             const h2 = overlay.querySelector('h2');
                             if (h2) {
-                                h2.style.display = 'block';
-                                h2.textContent = displayName;
+                                h2.innerHTML = `<span class="back-link" onclick="const o=this.closest('.settings-page-overlay');o.querySelectorAll('.settings-page').forEach(p=>{p.style.display='none';p.classList.remove('active')});const m=o.querySelector('.settings-menu');if(m)m.style.display='flex';o.classList.remove('show-back');o.querySelector('h2').innerHTML='Paramètres';const lb=o.querySelector('.mobile-logout-btn');if(lb)lb.style.display='flex'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span><span class="page-title">${displayName}</span>`;
                             }
+                        }
                         }
                     });
                 });
