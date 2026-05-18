@@ -3255,7 +3255,6 @@ function switchView(viewName) {
                                 h2.innerHTML = `<span class="back-link" onclick="const o=this.closest('.settings-page-overlay');o.querySelectorAll('.settings-page').forEach(p=>{p.style.display='none';p.classList.remove('active')});const m=o.querySelector('.settings-menu');if(m)m.style.display='flex';o.classList.remove('show-back');o.querySelector('h2').innerHTML='Paramètres';const lb=o.querySelector('.mobile-logout-btn');if(lb)lb.style.display='flex'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span><span class="page-title">${displayName}</span>`;
                             }
                         }
-                        }
                     });
                 });
                 
