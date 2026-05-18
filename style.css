@@ -2656,9 +2656,8 @@ h2 {
     }
     
     .overlay-back-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
+        position: fixed;
+        top: 16px;
         left: 16px;
         z-index: 1001;
         padding: 8px;
@@ -2679,26 +2678,29 @@ h2 {
     
     .overlay-back-btn:active {
         opacity: 0.7;
-        transform: translateY(-50%) scale(0.95);
+        transform: scale(0.95);
     }
     
     .settings-page-overlay h2 {
+        position: fixed;
+        top: 16px;
+        left: 0;
+        right: 0;
         margin: 0;
-        padding: 16px 16px 16px 52px;
+        padding: 16px 16px 16px 60px;
         font-size: 1.25rem;
         font-weight: 700;
         color: var(--color-text);
         background: var(--color-bg);
-        position: sticky;
-        top: 0;
         z-index: 10;
         min-height: 56px;
         display: flex;
         align-items: center;
+        box-sizing: border-box;
     }
     
     .settings-page-overlay .settings-page {
-        padding: 16px;
+        padding: 72px 16px 16px;
     }
     
     .settings-page-overlay .settings-page .settings-section {
