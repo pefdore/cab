@@ -2657,8 +2657,8 @@ h2 {
     
     .overlay-back-btn {
         position: fixed;
-        top: 16px;
-        left: 16px;
+        top: 12px;
+        left: 12px;
         z-index: 1001;
         padding: 8px;
         background: var(--color-bg-elevated);
@@ -2683,24 +2683,28 @@ h2 {
     
     .settings-page-overlay h2 {
         position: fixed;
-        top: 16px;
+        top: 12px;
         left: 0;
         right: 0;
         margin: 0;
-        padding: 16px 16px 16px 60px;
+        padding: 12px 16px 12px 56px;
         font-size: 1.25rem;
         font-weight: 700;
         color: var(--color-text);
         background: var(--color-bg);
         z-index: 10;
-        min-height: 56px;
+        min-height: 52px;
         display: flex;
         align-items: center;
         box-sizing: border-box;
     }
     
-    .settings-page-overlay .settings-page {
+    .settings-page-overlay .settings-menu {
         padding: 72px 16px 16px;
+    }
+    
+    .settings-page-overlay .settings-page {
+        padding: 68px 16px 16px;
     }
     
     .settings-page-overlay .settings-page .settings-section {
@@ -2744,7 +2748,7 @@ h2 {
     }
     
     .settings-page-overlay .settings-menu {
-        padding: 16px;
+        padding: 72px 16px 16px;
     }
     
     .settings-page-overlay .settings-menu .settings-card {
