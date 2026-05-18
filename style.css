@@ -2374,7 +2374,7 @@ h2 {
         bottom: 0;
         background: var(--color-bg);
         z-index: 2000;
-        padding: 60px 16px 20px 16px;
+        padding: 0;
         overflow-y: auto;
         display: none;
     }
@@ -2417,7 +2417,6 @@ h2 {
     
     .settings-page-overlay .settings-page {
         display: none;
-        padding: 80px 16px 20px;
     }
     
     .settings-page-overlay .settings-page.active {
@@ -2426,31 +2425,31 @@ h2 {
     
     /* Responsive pour les sous-pages */
     .settings-page-overlay .settings-page .settings-section {
-        margin-bottom: 24px;
-        padding: 20px;
+        margin-bottom: 16px;
+        padding: 16px;
         background: var(--color-bg-elevated);
-        border-radius: 12px;
+        border-radius: var(--radius-lg);
         border: 1px solid var(--color-border);
     }
     
     .settings-page-overlay .settings-page .settings-section h3 {
-        font-size: 1.1rem;
-        margin-bottom: 8px;
+        font-size: 1rem;
+        margin-bottom: 12px;
     }
     
     .settings-page-overlay .settings-page .settings-desc {
         font-size: 0.85rem;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
         color: var(--color-text-secondary);
     }
     
     .settings-page-overlay .settings-page input,
     .settings-page-overlay .settings-page select {
         width: 100%;
-        padding: 14px;
+        padding: 12px;
         margin-bottom: 12px;
         border: 1px solid var(--color-border);
-        border-radius: 10px;
+        border-radius: var(--radius-md);
         font-size: 1rem;
         background: var(--color-bg);
     }
@@ -2657,11 +2656,11 @@ h2 {
     }
     
     .overlay-back-btn {
-        position: fixed;
+        position: absolute;
         top: 16px;
         left: 16px;
         z-index: 1001;
-        padding: 12px;
+        padding: 10px;
         background: var(--color-bg-elevated);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-full);
@@ -2683,12 +2682,27 @@ h2 {
     }
     
     .settings-page-overlay h2 {
-        margin-top: 72px;
-        margin-bottom: 24px;
-        font-size: 1.5rem;
+        margin: 0;
+        padding: 16px 16px 16px 52px;
+        font-size: 1.25rem;
         font-weight: 700;
         color: var(--color-text);
-        padding-left: 52px;
+        background: var(--color-bg);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .settings-page-overlay .settings-page {
+        padding: 16px;
+    }
+    
+    .settings-page-overlay .settings-page .settings-section {
+        margin-bottom: 16px;
+        padding: 16px;
+        background: var(--color-bg-elevated);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--color-border);
     }
     
     .settings-page-overlay .mobile-logout-btn {
@@ -2718,13 +2732,27 @@ h2 {
         display: none !important;
     }
     
-    /* Ajouter padding en bas de l'overlay pour éviter que le bouton soit caché par la navbar */
+    /* Ajouter padding en bas de l'overlay pour éviter que le contenu soit caché par la navbar */
     .settings-page-overlay {
-        padding-bottom: 100px !important;
+        padding-bottom: 100px;
     }
     
     .settings-page-overlay .settings-menu {
-        padding-bottom: 20px;
+        padding: 16px;
+    }
+    
+    .settings-page-overlay .settings-menu .settings-card {
+        padding: 16px;
+    }
+    
+    .settings-page-overlay .settings-menu .settings-card-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .settings-page-overlay .settings-menu .settings-card-icon svg {
+        width: 20px;
+        height: 20px;
     }
 
     .mobile-logout-btn {

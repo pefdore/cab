@@ -3246,43 +3246,36 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
-                            // Add back button - ONLY for sub-pages (not preferences)
+                            // Add back button for all sub-pages
                             let backBtn = overlay.querySelector('.overlay-back-btn');
-                            if (pageName !== 'preferences') {
-                                if (!backBtn) {
-                                    backBtn = document.createElement('button');
-                                    backBtn.className = 'overlay-back-btn';
-                                    overlay.insertBefore(backBtn, overlay.firstChild);
-                                }
-                                backBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`;
-                                backBtn.onclick = () => {
-                                    // Show menu, hide all pages
-                                    const menu = overlay.querySelector('.settings-menu');
-                                    if (menu) menu.style.display = 'flex';
-                                    overlay.querySelectorAll('.settings-page').forEach(p => {
-                                        p.style.display = 'none';
-                                        p.classList.remove('active');
-                                    });
-                                    // Remove back button
-                                    const btn = overlay.querySelector('.overlay-back-btn');
-                                    if (btn) btn.remove();
-                                    // Show logout button again
-                                    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-                                    if (logoutBtn) logoutBtn.style.display = 'flex';
-                                    // Show and reset h2 title
-                                    const h2 = overlay.querySelector('h2');
-                                    if (h2) {
-                                        h2.style.display = 'block';
-                                        h2.textContent = 'Paramètres';
-                                    }
-                                };
-                            } else {
-                                // On preferences page, remove back button if exists
-                                if (backBtn) {
-                                    backBtn.remove();
-                                    backBtn = null;
-                                }
+                            if (!backBtn) {
+                                backBtn = document.createElement('button');
+                                backBtn.className = 'overlay-back-btn';
+                                overlay.insertBefore(backBtn, overlay.firstChild);
                             }
+                            backBtn.style.display = 'flex';
+                            backBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`;
+                            backBtn.onclick = () => {
+                                // Show menu, hide all pages
+                                const menu = overlay.querySelector('.settings-menu');
+                                if (menu) menu.style.display = 'flex';
+                                overlay.querySelectorAll('.settings-page').forEach(p => {
+                                    p.style.display = 'none';
+                                    p.classList.remove('active');
+                                });
+                                // Hide back button
+                                const btn = overlay.querySelector('.overlay-back-btn');
+                                if (btn) btn.style.display = 'none';
+                                // Show logout button again
+                                const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+                                if (logoutBtn) logoutBtn.style.display = 'flex';
+                                // Show and reset h2 title
+                                const h2 = overlay.querySelector('h2');
+                                if (h2) {
+                                    h2.style.display = 'block';
+                                    h2.textContent = 'Paramètres';
+                                }
+                            };
                             
                             // Show and update h2 title in overlay
                             const h2 = overlay.querySelector('h2');
@@ -3312,6 +3305,10 @@ function switchView(viewName) {
                         doSignOut();
                     });
                 }
+                
+                // Hide back button by default (shown only on sub-pages)
+                const defaultBackBtn = overlay.querySelector('.overlay-back-btn');
+                if (defaultBackBtn) defaultBackBtn.style.display = 'none';
             }
             overlay.classList.add('active');
         }
