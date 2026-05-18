@@ -2657,10 +2657,11 @@ h2 {
     
     .overlay-back-btn {
         position: absolute;
-        top: 16px;
+        top: 50%;
+        transform: translateY(-50%);
         left: 16px;
         z-index: 1001;
-        padding: 10px;
+        padding: 8px;
         background: var(--color-bg-elevated);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-full);
@@ -2678,7 +2679,7 @@ h2 {
     
     .overlay-back-btn:active {
         opacity: 0.7;
-        transform: scale(0.95);
+        transform: translateY(-50%) scale(0.95);
     }
     
     .settings-page-overlay h2 {
@@ -2691,6 +2692,9 @@ h2 {
         position: sticky;
         top: 0;
         z-index: 10;
+        min-height: 56px;
+        display: flex;
+        align-items: center;
     }
     
     .settings-page-overlay .settings-page {
