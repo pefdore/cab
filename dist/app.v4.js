@@ -382,9 +382,10 @@ function applyCotationVisibility() {
         fabAddPassage.style.display = cotationEnabled ? 'flex' : 'none';
     }
     
-    if (cotationSettingsSection) {
-        cotationSettingsSection.style.display = cotationEnabled ? 'block' : 'none';
-    }
+    // Settings section should always be visible so user can toggle back
+    // if (cotationSettingsSection) {
+    //     cotationSettingsSection.style.display = cotationEnabled ? 'block' : 'none';
+    // }
     
     // If cotation is disabled, switch to cabinet dashboard by default
     if (!cotationEnabled) {
