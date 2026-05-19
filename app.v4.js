@@ -358,6 +358,9 @@ function applyCotationVisibility() {
     const cotationDash = document.getElementById('cotation-dashboard');
     const addPassagesSection = document.getElementById('add-passages-section');
     const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
+    const fabAddPassage = document.getElementById('fab-add-passage');
+    const cotationSettingsSection = document.getElementById('cotation-settings-section');
     
     const toggleCheckbox = document.getElementById('cotationEnabled');
     if (toggleCheckbox) {
@@ -378,6 +381,28 @@ function applyCotationVisibility() {
     if (addPassagesSectionModal) {
         console.log('[COTATION] Setting add-passages-section-modal display to:', cotationEnabled ? 'block' : 'none');
         addPassagesSectionModal.style.display = cotationEnabled ? 'block' : 'none';
+    }
+    
+    // Show/hide dashboard switcher and FAB menu item
+    if (dashboardSwitcher) {
+        dashboardSwitcher.style.display = cotationEnabled ? 'flex' : 'none';
+    }
+    
+    if (fabAddPassage) {
+        fabAddPassage.style.display = cotationEnabled ? 'flex' : 'none';
+    }
+    
+    if (cotationSettingsSection) {
+        cotationSettingsSection.style.display = cotationEnabled ? 'block' : 'none';
+    }
+    
+    // If cotation is disabled, switch to cabinet dashboard by default
+    if (!cotationEnabled) {
+        const cabinetDash = document.getElementById('cabinet-dashboard');
+        if (cabinetDash) {
+            cabinetDash.style.display = 'block';
+            cabinetDash.style.visibility = 'visible';
+        }
     }
     
     console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);

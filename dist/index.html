@@ -315,7 +315,7 @@ window.attemptLogin = function() {
             <!-- Dashboard View -->
             <section id="view-dashboard" class="view active">
                 <!-- Mode Switcher -->
-                <div class="dashboard-switcher">
+                <div class="dashboard-switcher" id="dashboardSwitcher">
                     <button class="switch-btn active" data-mode="cotation" onclick="switchDashboardMode('cotation')">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
@@ -1223,7 +1223,7 @@ window.attemptLogin = function() {
 
                 <!-- Préférences Page -->
                 <div id="settings-page-preferences" class="settings-page" style="display: none;">
-                    <div class="settings-section">
+                    <div class="settings-section" id="cotation-settings-section">
                         <h3>Cotation hors cabinet</h3>
                         <div class="preference-item">
                             <div class="preference-info">
@@ -2257,7 +2257,7 @@ window.attemptLogin = function() {
         <!-- FAB - Floating Action Button -->
         <div class="fab-container" id="fabContainer">
             <div class="fab-menu" id="fabMenu">
-                <div class="fab-menu-item" onclick="fabAction('passage')">
+                <div class="fab-menu-item" id="fab-add-passage" onclick="fabAction('passage')">
                     <span class="fab-menu-icon">🩺</span>
                     <span class="fab-menu-label">Ajouter un passage</span>
                 </div>
