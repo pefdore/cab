@@ -566,6 +566,10 @@ function updateToggleButton() {
     const cotationDash = document.getElementById('cotation-dashboard');
     const addPassagesSection = document.getElementById('add-passages-section');
     const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
+    const fabAddPassage = document.getElementById('fab-add-passage');
+    const cotationSettingsSection = document.getElementById('cotation-settings-section');
+    const cabinetDash = document.getElementById('cabinet-dashboard');
     
     if (cotationDash) {
         cotationDash.style.display = isEnabled ? 'block' : 'none';
@@ -578,6 +582,23 @@ function updateToggleButton() {
     
     if (addPassagesSectionModal) {
         addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (dashboardSwitcher) {
+        dashboardSwitcher.style.display = isEnabled ? 'flex' : 'none';
+    }
+    
+    if (fabAddPassage) {
+        fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
+    }
+    
+    if (cotationSettingsSection) {
+        cotationSettingsSection.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (cabinetDash) {
+        cabinetDash.style.display = isEnabled ? 'none' : 'block';
+        cabinetDash.style.visibility = isEnabled ? 'hidden' : 'visible';
     }
 }
 
