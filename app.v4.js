@@ -581,7 +581,6 @@ function updateToggleButton() {
     const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
     const dashboardSwitcher = document.getElementById('dashboardSwitcher');
     const fabAddPassage = document.getElementById('fab-add-passage');
-    const cotationSettingsSection = document.getElementById('cotation-settings-section');
     const cabinetDash = document.getElementById('cabinet-dashboard');
     
     if (cotationDash) {
@@ -605,9 +604,7 @@ function updateToggleButton() {
         fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
     }
     
-    if (cotationSettingsSection) {
-        cotationSettingsSection.style.display = isEnabled ? 'block' : 'none';
-    }
+    // Don't hide settings section - user needs to be able to toggle back
     
     if (cabinetDash) {
         cabinetDash.style.display = isEnabled ? 'none' : 'block';
