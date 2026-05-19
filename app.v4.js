@@ -346,8 +346,8 @@ function applyCotationVisibility() {
     // Use settings value if available, otherwise fall back to localStorage
     let cotationEnabled = settings.cotation_enabled === 'true' || settings.cotation_enabled === true;
     
-    // Fallback to localStorage
-    if (!cotationEnabled && settings.cotation_enabled === undefined) {
+    // Fallback to localStorage - only if settings is undefined
+    if (settings.cotation_enabled === undefined || settings.cotation_enabled === null) {
         const localValue = localStorage.getItem('cotation_enabled');
         cotationEnabled = localValue === 'true';
         console.log('[COTATION] Using localStorage fallback:', localValue);
