@@ -137,6 +137,9 @@ try {
         initRemplacements();
     }
     
+    // Apply cotation visibility on load
+    applyCotationVisibility();
+    
     console.log('[AUTH] App fully initialized');
 }
 
