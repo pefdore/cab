@@ -333,7 +333,16 @@ function applyCotationVisibility() {
     console.log('[COTATION] applyCotationVisibility called');
     console.log('[COTATION] settings:', settings);
     
-    const cotationEnabled = settings.cotation_enabled === 'true' || settings.cotation_enabled === true;
+    // Use settings value if available, otherwise fall back to localStorage
+    let cotationEnabled = settings.cotation_enabled === 'true' || settings.cotation_enabled === true;
+    
+    // Fallback to localStorage
+    if (!cotationEnabled && settings.cotation_enabled === undefined) {
+        const localValue = localStorage.getItem('cotation_enabled');
+        cotationEnabled = localValue === 'true';
+        console.log('[COTATION] Using localStorage fallback:', localValue);
+    }
+    
     console.log('[COTATION] cotationEnabled:', cotationEnabled);
     
     const cotationDash = document.getElementById('cotation-dashboard');
