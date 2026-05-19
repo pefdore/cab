@@ -545,6 +545,7 @@ function initCotationVisibility() {
         const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
         toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
         toggleBtn.classList.toggle('active', isEnabled);
+        toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
         
         // Set initial visibility
         const cotationDash = document.getElementById('cotation-dashboard');
