@@ -455,6 +455,44 @@ function updateToggleButton() {
 
 window.updateToggleButton = updateToggleButton;
 
+// Apply cotation visibility immediately on page load (before auth)
+function initCotationVisibility() {
+    const checkAndApply = () => {
+        const toggleBtn = document.getElementById('cotationToggleBtn');
+        
+        if (!toggleBtn) {
+            setTimeout(checkAndApply, 100);
+            return;
+        }
+        
+        // Set initial button state
+        const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+        toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
+        toggleBtn.classList.toggle('active', isEnabled);
+        toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
+        
+        // Set initial visibility
+        const cotationDash = document.getElementById('cotation-dashboard');
+        const addPassagesSection = document.getElementById('add-passages-section');
+        const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+        
+        if (cotationDash) {
+            cotationDash.style.display = isEnabled ? 'block' : 'none';
+            cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
+        }
+        
+        if (addPassagesSection) {
+            addPassagesSection.style.display = isEnabled ? 'block' : 'none';
+        }
+        
+        if (addPassagesSectionModal) {
+            addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+        }
+    };
+    
+    checkAndApply();
+}
+
 async function saveCotationSetting(enabled) {
     console.log('[COTATION] saveCotationSetting called with:', enabled);
     console.log('[COTATION] currentUser:', currentUser ? currentUser.id : 'null');
@@ -7173,3 +7211,6 @@ async function initRemplacements() {
     await loadContrats();
     await loadOffres();
 }
+
+// Call immediately on script load
+initCotationVisibility();
