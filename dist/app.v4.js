@@ -394,10 +394,63 @@ function applyCotationVisibility() {
             cabinetDash.style.display = 'block';
             cabinetDash.style.visibility = 'visible';
         }
+    } else {
+        const cabinetDash = document.getElementById('cabinet-dashboard');
+        if (cabinetDash) {
+            cabinetDash.style.display = 'none';
+            cabinetDash.style.visibility = 'hidden';
+        }
     }
+    
+    // Update toggle button state
+    updateToggleButton();
     
     console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);
 }
+
+function updateToggleButton() {
+    const toggleBtn = document.getElementById('cotationToggleBtn');
+    if (!toggleBtn) return;
+    
+    const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+    toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
+    toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
+    
+    const cotationDash = document.getElementById('cotation-dashboard');
+    const addPassagesSection = document.getElementById('add-passages-section');
+    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
+    const fabAddPassage = document.getElementById('fab-add-passage');
+    const cabinetDash = document.getElementById('cabinet-dashboard');
+    
+    if (cotationDash) {
+        cotationDash.style.display = isEnabled ? 'block' : 'none';
+        cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
+    }
+    
+    if (addPassagesSection) {
+        addPassagesSection.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (addPassagesSectionModal) {
+        addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (dashboardSwitcher) {
+        dashboardSwitcher.style.display = isEnabled ? 'flex' : 'none';
+    }
+    
+    if (fabAddPassage) {
+        fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
+    }
+    
+    if (cabinetDash) {
+        cabinetDash.style.display = isEnabled ? 'none' : 'block';
+        cabinetDash.style.visibility = isEnabled ? 'hidden' : 'visible';
+    }
+}
+
+window.updateToggleButton = updateToggleButton;
 
 async function saveCotationSetting(enabled) {
     console.log('[COTATION] saveCotationSetting called with:', enabled);

@@ -404,7 +404,16 @@ function applyCotationVisibility() {
             cabinetDash.style.display = 'block';
             cabinetDash.style.visibility = 'visible';
         }
+    } else {
+        const cabinetDash = document.getElementById('cabinet-dashboard');
+        if (cabinetDash) {
+            cabinetDash.style.display = 'none';
+            cabinetDash.style.visibility = 'hidden';
+        }
     }
+    
+    // Update toggle button state
+    updateToggleButton();
     
     console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);
 }
