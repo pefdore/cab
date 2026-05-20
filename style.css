@@ -8354,3 +8354,416 @@ h2 {
         max-height: 250px !important;
     }
 }
+
+/* ============================================
+   FLUX VIEW STYLES
+   ============================================ */
+
+.flux-header {
+    margin-bottom: 20px;
+}
+
+.flux-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: var(--color-text);
+}
+
+.flux-subtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.flux-filters {
+    background: var(--color-bg-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.flux-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.flux-filter-group {
+    flex: 1;
+    min-width: 140px;
+}
+
+.flux-filter-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+}
+
+.flux-filter-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-elevated);
+    color: var(--color-text);
+    font-size: 0.875rem;
+}
+
+.flux-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.flux-summary-card {
+    background: var(--color-bg-elevated);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.flux-summary-card.income {
+    border-color: var(--color-success-border);
+    background: var(--color-success-bg);
+}
+
+.flux-summary-card.expense {
+    border-color: var(--color-danger-border);
+    background: var(--color-danger-bg);
+}
+
+.flux-summary-card.balance {
+    border-color: var(--color-primary-border);
+    background: var(--color-primary-bg);
+}
+
+.flux-summary-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.flux-summary-card.income .flux-summary-icon {
+    background: var(--color-success);
+    color: white;
+}
+
+.flux-summary-card.expense .flux-summary-icon {
+    background: var(--color-danger);
+    color: white;
+}
+
+.flux-summary-card.balance .flux-summary-icon {
+    background: var(--color-primary);
+    color: white;
+}
+
+.flux-summary-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.flux-summary-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.flux-summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.flux-summary-card.income .flux-summary-value {
+    color: var(--color-success);
+}
+
+.flux-summary-card.expense .flux-summary-value {
+    color: var(--color-danger);
+}
+
+.flux-summary-card.balance .flux-summary-value {
+    color: var(--color-primary);
+}
+
+.flux-view-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.flux-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-elevated);
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.flux-toggle-btn:hover {
+    background: var(--color-bg-subtle);
+}
+
+.flux-toggle-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.flux-table-wrapper {
+    background: var(--color-bg-elevated);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.flux-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.flux-table th,
+.flux-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.flux-table th {
+    background: var(--color-bg-subtle);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-secondary);
+}
+
+.flux-table td {
+    font-size: 0.875rem;
+}
+
+.flux-table tr:last-child td {
+    border-bottom: none;
+}
+
+.flux-table .text-right {
+    text-align: right;
+}
+
+.flux-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.flux-type-badge.recette {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.flux-type-badge.depense {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.flux-amount {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.flux-amount.income {
+    color: var(--color-success);
+}
+
+.flux-amount.expense {
+    color: var(--color-danger);
+}
+
+.flux-category {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+.flux-monthly-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.flux-month-card {
+    background: var(--color-bg-elevated);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+}
+
+.flux-month-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.flux-month-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.flux-month-balance {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.flux-month-balance.positive {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.flux-month-balance.negative {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.flux-month-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.flux-month-detail {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+}
+
+.flux-month-detail.income {
+    color: var(--color-success);
+}
+
+.flux-month-detail.expense {
+    color: var(--color-danger);
+}
+
+.flux-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.flux-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.flux-action-btn.expense {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+}
+
+.flux-action-btn.expense:hover {
+    background: var(--color-danger);
+    color: white;
+}
+
+.flux-action-btn.income {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border: 1px solid var(--color-success-border);
+}
+
+.flux-action-btn.income:hover {
+    background: var(--color-success);
+    color: white;
+}
+
+.flux-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--color-text-secondary);
+}
+
+.flux-empty-state svg {
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+/* Flux Modal */
+.flux-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.flux-modal-form .form-group {
+    margin-bottom: 0;
+}
+
+.flux-modal-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .flux-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .flux-filter-row {
+        flex-direction: column;
+    }
+    
+    .flux-filter-group {
+        min-width: 100%;
+    }
+    
+    .flux-table-wrapper {
+        overflow-x: auto;
+    }
+    
+    .flux-table {
+        min-width: 600px;
+    }
+    
+    .flux-monthly-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .flux-quick-actions {
+        grid-template-columns: 1fr;
+    }
+}
