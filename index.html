@@ -3708,7 +3708,7 @@ window.attemptLogin = function() {
           
           const { data: passages, error: passagesError } = await window.supabaseClient
             .from('passages')
-            .select('*')
+            .select('*, patients(name)')
             .gte('date', prevMonthKey + '-01')
             .lt('date', now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01')
             .order('date', { ascending: true });
@@ -3759,26 +3759,29 @@ window.attemptLogin = function() {
             
             doc.setFillColor(249, 250, 251);
             doc.rect(15, y - 5, 180, 8, 'F');
-            doc.setFontSize(9);
+            doc.setFontSize(8);
             doc.setTextColor(100, 116, 139);
             doc.text('Date', 17, y);
             doc.text('Patient', 45, y);
-            doc.text('Acte', 110, y);
-            doc.text('Montant', 170, y);
+            doc.text('Lieu', 100, y);
+            doc.text('Acte', 140, y);
+            doc.text('Montant', 175, y);
             
             y += 8;
             doc.setTextColor(30, 41, 59);
             
             medicoSSR.forEach(p => {
               const dateStr = p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '';
-              const patientName = p.patient_name || '';
+              const patientName = p.patients?.name || '';
+              const location = p.location || '';
               const cotation = p.cotation || '';
               const amount = (parseFloat(p.amount) || 0).toFixed(2) + ' €';
               
               doc.text(dateStr, 17, y);
-              doc.text(patientName.substring(0, 30), 45, y);
-              doc.text(cotation, 110, y);
-              doc.text(amount, 170, y);
+              doc.text(patientName.substring(0, 25), 45, y);
+              doc.text(location.substring(0, 18), 100, y);
+              doc.text(cotation, 140, y);
+              doc.text(amount, 175, y);
               y += 7;
               
               if (y > 270) {
@@ -3823,12 +3826,13 @@ window.attemptLogin = function() {
               
               doc.setFillColor(249, 250, 251);
               doc.rect(15, y - 5, 180, 8, 'F');
-              doc.setFontSize(9);
+              doc.setFontSize(8);
               doc.setTextColor(100, 116, 139);
               doc.text('Date', 17, y);
               doc.text('Patient', 45, y);
-              doc.text('Acte', 110, y);
-              doc.text('Montant', 170, y);
+              doc.text('Lieu', 100, y);
+              doc.text('Acte', 140, y);
+              doc.text('Montant', 175, y);
               
               y += 8;
               doc.setTextColor(30, 41, 59);
@@ -3836,14 +3840,16 @@ window.attemptLogin = function() {
               const locPassages = ehpadByLocation[locName].sort((a, b) => new Date(a.date) - new Date(b.date));
               locPassages.forEach(p => {
                 const dateStr = p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '';
-                const patientName = p.patient_name || '';
+                const patientName = p.patients?.name || '';
+                const location = p.location || '';
                 const cotation = p.cotation || '';
                 const amount = (parseFloat(p.amount) || 0).toFixed(2) + ' €';
                 
                 doc.text(dateStr, 17, y);
-                doc.text(patientName.substring(0, 30), 45, y);
-                doc.text(cotation, 110, y);
-                doc.text(amount, 170, y);
+                doc.text(patientName.substring(0, 25), 45, y);
+                doc.text(location.substring(0, 18), 100, y);
+                doc.text(cotation, 140, y);
+                doc.text(amount, 175, y);
                 y += 7;
                 
                 if (y > 270) {
