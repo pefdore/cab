@@ -709,6 +709,37 @@ window.selectAddress = function(address) {
   }
 };
 
+window.handleRegisterSubmit = async function() {
+    console.log('[REGISTER] handleRegisterSubmit called');
+    
+    const firstName = document.getElementById('register-firstname')?.value;
+    const lastName = document.getElementById('register-lastname')?.value;
+    const role = document.getElementById('register-role')?.value;
+    const replaceMedecinId = document.getElementById('register-remplace')?.value || null;
+    const email = document.getElementById('register-email')?.value;
+    const password = document.getElementById('register-password')?.value;
+    const addressInput = document.getElementById('register-cabinet-address');
+    const cabinetAddress = addressInput ? addressInput.value.trim() : '';
+    
+    console.log('[REGISTER] Role:', role, 'Address:', cabinetAddress);
+    
+    // Check if address already exists for medecin/secretaire
+    if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
+        console.log('[REGISTER] Checking for existing cabinet at address...');
+        const existingDoctors = await checkAddressExists(cabinetAddress);
+        console.log('[REGISTER] Existing doctors found:', existingDoctors);
+        
+        if (existingDoctors && existingDoctors.length > 0) {
+            showCabinetModal(cabinetAddress, existingDoctors, {
+                email, password, firstName, lastName, role, replaceMedecinId
+            });
+            return;
+        }
+    }
+    
+    doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress, null);
+};
+
 // Check if address already exists in database
 async function checkAddressExists(address) {
     console.log('[CABINET] Checking address:', address);
