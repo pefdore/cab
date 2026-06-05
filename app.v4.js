@@ -777,16 +777,33 @@ async function checkAddressExists(address) {
     console.log('[CABINET] Checking address:', address);
     
     try {
-        // Use ilike for case-insensitive comparison
-        const { data, error } = await supabaseClient
+        // Try exact match first, then partial match
+        let { data, error } = await supabaseClient
             .from('profiles')
             .select('id, first_name, last_name, role')
-            .ilike('cabinet_address', address.trim())
-            .neq('role', 'medecin_remplacant');
+            .eq('cabinet_address', address.trim());
         
         if (error) {
             console.error('[CABINET] Error checking address:', error);
             return null;
+        }
+        
+        // If no exact match, try partial match
+        if (!data || data.length === 0) {
+            console.log('[CABINET] No exact match, trying partial match...');
+            const searchTerm = '%' + address.trim() + '%';
+            const partialResult = await supabaseClient
+                .from('profiles')
+                .select('id, first_name, last_name, role')
+                .like('cabinet_address', searchTerm)
+                .neq('role', 'medecin_remplacant');
+            
+            data = partialResult.data;
+        }
+        
+        // Filter out remplacants from results
+        if (data && data.length > 0) {
+            data = data.filter(function(d) { return d.role !== 'medecin_remplacant'; });
         }
         
         console.log('[CABINET] Found doctors:', data);
