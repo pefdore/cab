@@ -43,7 +43,7 @@
                 </div>
                 <button type="button" class="btn-primary" id="loginBtn" onclick="attemptLogin()">Se connecter</button>
                 <p style="text-align:center;margin-top:15px;">
-                    Pas de compte? <a href="#" onclick="toggleForm('register')">S'inscrire</a>
+                    Pas de compte? <a href="javascript:void(0)" onclick="toggleForm('register'); return false;">S'inscrire</a>
                 </p>
             </form>
 
@@ -110,7 +110,7 @@ window.attemptLogin = function() {
                     <label for="register-password">Mot de passe</label>
                     <input type="password" id="register-password" required placeholder="••••••••" minlength="6">
                 </div>
-                <button type="button" class="btn-primary" onclick="submitRegisterForm()">Créer mon compte</button>
+                <button type="submit" class="btn-primary">Créer mon compte</button>
                 <button type="button" id="show-login" class="btn-link">Déjà un compte? Se connecter</button>
             </form>
         </div>
@@ -2659,6 +2659,17 @@ window.attemptLogin = function() {
     <script src="app.v4.js?v=202605180100" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
+      // Toggle form function for mobile
+      window.toggleForm = function(formName) {
+        if (formName === 'register') {
+          document.getElementById('login-form').style.display = 'none';
+          document.getElementById('register-form').style.display = 'flex';
+        } else if (formName === 'login') {
+          document.getElementById('login-form').style.display = 'flex';
+          document.getElementById('register-form').style.display = 'none';
+        }
+      };
+      
       // Fallback: Define showAddEmployeeModal directly in case secretariat.js fails to load
       window.showAddEmployeeModal = function() {
         console.log('[FALLBACK] showAddEmployeeModal called');
