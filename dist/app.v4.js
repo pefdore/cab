@@ -802,35 +802,55 @@ async function checkAddressExists(address) {
     console.log('[CABINET] Checking address:', address);
     
     try {
-        // Use public cabinets table instead of profiles (bypasses RLS)
-        const { data, error } = await supabaseClient
+        // Get cabinets at this address
+        const { data: cabinets } = await supabaseClient
             .from('cabinets')
             .select('id, name, address');
         
-        if (error) {
-            console.error('[CABINET] Error:', error);
-            return [];
-        }
+        if (!cabinets) return [];
         
-        console.log('[CABINET] All cabinets:', data);
-        
-        // Filter by address (exact or partial match)
+        // Filter by address
         const addressTrimmed = address.trim().toLowerCase();
-        const matching = data.filter(function(c) {
+        const matchingCabinets = cabinets.filter(function(c) {
             if (!c.address) return false;
             const cabAddr = c.address.toLowerCase();
             return cabAddr.includes(addressTrimmed) || addressTrimmed.includes(cabAddr);
         });
         
-        // Convert cabinet data to doctor format for modal
-        const doctors = matching.map(function(c) {
-            return {
-                id: c.id,
-                first_name: c.name || 'Cabinet',
-                last_name: '',
-                role: 'medecin_installe'
-            };
-        });
+        console.log('[CABINET] Matching cabinets:', matchingCabinets);
+        
+        // For each cabinet, get all doctors in that cabinet
+        const doctors = [];
+        
+        for (var i = 0; i < matchingCabinets.length; i++) {
+            var cabinet = matchingCabinets[i];
+            
+            // Get all profiles linked to this cabinet
+            var cabinetMembers = [];
+            
+            // First try to get from profiles (requires authentication)
+            const { data: profiles } = await supabaseClient
+                .from('profiles')
+                .select('id, first_name, last_name, role')
+                .eq('cabinet_id', cabinet.id);
+            
+            if (profiles && profiles.length > 0) {
+                cabinetMembers = profiles;
+            } else {
+                // Fallback: use cabinet name if no profiles found
+                cabinetMembers = [{ first_name: cabinet.name || 'Cabinet', last_name: '' }];
+            }
+            
+            // Add each member to doctors array
+            cabinetMembers.forEach(function(m) {
+                doctors.push({
+                    id: cabinet.id,
+                    first_name: m.first_name,
+                    last_name: m.last_name,
+                    role: 'medecin_installe'
+                });
+            });
+        }
         
         console.log('[CABINET] Found doctors:', doctors);
         return doctors;
