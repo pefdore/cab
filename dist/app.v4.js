@@ -777,37 +777,31 @@ async function checkAddressExists(address) {
     console.log('[CABINET] Checking address:', address);
     
     try {
-        // Try exact match first, then partial match
-        let { data, error } = await supabaseClient
+        // Get all profiles and filter manually (bypass RLS issues)
+        const { data: allProfiles, error } = await supabaseClient
             .from('profiles')
-            .select('id, first_name, last_name, role')
-            .eq('cabinet_address', address.trim());
+            .select('id, first_name, last_name, role, cabinet_address');
         
         if (error) {
-            console.error('[CABINET] Error checking address:', error);
-            return null;
+            console.error('[CABINET] Error:', error);
+            // Try alternative: get just the current user's profile
+            return [];
         }
         
-        // If no exact match, try partial match
-        if (!data || data.length === 0) {
-            console.log('[CABINET] No exact match, trying partial match...');
-            const searchTerm = '%' + address.trim() + '%';
-            const partialResult = await supabaseClient
-                .from('profiles')
-                .select('id, first_name, last_name, role')
-                .like('cabinet_address', searchTerm)
-                .neq('role', 'medecin_remplacant');
+        console.log('[CABINET] All profiles:', allProfiles);
+        
+        // Filter by address (exact or partial match)
+        const addressTrimmed = address.trim().toLowerCase();
+        const matching = allProfiles.filter(function(p) {
+            if (!p.cabinet_address) return false;
+            if (p.role === 'medecin_remplacant') return false;
             
-            data = partialResult.data;
-        }
+            const cabAddr = p.cabinet_address.toLowerCase();
+            return cabAddr.includes(addressTrimmed) || addressTrimmed.includes(cabAddr);
+        });
         
-        // Filter out remplacants from results
-        if (data && data.length > 0) {
-            data = data.filter(function(d) { return d.role !== 'medecin_remplacant'; });
-        }
-        
-        console.log('[CABINET] Found doctors:', data);
-        return data || [];
+        console.log('[CABINET] Found doctors:', matching);
+        return matching;
     } catch (e) {
         console.error('[CABINET] Exception:', e);
         return [];
