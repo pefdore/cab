@@ -215,7 +215,7 @@ async function doLogin(email, password) {
     }
 }
 
-async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId) {
+async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress = null) {
     console.log('[AUTH] Tentative inscription:', email);
     
     if (!email || !password || !firstName || !lastName || !role) {
@@ -243,7 +243,8 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
                     first_name: firstName,
                     last_name: lastName,
                     role: role,
-                    remplace_medecin_id: replaceMedecinId
+                    remplace_medecin_id: replaceMedecinId,
+                    cabinet_address: cabinetAddress
                 }
             }
         });
@@ -298,7 +299,17 @@ async function loadUserProfile() {
 }
 
 async function loadUserSettings() {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('[COTATION] No currentUser, trying localStorage only');
+        // Try to load from localStorage even without user
+        const localCotationEnabled = localStorage.getItem('cotation_enabled');
+        if (localCotationEnabled) {
+            settings.cotation_enabled = localCotationEnabled;
+            console.log('[COTATION] Loaded from localStorage (no user):', localCotationEnabled);
+        }
+        applyCotationVisibility();
+        return;
+    }
     
     // First try to load from localStorage as backup
     const localCotationEnabled = localStorage.getItem('cotation_enabled');
@@ -411,88 +422,6 @@ function applyCotationVisibility() {
     console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);
 }
 
-function updateToggleButton() {
-    const toggleBtn = document.getElementById('cotationToggleBtn');
-    if (!toggleBtn) return;
-    
-    const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-    toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
-    toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
-    
-    const cotationDash = document.getElementById('cotation-dashboard');
-    const addPassagesSection = document.getElementById('add-passages-section');
-    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
-    const fabAddPassage = document.getElementById('fab-add-passage');
-    const cabinetDash = document.getElementById('cabinet-dashboard');
-    
-    if (cotationDash) {
-        cotationDash.style.display = isEnabled ? 'block' : 'none';
-        cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
-    }
-    
-    if (addPassagesSection) {
-        addPassagesSection.style.display = isEnabled ? 'block' : 'none';
-    }
-    
-    if (addPassagesSectionModal) {
-        addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
-    }
-    
-    if (dashboardSwitcher) {
-        dashboardSwitcher.style.display = isEnabled ? 'flex' : 'none';
-    }
-    
-    if (fabAddPassage) {
-        fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
-    }
-    
-    if (cabinetDash) {
-        cabinetDash.style.display = isEnabled ? 'none' : 'block';
-        cabinetDash.style.visibility = isEnabled ? 'hidden' : 'visible';
-    }
-}
-
-window.updateToggleButton = updateToggleButton;
-
-// Apply cotation visibility immediately on page load (before auth)
-function initCotationVisibility() {
-    const checkAndApply = () => {
-        const toggleBtn = document.getElementById('cotationToggleBtn');
-        
-        if (!toggleBtn) {
-            setTimeout(checkAndApply, 100);
-            return;
-        }
-        
-        // Set initial button state
-        const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-        toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
-        toggleBtn.classList.toggle('active', isEnabled);
-        toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
-        
-        // Set initial visibility
-        const cotationDash = document.getElementById('cotation-dashboard');
-        const addPassagesSection = document.getElementById('add-passages-section');
-        const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-        
-        if (cotationDash) {
-            cotationDash.style.display = isEnabled ? 'block' : 'none';
-            cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
-        }
-        
-        if (addPassagesSection) {
-            addPassagesSection.style.display = isEnabled ? 'block' : 'none';
-        }
-        
-        if (addPassagesSectionModal) {
-            addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
-        }
-    };
-    
-    checkAndApply();
-}
-
 async function saveCotationSetting(enabled) {
     console.log('[COTATION] saveCotationSetting called with:', enabled);
     console.log('[COTATION] currentUser:', currentUser ? currentUser.id : 'null');
@@ -529,9 +458,9 @@ async function saveCotationSetting(enabled) {
         }
     } catch (e) {
         console.error('[COTATION] Exception:', e);
-    }
 }
-
+}
+    
 // --- Setup des écouteurs d'événements ---
 function setupAuthListeners() {
     console.log('[AUTH] Setup des listeners');
@@ -556,8 +485,14 @@ function setupAuthListeners() {
             const replaceMedecinId = document.getElementById('register-remplace')?.value || null;
             const email = document.getElementById('register-email')?.value;
             const password = document.getElementById('register-password')?.value;
-            doSignUp(email, password, firstName, lastName, role, replaceMedecinId);
+            const addressInput = document.getElementById('register-cabinet-address');
+            const cabinetAddress = addressInput ? addressInput.value.trim() : '';
+            
+            doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress);
         });
+        
+        // Initialize address autocomplete
+        window.initAddressAutocomplete();
     }
     
     // Show register link
@@ -602,6 +537,163 @@ function showError(message) {
 function showToast(message) {
     alert(message);
 }
+
+// Apply cotation visibility immediately on page load (before auth)
+function initCotationVisibility() {
+    const checkAndApply = () => {
+        const toggleBtn = document.getElementById('cotationToggleBtn');
+        
+        if (!toggleBtn) {
+            setTimeout(checkAndApply, 100);
+            return;
+        }
+        
+        // Set initial button state
+        const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+        toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
+        toggleBtn.classList.toggle('active', isEnabled);
+        toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
+        
+        // Set initial visibility
+        const cotationDash = document.getElementById('cotation-dashboard');
+        const addPassagesSection = document.getElementById('add-passages-section');
+        const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+        
+        if (cotationDash) {
+            cotationDash.style.display = isEnabled ? 'block' : 'none';
+            cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
+        }
+        
+        if (addPassagesSection) {
+            addPassagesSection.style.display = isEnabled ? 'block' : 'none';
+        }
+        
+        if (addPassagesSectionModal) {
+            addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+        }
+    };
+    
+    checkAndApply();
+}
+
+function updateToggleButton() {
+    const toggleBtn = document.getElementById('cotationToggleBtn');
+    if (!toggleBtn) return;
+    
+    const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+    toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
+    toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
+    
+    const cotationDash = document.getElementById('cotation-dashboard');
+    const addPassagesSection = document.getElementById('add-passages-section');
+    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
+    const fabAddPassage = document.getElementById('fab-add-passage');
+    const cabinetDash = document.getElementById('cabinet-dashboard');
+    
+    if (cotationDash) {
+        cotationDash.style.display = isEnabled ? 'block' : 'none';
+        cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
+    }
+    
+    if (addPassagesSection) {
+        addPassagesSection.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (addPassagesSectionModal) {
+        addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (dashboardSwitcher) {
+        dashboardSwitcher.style.display = isEnabled ? 'flex' : 'none';
+    }
+    
+    if (fabAddPassage) {
+        fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
+    }
+    
+    // Don't hide settings section - user needs to be able to toggle back
+    
+    if (cabinetDash) {
+        cabinetDash.style.display = isEnabled ? 'none' : 'block';
+        cabinetDash.style.visibility = isEnabled ? 'hidden' : 'visible';
+    }
+}
+
+window.updateToggleButton = updateToggleButton;
+
+// Address autocomplete for cabinet registration
+let addressTimeout = null;
+
+window.initAddressAutocomplete = function() {
+  var addressInput = document.getElementById('register-cabinet-address');
+  if (!addressInput) return;
+  
+  addressInput.addEventListener('input', function() {
+    clearTimeout(addressTimeout);
+    var value = this.value.trim();
+    
+    if (value.length < 3) {
+      hideAddressSuggestions();
+      return;
+    }
+    
+    addressTimeout = setTimeout(function() {
+      searchAddresses(value);
+    }, 300);
+  });
+  
+  addressInput.addEventListener('blur', function() {
+    setTimeout(hideAddressSuggestions, 200);
+  });
+};
+
+async function searchAddresses(query) {
+  try {
+    var response = await fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(query) + '&limit=5');
+    var data = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      showAddressSuggestions(data.features.map(function(f) {
+        return {
+          label: f.properties.label,
+          full: f.properties.label
+        };
+      }));
+    } else {
+      hideAddressSuggestions();
+    }
+  } catch (e) {
+    console.error('[ADDRESS] Error searching:', e);
+    hideAddressSuggestions();
+  }
+}
+
+function showAddressSuggestions(suggestions) {
+  var container = document.getElementById('address-suggestions');
+  if (!container) return;
+  
+  container.innerHTML = suggestions.map(function(s) {
+    return '<div onclick="selectAddress(\'' + s.full.replace(/'/g, "\\'") + '\')">' + s.full + '</div>';
+  }).join('');
+  container.style.display = 'block';
+}
+
+function hideAddressSuggestions() {
+  var container = document.getElementById('address-suggestions');
+  if (container) container.style.display = 'none';
+}
+
+window.selectAddress = function(address) {
+  var input = document.getElementById('register-cabinet-address');
+  if (input) {
+    input.value = address;
+    hideAddressSuggestions();
+  }
+};
+
+// Call immediately on script load
+initCotationVisibility();
 
 // Exposer les fonctions pour les onclick HTML
 window.doLogin = doLogin;
@@ -3092,11 +3184,19 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
     });
 });
 
+// Cotation toggle handler - wrapper to handle the checkbox change
+window.handleCotationToggle = function(checkbox) {
+    console.log('[COTATION] handleCotationToggle called, checked:', checkbox.checked);
+    window.toggleCotationEnabled(checkbox.checked);
+};
+
 // Cotation enabled toggle - using global function
 window.toggleCotationEnabled = async function(enabled) {
     console.log('[COTATION] Toggle called, enabled:', enabled);
+    console.log('[COTATION] currentUser at toggle:', currentUser ? currentUser.id : 'null');
     await saveCotationSetting(enabled);
     applyCotationVisibility();
+    updateToggleButton();
 };
 
 // Load saved theme
@@ -3280,49 +3380,10 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
-                            // Add back button - ONLY for sub-pages (not preferences)
-                            let backBtn = overlay.querySelector('.overlay-back-btn');
-                            if (pageName !== 'preferences') {
-                                if (!backBtn) {
-                                    backBtn = document.createElement('button');
-                                    backBtn.className = 'overlay-back-btn';
-                                    overlay.insertBefore(backBtn, overlay.firstChild);
-                                }
-                                backBtn.innerHTML = `<span class="back-arrow">← Retour</span>`;
-                                backBtn.onclick = () => {
-                                    // Show menu, hide all pages
-                                    const menu = overlay.querySelector('.settings-menu');
-                                    if (menu) menu.style.display = 'flex';
-                                    overlay.querySelectorAll('.settings-page').forEach(p => {
-                                        p.style.display = 'none';
-                                        p.classList.remove('active');
-                                    });
-                                    // Remove back button
-                                    const btn = overlay.querySelector('.overlay-back-btn');
-                                    if (btn) btn.remove();
-                                    // Show logout button again
-                                    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-                                    if (logoutBtn) logoutBtn.style.display = 'flex';
-                                    // Show and reset h2 title
-                                    const h2 = overlay.querySelector('h2');
-                                    if (h2) {
-                                        h2.style.display = 'block';
-                                        h2.textContent = 'Paramètres';
-                                    }
-                                };
-                            } else {
-                                // On preferences page, remove back button if exists
-                                if (backBtn) {
-                                    backBtn.remove();
-                                    backBtn = null;
-                                }
-                            }
-                            
-                            // Show and update h2 title in overlay
+                            // Show sub-page header with back link above title
                             const h2 = overlay.querySelector('h2');
                             if (h2) {
-                                h2.style.display = 'block';
-                                h2.textContent = displayName;
+                                h2.innerHTML = `<span class="back-link" onclick="const o=this.closest('.settings-page-overlay');o.querySelectorAll('.settings-page').forEach(p=>{p.style.display='none';p.classList.remove('active')});const m=o.querySelector('.settings-menu');if(m)m.style.display='flex';o.querySelector('h2').innerHTML='Paramètres';const lb=o.querySelector('.mobile-logout-btn');if(lb)lb.style.display='flex'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span><span class="page-title">${displayName}</span>`;
                             }
                         }
                     });
@@ -3346,6 +3407,10 @@ function switchView(viewName) {
                         doSignOut();
                     });
                 }
+                
+                // Hide back button by default (shown only on sub-pages)
+                const defaultBackBtn = overlay.querySelector('.overlay-back-btn');
+                if (defaultBackBtn) defaultBackBtn.style.display = 'none';
             }
             overlay.classList.add('active');
         }
@@ -7211,6 +7276,3 @@ async function initRemplacements() {
     await loadContrats();
     await loadOffres();
 }
-
-// Call immediately on script load
-initCotationVisibility();

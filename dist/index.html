@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-9KnNWiZD.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-BG49VXBE.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -101,6 +101,11 @@ window.attemptLogin = function() {
                     <select id="register-remplace">
                         <option value="">Sélectionner...</option>
                     </select>
+                </div>
+                <div class="form-group" id="cabinet-address-group" style="display:block !important; border: 3px solid red !important; padding: 10px; margin: 10px 0; background: #ffffcc;">
+                    <label for="register-cabinet-address">Adresse du cabinet principal</label>
+                    <input type="text" id="register-cabinet-address" placeholder="Tapez votre adresse (rue, ville)">
+                    <div id="address-suggestions" class="address-suggestions" style="display:none;"></div>
                 </div>
                 <div class="form-group">
                     <label for="register-email">Email</label>
@@ -1027,7 +1032,13 @@ window.attemptLogin = function() {
                         <button class="doc-filter-btn" data-filter="05" onclick="filterDocuments('05')">05 Comptabilité</button>
                         <button class="doc-filter-btn" data-filter="06" onclick="filterDocuments('06')">06 Fiscalité</button>
                         <button class="doc-filter-btn" data-filter="07" onclick="filterDocuments('07')">07 Correspondance</button>
-                        <select id="docSortSelect" onchange="sortDocuments(this.value)" style="margin-left: auto; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.75rem; background: var(--color-bg-elevated);">
+                        <button class="btn-secondary" style="margin-left: auto; padding: 8px 16px; font-size: 0.85rem;" onclick="generatePassagePDF()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                            Générer PDF
+                        </button>
+                        <select id="docSortSelect" onchange="sortDocuments(this.value)" style="padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.75rem; background: var(--color-bg-elevated);">
                             <option value="date-desc">Plus récent</option>
                             <option value="date-asc">Plus ancien</option>
                             <option value="category">Catégorie</option>
@@ -2650,7 +2661,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v4.js?v=202605180110" defer></script>
+    <script src="app.v4.js?v=202605180100" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
       // Toggle form function for mobile
@@ -2661,6 +2672,25 @@ window.attemptLogin = function() {
         } else if (formName === 'login') {
           document.getElementById('login-form').style.display = 'flex';
           document.getElementById('register-form').style.display = 'none';
+        }
+      };
+      
+      // Toggle address field based on role
+      window.toggleRemplacantField = function() {
+        var role = document.getElementById('register-role')?.value;
+        var replaceGroup = document.getElementById('remplace-medecin-group');
+        var addressGroup = document.getElementById('cabinet-address-group');
+        
+        if (role === 'medecin_remplacant') {
+          if (replaceGroup) replaceGroup.style.display = 'block';
+        } else {
+          if (replaceGroup) replaceGroup.style.display = 'none';
+        }
+        
+        if (role === 'medecin_installe' || role === 'medecin_remplacant' || role === 'secretaire') {
+          if (addressGroup) addressGroup.style.display = 'block';
+        } else {
+          if (addressGroup) addressGroup.style.display = 'none';
         }
       };
       
@@ -3082,7 +3112,8 @@ window.attemptLogin = function() {
           { value: '5.2', label: '5.2 Contrats de prêts', keywords: ['crédit', 'prêt', 'emprunt', 'crédit', 'loan'], desc: 'Contrats de prêts bancaires' },
           { value: '5.3', label: '5.3 Appels de Fonds', keywords: ['appel de fonds', 'apport', 'virement', 'associé'], desc: 'Justificatifs des virements effectués par chaque associé' },
           { value: '5.4', label: '5.4 Immobilisations', keywords: ['immobilisation', 'amortissement', 'investissement', 'bien'], desc: 'Factures d\'achats importants (> 500 € HT) et tableaux d\'amortissement' },
-          { value: '5.5', label: '5.5 Honoraires', keywords: ['honoraire', 'expert', 'comptable', 'avocat', 'commissaire'], desc: 'Factures de l\'expert-comptable, de l\'avocat ou du commissaire aux comptes' }
+          { value: '5.5', label: '5.5 Honoraires', keywords: ['honoraire', 'expert', 'comptable', 'avocat', 'commissaire'], desc: 'Factures de l\'expert-comptable, de l\'avocat ou du commissaire aux comptes' },
+          { value: '5.6', label: '5.6 Feuilles de passage', keywords: ['passage', 'feuille', 'honoraire', 'mois', 'médecin', 'ehpad'], desc: 'Feuilles de passage mensuelles générées automatiquement' }
         ],
         '06': [
           { value: '6.1', label: '6.1 Déclarations 2036', keywords: ['2036', 'déclaration', 'scm'], desc: 'Copies des déclarations annuelles de la SCM' },
@@ -3684,6 +3715,253 @@ window.attemptLogin = function() {
           btn.classList.toggle('active', btn.dataset.filter === filter);
         });
         renderDocuments();
+      };
+
+      window.generatePassagePDF = async function() {
+        console.log('[PDF PASSAGE] Starting generation for previous month...');
+        
+        let jsPDF = null;
+        if (window.jspdf && window.jspdf.jsPDF) {
+          jsPDF = window.jspdf.jsPDF;
+        } else if (window.jsPDF) {
+          jsPDF = window.jsPDF;
+        }
+        
+        if (!jsPDF) {
+          alert('Erreur: jsPDF non chargé. Attendez 2-3 secondes puis réessayez.');
+          return;
+        }
+        
+        try {
+          const now = new Date();
+          const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const prevMonthKey = prevMonth.getFullYear() + '-' + String(prevMonth.getMonth() + 1).padStart(2, '0');
+          const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+          const monthDisplay = monthNames[prevMonth.getMonth()] + ' ' + prevMonth.getFullYear();
+          
+          console.log('[PDF PASSAGE] Generating for:', prevMonthKey, monthDisplay);
+          
+          const { data: passages, error: passagesError } = await window.supabaseClient
+            .from('passages')
+            .select('*, patients(name)')
+            .gte('date', prevMonthKey + '-01')
+            .lt('date', now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01')
+            .order('date', { ascending: true });
+          
+          if (passagesError) {
+            console.error('[PDF PASSAGE] Error loading passages:', passagesError);
+            throw passagesError;
+          }
+          
+          console.log('[PDF PASSAGE] Found passages:', passages?.length || 0);
+          
+          if (!passages || passages.length === 0) {
+            alert('Aucun passage trouvé pour ' + monthDisplay);
+            return;
+          }
+          
+          const doc = new jsPDF();
+          
+          const locations = {
+            'Médecine': { name: 'MÉDECINE', ehpad: false },
+            'SSR': { name: 'SSR', ehpad: false },
+            'Lilias RdC': { name: 'LILIAS RdC', ehpad: true },
+            'Lilas 1er étage': { name: 'LILAS 1er étage', ehpad: true },
+            'Tamaris': { name: 'TAMARIS', ehpad: true }
+          };
+          
+          const medicoSSR = passages.filter(e => !locations[e.location]?.ehpad);
+          const ehpad = passages.filter(e => locations[e.location]?.ehpad);
+          
+          doc.addPage();
+          doc.setFillColor(240, 244, 252);
+          doc.rect(0, 0, 210, 40, 'F');
+          
+          doc.setFontSize(24);
+          doc.setTextColor(30, 41, 59);
+          doc.text('FEUILLE DE PASSAGE', 105, 20, { align: 'center' });
+          
+          doc.setFontSize(16);
+          doc.text(monthDisplay.toUpperCase(), 105, 32, { align: 'center' });
+          
+          let y = 55;
+          
+          if (medicoSSR.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(99, 102, 241);
+            doc.text('MÉDECIN / SSR', 15, y);
+            y += 10;
+            
+            doc.setFillColor(249, 250, 251);
+            doc.rect(15, y - 5, 180, 8, 'F');
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139);
+            doc.text('Date', 17, y);
+            doc.text('Patient', 45, y);
+            doc.text('Lieu', 100, y);
+            doc.text('Acte', 140, y);
+            doc.text('Montant', 175, y);
+            
+            y += 8;
+            doc.setTextColor(30, 41, 59);
+            
+            medicoSSR.forEach(p => {
+              const dateStr = p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '';
+              const patientName = p.patients?.name || '';
+              const location = p.location || '';
+              const cotation = p.cotation || '';
+              const amount = (parseFloat(p.amount) || 0).toFixed(2) + ' €';
+              
+              doc.text(dateStr, 17, y);
+              doc.text(patientName.substring(0, 25), 45, y);
+              doc.text(location.substring(0, 18), 100, y);
+              doc.text(cotation, 140, y);
+              doc.text(amount, 175, y);
+              y += 7;
+              
+              if (y > 270) {
+                doc.addPage();
+                y = 20;
+              }
+            });
+            
+            y += 5;
+            doc.setDrawColor(226, 232, 240);
+            doc.line(15, y, 195, y);
+            y += 8;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(99, 102, 241);
+            doc.text('TOTAL MÉDECIN / SSR', 20, y);
+            const totalMedico = medicoSSR.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+            doc.text(totalMedico.toFixed(2) + ' €', 170, y);
+            y += 15;
+          }
+          
+          if (ehpad.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(99, 102, 241);
+            doc.text('EHPAD', 15, y);
+            y += 10;
+            
+            const ehpadByLocation = {};
+            ehpad.forEach(e => {
+              const loc = locations[e.location]?.name || e.location;
+              if (!ehpadByLocation[loc]) ehpadByLocation[loc] = [];
+              ehpadByLocation[loc].push(e);
+            });
+            
+            const sortedLocations = Object.keys(ehpadByLocation).sort();
+            
+            sortedLocations.forEach(locName => {
+              doc.setFontSize(12);
+              doc.setTextColor(30, 41, 59);
+              doc.text(locName, 20, y);
+              y += 8;
+              
+              doc.setFillColor(249, 250, 251);
+              doc.rect(15, y - 5, 180, 8, 'F');
+              doc.setFontSize(8);
+              doc.setTextColor(100, 116, 139);
+              doc.text('Date', 17, y);
+              doc.text('Patient', 45, y);
+              doc.text('Lieu', 100, y);
+              doc.text('Acte', 140, y);
+              doc.text('Montant', 175, y);
+              
+              y += 8;
+              doc.setTextColor(30, 41, 59);
+              
+              const locPassages = ehpadByLocation[locName].sort((a, b) => new Date(a.date) - new Date(b.date));
+              locPassages.forEach(p => {
+                const dateStr = p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '';
+                const patientName = p.patients?.name || '';
+                const location = p.location || '';
+                const cotation = p.cotation || '';
+                const amount = (parseFloat(p.amount) || 0).toFixed(2) + ' €';
+                
+                doc.text(dateStr, 17, y);
+                doc.text(patientName.substring(0, 25), 45, y);
+                doc.text(location.substring(0, 18), 100, y);
+                doc.text(cotation, 140, y);
+                doc.text(amount, 175, y);
+                y += 7;
+                
+                if (y > 270) {
+                  doc.addPage();
+                  y = 20;
+                }
+              });
+              
+              y += 5;
+            });
+            
+            doc.setDrawColor(226, 232, 240);
+            doc.line(15, y, 195, y);
+            y += 8;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(99, 102, 241);
+            doc.text('TOTAL EHPAD', 20, y);
+            const totalEhpad = ehpad.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+            doc.text(totalEhpad.toFixed(2) + ' €', 170, y);
+          }
+          
+          const pdfBase64 = doc.output('datauristring');
+          const fileName = 'feuille-passage-' + prevMonthKey + '.pdf';
+          
+          const blob = await fetch(pdfBase64).then(r => r.blob());
+          const file = new File([blob], fileName, { type: 'application/pdf' });
+          
+          const filePath = 'passages/' + prevMonthKey + '/' + Date.now() + '-' + fileName;
+          
+          const { data: uploadData, error: uploadError } = await window.supabaseClient
+            .storage
+            .from('documents')
+            .upload(filePath, file);
+          
+          if (uploadError) {
+            console.error('[PDF PASSAGE] Upload error:', uploadError);
+            throw uploadError;
+          }
+          
+          const { data: urlData } = window.supabaseClient
+            .storage
+            .from('documents')
+            .getPublicUrl(filePath);
+          
+          const { data: { user } } = await window.supabaseClient.auth.getUser();
+          
+          const docRecord = {
+            user_id: user.id,
+            file_name: fileName,
+            file_url: urlData.publicUrl,
+            category: '05 - Feuilles de passage',
+            description: 'Feuille de passage - ' + monthDisplay,
+            doc_type: 'passage',
+            doc_date: prevMonth.toISOString().split('T')[0]
+          };
+          
+          const { error: insertError } = await window.supabaseClient
+            .from('documents')
+            .insert(docRecord);
+          
+          if (insertError) {
+            console.error('[PDF PASSAGE] Insert error:', insertError);
+            throw insertError;
+          }
+          
+          console.log('[PDF PASSAGE] PDF generated and saved successfully!');
+          
+          alert('PDF généré avec succès pour ' + monthDisplay + '!');
+          
+          loadDocuments();
+          filterDocuments('comptabilite');
+          
+        } catch (err) {
+          console.error('[PDF PASSAGE] Error:', err);
+          alert('Erreur lors de la génération du PDF: ' + err.message);
+        }
       };
 
       // Load documents when clicking the "+ Ajouter" button

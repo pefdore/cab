@@ -215,7 +215,7 @@ async function doLogin(email, password) {
     }
 }
 
-async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId) {
+async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress = null) {
     console.log('[AUTH] Tentative inscription:', email);
     
     if (!email || !password || !firstName || !lastName || !role) {
@@ -243,7 +243,8 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
                     first_name: firstName,
                     last_name: lastName,
                     role: role,
-                    remplace_medecin_id: replaceMedecinId
+                    remplace_medecin_id: replaceMedecinId,
+                    cabinet_address: cabinetAddress
                 }
             }
         });
@@ -484,8 +485,14 @@ function setupAuthListeners() {
             const replaceMedecinId = document.getElementById('register-remplace')?.value || null;
             const email = document.getElementById('register-email')?.value;
             const password = document.getElementById('register-password')?.value;
-            doSignUp(email, password, firstName, lastName, role, replaceMedecinId);
+            const addressInput = document.getElementById('register-cabinet-address');
+            const cabinetAddress = addressInput ? addressInput.value.trim() : '';
+            
+            doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress);
         });
+        
+        // Initialize address autocomplete
+        window.initAddressAutocomplete();
     }
     
     // Show register link
@@ -614,6 +621,76 @@ function updateToggleButton() {
 }
 
 window.updateToggleButton = updateToggleButton;
+
+// Address autocomplete for cabinet registration
+let addressTimeout = null;
+
+window.initAddressAutocomplete = function() {
+  var addressInput = document.getElementById('register-cabinet-address');
+  if (!addressInput) return;
+  
+  addressInput.addEventListener('input', function() {
+    clearTimeout(addressTimeout);
+    var value = this.value.trim();
+    
+    if (value.length < 3) {
+      hideAddressSuggestions();
+      return;
+    }
+    
+    addressTimeout = setTimeout(function() {
+      searchAddresses(value);
+    }, 300);
+  });
+  
+  addressInput.addEventListener('blur', function() {
+    setTimeout(hideAddressSuggestions, 200);
+  });
+};
+
+async function searchAddresses(query) {
+  try {
+    var response = await fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(query) + '&limit=5');
+    var data = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      showAddressSuggestions(data.features.map(function(f) {
+        return {
+          label: f.properties.label,
+          full: f.properties.label
+        };
+      }));
+    } else {
+      hideAddressSuggestions();
+    }
+  } catch (e) {
+    console.error('[ADDRESS] Error searching:', e);
+    hideAddressSuggestions();
+  }
+}
+
+function showAddressSuggestions(suggestions) {
+  var container = document.getElementById('address-suggestions');
+  if (!container) return;
+  
+  container.innerHTML = suggestions.map(function(s) {
+    return '<div onclick="selectAddress(\'' + s.full.replace(/'/g, "\\'") + '\')">' + s.full + '</div>';
+  }).join('');
+  container.style.display = 'block';
+}
+
+function hideAddressSuggestions() {
+  var container = document.getElementById('address-suggestions');
+  if (container) container.style.display = 'none';
+}
+
+window.selectAddress = function(address) {
+  var input = document.getElementById('register-cabinet-address');
+  if (input) {
+    input.value = address;
+    hideAddressSuggestions();
+  }
+};
 
 // Call immediately on script load
 initCotationVisibility();

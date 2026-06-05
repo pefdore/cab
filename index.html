@@ -102,6 +102,11 @@ window.attemptLogin = function() {
                         <option value="">Sélectionner...</option>
                     </select>
                 </div>
+                <div class="form-group" id="cabinet-address-group" style="display:block !important; border: 3px solid red !important; padding: 10px; margin: 10px 0; background: #ffffcc;">
+                    <label for="register-cabinet-address">Adresse du cabinet principal</label>
+                    <input type="text" id="register-cabinet-address" placeholder="Tapez votre adresse (rue, ville)">
+                    <div id="address-suggestions" class="address-suggestions" style="display:none;"></div>
+                </div>
                 <div class="form-group">
                     <label for="register-email">Email</label>
                     <input type="email" id="register-email" required placeholder="votre@email.com">
@@ -2667,6 +2672,25 @@ window.attemptLogin = function() {
         } else if (formName === 'login') {
           document.getElementById('login-form').style.display = 'flex';
           document.getElementById('register-form').style.display = 'none';
+        }
+      };
+      
+      // Toggle address field based on role
+      window.toggleRemplacantField = function() {
+        var role = document.getElementById('register-role')?.value;
+        var replaceGroup = document.getElementById('remplace-medecin-group');
+        var addressGroup = document.getElementById('cabinet-address-group');
+        
+        if (role === 'medecin_remplacant') {
+          if (replaceGroup) replaceGroup.style.display = 'block';
+        } else {
+          if (replaceGroup) replaceGroup.style.display = 'none';
+        }
+        
+        if (role === 'medecin_installe' || role === 'medecin_remplacant' || role === 'secretaire') {
+          if (addressGroup) addressGroup.style.display = 'block';
+        } else {
+          if (addressGroup) addressGroup.style.display = 'none';
         }
       };
       
