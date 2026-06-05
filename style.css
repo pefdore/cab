@@ -2099,6 +2099,8 @@ h2 {
     background: var(--color-text-muted);
     color: var(--color-text-inverse);
     -webkit-tap-highlight-color: transparent;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .cotation-toggle-btn:hover {
