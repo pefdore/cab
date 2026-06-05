@@ -489,9 +489,14 @@ function setupAuthListeners() {
             const addressInput = document.getElementById('register-cabinet-address');
             const cabinetAddress = addressInput ? addressInput.value.trim() : '';
             
+            console.log('[REGISTER] Role:', role, 'Address:', cabinetAddress);
+            
             // Check if address already exists for medecin/secretaire
             if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
+                console.log('[REGISTER] Checking for existing cabinet at address...');
                 const existingDoctors = await checkAddressExists(cabinetAddress);
+                console.log('[REGISTER] Existing doctors found:', existingDoctors);
+                
                 if (existingDoctors && existingDoctors.length > 0) {
                     showCabinetModal(cabinetAddress, existingDoctors, {
                         email, password, firstName, lastName, role, replaceMedecinId
@@ -706,17 +711,22 @@ window.selectAddress = function(address) {
 
 // Check if address already exists in database
 async function checkAddressExists(address) {
+    console.log('[CABINET] Checking address:', address);
+    
     try {
+        // Use ilike for case-insensitive comparison
         const { data, error } = await supabaseClient
             .from('profiles')
             .select('id, first_name, last_name, role')
-            .eq('cabinet_address', address)
+            .ilike('cabinet_address', address.trim())
             .neq('role', 'medecin_remplacant');
         
         if (error) {
             console.error('[CABINET] Error checking address:', error);
             return null;
         }
+        
+        console.log('[CABINET] Found doctors:', data);
         return data || [];
     } catch (e) {
         console.error('[CABINET] Exception:', e);
