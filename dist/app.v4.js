@@ -215,7 +215,7 @@ async function doLogin(email, password) {
     }
 }
 
-async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress = null) {
+async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress = null, cabinetId = null) {
     console.log('[AUTH] Tentative inscription:', email);
     
     if (!email || !password || !firstName || !lastName || !role) {
@@ -244,7 +244,8 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
                     last_name: lastName,
                     role: role,
                     remplace_medecin_id: replaceMedecinId,
-                    cabinet_address: cabinetAddress
+                    cabinet_address: cabinetAddress,
+                    cabinet_id: cabinetId
                 }
             }
         });
@@ -477,7 +478,7 @@ function setupAuthListeners() {
     // Register form
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
-        registerForm.addEventListener('submit', (e) => {
+        registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const firstName = document.getElementById('register-firstname')?.value;
             const lastName = document.getElementById('register-lastname')?.value;
@@ -488,7 +489,18 @@ function setupAuthListeners() {
             const addressInput = document.getElementById('register-cabinet-address');
             const cabinetAddress = addressInput ? addressInput.value.trim() : '';
             
-            doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress);
+            // Check if address already exists for medecin/secretaire
+            if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
+                const existingDoctors = await checkAddressExists(cabinetAddress);
+                if (existingDoctors && existingDoctors.length > 0) {
+                    showCabinetModal(cabinetAddress, existingDoctors, {
+                        email, password, firstName, lastName, role, replaceMedecinId
+                    });
+                    return;
+                }
+            }
+            
+            doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress, null);
         });
         
         // Initialize address autocomplete
@@ -690,6 +702,113 @@ window.selectAddress = function(address) {
     input.value = address;
     hideAddressSuggestions();
   }
+};
+
+// Check if address already exists in database
+async function checkAddressExists(address) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('profiles')
+            .select('id, first_name, last_name, role')
+            .eq('cabinet_address', address)
+            .neq('role', 'medecin_remplacant');
+        
+        if (error) {
+            console.error('[CABINET] Error checking address:', error);
+            return null;
+        }
+        return data || [];
+    } catch (e) {
+        console.error('[CABINET] Exception:', e);
+        return [];
+    }
+}
+
+// Show cabinet selection modal
+function showCabinetModal(address, doctors, registrationData) {
+    var modal = document.getElementById('cabinet-select-modal');
+    var optionsContainer = document.getElementById('cabinet-options');
+    
+    if (!modal || !optionsContainer) {
+        // Modal doesn't exist, create it dynamically
+        createCabinetModal();
+        modal = document.getElementById('cabinet-select-modal');
+        optionsContainer = document.getElementById('cabinet-options');
+    }
+    
+    var doctorNames = doctors.map(function(d) { return d.first_name + ' ' + d.last_name; }).join(', ');
+    
+    optionsContainer.innerHTML = 
+        '<div class="cabinet-option" onclick="joinExistingCabinet(\'' + doctors[0].id + '\')">' +
+            '<div class="cabinet-name">Cabinet des Drs ' + doctorNames + '</div>' +
+            '<div class="cabinet-address">' + address + '</div>' +
+        '</div>';
+    
+    modal.style.display = 'flex';
+    
+    // Store registration data for later use
+    window.pendingRegistrationData = registrationData;
+    window.pendingCabinetAddress = address;
+}
+
+function createCabinetModal() {
+    var modalHTML = 
+        '<div id="cabinet-select-modal" class="modal-overlay" style="display: none; z-index: 999999;">' +
+            '<div class="modal-card" style="max-width: 500px;">' +
+                '<div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--color-border);">' +
+                    '<div style="display: flex; align-items: center; gap: 12px;">' +
+                        '<div style="width: 40px; height: 40px; background: var(--color-primary-light); border-radius: 10px; display: flex; align-items: center; justify-content: center;">' +
+                            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2">' +
+                                '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>' +
+                                '<polyline points="9 22 9 12 15 12 15 22"/>' +
+                            '</svg>' +
+                        '</div>' +
+                        '<div>' +
+                            '<h3 style="margin: 0; font-size: 1.1rem;">Cabinet déjà existant</h3>' +
+                            '<p style="margin: 2px 0 0; font-size: 0.8rem; color: var(--color-text-secondary);">Rejoindre un cabinet ou créer le votre</p>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button class="modal-close" onclick="closeModal(\'cabinet-select-modal\')">' +
+                        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="modal-body" style="padding: 20px;">' +
+                    '<p style="text-align: center; margin-bottom: 20px; color: var(--color-text-secondary); font-size: 0.9rem;">' +
+                        'Des médecins sont déjà inscrits à cette adresse. Faites-vous partie de ce cabinet ?' +
+                    '</p>' +
+                    '<div id="cabinet-options" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;"></div>' +
+                    '<button type="button" class="btn-secondary" style="width: 100%; padding: 12px;" onclick="createNewCabinet()">Créer un nouveau cabinet</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+window.joinExistingCabinet = function(cabinetId) {
+    var data = window.pendingRegistrationData;
+    var address = window.pendingCabinetAddress;
+    
+    if (data) {
+        closeModal('cabinet-select-modal');
+        doSignUp(data.email, data.password, data.firstName, data.lastName, data.role, data.replaceMedecinId, address, cabinetId);
+    }
+    
+    window.pendingRegistrationData = null;
+    window.pendingCabinetAddress = null;
+};
+
+window.createNewCabinet = function() {
+    var data = window.pendingRegistrationData;
+    var address = window.pendingCabinetAddress;
+    
+    if (data) {
+        closeModal('cabinet-select-modal');
+        doSignUp(data.email, data.password, data.firstName, data.lastName, data.role, data.replaceMedecinId, address, null);
+    }
+    
+    window.pendingRegistrationData = null;
+    window.pendingCabinetAddress = null;
 };
 
 // Call immediately on script load
