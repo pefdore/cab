@@ -835,13 +835,28 @@ function showCabinetModal(address, doctors, registrationData) {
         optionsContainer = document.getElementById('cabinet-options');
     }
     
-    var doctorNames = doctors.map(function(d) { return d.first_name + ' ' + d.last_name; }).join(', ');
+    // Group doctors by cabinet (they may have same address but different cabinets)
+    var cabinetsMap = {};
+    doctors.forEach(function(d) {
+        var key = d.id;
+        if (!cabinetsMap[key]) {
+            cabinetsMap[key] = { doctors: [], name: d.first_name + ' ' + d.last_name };
+        }
+        cabinetsMap[key].doctors.push(d);
+    });
     
-    optionsContainer.innerHTML = 
-        '<div class="cabinet-option" onclick="joinExistingCabinet(\'' + doctors[0].id + '\')">' +
-            '<div class="cabinet-name">Cabinet des Drs ' + doctorNames + '</div>' +
-            '<div class="cabinet-address">' + address + '</div>' +
-        '</div>';
+    // Build HTML for all cabinets
+    var optionsHTML = '';
+    Object.values(cabinetsMap).forEach(function(cab) {
+        var doctorNames = cab.doctors.map(function(d) { return d.first_name + ' ' + d.last_name; }).join(', ');
+        optionsHTML += 
+            '<div class="cabinet-option" onclick="joinExistingCabinet(\'' + cab.doctors[0].id + '\')">' +
+                '<div class="cabinet-name">Cabinet des Drs ' + doctorNames + '</div>' +
+                '<div class="cabinet-address">' + address + '</div>' +
+            '</div>';
+    });
+    
+    optionsContainer.innerHTML = optionsHTML;
     
     modal.style.display = 'flex';
     
