@@ -857,10 +857,10 @@ function showCabinetModal(address, doctors, registrationData) {
     Object.values(cabinetsMap).forEach(function(cab) {
         var doctorNames = cab.doctors.map(function(d) { return d.first_name + ' ' + d.last_name; }).join(', ');
         optionsHTML += 
-            '<div class="cabinet-option" onclick="joinExistingCabinet(\'' + cab.doctors[0].id + '\')">' +
+            '<button type="button" class="cabinet-option" onclick="joinExistingCabinet(\'' + cab.doctors[0].id + '\')" style="width:100%;text-align:left;background:none;border:2px solid var(--color-border);border-radius:10px;padding:14px;cursor:pointer;margin-bottom:8px;">' +
                 '<div class="cabinet-name">Cabinet des Drs ' + doctorNames + '</div>' +
                 '<div class="cabinet-address">' + address + '</div>' +
-            '</div>';
+            '</button>';
     });
     
     optionsContainer.innerHTML = optionsHTML;
@@ -907,6 +907,7 @@ function createCabinetModal() {
 }
 
 window.joinExistingCabinet = function(cabinetId) {
+    alert('Cabinet cliqué: ' + cabinetId);
     console.log('[JOIN] joinExistingCabinet called, cabinetId:', cabinetId);
     var data = window.pendingRegistrationData;
     var address = window.pendingCabinetAddress;
