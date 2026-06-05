@@ -266,6 +266,23 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
             });
         }
         
+        // Update user profile with cabinet_id
+        if (data.user && (cabinetId || cabinetAddress)) {
+            const { error: profileError } = await supabaseClient
+                .from('profiles')
+                .update({
+                    cabinet_id: cabinetId,
+                    cabinet_address: cabinetAddress
+                })
+                .eq('id', data.user.id);
+            
+            if (profileError) {
+                console.error('[AUTH] Error updating profile:', profileError);
+            } else {
+                console.log('[AUTH] Profile updated with cabinet_id:', cabinetId);
+            }
+        }
+        
         alert('Compte créé! Veuillez vérifier votre email pour confirmer votre adresse.');
         showLoginForm();
         
