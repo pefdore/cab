@@ -3698,8 +3698,19 @@ async function loadCabinetData() {
     // Only proceed if supabaseClient is initialized
     if (currentUser && supabaseClient) {
         console.log('Loading cabinet data for user:', currentUser.id);
-        await loadDepenses();
-        await loadRecettes();
+        
+        // Get user's cabinet_id from profile
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('cabinet_id')
+            .eq('id', currentUser.id)
+            .single();
+        
+        const userCabinetId = profile?.cabinet_id;
+        console.log('[LOAD] User cabinet_id:', userCabinetId);
+        
+        await loadDepenses(userCabinetId);
+        await loadRecettes(userCabinetId);
         console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
         renderAddDepensesRecettes();
@@ -3708,48 +3719,101 @@ async function loadCabinetData() {
     }
 }
 
-async function loadDepenses() {
+async function loadDepenses(userCabinetId) {
     console.log('[COMPTAB] loadDepenses called, user:', currentUser?.id);
     try {
         console.log('Loading depenses for user:', currentUser?.id);
-        const { data, error } = await supabaseClient
+        
+        // Get user's cabinet_id to share data with other doctors in same cabinet
+        let depenses = [];
+        
+        // Load own depenses
+        const { data: ownDepenses, error: ownError } = await supabaseClient
             .from('cabinet_depenses')
             .select('*')
             .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
-        console.log('[COMPTAB] Depenses loaded:', data?.length || 0, error);
-        if (error) {
-            console.error('[COMPTAB] Depenses error:', error);
+        if (ownDepenses) depenses = [...ownDepenses];
+        
+        // If user has a cabinet, also load depenses from other doctors in same cabinet
+        if (userCabinetId) {
+            // Get other users in the same cabinet
+            const { data: cabinetMembers } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('cabinet_id', userCabinetId)
+                .neq('id', currentUser.id);
+            
+            if (cabinetMembers && cabinetMembers.length > 0) {
+                const memberIds = cabinetMembers.map(m => m.id);
+                
+                const { data: sharedDepenses } = await supabaseClient
+                    .from('cabinet_depenses')
+                    .select('*')
+                    .in('user_id', memberIds)
+                    .order('date', { ascending: false });
+                
+                if (sharedDepenses) {
+                    // Mark shared depenses with a flag
+                    const markedShared = sharedDepenses.map(d => ({...d, is_shared: true}));
+                    depenses = [...depenses, ...markedShared];
+                }
+            }
         }
-        if (data) {
-            cabinetDepenses = data;
-            renderDepenses();
-            updateSousCategoriesDepense();
-        }
+        
+        console.log('[COMPTAB] Total depenses loaded:', depenses.length);
+        cabinetDepenses = depenses;
+        renderDepenses();
+        updateSousCategoriesDepense();
     } catch (error) {
         console.error('Erreur loadDepenses:', error);
     }
 }
 
-async function loadRecettes() {
+async function loadRecettes(userCabinetId) {
     console.log('[COMPTAB] loadRecettes called, user:', currentUser?.id);
     try {
         console.log('Loading recettes for user:', currentUser?.id);
-        const { data, error } = await supabaseClient
+        
+        let recettes = [];
+        
+        // Load own recettes
+        const { data: ownRecettes, error: ownError } = await supabaseClient
             .from('cabinet_recettes')
             .select('*')
             .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
-        console.log('[COMPTAB] Recettes loaded:', data?.length || 0, error);
-        if (error) {
-            console.error('[COMPTAB] Recettes error:', error);
+        if (ownRecettes) recettes = [...ownRecettes];
+        
+        // If user has a cabinet, also load recettes from other doctors in same cabinet
+        if (userCabinetId) {
+            const { data: cabinetMembers } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('cabinet_id', userCabinetId)
+                .neq('id', currentUser.id);
+            
+            if (cabinetMembers && cabinetMembers.length > 0) {
+                const memberIds = cabinetMembers.map(m => m.id);
+                
+                const { data: sharedRecettes } = await supabaseClient
+                    .from('cabinet_recettes')
+                    .select('*')
+                    .in('user_id', memberIds)
+                    .order('date', { ascending: false });
+                
+                if (sharedRecettes) {
+                    const markedShared = sharedRecettes.map(r => ({...r, is_shared: true}));
+                    recettes = [...recettes, ...markedShared];
+                }
+            }
         }
-        if (data) {
-            cabinetRecettes = data;
-            renderRecettes();
-        }
+        
+        console.log('[COMPTAB] Total recettes loaded:', recettes.length);
+        cabinetRecettes = recettes;
+        renderRecettes();
     } catch (error) {
         console.error('Erreur loadRecettes:', error);
     }
