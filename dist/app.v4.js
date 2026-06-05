@@ -417,7 +417,7 @@ function updateToggleButton() {
     
     const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
     toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
-    toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
+    toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
     
     const cotationDash = document.getElementById('cotation-dashboard');
     const addPassagesSection = document.getElementById('add-passages-section');
@@ -469,7 +469,7 @@ function initCotationVisibility() {
         const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
         toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
         toggleBtn.classList.toggle('active', isEnabled);
-        toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
+        toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
         
         // Set initial visibility
         const cotationDash = document.getElementById('cotation-dashboard');
