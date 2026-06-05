@@ -710,6 +710,35 @@ window.selectAddress = function(address) {
     input.value = address;
     hideAddressSuggestions();
   }
+  
+  // Check if this address already exists for medecin/secretaire
+  checkAddressOnSelect(address);
+};
+
+async function checkAddressOnSelect(address) {
+  var role = document.getElementById('register-role')?.value;
+  console.log('[ADDRESS] Address selected:', address, 'Role:', role);
+  
+  if (role !== 'medecin_installe' && role !== 'secretaire') {
+    console.log('[ADDRESS] Role does not need cabinet check');
+    return;
+  }
+  
+  console.log('[ADDRESS] Checking for existing cabinet...');
+  var existingDoctors = await checkAddressExists(address);
+  console.log('[ADDRESS] Existing doctors found:', existingDoctors);
+  
+  if (existingDoctors && existingDoctors.length > 0) {
+    var email = document.getElementById('register-email')?.value;
+    var password = document.getElementById('register-password')?.value;
+    var firstName = document.getElementById('register-firstname')?.value;
+    var lastName = document.getElementById('register-lastname')?.value;
+    var replaceMedecinId = document.getElementById('register-remplace')?.value || null;
+    
+    showCabinetModal(address, existingDoctors, {
+      email, password, firstName, lastName, role, replaceMedecinId
+    });
+  }
 };
 
 window.handleRegisterSubmit = async function() {
