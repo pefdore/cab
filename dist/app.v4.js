@@ -825,6 +825,8 @@ async function checkAddressExists(address) {
 
 // Show cabinet selection modal
 function showCabinetModal(address, doctors, registrationData) {
+    console.log('[MODAL] showCabinetModal called', { address: address, doctors: doctors, registrationData: registrationData });
+    
     var modal = document.getElementById('cabinet-select-modal');
     var optionsContainer = document.getElementById('cabinet-options');
     
@@ -834,6 +836,11 @@ function showCabinetModal(address, doctors, registrationData) {
         modal = document.getElementById('cabinet-select-modal');
         optionsContainer = document.getElementById('cabinet-options');
     }
+    
+    // Store registration data for later use
+    window.pendingRegistrationData = registrationData;
+    window.pendingCabinetAddress = address;
+    console.log('[MODAL] Data stored:', window.pendingRegistrationData);
     
     // Group doctors by cabinet (they may have same address but different cabinets)
     var cabinetsMap = {};
@@ -900,8 +907,16 @@ function createCabinetModal() {
 }
 
 window.joinExistingCabinet = function(cabinetId) {
+    console.log('[JOIN] joinExistingCabinet called, cabinetId:', cabinetId);
     var data = window.pendingRegistrationData;
     var address = window.pendingCabinetAddress;
+    console.log('[JOIN] pendingRegistrationData:', data);
+    console.log('[JOIN] pendingCabinetAddress:', address);
+    
+    if (!data) {
+        alert('Erreur: données d\'inscription perdues. Veuillez recommencer.');
+        return;
+    }
     
     if (data) {
         closeModal('cabinet-select-modal');
