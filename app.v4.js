@@ -258,6 +258,14 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
             return;
         }
         
+        // Save cabinet address to public cabinets table if it's a new cabinet
+        if (cabinetAddress && !cabinetId) {
+            await supabaseClient.from('cabinets').insert({
+                address: cabinetAddress,
+                name: firstName + ' ' + lastName
+            });
+        }
+        
         alert('Compte créé! Veuillez vérifier votre email pour confirmer votre adresse.');
         showLoginForm();
         
@@ -777,31 +785,38 @@ async function checkAddressExists(address) {
     console.log('[CABINET] Checking address:', address);
     
     try {
-        // Get all profiles and filter manually (bypass RLS issues)
-        const { data: allProfiles, error } = await supabaseClient
-            .from('profiles')
-            .select('id, first_name, last_name, role, cabinet_address');
+        // Use public cabinets table instead of profiles (bypasses RLS)
+        const { data, error } = await supabaseClient
+            .from('cabinets')
+            .select('id, name, address');
         
         if (error) {
             console.error('[CABINET] Error:', error);
-            // Try alternative: get just the current user's profile
             return [];
         }
         
-        console.log('[CABINET] All profiles:', allProfiles);
+        console.log('[CABINET] All cabinets:', data);
         
         // Filter by address (exact or partial match)
         const addressTrimmed = address.trim().toLowerCase();
-        const matching = allProfiles.filter(function(p) {
-            if (!p.cabinet_address) return false;
-            if (p.role === 'medecin_remplacant') return false;
-            
-            const cabAddr = p.cabinet_address.toLowerCase();
+        const matching = data.filter(function(c) {
+            if (!c.address) return false;
+            const cabAddr = c.address.toLowerCase();
             return cabAddr.includes(addressTrimmed) || addressTrimmed.includes(cabAddr);
         });
         
-        console.log('[CABINET] Found doctors:', matching);
-        return matching;
+        // Convert cabinet data to doctor format for modal
+        const doctors = matching.map(function(c) {
+            return {
+                id: c.id,
+                first_name: c.name || 'Cabinet',
+                last_name: '',
+                role: 'medecin_installe'
+            };
+        });
+        
+        console.log('[CABINET] Found doctors:', doctors);
+        return doctors;
     } catch (e) {
         console.error('[CABINET] Exception:', e);
         return [];
