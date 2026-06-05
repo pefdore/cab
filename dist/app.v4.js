@@ -1,5 +1,8 @@
+console.log('[INIT] app.v4.js loading...');
 const SUPABASE_URL = 'https://wlpbnxnvctlmhndqvvim.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndscGJueG52Y3RsbWhuZHF2dmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NjgxMTAsImV4cCI6MjA5MjU0NDExMH0.ob6hctrkA7dTzKLUGG4Ymt1iemcgDnbsCtBwgBZPHoM';
+
+console.log('[INIT] Constants defined');
 
 window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
