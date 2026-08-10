@@ -1,5 +1,8 @@
+console.log('[INIT] app.v4.js loading...');
 const SUPABASE_URL = 'https://wlpbnxnvctlmhndqvvim.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndscGJueG52Y3RsbWhuZHF2dmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NjgxMTAsImV4cCI6MjA5MjU0NDExMH0.ob6hctrkA7dTzKLUGG4Ymt1iemcgDnbsCtBwgBZPHoM';
+
+console.log('[INIT] Constants defined');
 
 window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
@@ -215,7 +218,7 @@ async function doLogin(email, password) {
     }
 }
 
-async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId) {
+async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress = null, cabinetId = null) {
     console.log('[AUTH] Tentative inscription:', email);
     
     if (!email || !password || !firstName || !lastName || !role) {
@@ -243,7 +246,9 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
                     first_name: firstName,
                     last_name: lastName,
                     role: role,
-                    remplace_medecin_id: replaceMedecinId
+                    remplace_medecin_id: replaceMedecinId,
+                    cabinet_address: cabinetAddress,
+                    cabinet_id: cabinetId
                 }
             }
         });
@@ -251,6 +256,31 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
         if (error) {
             showError(error.message);
             return;
+        }
+        
+        // Save cabinet address to public cabinets table if it's a new cabinet
+        if (cabinetAddress && !cabinetId) {
+            await supabaseClient.from('cabinets').insert({
+                address: cabinetAddress,
+                name: firstName + ' ' + lastName
+            });
+        }
+        
+        // Update user profile with cabinet_id
+        if (data.user && (cabinetId || cabinetAddress)) {
+            const { error: profileError } = await supabaseClient
+                .from('profiles')
+                .update({
+                    cabinet_id: cabinetId,
+                    cabinet_address: cabinetAddress
+                })
+                .eq('id', data.user.id);
+            
+            if (profileError) {
+                console.error('[AUTH] Error updating profile:', profileError);
+            } else {
+                console.log('[AUTH] Profile updated with cabinet_id:', cabinetId);
+            }
         }
         
         alert('Compte créé! Veuillez vérifier votre email pour confirmer votre adresse.');
@@ -298,7 +328,17 @@ async function loadUserProfile() {
 }
 
 async function loadUserSettings() {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('[COTATION] No currentUser, trying localStorage only');
+        // Try to load from localStorage even without user
+        const localCotationEnabled = localStorage.getItem('cotation_enabled');
+        if (localCotationEnabled) {
+            settings.cotation_enabled = localCotationEnabled;
+            console.log('[COTATION] Loaded from localStorage (no user):', localCotationEnabled);
+        }
+        applyCotationVisibility();
+        return;
+    }
     
     // First try to load from localStorage as backup
     const localCotationEnabled = localStorage.getItem('cotation_enabled');
@@ -411,88 +451,6 @@ function applyCotationVisibility() {
     console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);
 }
 
-function updateToggleButton() {
-    const toggleBtn = document.getElementById('cotationToggleBtn');
-    if (!toggleBtn) return;
-    
-    const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-    toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
-    toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
-    
-    const cotationDash = document.getElementById('cotation-dashboard');
-    const addPassagesSection = document.getElementById('add-passages-section');
-    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
-    const fabAddPassage = document.getElementById('fab-add-passage');
-    const cabinetDash = document.getElementById('cabinet-dashboard');
-    
-    if (cotationDash) {
-        cotationDash.style.display = isEnabled ? 'block' : 'none';
-        cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
-    }
-    
-    if (addPassagesSection) {
-        addPassagesSection.style.display = isEnabled ? 'block' : 'none';
-    }
-    
-    if (addPassagesSectionModal) {
-        addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
-    }
-    
-    if (dashboardSwitcher) {
-        dashboardSwitcher.style.display = isEnabled ? 'flex' : 'none';
-    }
-    
-    if (fabAddPassage) {
-        fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
-    }
-    
-    if (cabinetDash) {
-        cabinetDash.style.display = isEnabled ? 'none' : 'block';
-        cabinetDash.style.visibility = isEnabled ? 'hidden' : 'visible';
-    }
-}
-
-window.updateToggleButton = updateToggleButton;
-
-// Apply cotation visibility immediately on page load (before auth)
-function initCotationVisibility() {
-    const checkAndApply = () => {
-        const toggleBtn = document.getElementById('cotationToggleBtn');
-        
-        if (!toggleBtn) {
-            setTimeout(checkAndApply, 100);
-            return;
-        }
-        
-        // Set initial button state
-        const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-        toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
-        toggleBtn.classList.toggle('active', isEnabled);
-        toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
-        
-        // Set initial visibility
-        const cotationDash = document.getElementById('cotation-dashboard');
-        const addPassagesSection = document.getElementById('add-passages-section');
-        const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-        
-        if (cotationDash) {
-            cotationDash.style.display = isEnabled ? 'block' : 'none';
-            cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
-        }
-        
-        if (addPassagesSection) {
-            addPassagesSection.style.display = isEnabled ? 'block' : 'none';
-        }
-        
-        if (addPassagesSectionModal) {
-            addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
-        }
-    };
-    
-    checkAndApply();
-}
-
 async function saveCotationSetting(enabled) {
     console.log('[COTATION] saveCotationSetting called with:', enabled);
     console.log('[COTATION] currentUser:', currentUser ? currentUser.id : 'null');
@@ -529,9 +487,9 @@ async function saveCotationSetting(enabled) {
         }
     } catch (e) {
         console.error('[COTATION] Exception:', e);
-    }
 }
-
+}
+    
 // --- Setup des écouteurs d'événements ---
 function setupAuthListeners() {
     console.log('[AUTH] Setup des listeners');
@@ -548,7 +506,7 @@ function setupAuthListeners() {
     // Register form
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
-        registerForm.addEventListener('submit', (e) => {
+        registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const firstName = document.getElementById('register-firstname')?.value;
             const lastName = document.getElementById('register-lastname')?.value;
@@ -556,8 +514,30 @@ function setupAuthListeners() {
             const replaceMedecinId = document.getElementById('register-remplace')?.value || null;
             const email = document.getElementById('register-email')?.value;
             const password = document.getElementById('register-password')?.value;
-            doSignUp(email, password, firstName, lastName, role, replaceMedecinId);
+            const addressInput = document.getElementById('register-cabinet-address');
+            const cabinetAddress = addressInput ? addressInput.value.trim() : '';
+            
+            console.log('[REGISTER] Role:', role, 'Address:', cabinetAddress);
+            
+            // Check if address already exists for medecin/secretaire
+            if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
+                console.log('[REGISTER] Checking for existing cabinet at address...');
+                const existingDoctors = await checkAddressExists(cabinetAddress);
+                console.log('[REGISTER] Existing doctors found:', existingDoctors);
+                
+                if (existingDoctors && existingDoctors.length > 0) {
+                    showCabinetModal(cabinetAddress, existingDoctors, {
+                        email, password, firstName, lastName, role, replaceMedecinId
+                    });
+                    return;
+                }
+            }
+            
+            doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress, null);
         });
+        
+        // Initialize address autocomplete
+        window.initAddressAutocomplete();
     }
     
     // Show register link
@@ -602,6 +582,404 @@ function showError(message) {
 function showToast(message) {
     alert(message);
 }
+
+// Apply cotation visibility immediately on page load (before auth)
+function initCotationVisibility() {
+    const checkAndApply = () => {
+        const toggleBtn = document.getElementById('cotationToggleBtn');
+        
+        if (!toggleBtn) {
+            setTimeout(checkAndApply, 100);
+            return;
+        }
+        
+        // Set initial button state
+        const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+        toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
+        toggleBtn.classList.toggle('active', isEnabled);
+        toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
+        
+        // Set initial visibility
+        const cotationDash = document.getElementById('cotation-dashboard');
+        const addPassagesSection = document.getElementById('add-passages-section');
+        const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+        
+        if (cotationDash) {
+            cotationDash.style.display = isEnabled ? 'block' : 'none';
+            cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
+        }
+        
+        if (addPassagesSection) {
+            addPassagesSection.style.display = isEnabled ? 'block' : 'none';
+        }
+        
+        if (addPassagesSectionModal) {
+            addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+        }
+    };
+    
+    checkAndApply();
+}
+
+function updateToggleButton() {
+    const toggleBtn = document.getElementById('cotationToggleBtn');
+    if (!toggleBtn) return;
+    
+    const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+    toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
+    toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
+    
+    const cotationDash = document.getElementById('cotation-dashboard');
+    const addPassagesSection = document.getElementById('add-passages-section');
+    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
+    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
+    const fabAddPassage = document.getElementById('fab-add-passage');
+    const cabinetDash = document.getElementById('cabinet-dashboard');
+    
+    if (cotationDash) {
+        cotationDash.style.display = isEnabled ? 'block' : 'none';
+        cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
+    }
+    
+    if (addPassagesSection) {
+        addPassagesSection.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (addPassagesSectionModal) {
+        addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
+    }
+    
+    if (dashboardSwitcher) {
+        dashboardSwitcher.style.display = isEnabled ? 'flex' : 'none';
+    }
+    
+    if (fabAddPassage) {
+        fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
+    }
+    
+    // Don't hide settings section - user needs to be able to toggle back
+    
+    if (cabinetDash) {
+        cabinetDash.style.display = isEnabled ? 'none' : 'block';
+        cabinetDash.style.visibility = isEnabled ? 'hidden' : 'visible';
+    }
+}
+
+window.updateToggleButton = updateToggleButton;
+
+// Address autocomplete for cabinet registration
+let addressTimeout = null;
+
+window.initAddressAutocomplete = function() {
+  var addressInput = document.getElementById('register-cabinet-address');
+  if (!addressInput) return;
+  
+  addressInput.addEventListener('input', function() {
+    clearTimeout(addressTimeout);
+    var value = this.value.trim();
+    
+    if (value.length < 3) {
+      hideAddressSuggestions();
+      return;
+    }
+    
+    addressTimeout = setTimeout(function() {
+      searchAddresses(value);
+    }, 300);
+  });
+  
+  addressInput.addEventListener('blur', function() {
+    setTimeout(hideAddressSuggestions, 200);
+  });
+};
+
+async function searchAddresses(query) {
+  try {
+    var response = await fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(query) + '&limit=5');
+    var data = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      showAddressSuggestions(data.features.map(function(f) {
+        return {
+          label: f.properties.label,
+          full: f.properties.label
+        };
+      }));
+    } else {
+      hideAddressSuggestions();
+    }
+  } catch (e) {
+    console.error('[ADDRESS] Error searching:', e);
+    hideAddressSuggestions();
+  }
+}
+
+function showAddressSuggestions(suggestions) {
+  var container = document.getElementById('address-suggestions');
+  if (!container) return;
+  
+  container.innerHTML = suggestions.map(function(s) {
+    return '<div onclick="selectAddress(\'' + s.full.replace(/'/g, "\\'") + '\')">' + s.full + '</div>';
+  }).join('');
+  container.style.display = 'block';
+}
+
+function hideAddressSuggestions() {
+  var container = document.getElementById('address-suggestions');
+  if (container) container.style.display = 'none';
+}
+
+window.selectAddress = function(address) {
+  var input = document.getElementById('register-cabinet-address');
+  if (input) {
+    input.value = address;
+    hideAddressSuggestions();
+  }
+  
+  // Check if this address already exists for medecin/secretaire
+  checkAddressOnSelect(address);
+};
+
+async function checkAddressOnSelect(address) {
+  var role = document.getElementById('register-role')?.value;
+  console.log('[ADDRESS] Address selected:', address, 'Role:', role);
+  
+  if (role !== 'medecin_installe' && role !== 'secretaire') {
+    console.log('[ADDRESS] Role does not need cabinet check');
+    return;
+  }
+  
+  console.log('[ADDRESS] Checking for existing cabinet...');
+  var existingDoctors = await checkAddressExists(address);
+  console.log('[ADDRESS] Existing doctors found:', existingDoctors);
+  
+  if (existingDoctors && existingDoctors.length > 0) {
+    var email = document.getElementById('register-email')?.value;
+    var password = document.getElementById('register-password')?.value;
+    var firstName = document.getElementById('register-firstname')?.value;
+    var lastName = document.getElementById('register-lastname')?.value;
+    var replaceMedecinId = document.getElementById('register-remplace')?.value || null;
+    
+    showCabinetModal(address, existingDoctors, {
+      email, password, firstName, lastName, role, replaceMedecinId
+    });
+  }
+};
+
+window.handleRegisterSubmit = async function() {
+    console.log('[REGISTER] handleRegisterSubmit called');
+    
+    const firstName = document.getElementById('register-firstname')?.value;
+    const lastName = document.getElementById('register-lastname')?.value;
+    const role = document.getElementById('register-role')?.value;
+    const replaceMedecinId = document.getElementById('register-remplace')?.value || null;
+    const email = document.getElementById('register-email')?.value;
+    const password = document.getElementById('register-password')?.value;
+    const addressInput = document.getElementById('register-cabinet-address');
+    const cabinetAddress = addressInput ? addressInput.value.trim() : '';
+    
+    console.log('[REGISTER] Role:', role, 'Address:', cabinetAddress);
+    
+    // Check if address already exists for medecin/secretaire
+    if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
+        console.log('[REGISTER] Checking for existing cabinet at address...');
+        const existingDoctors = await checkAddressExists(cabinetAddress);
+        console.log('[REGISTER] Existing doctors found:', existingDoctors);
+        
+        if (existingDoctors && existingDoctors.length > 0) {
+            showCabinetModal(cabinetAddress, existingDoctors, {
+                email, password, firstName, lastName, role, replaceMedecinId
+            });
+            return;
+        }
+    }
+    
+    doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress, null);
+};
+
+// Check if address already exists in database
+async function checkAddressExists(address) {
+    console.log('[CABINET] Checking address:', address);
+    
+    try {
+        // Get cabinets at this address
+        const { data: cabinets } = await supabaseClient
+            .from('cabinets')
+            .select('id, name, address');
+        
+        if (!cabinets) return [];
+        
+        // Filter by address
+        const addressTrimmed = address.trim().toLowerCase();
+        const matchingCabinets = cabinets.filter(function(c) {
+            if (!c.address) return false;
+            const cabAddr = c.address.toLowerCase();
+            return cabAddr.includes(addressTrimmed) || addressTrimmed.includes(cabAddr);
+        });
+        
+        console.log('[CABINET] Matching cabinets:', matchingCabinets);
+        
+        // For each cabinet, get all doctors in that cabinet
+        const doctors = [];
+        
+        for (var i = 0; i < matchingCabinets.length; i++) {
+            var cabinet = matchingCabinets[i];
+            
+            // Get all profiles linked to this cabinet
+            var cabinetMembers = [];
+            
+            // First try to get from profiles (requires authentication)
+            const { data: profiles } = await supabaseClient
+                .from('profiles')
+                .select('id, first_name, last_name, role')
+                .eq('cabinet_id', cabinet.id);
+            
+            if (profiles && profiles.length > 0) {
+                cabinetMembers = profiles;
+            } else {
+                // Fallback: use cabinet name if no profiles found
+                cabinetMembers = [{ first_name: cabinet.name || 'Cabinet', last_name: '' }];
+            }
+            
+            // Add each member to doctors array
+            cabinetMembers.forEach(function(m) {
+                doctors.push({
+                    id: cabinet.id,
+                    first_name: m.first_name,
+                    last_name: m.last_name,
+                    role: 'medecin_installe'
+                });
+            });
+        }
+        
+        console.log('[CABINET] Found doctors:', doctors);
+        return doctors;
+    } catch (e) {
+        console.error('[CABINET] Exception:', e);
+        return [];
+    }
+}
+
+// Show cabinet selection modal
+function showCabinetModal(address, doctors, registrationData) {
+    console.log('[MODAL] showCabinetModal called', { address: address, doctors: doctors, registrationData: registrationData });
+    
+    var modal = document.getElementById('cabinet-select-modal');
+    var optionsContainer = document.getElementById('cabinet-options');
+    
+    if (!modal || !optionsContainer) {
+        // Modal doesn't exist, create it dynamically
+        createCabinetModal();
+        modal = document.getElementById('cabinet-select-modal');
+        optionsContainer = document.getElementById('cabinet-options');
+    }
+    
+    // Store registration data for later use
+    window.pendingRegistrationData = registrationData;
+    window.pendingCabinetAddress = address;
+    console.log('[MODAL] Data stored:', window.pendingRegistrationData);
+    
+    // Group doctors by cabinet (they may have same address but different cabinets)
+    var cabinetsMap = {};
+    doctors.forEach(function(d) {
+        var key = d.id;
+        if (!cabinetsMap[key]) {
+            cabinetsMap[key] = { doctors: [], name: d.first_name + ' ' + d.last_name };
+        }
+        cabinetsMap[key].doctors.push(d);
+    });
+    
+    // Build HTML for all cabinets
+    var optionsHTML = '';
+    Object.values(cabinetsMap).forEach(function(cab) {
+        var doctorNames = cab.doctors.map(function(d) { return d.first_name + ' ' + d.last_name; }).join(', ');
+        optionsHTML += 
+            '<button type="button" class="cabinet-option" onclick="joinExistingCabinet(\'' + cab.doctors[0].id + '\')" style="width:100%;text-align:left;background:none;border:2px solid var(--color-border);border-radius:10px;padding:14px;cursor:pointer;margin-bottom:8px;">' +
+                '<div class="cabinet-name">Cabinet des Drs ' + doctorNames + '</div>' +
+                '<div class="cabinet-address">' + address + '</div>' +
+            '</button>';
+    });
+    
+    optionsContainer.innerHTML = optionsHTML;
+    
+    modal.style.display = 'flex';
+    
+    // Store registration data for later use
+    window.pendingRegistrationData = registrationData;
+    window.pendingCabinetAddress = address;
+}
+
+function createCabinetModal() {
+    var modalHTML = 
+        '<div id="cabinet-select-modal" class="modal-overlay" style="display: none; z-index: 999999;">' +
+            '<div class="modal-card" style="max-width: 500px;">' +
+                '<div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--color-border);">' +
+                    '<div style="display: flex; align-items: center; gap: 12px;">' +
+                        '<div style="width: 40px; height: 40px; background: var(--color-primary-light); border-radius: 10px; display: flex; align-items: center; justify-content: center;">' +
+                            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2">' +
+                                '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>' +
+                                '<polyline points="9 22 9 12 15 12 15 22"/>' +
+                            '</svg>' +
+                        '</div>' +
+                        '<div>' +
+                            '<h3 style="margin: 0; font-size: 1.1rem;">Cabinet déjà existant</h3>' +
+                            '<p style="margin: 2px 0 0; font-size: 0.8rem; color: var(--color-text-secondary);">Rejoindre un cabinet ou créer le votre</p>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button class="modal-close" onclick="closeModal(\'cabinet-select-modal\')">' +
+                        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="modal-body" style="padding: 20px;">' +
+                    '<p style="text-align: center; margin-bottom: 20px; color: var(--color-text-secondary); font-size: 0.9rem;">' +
+                        'Des médecins sont déjà inscrits à cette adresse. Faites-vous partie de ce cabinet ?' +
+                    '</p>' +
+                    '<div id="cabinet-options" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;"></div>' +
+                    '<button type="button" class="btn-secondary" style="width: 100%; padding: 12px;" onclick="createNewCabinet()">Créer un nouveau cabinet</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+window.joinExistingCabinet = function(cabinetId) {
+    alert('Cabinet cliqué: ' + cabinetId);
+    console.log('[JOIN] joinExistingCabinet called, cabinetId:', cabinetId);
+    var data = window.pendingRegistrationData;
+    var address = window.pendingCabinetAddress;
+    console.log('[JOIN] pendingRegistrationData:', data);
+    console.log('[JOIN] pendingCabinetAddress:', address);
+    
+    if (!data) {
+        alert('Erreur: données d\'inscription perdues. Veuillez recommencer.');
+        return;
+    }
+    
+    if (data) {
+        closeModal('cabinet-select-modal');
+        doSignUp(data.email, data.password, data.firstName, data.lastName, data.role, data.replaceMedecinId, address, cabinetId);
+    }
+    
+    window.pendingRegistrationData = null;
+    window.pendingCabinetAddress = null;
+};
+
+window.createNewCabinet = function() {
+    var data = window.pendingRegistrationData;
+    var address = window.pendingCabinetAddress;
+    
+    if (data) {
+        closeModal('cabinet-select-modal');
+        doSignUp(data.email, data.password, data.firstName, data.lastName, data.role, data.replaceMedecinId, address, null);
+    }
+    
+    window.pendingRegistrationData = null;
+    window.pendingCabinetAddress = null;
+};
+
+// Call immediately on script load
+initCotationVisibility();
 
 // Exposer les fonctions pour les onclick HTML
 window.doLogin = doLogin;
@@ -3092,11 +3470,19 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
     });
 });
 
+// Cotation toggle handler - wrapper to handle the checkbox change
+window.handleCotationToggle = function(checkbox) {
+    console.log('[COTATION] handleCotationToggle called, checked:', checkbox.checked);
+    window.toggleCotationEnabled(checkbox.checked);
+};
+
 // Cotation enabled toggle - using global function
 window.toggleCotationEnabled = async function(enabled) {
     console.log('[COTATION] Toggle called, enabled:', enabled);
+    console.log('[COTATION] currentUser at toggle:', currentUser ? currentUser.id : 'null');
     await saveCotationSetting(enabled);
     applyCotationVisibility();
+    updateToggleButton();
 };
 
 // Load saved theme
@@ -3280,49 +3666,10 @@ function switchView(viewName) {
                             const logoutBtn = overlay.querySelector('.mobile-logout-btn');
                             if (logoutBtn) logoutBtn.style.display = 'none';
                             
-                            // Add back button - ONLY for sub-pages (not preferences)
-                            let backBtn = overlay.querySelector('.overlay-back-btn');
-                            if (pageName !== 'preferences') {
-                                if (!backBtn) {
-                                    backBtn = document.createElement('button');
-                                    backBtn.className = 'overlay-back-btn';
-                                    overlay.insertBefore(backBtn, overlay.firstChild);
-                                }
-                                backBtn.innerHTML = `<span class="back-arrow">← Retour</span>`;
-                                backBtn.onclick = () => {
-                                    // Show menu, hide all pages
-                                    const menu = overlay.querySelector('.settings-menu');
-                                    if (menu) menu.style.display = 'flex';
-                                    overlay.querySelectorAll('.settings-page').forEach(p => {
-                                        p.style.display = 'none';
-                                        p.classList.remove('active');
-                                    });
-                                    // Remove back button
-                                    const btn = overlay.querySelector('.overlay-back-btn');
-                                    if (btn) btn.remove();
-                                    // Show logout button again
-                                    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-                                    if (logoutBtn) logoutBtn.style.display = 'flex';
-                                    // Show and reset h2 title
-                                    const h2 = overlay.querySelector('h2');
-                                    if (h2) {
-                                        h2.style.display = 'block';
-                                        h2.textContent = 'Paramètres';
-                                    }
-                                };
-                            } else {
-                                // On preferences page, remove back button if exists
-                                if (backBtn) {
-                                    backBtn.remove();
-                                    backBtn = null;
-                                }
-                            }
-                            
-                            // Show and update h2 title in overlay
+                            // Show sub-page header with back link above title
                             const h2 = overlay.querySelector('h2');
                             if (h2) {
-                                h2.style.display = 'block';
-                                h2.textContent = displayName;
+                                h2.innerHTML = `<span class="back-link" onclick="const o=this.closest('.settings-page-overlay');o.querySelectorAll('.settings-page').forEach(p=>{p.style.display='none';p.classList.remove('active')});const m=o.querySelector('.settings-menu');if(m)m.style.display='flex';o.querySelector('h2').innerHTML='Paramètres';const lb=o.querySelector('.mobile-logout-btn');if(lb)lb.style.display='flex'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span><span class="page-title">${displayName}</span>`;
                             }
                         }
                     });
@@ -3346,6 +3693,10 @@ function switchView(viewName) {
                         doSignOut();
                     });
                 }
+                
+                // Hide back button by default (shown only on sub-pages)
+                const defaultBackBtn = overlay.querySelector('.overlay-back-btn');
+                if (defaultBackBtn) defaultBackBtn.style.display = 'none';
             }
             overlay.classList.add('active');
         }
@@ -3384,8 +3735,19 @@ async function loadCabinetData() {
     // Only proceed if supabaseClient is initialized
     if (currentUser && supabaseClient) {
         console.log('Loading cabinet data for user:', currentUser.id);
-        await loadDepenses();
-        await loadRecettes();
+        
+        // Get user's cabinet_id from profile
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('cabinet_id')
+            .eq('id', currentUser.id)
+            .single();
+        
+        const userCabinetId = profile?.cabinet_id;
+        console.log('[LOAD] User cabinet_id:', userCabinetId);
+        
+        await loadDepenses(userCabinetId);
+        await loadRecettes(userCabinetId);
         console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
         renderAddDepensesRecettes();
@@ -3394,48 +3756,101 @@ async function loadCabinetData() {
     }
 }
 
-async function loadDepenses() {
+async function loadDepenses(userCabinetId) {
     console.log('[COMPTAB] loadDepenses called, user:', currentUser?.id);
     try {
         console.log('Loading depenses for user:', currentUser?.id);
-        const { data, error } = await supabaseClient
+        
+        // Get user's cabinet_id to share data with other doctors in same cabinet
+        let depenses = [];
+        
+        // Load own depenses
+        const { data: ownDepenses, error: ownError } = await supabaseClient
             .from('cabinet_depenses')
             .select('*')
             .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
-        console.log('[COMPTAB] Depenses loaded:', data?.length || 0, error);
-        if (error) {
-            console.error('[COMPTAB] Depenses error:', error);
+        if (ownDepenses) depenses = [...ownDepenses];
+        
+        // If user has a cabinet, also load depenses from other doctors in same cabinet
+        if (userCabinetId) {
+            // Get other users in the same cabinet
+            const { data: cabinetMembers } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('cabinet_id', userCabinetId)
+                .neq('id', currentUser.id);
+            
+            if (cabinetMembers && cabinetMembers.length > 0) {
+                const memberIds = cabinetMembers.map(m => m.id);
+                
+                const { data: sharedDepenses } = await supabaseClient
+                    .from('cabinet_depenses')
+                    .select('*')
+                    .in('user_id', memberIds)
+                    .order('date', { ascending: false });
+                
+                if (sharedDepenses) {
+                    // Mark shared depenses with a flag
+                    const markedShared = sharedDepenses.map(d => ({...d, is_shared: true}));
+                    depenses = [...depenses, ...markedShared];
+                }
+            }
         }
-        if (data) {
-            cabinetDepenses = data;
-            renderDepenses();
-            updateSousCategoriesDepense();
-        }
+        
+        console.log('[COMPTAB] Total depenses loaded:', depenses.length);
+        cabinetDepenses = depenses;
+        renderDepenses();
+        updateSousCategoriesDepense();
     } catch (error) {
         console.error('Erreur loadDepenses:', error);
     }
 }
 
-async function loadRecettes() {
+async function loadRecettes(userCabinetId) {
     console.log('[COMPTAB] loadRecettes called, user:', currentUser?.id);
     try {
         console.log('Loading recettes for user:', currentUser?.id);
-        const { data, error } = await supabaseClient
+        
+        let recettes = [];
+        
+        // Load own recettes
+        const { data: ownRecettes, error: ownError } = await supabaseClient
             .from('cabinet_recettes')
             .select('*')
             .eq('user_id', currentUser.id)
             .order('date', { ascending: false });
         
-        console.log('[COMPTAB] Recettes loaded:', data?.length || 0, error);
-        if (error) {
-            console.error('[COMPTAB] Recettes error:', error);
+        if (ownRecettes) recettes = [...ownRecettes];
+        
+        // If user has a cabinet, also load recettes from other doctors in same cabinet
+        if (userCabinetId) {
+            const { data: cabinetMembers } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('cabinet_id', userCabinetId)
+                .neq('id', currentUser.id);
+            
+            if (cabinetMembers && cabinetMembers.length > 0) {
+                const memberIds = cabinetMembers.map(m => m.id);
+                
+                const { data: sharedRecettes } = await supabaseClient
+                    .from('cabinet_recettes')
+                    .select('*')
+                    .in('user_id', memberIds)
+                    .order('date', { ascending: false });
+                
+                if (sharedRecettes) {
+                    const markedShared = sharedRecettes.map(r => ({...r, is_shared: true}));
+                    recettes = [...recettes, ...markedShared];
+                }
+            }
         }
-        if (data) {
-            cabinetRecettes = data;
-            renderRecettes();
-        }
+        
+        console.log('[COMPTAB] Total recettes loaded:', recettes.length);
+        cabinetRecettes = recettes;
+        renderRecettes();
     } catch (error) {
         console.error('Erreur loadRecettes:', error);
     }
@@ -7211,6 +7626,3 @@ async function initRemplacements() {
     await loadContrats();
     await loadOffres();
 }
-
-// Call immediately on script load
-initCotationVisibility();
