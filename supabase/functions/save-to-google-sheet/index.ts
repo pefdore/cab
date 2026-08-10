@@ -41,6 +41,8 @@ Deno.serve(async (req) => {
     const passageId = body.passageId
 
     if (body.action === 'delete' && passage) {
+      console.log('Delete action received, passage:', JSON.stringify(passage))
+      
       const auth = new google.auth.JWT(
         SERVICE_ACCOUNT.client_email,
         undefined,
@@ -76,6 +78,7 @@ Deno.serve(async (req) => {
       
       const searchDate = formatDateFrench(passage.date)
       console.log('Searching for delete:', { searchDate, patient: passage.patientName, location: passage.location })
+      console.log('Total rows to check:', existingValues.length)
       
       for (let i = 0; i < existingValues.length; i++) {
         const row = existingValues[i]
@@ -110,7 +113,7 @@ Deno.serve(async (req) => {
         }
       }
       
-      return new Response(JSON.stringify({ error: 'Row not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ error: 'Row not found', debug: { searchDate, patient: passage.patientName, location: passage.location, rowsFound: existingValues.length } }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     if (!passage) {
