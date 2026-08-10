@@ -1813,6 +1813,15 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
         
         if (error) throw error;
         
+        // Save to Google Sheets if configured
+        await savePassageToGoogleSheets({
+            date: visitDate,
+            patientName: patientName,
+            location: visitLocation,
+            cotation: cotation,
+            amount: parseFloat(amount)
+        });
+        
         closePassageModal();
         loadData();
         loadData();
@@ -2288,6 +2297,51 @@ async function handleSubmit(e) {
     renderCharts();
     
     alert('Passage enregistré!');
+    
+    // Save to Google Sheets if configured
+    await savePassageToGoogleSheets({
+        date: date,
+        patientName: patientName,
+        location: location,
+        cotation: cotation,
+        amount: parseFloat(amount)
+    });
+}
+
+async function savePassageToGoogleSheets(passage) {
+    console.log('[GSheets] savePassageToGoogleSheets called with:', passage);
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const googleSettings = settings.googleSheets || {};
+    
+    const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
+    
+    console.log('[GSheets] Using spreadsheetId:', spreadsheetId);
+    
+    if (!spreadsheetId) {
+        console.log('[GSheets] No spreadsheet ID configured, skipping');
+        return;
+    }
+    
+    try {
+        console.log('[GSheets] Saving passage to Google Sheets...');
+        
+        const { data, error } = await supabaseClient.functions.invoke('save-to-google-sheet', {
+            body: {
+                passage: passage,
+                spreadsheetId: spreadsheetId
+            }
+        });
+        
+        if (error) {
+            console.error('[GSheets] Error:', error);
+            return;
+        }
+        
+        console.log('[GSheets] Success:', data);
+    } catch (err) {
+        console.error('[GSheets] Exception:', err);
+    }
 }
 
 function handleLocationChange() {
@@ -3201,6 +3255,8 @@ async function openSettingsPage(pageName) {
     } else if (pageName === 'preferences') {
         loadTheme();
         await loadOpenRouterKey();
+    } else if (pageName === 'googlesheets') {
+        loadGoogleSheetsSettings();
     }
 }
 
@@ -3312,6 +3368,75 @@ window.loadOpenRouterKey = async function() {
         }
     } catch (e) {
         console.log('[LLM] loadOpenRouterKey error:', e);
+    }
+};
+
+// Google Sheets functions
+window.saveGoogleSheetsSettings = async function() {
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    settings.googleSheets = {
+        spreadsheetId: '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U'
+    };
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    
+    const overlay = document.querySelector('.settings-page-overlay');
+    const status = overlay ? overlay.querySelector('#googleSheetsStatus') : document.getElementById('googleSheetsStatus');
+    
+    if (status) {
+        status.textContent = 'Paramètres enregistrés!';
+    }
+    setTimeout(() => {
+        if (status) status.textContent = '';
+    }, 3000);
+};
+
+window.loadGoogleSheetsSettings = function() {
+    // Spreadsheet is pre-configured, no need to load anything
+    console.log('[GSheets] Using default spreadsheet ID');
+};
+
+window.testGoogleSheetsConnection = async function() {
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const googleSettings = settings.googleSheets || {};
+    
+    const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
+    
+    const overlay = document.querySelector('.settings-page-overlay');
+    const status = overlay ? overlay.querySelector('#googleSheetsTestStatus') : document.getElementById('googleSheetsTestStatus');
+    
+    if (status) {
+        status.textContent = 'Test en cours...';
+        status.style.color = 'var(--color-text-secondary)';
+    }
+    
+    try {
+        const { data, error } = await supabaseClient.functions.invoke('save-to-google-sheet', {
+            body: {
+                passage: {
+                    date: new Date().toISOString().split('T')[0],
+                    patientName: 'Test',
+                    location: 'Test',
+                    cotation: 'G',
+                    amount: 30
+                },
+                spreadsheetId: spreadsheetId
+            }
+        });
+        
+        if (error) {
+            throw error;
+        }
+        
+        if (status) {
+            status.textContent = 'Connexion réussie! Feuille: ' + data.sheet + ', Ligne: ' + data.row;
+            status.style.color = 'var(--color-success)';
+        }
+    } catch (err) {
+        console.error('[GSheets] Test error:', err);
+        if (status) {
+            status.textContent = 'Erreur: ' + (err.message || err);
+            status.style.color = 'var(--color-error)';
+        }
     }
 };
 
