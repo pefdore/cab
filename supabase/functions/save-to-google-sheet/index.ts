@@ -75,21 +75,27 @@ Deno.serve(async (req) => {
       const existingValues = getResult.data.values || []
       
       const searchDate = formatDateFrench(passage.date)
-      console.log('Searching for:', { searchDate, patient: passage.patientName, location: passage.location, cotation: passage.cotation })
+      console.log('Searching for delete:', { searchDate, patient: passage.patientName, location: passage.location })
       
       for (let i = 0; i < existingValues.length; i++) {
         const row = existingValues[i]
-        const rowDate = row[0] ? row[0].toString().trim() : ''
+        let rowDate = row[0] ? row[0].toString().trim() : ''
+        
+        // Handle date stored as Date object in Google Sheets
+        if (row[0] instanceof Date) {
+          const d = row[0]
+          rowDate = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear()
+        }
+        
         const rowPatient = row[2] ? row[2].toString().trim() : ''
         const rowLocation = row[3] ? row[3].toString().trim() : ''
-        const rowCotation = row[4] ? row[4].toString().trim() : ''
         
-        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation, rowCotation })
+        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation })
         
+        // Match on date + patient + location (more flexible)
         if (rowDate === searchDate && 
-            rowPatient === passage.patientName && 
-            rowLocation === passage.location && 
-            rowCotation === passage.cotation) {
+            rowPatient.toLowerCase() === passage.patientName.toLowerCase() && 
+            rowLocation.toLowerCase() === passage.location.toLowerCase()) {
           
           const rowNum = i + 3
           console.log('Found matching row:', rowNum)
@@ -103,8 +109,6 @@ Deno.serve(async (req) => {
           })
         }
       }
-      
-      console.log('Row not found, returning error')
       
       return new Response(JSON.stringify({ error: 'Row not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
