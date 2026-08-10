@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     const passage = body.passage
     const passageId = body.passageId
 
-    if (body.action === 'delete' && passageId) {
+    if (body.action === 'delete' && passage) {
       const auth = new google.auth.JWT(
         SERVICE_ACCOUNT.client_email,
         undefined,
@@ -74,19 +74,25 @@ Deno.serve(async (req) => {
       
       const existingValues = getResult.data.values || []
       
+      const searchDate = formatDateFrench(passage.date)
+      console.log('Searching for:', { searchDate, patient: passage.patientName, location: passage.location, cotation: passage.cotation })
+      
       for (let i = 0; i < existingValues.length; i++) {
         const row = existingValues[i]
-        const rowDate = row[0] ? row[0].toString() : ''
-        const rowPatient = row[2] ? row[2].toString() : ''
-        const rowLocation = row[3] ? row[3].toString() : ''
-        const rowCotation = row[4] ? row[4].toString() : ''
+        const rowDate = row[0] ? row[0].toString().trim() : ''
+        const rowPatient = row[2] ? row[2].toString().trim() : ''
+        const rowLocation = row[3] ? row[3].toString().trim() : ''
+        const rowCotation = row[4] ? row[4].toString().trim() : ''
         
-        if (rowDate === formatDateFrench(passage.date) && 
+        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation, rowCotation })
+        
+        if (rowDate === searchDate && 
             rowPatient === passage.patientName && 
             rowLocation === passage.location && 
             rowCotation === passage.cotation) {
           
           const rowNum = i + 3
+          console.log('Found matching row:', rowNum)
           await sheets.spreadsheets.values.clear({
             spreadsheetId,
             range: `${sheetTitle}!A${rowNum}:E${rowNum}`
@@ -97,6 +103,8 @@ Deno.serve(async (req) => {
           })
         }
       }
+      
+      console.log('Row not found, returning error')
       
       return new Response(JSON.stringify({ error: 'Row not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
