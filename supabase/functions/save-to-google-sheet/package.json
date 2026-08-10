@@ -1,0 +1,9 @@
+{
+  "name": "save-to-google-sheet",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "googleapis": "^131.0.0"
+  }
+}

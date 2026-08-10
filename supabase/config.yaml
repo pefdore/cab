@@ -1,5 +1,8 @@
 {
   "functions": {
+    "save-to-google-sheet": {
+      "timeout_seconds": 60
+    },
     "generate-monthly-pdf": {
       "timeout_seconds": 300
     },
