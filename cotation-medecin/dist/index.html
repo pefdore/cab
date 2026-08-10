@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#5B4BFF">
+    <meta name="description" content="Cotation Médecin - Gestion des passages et honoraires">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Cotation">
+    <link rel="manifest" href="/assets/manifest-BGmaG6wq.json">
+    <link rel="icon" type="image/svg+xml" href="/assets/icon-192-mySIpaht.svg">
+    <link rel="apple-touch-icon" href="/assets/icon-192-mySIpaht.svg">
+    <title>Cotation Médecin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" crossorigin href="/assets/main-DjJukFz8.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <span class="login-icon">🏥</span>
+                <h1>Cotation CH La Guerche</h1>
+                <p>Gestion des facturations EHPAD</p>
+            </div>
+            
+<form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" placeholder="votre@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="button" class="btn-primary" id="loginBtn">Se connecter</button>
+                <p style="text-align:center;margin-top:15px;">
+                    Pas de compte? <a href="#" onclick="toggleForm('register')">S'inscrire</a>
+                </p>
+            </form>
+
+<script>
+function toggleForm(form) {
+    if (form === 'register') {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('login-toggle').style.display = 'none';
+        document.getElementById('register-form').style.display = 'flex';
+    } else if (form === 'login') {
+        document.getElementById('login-form').style.display = 'flex';
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-toggle').style.display = 'block';
+    }
+}
+
+function attemptLogin() {
+    console.log('[MOBILE] Login button clicked');
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    console.log('[MOBILE] Email:', email);
+    console.log('[MOBILE] Password length:', password ? password.length : 0);
+    if (window.doLogin) {
+        window.doLogin(email, password);
+    } else if (typeof doLogin === 'function') {
+        doLogin(email, password);
+    }
+}
+window.handleLoginClick = attemptLogin;
+document.getElementById('loginBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    attemptLogin();
+});
+document.getElementById('login-password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        attemptLogin();
+    }
+});
+document.getElementById('login-email').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('login-password').focus();
+    }
+});
+</script>
+            <form id="register-form" class="login-form" style="display:none;">
+                <div class="form-row-auth">
+                    <div class="form-group">
+                        <label for="register-lastname">Nom</label>
+                        <input type="text" id="register-lastname" required placeholder="Votre nom">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-firstname">Prénom</label>
+                        <input type="text" id="register-firstname" required placeholder="Votre prénom">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="register-role">Fonction</label>
+                    <select id="register-role" required onchange="toggleRemplacantField()">
+                        <option value="">Sélectionner...</option>
+                        <option value="medecin_installe">Médecin installé</option>
+                        <option value="medecin_remplacant">Médecin remplaçant</option>
+                        <option value="secretaire">Secrétaire</option>
+                    </select>
+                </div>
+                <div class="form-group" id="remplace-medecin-group" style="display:none;">
+                    <label for="register-remplace">Médecin remplacé</label>
+                    <select id="register-remplace">
+                        <option value="">Sélectionner...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" required placeholder="votre@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Mot de passe</label>
+                    <input type="password" id="register-password" required placeholder="••••••••" minlength="6">
+                </div>
+                <button type="submit" class="btn-primary">Créer mon compte</button>
+                <button type="button" id="show-login" class="btn-link">Déjà un compte? Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div id="app-container" class="app" style="display:none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>
+                    <span class="logo-icon">🩺</span>
+                    Cotation
+                </h1>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item" data-view="add">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+                        <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                    Ajouter
+                </a>
+                <a href="#" class="nav-item" data-view="history">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                    </svg>
+                    Documents
+                </a>
+                <a href="#" class="nav-item" data-view="cabinet">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Cabinet
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    Paramètres
+                </a>
+            </nav>
+            <div class="user-section">
+                <button id="logoutBtn" class="logout-btn" title="Déconnexion">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Mobile Top Bar -->
+            <div class="mobile-top-bar" style="display: none;">
+                <button class="mobile-back-btn" id="mobileBackBtn" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <span class="mobile-page-title" id="mobilePageTitle">Dashboard</span>
+            </div>
+
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view active">
+                <!-- Mode Switcher -->
+                <div class="dashboard-switcher">
+                    <button class="switch-btn active" data-mode="cotation" onclick="switchDashboardMode('cotation')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                        </svg>
+                        Cotation
+                    </button>
+                    <button class="switch-btn" data-mode="cabinet" onclick="switchDashboardMode('cabinet')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        Cabinet
+                    </button>
+                </div>
+                
+                <!-- Cotation Dashboard -->
+                <div id="cotation-dashboard" style="display:none;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalPatients">0</span>
+                                <span class="stat-comparison" id="patientsComparison"></span>
+                            </div>
+                            <span class="stat-label">Patients ce mois</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalAmount">0€</span>
+                                <span class="stat-comparison" id="amountComparison"></span>
+                            </div>
+                            <span class="stat-label">Revenus du mois</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-header">
+                                <span class="stat-value" id="totalVisits">0</span>
+                                <span class="stat-comparison" id="visitsComparison"></span>
+                            </div>
+                            <span class="stat-label">Visites ce mois</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-header">
+                                <span class="stat-value" id="avgPerDay">0€</span>
+                                <span class="stat-comparison" id="avgComparison"></span>
+                            </div>
+                            <span class="stat-label">Moyenne/jour</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-grid extra-stats" id="extraStats"></div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Revenus mensuels</h3>
+                        <div class="chart-legend" id="monthlyChartLegend"></div>
+                        <div class="chart" id="monthlyChart">
+                            <div class="chart-bars" id="monthlyChartBars"></div>
+                            <div class="chart-labels" id="monthlyChartLabels"></div>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Répartition par lieu</h3>
+                        <div class="donut-wrapper" id="locationChart">
+                            <div class="donut-chart" id="donutChart"></div>
+                            <div class="legend" id="donutLegend"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-section">
+                    <h3>Passages récents</h3>
+                    <div class="recent-list" id="recentList"></div>
+                </div>
+                </div>
+
+                <!-- Cabinet Dashboard -->
+                <div id="cabinet-dashboard" style="display:none;">
+                    <div class="compta-summary">
+                        <div class="compta-card income">
+                            <span class="compta-label">Recettes année
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Somme des apports des associés (virements reçus) enregistrés depuis le début de l'utilisation de l'application.</span></span>
+                            </span>
+                            <span class="compta-value" id="dash-cab-recettes">0€</span>
+                            <span class="compta-trend" id="recettesTrend"></span>
+                        </div>
+                        <div class="compta-card expense">
+                            <span class="compta-label">Dépenses année
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Somme de toutes les dépenses du cabinet (loyer, charges sociales, fournitures, logiciels...) classées par catégorie.</span></span>
+                            </span>
+                            <span class="compta-value" id="dash-cab-depenses">0€</span>
+                            <span class="compta-trend" id="depensesTrend"></span>
+                        </div>
+                        <div class="compta-card balance">
+                            <span class="compta-label">Balance année
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Différence entre les recettes et les dépenses. Positif = excédent (bénéfice), Négatif = déficit.</span></span>
+                            </span>
+                            <span class="compta-value" id="dash-cab-balance">0€</span>
+                            <span class="compta-trend" id="balanceTrend"></span>
+                        </div>
+                    </div>
+
+                    <div class="cabinet-stats-row">
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon green">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Recettes ce mois
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Total des recettes du mois en cours (honoraires, télétransmission, actes outside PA).</span></span>
+                                </span>
+                                <span class="cabinet-stat-value" id="recettesThisMonth">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon red">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Dépenses ce mois
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Total des dépenses du mois en cours, toutes catégories confondues.</span></span>
+                                </span>
+                                <span class="cabinet-stat-value" id="depensesThisMonth">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon purple">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Taux de marge
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Pourcentage de laSCM = (Apports - Charges) / Apports × 100. Permet de voir la part des apports restante après payment des charges.</span></span>
+                                </span>
+                                <span class="cabinet-stat-value" id="tauxMarge">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="cabinet-stats-row">
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">vs Année -1
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Évolution de la balance par rapport à la même période de l'année précédente (N-1).</span></span>
+                                </span>
+                                <span class="cabinet-stat-value" id="vsAnneePrecedente">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon teal">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Réserve trésorerie
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Nombre de mois de fonctionnement couverts par la balance actuelle. Objectif: 3-6 mois de réserve.</span></span>
+                                </span>
+                                <span class="cabinet-stat-value" id="reserveTresorerie">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon orange">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Moy. mensuelle
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Moyenne mensuelle des charges sur l'année en cours. Permet de mieux anticiper les besoins de trésorerie.</span></span>
+                                </span>
+                                <span class="cabinet-stat-value" id="avgMonthlyDepenses">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon yellow">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Postes clés
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">La catégorie de dépenses la plus importante en valeur absolue (premier poste de charge).</span></span>
+                                </span>
+                                <span class="cabinet-stat-value" id="topPostes">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon pink">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Alertes
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Nombre d'alertes: postes représentant >40% des dépenses, balance négative, trésorerie critique.</span></span>
+                                </span>
+                                <span class="cabinet-stat-value" id="alertesCount">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Évolution mensuelle (12 derniers mois)
+                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="tooltip-text">Graphique en barres显示过去12个月的收入和支出。点击任意月份可查看该月的详细金额。</span></span>
+                        </h3>
+                        <div class="chart-legend">
+                            <span class="legend-item"><span class="legend-dot expense"></span>Dépenses</span>
+                            <span class="legend-item"><span class="legend-dot income"></span>Recettes</span>
+                        </div>
+                        <div class="bar-chart" id="evolutionChart"></div>
+                    </div>
+                    
+                    <div class="charts-row">
+                        <div class="chart-card small">
+                            <h3>Répartition dépenses
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Répartition des dépenses par catégorie sous forme de graphique en anneau. Cliquez sur une section pour voir le détail.</span></span>
+                            </h3>
+                            <div class="donut-chart" id="depensesPieChart"></div>
+                            <div class="donut-legend" id="depensesPieLegend"></div>
+                        </div>
+                        
+                        <div class="chart-card small">
+                            <h3>Top catégories
+                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span class="tooltip-text">Les 5 premières catégories de dépenses triées par montant total, avec le pourcentage par rapport au total.</span></span>
+                            </h3>
+                            <div id="topCategories"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-section">
+                        <h3>5 dernières dépenses
+                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="tooltip-text">Liste des 5 dernières dépenses enregistrées, triées par date (la plus récente en haut). Cliquez pour voir le détail.</span></span>
+                        </h3>
+                        <div id="dashRecentDepenses" class="recent-list"></div>
+                    </div>
+                    <div class="recent-section">
+                        <h3>5 dernières recettes
+                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="tooltip-text">Liste des 5 dernières recettes enregistrées, triées par date (la plus récente en haut). Cliquez pour voir le détail.</span></span>
+                        </h3>
+                        <div id="dashRecentRecettes" class="recent-list"></div>
+                    </div>
+                    
+                    <!-- Analyse financiere -->
+                    <div class="llm-analysis-section">
+                        <h3>Analyse financiere
+                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span class="tooltip-text">Analyse automatique basée sur vos données financières. Cliquez sur le bouton de rafraîchissement pour mettre à jour.</span></span>
+                        </h3>
+                        <div class="llm-cards-grid">
+                            <div class="llm-card" id="llm-optimisation">
+                                <div class="llm-card-header">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span>Optimisation</span>
+                                </div>
+                                <div class="llm-card-content" id="llm-optimisation-content">
+                                    <p class="llm-loading">Analyse en cours...</p>
+                                </div>
+                                <button class="llm-refresh-btn" onclick="refreshLLMAnalysis('optimisation')" title="Actualiser">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                </button>
+                            </div>
+                            <div class="llm-card" id="llm-benchmark">
+                                <div class="llm-card-header">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                                    <span>Benchmark</span>
+                                </div>
+                                <div class="llm-card-content" id="llm-benchmark-content">
+                                    <p class="llm-loading">Analyse en cours...</p>
+                                </div>
+                                <button class="llm-refresh-btn" onclick="refreshLLMAnalysis('benchmark')" title="Actualiser">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                </button>
+                            </div>
+                            <div class="llm-card" id="llm-previsions">
+                                <div class="llm-card-header">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                    <span>Tendances</span>
+                                </div>
+                                <div class="llm-card-content" id="llm-previsions-content">
+                                    <p class="llm-loading">Analyse en cours...</p>
+                                </div>
+                                <button class="llm-refresh-btn" onclick="refreshLLMAnalysis('previsions')" title="Actualiser">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                </button>
+                            </div>
+                            <div class="llm-card" id="llm-recommandations">
+                                <div class="llm-card-header">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                    <span>Recommandations</span>
+                                </div>
+                                <div class="llm-card-content" id="llm-recommandations-content">
+                                    <p class="llm-loading">Analyse en cours...</p>
+                                </div>
+                                <button class="llm-refresh-btn" onclick="refreshLLMAnalysis('recommandations')" title="Actualiser">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add View -->
+            <section id="view-add" class="view">
+                <h2>Ajouter un passage</h2>
+                <form id="entryForm" class="add-form">
+                    <div class="form-group">
+                        <label>Patient</label>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" id="patientName" required placeholder="NOM Prénom">
+                            <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="visitDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Lieu</label>
+                            <select id="visitLocation" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="Médecine">Médecine</option>
+                                <option value="SSR">SSR</option>
+                                <option value="Lilias RdC">Lilias RdC</option>
+                                <option value="Lilas 1er étage">Lilas 1er étage</option>
+                                <option value="Tamaris">Tamaris</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cotation</label>
+                            <select id="cotation" required>
+                                <option value="">Sélectionner...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="customCotation" style="display: none;">
+                            <label>Nouvelle cotation</label>
+                            <input type="text" id="customCotationKey" placeholder="Clé (ex: VG+MD)">
+                            <input type="number" id="customCotationAmount" placeholder="Montant" step="0.01">
+                            <button type="button" id="saveCustomCotation" class="add-btn">Ajouter</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Montant</label>
+                            <div class="amount-display" id="amountDisplay">0€</div>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Enregistrer
+                    </button>
+                </form>
+
+                <!-- Recent VL Section -->
+                <div class="recent-vl-section" style="margin-top: 24px;">
+                    <div class="recent-vl-header">
+                        <h3>Dernières cotations VL</h3>
+                        <button class="info-btn" onclick="showVLRulesPopup()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="16" x2="12" y2="12"/>
+                                <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p style="font-size: 0.8125rem; color: var(--color-text-secondary); margin-bottom: 12px;">
+                        Ces patients ont eu une VL récemment.
+                    </p>
+                    <div id="recentVLList" class="recent-vl-list"></div>
+                </div>
+
+                <!-- VL Rules Popup -->
+                <div id="vl-rules-popup" class="popup-overlay" style="display: none;">
+                    <div class="popup-card">
+                        <div class="popup-header">
+                            <h3>Règles de cotation VL</h3>
+                            <button class="popup-close" onclick="closeVLRulesPopup()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="popup-body">
+                            <div class="rule-item">
+                                <span class="rule-icon">💰</span>
+                                <div class="rule-content">
+                                    <strong>VL</strong> = 60€ | <strong>VL+MD</strong> = 70€
+                                </div>
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-icon">👴</span>
+                                <div class="rule-content">
+                                    <strong>Bénéficiaires</strong> : Patients ALD 80+ ou pathologies neurodégénératives
+                                </div>
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-icon">📅</span>
+                                <div class="rule-content">
+                                    <strong>Fréquence</strong> : 4 fois/an (1x par trimestre civil)
+                                </div>
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-icon">🏥</span>
+                                <div class="rule-content">
+                                    <strong>Première visite</strong> : Code IMT (une seule fois)
+                                </div>
+                            </div>
+                            <div class="rule-item">
+                                <span class="rule-icon">🕊️</span>
+                                <div class="rule-content">
+                                    <strong>Soins palliatifs</strong> : Utiliser code <strong>VSP</strong> (pas de limite)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                function showVLRulesPopup() {
+                    document.getElementById('vl-rules-popup').style.display = 'flex';
+                }
+                function closeVLRulesPopup() {
+                    document.getElementById('vl-rules-popup').style.display = 'none';
+                }
+                document.getElementById('vl-rules-popup').addEventListener('click', function(e) {
+                    if (e.target === this) closeVLRulesPopup();
+                });
+                </script>
+
+                <div class="entries-section">
+                    <div class="entries-header">
+                        <h3>Passages du mois</h3>
+                        <div class="month-selector">
+                            <button id="prevMonthAdd">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M15 18l-6-6 6-6"/>
+                                </svg>
+                            </button>
+                            <span id="currentMonthAdd">Avril 2026</span>
+                            <button id="nextMonthAdd">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="entries-table-wrapper">
+                        <table class="entries-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Patient</th>
+                                    <th>Lieu</th>
+                                    <th>Cotation</th>
+                                    <th>Montant</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="entriesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History View -->
+            <section id="view-history" class="view">
+                <div class="section-header">
+                    <h2>Feuilles de comptabilité</h2>
+                    <button id="generatePdfBtn" class="pdf-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                        </svg>
+                        Générer PDF
+                    </button>
+                </div>
+                <div class="history-list" id="historyList"></div>
+                <div id="noHistory" class="no-entries">Aucune feuille générée</div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="view-settings" class="view">
+                <!-- Settings Header -->
+                <div class="settings-header">
+                    <button class="settings-back-btn" id="settingsBackBtn" style="display: none;" onclick="closeSettingsPage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        <span>Retour</span>
+                    </button>
+                    <h2>Paramètres</h2>
+                </div>
+
+                <!-- Settings Menu (main page) -->
+                <div id="settings-menu" class="settings-menu">
+                    <button type="button" class="settings-card" data-settings-page="profil" onclick="openSettingsPage('profil')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Profil</h3>
+                            <p>Informations du compte et mot de passe</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+
+                    <button type="button" class="settings-card" data-settings-page="cotation" onclick="openSettingsPage('cotation')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Cotations</h3>
+                            <p>Gérer les codes de cotation</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+
+                    <button type="button" class="settings-card" data-settings-page="pdf" onclick="openSettingsPage('pdf')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>PDF</h3>
+                            <p>Logo, signature et modèle</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+
+                    <button type="button" class="settings-card" data-settings-page="preferences" onclick="openSettingsPage('preferences')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Préférences</h3>
+                            <p>Thème et notifications</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+
+                    <button type="button" class="settings-card" data-settings-page="donnees" onclick="openSettingsPage('donnees')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Données</h3>
+                            <p>Exporter ou supprimer vos données</p>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Profil Page -->
+                <div id="settings-page-profil" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Informations du compte</h3>
+                        <div class="profile-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nom</label>
+                                    <input type="text" id="profileLastname" placeholder="Votre nom">
+                                </div>
+                                <div class="form-group">
+                                    <label>Prénom</label>
+                                    <input type="text" id="profileFirstname" placeholder="Votre prénom">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="profileEmail" placeholder="votre@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Fonction</label>
+                                <select id="profileRole" disabled>
+                                    <option value="medecin_installe">Médecin installé</option>
+                                    <option value="medecin_remplacant">Médecin remplaçant</option>
+                                    <option value="secretaire">Secrétaire</option>
+                                </select>
+                            </div>
+                            <button id="saveProfileBtn" class="btn-primary">Enregistrer</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Changer le mot de passe</h3>
+                        <div class="password-form">
+                            <div class="form-group">
+                                <label>Mot de passe actuel</label>
+                                <input type="password" id="currentPassword" placeholder="••••••••">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nouveau mot de passe</label>
+                                    <input type="password" id="newPassword" placeholder="••••••••">
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirmer</label>
+                                    <input type="password" id="confirmPassword" placeholder="••••••••">
+                                </div>
+                            </div>
+                            <button id="changePasswordBtn" class="btn-primary">Changer le mot de passe</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cotations Page -->
+                <div id="settings-page-cotation" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Mes cotations</h3>
+                        <div id="settingsCotationList"></div>
+                        <div class="add-cotation-form">
+                            <input type="text" id="newCotationKey" placeholder="Nouvelle clé (ex: VG+MD)">
+                            <input type="number" id="newCotationAmount" placeholder="Montant" step="0.01">
+                            <button id="addNewCotation" class="add-btn">Ajouter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDF Page -->
+                <div id="settings-page-pdf" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Logo du PDF</h3>
+                        <p class="settings-desc">Uploadez le logo de l'établissement (affiché en haut à gauche)</p>
+                        <div class="logo-upload-wrapper">
+                            <div class="logo-preview" id="logoPreview">
+                                <img id="logoImage" src="" alt="Logo" style="display: none;">
+                                <span id="logoPlaceholder">Aucun logo</span>
+                            </div>
+                            <input type="file" id="logoInput" accept="image/*" style="display: none;">
+                            <button id="uploadLogoBtn" class="add-btn">Choisir une image</button>
+                            <button id="removeLogoBtn" class="remove-btn" style="display: none;">Supprimer</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Signature</h3>
+                        <p class="settings-desc">Uploadez votre signature (affichée en bas de page)</p>
+                        <div class="logo-upload-wrapper">
+                            <div class="logo-preview" id="signaturePreview">
+                                <img id="signatureImage" src="" alt="Signature" style="display: none;">
+                                <span id="signaturePlaceholder">Aucune signature</span>
+                            </div>
+                            <input type="file" id="signatureInput" accept="image/*" style="display: none;">
+                            <button id="uploadSignatureBtn" class="add-btn">Choisir une image</button>
+                            <button id="removeSignatureBtn" class="remove-btn" style="display: none;">Supprimer</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Modèle de PDF</h3>
+                        <p class="settings-desc">Modifier le modèle des honoraires</p>
+                        <a href="supabase/functions/generate-monthly-pdf/template.html" target="_blank" class="add-btn" style="display: inline-block; text-decoration: none; text-align: center;">
+                            Ouvrir le modèle HTML
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Préférences Page -->
+                <div id="settings-page-preferences" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Apparence</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Thème</span>
+                                <span class="preference-desc">Choisir entre clair et sombre</span>
+                            </div>
+                            <div class="theme-switcher">
+                                <button class="theme-btn active" data-theme="light">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                                    </svg>
+                                    Clair
+                                </button>
+                                <button class="theme-btn" data-theme="dark">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                    </svg>
+                                    Sombre
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Notifications</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Notifications de rappel</span>
+                                <span class="preference-desc">Recevoir des rappels pour les VL</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="notifVL" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Email mensuel</span>
+                                <span class="preference-desc">Recevoir le résumé par email</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="notifEmail">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Données Page -->
+                <div id="settings-page-donnees" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>Exporter vos données</h3>
+                        <p class="settings-desc">Téléchargez vos données dans le format souhaité</p>
+                        <div class="export-buttons">
+                            <button id="exportCSV" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                CSV
+                            </button>
+                            <button id="exportJSON" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                JSON
+                            </button>
+                            <button id="exportPDF" class="export-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                PDF
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section danger-zone">
+                        <h3>Zone dangereuse</h3>
+                        <p class="settings-desc">Attention, ces actions sont irréversibles</p>
+                        <div class="danger-actions">
+                            <button id="deleteAllData" class="danger-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Supprimer toutes les données
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="mobile-logout-btn" id="mobileLogoutBtn" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Déconnexion
+                </button>
+            </section>
+
+            <!-- Cabinet View -->
+            <section id="view-cabinet" class="view">
+                <h2>Comptabilité Cabinet</h2>
+                
+                <div class="cabinet-tabs">
+                    <button class="cabinet-tab active" data-tab="comptabilite">Résumé</button>
+                    <button class="cabinet-tab" data-tab="depenses">Dépenses</button>
+                    <button class="cabinet-tab" data-tab="recettes">Recettes</button>
+                </div>
+                
+                <!-- Résumé -->
+                <div id="cabinet-comptabilite" class="cabinet-tab-content active">
+                    <div class="compta-summary">
+                        <div class="compta-card income">
+                            <span class="compta-label">Recettes</span>
+                            <span class="compta-value" id="totalRecettes">0€</span>
+                        </div>
+                        <div class="compta-card expense">
+                            <span class="compta-label">Dépenses</span>
+                            <span class="compta-value" id="totalDepenses">0€</span>
+                        </div>
+                        <div class="compta-card balance">
+                            <span class="compta-label">Balance</span>
+                            <span class="compta-value" id="balanceCabinet">0€</span>
+                        </div>
+                    </div>
+                    
+                    <div class="compta-categories">
+                        <h3>Répartition des dépenses</h3>
+                        <div id="depensesParCategorie" class="categories-grid"></div>
+                    </div>
+                    
+                    <div class="compta-mois">
+                        <h3>Évolution mensuelle</h3>
+                        <div class="mois-selector">
+                            <button id="prevMoisCompta">&lt;</button>
+                            <span id="currentMoisCompta">2026</span>
+                            <button id="nextMoisCompta">&gt;</button>
+                        </div>
+                        <div id="evolutionMensuelle" class="evolution-grid"></div>
+                    </div>
+                </div>
+                
+                <!-- Dépenses -->
+                <div id="cabinet-depenses" class="cabinet-tab-content">
+                    <div class="section-header">
+                        <h3>Dépenses</h3>
+                        <button id="addDepenseBtn" class="add-btn" onclick="document.getElementById('depensesForm').style.display = document.getElementById('depensesForm').style.display === 'none' ? 'block' : 'none'">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Ajouter
+                        </button>
+                    </div>
+                    
+                    <div class="depenses-form" id="depensesForm" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Catégorie</label>
+                                <select id="depenseCategory">
+                                    <option value="masse_salariale">Masse salariale</option>
+                                    <option value="urssaf">URSSAF</option>
+                                    <option value="logiciel">Logiciel</option>
+                                    <option value="services">Services</option>
+                                    <option value="charges">Charges (EDF, eau, assurance)</option>
+                                    <option value="consommables">Consommables</option>
+                                    <option value="materiel">Matériel</option>
+                                    <option value="reception">Réception/Représentation</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sous-catégorie</label>
+                                <select id="depenseSousCategorie">
+                                    <option value="">Sélectionner...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Description</label>
+                                <input type="text" id="depenseDescription" placeholder="Description">
+                            </div>
+                            <div class="form-group">
+                                <label>Montant</label>
+                                <input type="number" id="depenseAmount" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="depenseDate">
+                        </div>
+                        <button id="saveDepenseBtn" class="btn-primary">Enregistrer</button>
+                    </div>
+                    
+                    <div class="depenses-list" id="depensesList"></div>
+                </div>
+                
+                <!-- Recettes -->
+                <div id="cabinet-recettes" class="cabinet-tab-content">
+                    <div class="section-header">
+                        <h3>Recettes</h3>
+                        <button id="addRecetteBtn" class="add-btn" onclick="document.getElementById('recettesForm').style.display = document.getElementById('recettesForm').style.display === 'none' ? 'block' : 'none'">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Ajouter
+                        </button>
+                    </div>
+                    
+                    <div class="recettes-form" id="recettesForm" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Catégorie</label>
+                                <select id="recetteCategory">
+                                    <option value="honoraires">Honoraires</option>
+                                    <option value="remboursements">Remboursements</option>
+                                    <option value="autres">Autres recettes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <input type="text" id="recetteDescription" placeholder="Description">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Montant</label>
+                                <input type="number" id="recetteAmount" placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="recetteDate">
+                            </div>
+                        </div>
+                        <button id="saveRecetteBtn" class="btn-primary">Enregistrer</button>
+                    </div>
+                    
+                    <div class="recettes-list" id="recettesList"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Mobile Bottom Navbar -->
+        <nav class="mobile-bottom-nav">
+            <a href="#" class="mobile-nav-item active" data-view="dashboard">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="add">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                <span>Ajouter</span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="history">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                </svg>
+                <span>Docs</span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="cabinet">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                <span>Cabinet</span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="settings">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>Paramètres</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+      // Unregister service worker first
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.unregister();
+          });
+        }).then(() => {
+          console.log('Service workers unregistered');
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+            console.log('Caches cleared');
+          });
+        });
+      }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="llm-api.js" defer></script>
+    <script src="app.v4.js?v=109" defer></script>
+    <script>
+      // DEBUG: Log everything
+      console.log('[DEBUG] Inline script running');
+      
+      // Expose downloadPDF and deletePDF after app.v4.js loads
+      let exposedCount = 0;
+      const exposeFunctions = setInterval(() => {
+        console.log('[DEBUG] Attempt', exposedCount, 'typeof downloadPDF:', typeof downloadPDF);
+        if (typeof downloadPDF === 'function') {
+          window.downloadPDF = downloadPDF;
+          console.log('[HISTORY] downloadPDF exposed to window');
+        }
+        if (typeof deletePDF === 'function') {
+          window.deletePDF = deletePDF;
+          console.log('[HISTORY] deletePDF exposed to window');
+        }
+        exposedCount++;
+        if (exposedCount >= 10) clearInterval(exposeFunctions);
+      }, 100);
+      
+      // Event delegation for download/delete buttons
+      document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-download, .btn-delete');
+        if (!btn) return;
+        
+        console.log('[DEBUG] Button clicked:', btn.className, btn.onclick);
+        
+        // Find the parent history-item to get the ID
+        const item = btn.closest('.history-item, .history-item-compact');
+        if (!item) return;
+        
+        // Get ID from data attribute or button onclick
+        const onclick = btn.getAttribute('onclick') || '';
+        const match = onclick.match(/'(.+)'/);
+        if (!match) return;
+        
+        const id = match[1];
+        
+        if (btn.classList.contains('btn-download')) {
+          console.log('[DEBUG] Calling downloadPDF for id:', id);
+          if (typeof window.downloadPDF === 'function') {
+            window.downloadPDF(id);
+          } else {
+            console.log('[DEBUG] downloadPDF not on window!');
+          }
+        } else if (btn.classList.contains('btn-delete')) {
+          console.log('[DEBUG] Calling deletePDF for id:', id);
+          if (typeof window.deletePDF === 'function') {
+            window.deletePDF(id);
+          }
+        }
+      });
+    </script>
+    <script>
+      // Wait for jsPDF to load and expose it properly
+      function checkJsPDF() {
+        if (window.jspdf && window.jspdf.jsPDF) {
+          window.jsPDF = window.jspdf.jsPDF;
+          console.log('[PDF] jsPDF loaded and exposed');
+        }
+      }
+      
+      // Check immediately
+      checkJsPDF();
+      
+      // Also check when window loads
+      window.addEventListener('load', checkJsPDF);
+      
+      // Poll every 500ms for up to 10 seconds
+      let attempts = 0;
+      const poll = setInterval(() => {
+        checkJsPDF();
+        attempts++;
+        if (attempts >= 20) clearInterval(poll);
+      }, 500);
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "generate-monthly-pdf": {
+      "timeout_seconds": 300
+    },
+    "send-monthly-email": {
+      "timeout_seconds": 300
+    }
+  }
+}
