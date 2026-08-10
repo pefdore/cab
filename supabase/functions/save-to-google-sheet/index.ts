@@ -21,6 +21,14 @@ const SERVICE_ACCOUNT = {
   client_id: '113441876164350645994'
 }
 
+function formatDateFrench(dateStr: string): string {
+  const parts = dateStr.split('-')
+  if (parts.length === 3) {
+    return parts[2] + '/' + parts[1] + '/' + parts[0]
+  }
+  return dateStr
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -30,6 +38,68 @@ Deno.serve(async (req) => {
     const body = await req.json()
     let spreadsheetId = body.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U'
     const passage = body.passage
+    const passageId = body.passageId
+
+    if (body.action === 'delete' && passageId) {
+      const auth = new google.auth.JWT(
+        SERVICE_ACCOUNT.client_email,
+        undefined,
+        SERVICE_ACCOUNT.private_key,
+        ['https://www.googleapis.com/auth/spreadsheets']
+      )
+      const sheets = google.sheets({ version: 'v4', auth })
+      
+      const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId })
+      
+      const dateObj = new Date(passage.date)
+      const monthIndex = dateObj.getMonth()
+      const sheetName = capitalizeFirstLetter(MONTH_NAMES[monthIndex])
+      
+      let sheetTitle = ''
+      for (const sheet of spreadsheet.data.sheets || []) {
+        if (sheet.properties?.title === sheetName) {
+          sheetTitle = sheet.properties.title
+          break
+        }
+      }
+      
+      if (!sheetTitle) {
+        return new Response(JSON.stringify({ error: 'Sheet not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+      
+      const getResult = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${sheetTitle}!A3:E`
+      })
+      
+      const existingValues = getResult.data.values || []
+      
+      for (let i = 0; i < existingValues.length; i++) {
+        const row = existingValues[i]
+        const rowDate = row[0] ? row[0].toString() : ''
+        const rowPatient = row[2] ? row[2].toString() : ''
+        const rowLocation = row[3] ? row[3].toString() : ''
+        const rowCotation = row[4] ? row[4].toString() : ''
+        
+        if (rowDate === formatDateFrench(passage.date) && 
+            rowPatient === passage.patientName && 
+            rowLocation === passage.location && 
+            rowCotation === passage.cotation) {
+          
+          const rowNum = i + 3
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `${sheetTitle}!A${rowNum}:E${rowNum}`
+          })
+          
+          return new Response(JSON.stringify({ success: true, deletedRow: rowNum }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+      }
+      
+      return new Response(JSON.stringify({ error: 'Row not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
     if (!passage) {
       return new Response(JSON.stringify({ 
@@ -89,7 +159,7 @@ Deno.serve(async (req) => {
     const nextRow = existingValues.length + 3
 
     const rowData = [
-      passage.date,
+      formatDateFrench(passage.date),
       '',
       passage.patientName,
       passage.location,
