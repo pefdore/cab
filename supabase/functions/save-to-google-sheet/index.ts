@@ -77,9 +77,10 @@ Deno.serve(async (req) => {
       const existingValues = getResult.data.values || []
       
       const searchDate = formatDateFrench(passage.date)
-      console.log('Searching for delete:', { searchDate, patient: passage.patientName, location: passage.location })
+      console.log('Searching for delete:', { searchDate, patient: passage.patientName, location: passage.location, cotation: passage.cotation })
       console.log('Total rows to check:', existingValues.length)
       
+      // First pass: match on date + patient + location + cotation
       for (let i = 0; i < existingValues.length; i++) {
         const row = existingValues[i]
         let rowDate = row[0] ? row[0].toString().trim() : ''
@@ -89,19 +90,26 @@ Deno.serve(async (req) => {
           const d = row[0]
           rowDate = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear()
         }
+        // Handle date stored as serial number (Excel/Google Sheets serial date)
+        else if (typeof row[0] === 'number') {
+          const serialDate = new Date((row[0] - 25569) * 86400 * 1000)
+          rowDate = ('0' + serialDate.getDate()).slice(-2) + '/' + ('0' + (serialDate.getMonth() + 1)).slice(-2) + '/' + serialDate.getFullYear()
+        }
         
         const rowPatient = row[2] ? row[2].toString().trim() : ''
         const rowLocation = row[3] ? row[3].toString().trim() : ''
+        const rowCotation = row[4] ? row[4].toString().trim() : ''
         
-        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation })
+        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation, rowCotation })
         
-        // Match on date + patient + location (more flexible)
+        // Match on date + patient + location + cotation (precise match)
         if (rowDate === searchDate && 
             rowPatient.toLowerCase() === passage.patientName.toLowerCase() && 
-            rowLocation.toLowerCase() === passage.location.toLowerCase()) {
+            rowLocation.toLowerCase() === passage.location.toLowerCase() &&
+            rowCotation.toLowerCase() === passage.cotation.toLowerCase()) {
           
           const rowNum = i + 3
-          console.log('Found matching row:', rowNum)
+          console.log('Found matching row (exact cotation match):', rowNum)
           await sheets.spreadsheets.values.clear({
             spreadsheetId,
             range: `${sheetTitle}!A${rowNum}:E${rowNum}`
@@ -113,7 +121,41 @@ Deno.serve(async (req) => {
         }
       }
       
-      return new Response(JSON.stringify({ error: 'Row not found', debug: { searchDate, patient: passage.patientName, location: passage.location, rowsFound: existingValues.length } }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      // Second pass: fallback to match without cotation
+      for (let i = 0; i < existingValues.length; i++) {
+        const row = existingValues[i]
+        let rowDate = row[0] ? row[0].toString().trim() : ''
+        
+        if (row[0] instanceof Date) {
+          const d = row[0]
+          rowDate = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear()
+        } else if (typeof row[0] === 'number') {
+          const serialDate = new Date((row[0] - 25569) * 86400 * 1000)
+          rowDate = ('0' + serialDate.getDate()).slice(-2) + '/' + ('0' + (serialDate.getMonth() + 1)).slice(-2) + '/' + serialDate.getFullYear()
+        }
+        
+        const rowPatient = row[2] ? row[2].toString().trim() : ''
+        const rowLocation = row[3] ? row[3].toString().trim() : ''
+        
+        // Fallback: match without cotation
+        if (rowDate === searchDate && 
+            rowPatient.toLowerCase() === passage.patientName.toLowerCase() && 
+            rowLocation.toLowerCase() === passage.location.toLowerCase()) {
+          
+          const rowNum = i + 3
+          console.log('Found matching row (fallback match):', rowNum)
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `${sheetTitle}!A${rowNum}:E${rowNum}`
+          })
+          
+          return new Response(JSON.stringify({ success: true, deletedRow: rowNum }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+      }
+      
+      return new Response(JSON.stringify({ error: 'Row not found', debug: { searchDate, patient: passage.patientName, location: passage.location, cotation: passage.cotation, rowsFound: existingValues.length } }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     if (!passage) {
