@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
       })
       
       const existingValues = getResult.data.values || []
+      console.log('All rows from sheet:', JSON.stringify(existingValues.slice(0, 10))) // Debug: log first 10 rows
       
       const searchDate = formatDateFrench(passage.date)
       console.log('Searching for delete:', { searchDate, patient: passage.patientName, location: passage.location, cotation: passage.cotation })
@@ -100,7 +101,7 @@ Deno.serve(async (req) => {
         const rowLocation = row[3] ? row[3].toString().trim() : ''
         const rowCotation = row[4] ? row[4].toString().trim() : ''
         
-        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation, rowCotation })
+        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation, rowCotation, rawDate: row[0] })
         
         // Match on date + patient + location + cotation (precise match)
         if (rowDate === searchDate && 
