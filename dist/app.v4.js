@@ -5205,10 +5205,57 @@ function renderEntries() {
 async function deleteEntry(id) {
     if (!confirm('Supprimer ce passage?')) return;
     
+    const entryToDelete = entries.find(e => e.id === id);
+    
     const { error } = await supabaseClient.from('passages').delete().eq('id', id);
     if (error) {
         alert('Erreur: ' + error.message);
         return;
+    }
+    
+    // Supprimer du Google Sheet
+    if (entryToDelete) {
+        console.log('[DELETE] Attempting to delete from Google Sheet:', entryToDelete)
+        try {
+            const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+            console.log('[DELETE] Session check:', { hasSession: !!sessionData?.session, sessionError })
+            
+            if (sessionError) {
+                console.error('[DELETE] Session error:', sessionError)
+            }
+            
+            if (sessionData?.session) {
+                console.log('[DELETE] Sending delete request to Edge function...')
+                const response = await fetch('https://wlpbnxnvctlmhndqvvim.supabase.co/functions/v1/save-to-google-sheet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionData.session.access_token
+                    },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        passage: {
+                            date: entryToDelete.date,
+                            patientName: entryToDelete.patientName,
+                            location: entryToDelete.location,
+                            cotation: entryToDelete.cotation
+                        }
+                    })
+                });
+                const result = await response.json()
+                console.log('[DELETE] Response:', { status: response.status, result })
+                
+                if (!response.ok) {
+                    console.error('[DELETE] Failed:', result)
+                }
+            } else {
+                console.warn('[DELETE] No session, skipping Google Sheet delete')
+            }
+        } catch (err) {
+            console.error('[DELETE] Exception:', err);
+        }
+    } else {
+        console.warn('[DELETE] No entryToDelete found')
     }
     
     await loadData();
