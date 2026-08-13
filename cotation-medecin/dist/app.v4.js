@@ -2842,34 +2842,20 @@ async function deleteEntry(id) {
     
     // Supprimer du Google Sheet
     if (entryToDelete) {
-        console.log('Attempting to delete from Google Sheet:', entryToDelete)
-        try {
-            const { data: sessionData } = await supabaseClient.auth.getSession();
-            console.log('Session data:', sessionData?.session ? 'OK' : 'NULL')
-            if (sessionData?.session) {
-                console.log('Sending delete request to Edge function...')
-                const response = await fetch('https://wlpbnxnvctlmhndqvvim.supabase.co/functions/v1/save-to-google-sheet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + sessionData.session.access_token
-                    },
-                    body: JSON.stringify({
-                        action: 'delete',
-                        passage: {
-                            date: entryToDelete.date,
-                            patientName: entryToDelete.patientName,
-                            location: entryToDelete.location,
-                            cotation: entryToDelete.cotation
-                        }
-                    })
-                });
-                const result = await response.json()
-                console.log('Delete response:', result)
-            }
-        } catch (err) {
-            console.error('Erreur suppression Google Sheet:', err);
-        }
+        console.log('!!! ATTEMPTING GOOGLE SHEET DELETE:', entryToDelete)
+        fetch('https://wlpbnxnvctlmhndqvvim.supabase.co/functions/v1/save-to-google-sheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'delete',
+                passage: {
+                    date: entryToDelete.date,
+                    patientName: entryToDelete.patientName,
+                    location: entryToDelete.location,
+                    cotation: entryToDelete.cotation
+                }
+            })
+        }).then(r => r.json()).then(result => console.log('!!! DELETE RESULT:', result)).catch(err => console.error('!!! DELETE ERROR:', err))
     }
     
     await loadData();
