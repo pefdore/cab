@@ -17,7 +17,7 @@ export default defineConfig({
     {
       name: 'copy-files',
       closeBundle() {
-        const files = ['app.v4.js', 'style.css', 'manifest.json', 'icon-192.svg', 'sw.js', 'supabase/functions/generate-monthly-pdf/template.html'];
+        const files = ['app.v4.js', 'app.v5.js', 'style.css', 'manifest.json', 'icon-192.svg', 'sw.js', 'supabase/functions/generate-monthly-pdf/template.html'];
         files.forEach(file => {
           if (existsSync(file)) {
             const parts = file.split('/');
