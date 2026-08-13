@@ -2825,6 +2825,7 @@ function renderEntries() {
 }
 
 async function deleteEntry(id) {
+    console.log('!!! DELETE FUNCTION CALLED WITH ID:', id)
     if (!confirm('Supprimer ce passage?')) return;
     
     console.log('Delete called with id:', id)
