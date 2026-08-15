@@ -55,10 +55,14 @@ Deno.serve(async (req) => {
       
       const dateObj = new Date(passage.date)
       const monthIndex = dateObj.getMonth()
+      const year = dateObj.getFullYear()
       const sheetName = capitalizeFirstLetter(MONTH_NAMES[monthIndex])
+      
+      console.log('Looking for sheet:', sheetName, 'year:', year)
       
       let sheetTitle = ''
       for (const sheet of spreadsheet.data.sheets || []) {
+        console.log('Found sheet:', sheet.properties?.title)
         if (sheet.properties?.title === sheetName) {
           sheetTitle = sheet.properties.title
           break
@@ -66,7 +70,7 @@ Deno.serve(async (req) => {
       }
       
       if (!sheetTitle) {
-        return new Response(JSON.stringify({ error: 'Sheet not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify({ error: 'Sheet not found: ' + sheetName, available: (spreadsheet.data.sheets || []).map((s: any) => s.properties?.title) }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
       
       const getResult = await sheets.spreadsheets.values.get({
@@ -75,11 +79,16 @@ Deno.serve(async (req) => {
       })
       
       const existingValues = getResult.data.values || []
-      console.log('All rows from sheet:', JSON.stringify(existingValues.slice(0, 10))) // Debug: log first 10 rows
+      console.log('All rows from sheet:', JSON.stringify(existingValues.slice(0, 10)))
+      console.log('Total rows:', existingValues.length)
       
       const searchDate = formatDateFrench(passage.date)
-      console.log('Searching for delete:', { searchDate, patient: passage.patientName, location: passage.location, cotation: passage.cotation })
-      console.log('Total rows to check:', existingValues.length)
+      const searchPatient = passage.patientName ? passage.patientName.toLowerCase().trim() : ''
+      const searchLocation = passage.location ? passage.location.toLowerCase().trim() : ''
+      const searchCotation = passage.cotation ? passage.cotation.toLowerCase().trim() : ''
+      
+      console.log('Searching for delete:', { searchDate, searchPatient, searchLocation, searchCotation })
+      console.log('Original passage:', passage)
       
       // First pass: match on date + patient + location + cotation
       for (let i = 0; i < existingValues.length; i++) {
@@ -97,17 +106,17 @@ Deno.serve(async (req) => {
           rowDate = ('0' + serialDate.getDate()).slice(-2) + '/' + ('0' + (serialDate.getMonth() + 1)).slice(-2) + '/' + serialDate.getFullYear()
         }
         
-        const rowPatient = row[2] ? row[2].toString().trim() : ''
-        const rowLocation = row[3] ? row[3].toString().trim() : ''
-        const rowCotation = row[4] ? row[4].toString().trim() : ''
+        const rowPatient = row[2] ? row[2].toString().trim().toLowerCase() : ''
+        const rowLocation = row[3] ? row[3].toString().trim().toLowerCase() : ''
+        const rowCotation = row[4] ? row[4].toString().trim().toLowerCase() : ''
         
-        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation, rowCotation, rawDate: row[0] })
+        console.log('Row', i, ':', { rowDate, rowPatient, rowLocation, rowCotation })
         
         // Match on date + patient + location + cotation (precise match)
         if (rowDate === searchDate && 
-            rowPatient.toLowerCase() === passage.patientName.toLowerCase() && 
-            rowLocation.toLowerCase() === passage.location.toLowerCase() &&
-            rowCotation.toLowerCase() === passage.cotation.toLowerCase()) {
+            rowPatient === searchPatient && 
+            rowLocation === searchLocation &&
+            rowCotation === searchCotation) {
           
           const rowNum = i + 3
           console.log('Found matching row (exact cotation match):', rowNum)
@@ -135,13 +144,13 @@ Deno.serve(async (req) => {
           rowDate = ('0' + serialDate.getDate()).slice(-2) + '/' + ('0' + (serialDate.getMonth() + 1)).slice(-2) + '/' + serialDate.getFullYear()
         }
         
-        const rowPatient = row[2] ? row[2].toString().trim() : ''
-        const rowLocation = row[3] ? row[3].toString().trim() : ''
+        const rowPatient = row[2] ? row[2].toString().trim().toLowerCase() : ''
+        const rowLocation = row[3] ? row[3].toString().trim().toLowerCase() : ''
         
         // Fallback: match without cotation
         if (rowDate === searchDate && 
-            rowPatient.toLowerCase() === passage.patientName.toLowerCase() && 
-            rowLocation.toLowerCase() === passage.location.toLowerCase()) {
+            rowPatient === searchPatient && 
+            rowLocation === searchLocation) {
           
           const rowNum = i + 3
           console.log('Found matching row (fallback match):', rowNum)
@@ -156,7 +165,38 @@ Deno.serve(async (req) => {
         }
       }
       
-      return new Response(JSON.stringify({ error: 'Row not found', debug: { searchDate, patient: passage.patientName, location: passage.location, cotation: passage.cotation, rowsFound: existingValues.length } }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      // Third pass: match only by date + patient (most flexible)
+      for (let i = 0; i < existingValues.length; i++) {
+        const row = existingValues[i]
+        let rowDate = row[0] ? row[0].toString().trim() : ''
+        
+        if (row[0] instanceof Date) {
+          const d = row[0]
+          rowDate = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear()
+        } else if (typeof row[0] === 'number') {
+          const serialDate = new Date((row[0] - 25569) * 86400 * 1000)
+          rowDate = ('0' + serialDate.getDate()).slice(-2) + '/' + ('0' + (serialDate.getMonth() + 1)).slice(-2) + '/' + serialDate.getFullYear()
+        }
+        
+        const rowPatient = row[2] ? row[2].toString().trim().toLowerCase() : ''
+        
+        // Most flexible: match by date + patient only
+        if (rowDate === searchDate && rowPatient === searchPatient) {
+          
+          const rowNum = i + 3
+          console.log('Found matching row (date + patient only):', rowNum)
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `${sheetTitle}!A${rowNum}:E${rowNum}`
+          })
+          
+          return new Response(JSON.stringify({ success: true, deletedRow: rowNum }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+      }
+      
+      return new Response(JSON.stringify({ error: 'Row not found', debug: { searchDate, searchPatient, searchLocation, searchCotation, rowsFound: existingValues.length } }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     if (!passage) {
