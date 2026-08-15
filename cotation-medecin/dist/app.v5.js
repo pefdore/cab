@@ -3131,11 +3131,13 @@ function renderRecentList() {
                 <span class="recent-patient">${e.patientName}</span>
                 <span class="recent-date">${e.date} - ${e.location}</span>
             </div>
-            <span class="recent-amount">${(e.amount || 0).toFixed(2)}€</span>
+            <div class="recent-actions">
+                <span class="recent-amount">${(e.amount || 0).toFixed(2)}€</span>
+                <button class="btn-delete-passage" onclick="deleteEntry('${e.id}')" title="Supprimer">×</button>
+            </div>
         </div>
     `).join('');
     
-    // Apply modern card styling
     container.querySelectorAll('.recent-item').forEach((item, index) => {
         item.style.cssText = `
             display: flex;
@@ -3172,6 +3174,30 @@ function renderRecentList() {
     
     container.querySelectorAll('.recent-amount').forEach(amount => {
         amount.style.cssText = 'font-weight: 700; color: #10b981; font-size: 16px;';
+    });
+    
+    container.querySelectorAll('.recent-actions').forEach(actions => {
+        actions.style.cssText = 'display: flex; align-items: center; gap: 12px;';
+    });
+    
+    container.querySelectorAll('.btn-delete-passage').forEach(btn => {
+        btn.style.cssText = `
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            line-height: 1;
+        `;
+        btn.addEventListener('mouseenter', () => {
+            btn.style.background = '#fee2e2';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.background = 'none';
+        });
     });
 }
 
