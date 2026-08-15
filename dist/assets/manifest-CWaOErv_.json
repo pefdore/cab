@@ -1,0 +1,20 @@
+{
+  "name": "Cotation Médecin",
+  "short_name": "Cotation",
+  "description": "Gestion des passages et honoraires médicaux",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFBFC",
+  "theme_color": "#5B4BFF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["medical", "productivity"],
+  "lang": "fr"
+}
