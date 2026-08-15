@@ -5403,9 +5403,10 @@ function renderCharts() {
     const ehpadData = {};
     const medecinData = {};
     
-    // Initialize all 12 months
-    for (let m = 0; m < 12; m++) {
-        const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
+    // Initialize last 12 months from current month
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(currentYear, currentMonth - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         monthlyData[key] = 0;
         ehpadData[key] = 0;
         medecinData[key] = 0;
@@ -5447,7 +5448,7 @@ function renderCharts() {
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
     
-    const sortedKeys = Array.from({length: 12}, (_, i) => `${currentYear}-${String(i + 1).padStart(2, '0')}`);
+    const sortedKeys = Object.keys(monthlyData);
     const values = sortedKeys.map(k => monthlyData[k]);
     const maxVal = Math.max(...values, 1);
     
