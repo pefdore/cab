@@ -5528,10 +5528,9 @@ function renderCharts() {
     const ehpadData = {};
     const medecinData = {};
     
-    // Initialize last 12 months from current month
-    for (let i = 11; i >= 0; i--) {
-        const d = new Date(currentYear, currentMonth - i, 1);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    // Initialize all 12 months of current year
+    for (let m = 0; m < 12; m++) {
+        const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
         monthlyData[key] = 0;
         ehpadData[key] = 0;
         medecinData[key] = 0;
@@ -5540,15 +5539,17 @@ function renderCharts() {
     // Aggregate data
     entries.forEach(e => {
         const key = e.monthKey;
-        if (monthlyData.hasOwnProperty(key)) {
-            const amount = e.amount || 0;
-            monthlyData[key] += amount;
-            
-            const location = e.location || '';
-            if (ehpadLocations.includes(location)) {
-                ehpadData[key] += amount;
-            } else {
-                medecinData[key] += amount;
+        if (key && key.startsWith(currentYear.toString())) {
+            if (monthlyData.hasOwnProperty(key)) {
+                const amount = e.amount || 0;
+                monthlyData[key] += amount;
+                
+                const location = e.location || '';
+                if (ehpadLocations.includes(location)) {
+                    ehpadData[key] += amount;
+                } else {
+                    medecinData[key] += amount;
+                }
             }
         }
     });
@@ -5573,7 +5574,7 @@ function renderCharts() {
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
     
-    const sortedKeys = Object.keys(monthlyData);
+    const sortedKeys = Array.from({length: 12}, (_, i) => `${currentYear}-${String(i + 1).padStart(2, '0')}`);
     const values = sortedKeys.map(k => monthlyData[k]);
     const maxVal = Math.max(...values, 1);
     
