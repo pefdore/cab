@@ -2427,8 +2427,8 @@ function handleLocationChange() {
     const location = document.getElementById('visitLocation').value;
     const cotationSelect = document.getElementById('cotation');
     
-    if ((location === 'Médecine' || location === 'SSR') && cotationSelect) {
-        // Auto-select G 30€ for Médecine or SSR
+    if ((location === 'Medecine' || location === 'SSR') && cotationSelect) {
+        // Auto-select G 30€ for Medecine or SSR
         const options = Array.from(cotationSelect.options);
         const gOption = options.find(o => o.value.startsWith('G|'));
         if (gOption) {
@@ -2546,9 +2546,9 @@ function handlePatientSearch(e) {
 
 function getLocationColor(location) {
     const colors = {
-        'Médecine': '#0ea5e9',
+        'Medecine': '#0ea5e9',
         'SSR': '#8b5cf6',
-        'Lilias RdC': '#10b981',
+        'Lilas Rdc': '#10b981',
         'Lilas 1er étage': '#f59e0b',
         'Tamaris': '#ec4899'
     };
@@ -4871,9 +4871,9 @@ async function generatePDF() {
         const doc = new jsPDF();
         
         const locations = {
-            'Médecine': { name: 'MÉDECINE', ehpad: false },
+            'Medecine': { name: 'MÉDECINE', ehpad: false },
             'SSR': { name: 'SSR', ehpad: false },
-            'Lilias RdC': { name: 'LILIAS RdC', ehpad: true },
+            'Lilas Rdc': { name: 'LILIAS RdC', ehpad: true },
             'Lilas 1er étage': { name: 'LILAS 1er étage', ehpad: true },
             'Tamaris': { name: 'TAMARIS', ehpad: true }
         };
@@ -5476,7 +5476,7 @@ function renderCharts() {
     const currentMonth = now.getMonth();
     const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     
-    const ehpadLocations = ['Tamaris', 'Lilias RdC', 'Lilas 1er étage'];
+    const ehpadLocations = ['Tamaris', 'Lilas Rdc', 'Lilas 1er étage'];
     
     // ========== REVENUS MENSUELS ==========
     const monthlyData = {};
@@ -5519,7 +5519,7 @@ function renderCharts() {
             <div class="legend-row">
                 <span class="legend-total"><span class="legend-dot" style="background: #6366f1;"></span> Total: ${totalAnnual.toFixed(0)}€</span>
                 <span class="legend-ehpad"><span class="legend-dot" style="background: #10b981;"></span> EHPAD: ${totalEhpad.toFixed(0)}€</span>
-                <span class="legend-medecin"><span class="legend-dot" style="background: #f59e0b;"></span> Médecine/SSR: ${totalMedecin.toFixed(0)}€</span>
+                <span class="legend-medecin"><span class="legend-dot" style="background: #f59e0b;"></span> Medecine/SSR: ${totalMedecin.toFixed(0)}€</span>
             </div>
         `;
     }
@@ -5547,7 +5547,7 @@ function renderCharts() {
                         ${val > 0 ? `
                             <span class="bar-value">${val.toFixed(0)}€</span>
                             <span class="data-point data-point-ehpad" style="bottom: ${ehpadPct}%;" title="EHPAD: ${ehpadVal.toFixed(0)}€"></span>
-                            <span class="data-point data-point-medecin" style="bottom: ${medecinPct}%;" title="Médecine/SSR: ${medecinVal.toFixed(0)}€"></span>
+                            <span class="data-point data-point-medecin" style="bottom: ${medecinPct}%;" title="Medecine/SSR: ${medecinVal.toFixed(0)}€"></span>
                         ` : ''}
                     </div>
                 </div>
@@ -5692,7 +5692,7 @@ function showMonthPopup(month, total, ehpad, medecin) {
                         <span class="popup-value" id="popupEhpad"></span>
                     </div>
                     <div class="popup-row medecin">
-                        <span class="popup-label"><span class="dot-medecin"></span> Médecine/SSR</span>
+                        <span class="popup-label"><span class="dot-medecin"></span> Medecine/SSR</span>
                         <span class="popup-value" id="popupMedecin"></span>
                     </div>
                 </div>

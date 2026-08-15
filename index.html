@@ -729,9 +729,9 @@ window.attemptLogin = function() {
                             <label>Lieu</label>
                             <select id="visitLocation" required>
                                 <option value="">Sélectionner...</option>
-                                <option value="Médecine">Médecine</option>
+                                <option value="Medecine">Medecine</option>
                                 <option value="SSR">SSR</option>
-                                <option value="Lilias RdC">Lilias RdC</option>
+                                <option value="Lilas Rdc">Lilas Rdc</option>
                                 <option value="Lilas 1er étage">Lilas 1er étage</option>
                                 <option value="Tamaris">Tamaris</option>
                             </select>
@@ -2212,7 +2212,7 @@ window.attemptLogin = function() {
                         </div>
                         <div class="form-group">
                             <label>Spécialité requise</label>
-                            <input type="text" id="offre-specialite" placeholder="Ex: Médecine générale">
+                            <input type="text" id="offre-specialite" placeholder="Ex: Medecine générale">
                         </div>
                     </div>
                     <div class="form-group">
@@ -2444,9 +2444,9 @@ window.attemptLogin = function() {
                                 <label style="font-size: 0.75rem;">Lieu</label>
                                 <select id="visitLocationModal" required style="padding: 8px; font-size: 0.875rem;">
                                     <option value="">Sélectionner...</option>
-                                    <option value="Médecine">Médecine</option>
+                                    <option value="Medecine">Medecine</option>
                                     <option value="SSR">SSR</option>
-                                    <option value="Lilias RdC">Lilias RdC</option>
+                                    <option value="Lilas Rdc">Lilas Rdc</option>
                                     <option value="Lilas 1er">Lilas 1er</option>
                                     <option value="Tamaris">Tamaris</option>
                                 </select>
@@ -2662,7 +2662,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v4.js?v=20260815003" defer></script>
+    <script src="app.v4.js?v=20260815004" defer></script>
     <script src="secretariat.js?v=202605041815" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3764,9 +3764,9 @@ window.attemptLogin = function() {
           const doc = new jsPDF();
           
           const locations = {
-            'Médecine': { name: 'MÉDECINE', ehpad: false },
+            'Medecine': { name: 'MÉDECINE', ehpad: false },
             'SSR': { name: 'SSR', ehpad: false },
-            'Lilias RdC': { name: 'LILIAS RdC', ehpad: true },
+            'Lilas Rdc': { name: 'LILIAS RdC', ehpad: true },
             'Lilas 1er étage': { name: 'LILAS 1er étage', ehpad: true },
             'Tamaris': { name: 'TAMARIS', ehpad: true }
           };
