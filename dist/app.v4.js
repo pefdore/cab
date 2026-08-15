@@ -1703,19 +1703,23 @@ window.deleteEntryModal = async function(id) {
     try {
         const entryToDelete = entries.find(e => e.id === id);
         console.log('[DELETE] Entry to delete:', entryToDelete);
-        console.log('[DELETE] Settings:', settings?.googleSheets);
+        
+        const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        const googleSettings = settings.googleSheets || {};
+        const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
+        console.log('[DELETE] Google Settings:', googleSettings, 'spreadsheetId:', spreadsheetId);
         
         const { error } = await supabaseClient.from('passages').delete().eq('id', id);
         if (error) throw error;
         
-        if (entryToDelete && settings?.googleSheets?.spreadsheetId) {
+        if (entryToDelete && spreadsheetId) {
             console.log('[DELETE] Calling Google Sheets delete function...');
             try {
                 const { data, error: gsError } = await supabaseClient.functions.invoke('save-to-google-sheet', {
                     body: {
                         action: 'delete',
                         passage: entryToDelete,
-                        spreadsheetId: settings.googleSheets.spreadsheetId
+                        spreadsheetId: spreadsheetId
                     }
                 });
                 console.log('[DELETE] GSheets response:', data, 'error:', gsError);
@@ -1741,19 +1745,23 @@ window.deleteEntryDashboard = async function(id) {
     try {
         const entryToDelete = entries.find(e => e.id === id);
         console.log('[DELETE] Entry to delete:', entryToDelete);
-        console.log('[DELETE] Settings:', settings?.googleSheets);
+        
+        const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        const googleSettings = settings.googleSheets || {};
+        const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
+        console.log('[DELETE] Google Settings:', googleSettings, 'spreadsheetId:', spreadsheetId);
         
         const { error } = await supabaseClient.from('passages').delete().eq('id', id);
         if (error) throw error;
         
-        if (entryToDelete && settings?.googleSheets?.spreadsheetId) {
+        if (entryToDelete && spreadsheetId) {
             console.log('[DELETE] Calling Google Sheets delete function...');
             try {
                 const { data, error: gsError } = await supabaseClient.functions.invoke('save-to-google-sheet', {
                     body: {
                         action: 'delete',
                         passage: entryToDelete,
-                        spreadsheetId: settings.googleSheets.spreadsheetId
+                        spreadsheetId: spreadsheetId
                     }
                 });
                 console.log('[DELETE] GSheets response:', data, 'error:', gsError);
