@@ -1734,6 +1734,8 @@ window.deleteEntryModal = async function(id) {
         }
         
         renderEntriesForModal();
+        updateStats();
+        renderCharts();
         loadData();
         loadData();
     } catch (err) {
@@ -1781,6 +1783,9 @@ window.deleteEntryDashboard = async function(id) {
         }
         
         renderEntriesForDashboard();
+        renderEntriesForModal();
+        updateStats();
+        renderCharts();
         loadData();
         loadData();
     } catch (err) {
@@ -1923,6 +1928,8 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
         closePassageModal();
         renderEntriesForDashboard();
         renderEntriesForModal();
+        updateStats();
+        renderCharts();
         loadData();
         loadData();
         alert('Passage ajouté avec succès');

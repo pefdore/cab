@@ -1734,6 +1734,8 @@ window.deleteEntryModal = async function(id) {
         }
         
         renderEntriesForModal();
+        updateStats();
+        renderCharts();
         loadData();
         loadData();
     } catch (err) {
@@ -1776,11 +1778,14 @@ const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWA
             } catch (gsErr) {
                 console.error('[DELETE] GSheets exception:', gsErr);
             }
-        } else {
+} else {
             console.log('[DELETE] No Google Sheets config or entry, skipping');
         }
         
         renderEntriesForDashboard();
+        renderEntriesForModal();
+        updateStats();
+        renderCharts();
         loadData();
         loadData();
     } catch (err) {
@@ -1914,6 +1919,8 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
         closePassageModal();
         renderEntriesForDashboard();
         renderEntriesForModal();
+        updateStats();
+        renderCharts();
         loadData();
         loadData();
         alert('Passage ajouté avec succès');
