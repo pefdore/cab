@@ -2349,7 +2349,7 @@ async function handleSubmit(e) {
     const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
     
     // Create passage
-    const { error } = await supabaseClient
+    const { data: insertedData, error } = await supabaseClient
         .from('passages')
         .insert([{
             user_id: currentUser.id,
@@ -2359,11 +2359,26 @@ async function handleSubmit(e) {
             cotation: cotation,
             amount: parseFloat(amount),
             month_key: monthKey
-        }]);
+        }])
+        .select();
     
     if (error) {
         alert('Erreur: ' + error.message);
         return;
+    }
+    
+    if (insertedData && insertedData.length > 0) {
+        const newEntry = {
+            id: insertedData[0].id,
+            patientId: patientId,
+            patientName: patientName,
+            date: date,
+            location: location,
+            cotation: cotation,
+            amount: parseFloat(amount),
+            monthKey: monthKey
+        };
+        entries.unshift(newEntry);
     }
     
     // Reset form
@@ -2376,6 +2391,8 @@ async function handleSubmit(e) {
     await loadData();
     await loadPatients();
     renderEntries();
+    renderEntriesForDashboard();
+    renderEntriesForModal();
     updateStats();
     renderCharts();
     
