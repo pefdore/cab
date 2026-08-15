@@ -1701,7 +1701,8 @@ window.deleteEntryModal = async function(id) {
     if (!confirm('Supprimer ce passage?')) return;
     
     try {
-        const entryToDelete = entries.find(e => e.id === id);
+        const entryId = typeof id === 'string' ? parseInt(id, 10) : id;
+        const entryToDelete = entries.find(e => e.id === entryId);
         console.log('[DELETE] Entry to delete:', entryToDelete);
         
         const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
@@ -1709,7 +1710,7 @@ window.deleteEntryModal = async function(id) {
         const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
         console.log('[DELETE] Google Settings:', googleSettings, 'spreadsheetId:', spreadsheetId);
         
-        const { error } = await supabaseClient.from('passages').delete().eq('id', id);
+        const { error } = await supabaseClient.from('passages').delete().eq('id', entryId);
         if (error) throw error;
         
         if (entryToDelete && spreadsheetId) {
@@ -1743,10 +1744,10 @@ window.deleteEntryDashboard = async function(id) {
     if (!confirm('Supprimer ce passage?')) return;
     
     try {
-        console.log('[DELETE] Looking for id:', id);
-        console.log('[DELETE] Available entries IDs:', entries.slice(0, 5).map(e => e.id));
+        const entryId = typeof id === 'string' ? parseInt(id, 10) : id;
+        console.log('[DELETE] Looking for id:', entryId, 'type:', typeof entryId);
         
-        const entryToDelete = entries.find(e => e.id === id);
+        const entryToDelete = entries.find(e => e.id === entryId);
         console.log('[DELETE] Entry to delete:', entryToDelete);
         
         const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
@@ -1754,7 +1755,7 @@ window.deleteEntryDashboard = async function(id) {
         const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
         console.log('[DELETE] Google Settings:', googleSettings, 'spreadsheetId:', spreadsheetId);
         
-        const { error } = await supabaseClient.from('passages').delete().eq('id', id);
+const { error } = await supabaseClient.from('passages').delete().eq('id', entryId);
         if (error) throw error;
         
         if (entryToDelete && spreadsheetId) {
