@@ -2819,7 +2819,7 @@ function renderEntries() {
             <td>${locationBadge}</td>
             <td>${e.cotation}</td>
             <td>${(e.amount || 0).toFixed(2)}€</td>
-            <td style="text-align:center;"><button onclick="deleteEntry('${e.id}')" style="background:none;border:1px solid #e5e5e5;color:red;font-size:18px;cursor:pointer;padding:4px 10px;border-radius:6px;">×</button></td>
+            <td style="text-align:center;"><button onclick="deleteEntry('${e.id}')" title="Supprimer" style="background:none;border:1px solid #e5e5e5;color:#dc2626;font-size:16px;cursor:pointer;padding:6px 12px;border-radius:6px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
         </tr>
     `;}).join('');
 }
