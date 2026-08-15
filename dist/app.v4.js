@@ -1743,6 +1743,9 @@ window.deleteEntryDashboard = async function(id) {
     if (!confirm('Supprimer ce passage?')) return;
     
     try {
+        console.log('[DELETE] Looking for id:', id);
+        console.log('[DELETE] Available entries IDs:', entries.slice(0, 5).map(e => e.id));
+        
         const entryToDelete = entries.find(e => e.id === id);
         console.log('[DELETE] Entry to delete:', entryToDelete);
         
