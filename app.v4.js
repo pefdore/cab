@@ -1882,7 +1882,7 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
         const dateObj = new Date(visitDate);
         const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
         
-        const { data, error } = await supabaseClient
+        const { data: insertedData, error } = await supabaseClient
             .from('passages')
             .insert([{
                 user_id: currentUser.id,
@@ -1892,9 +1892,24 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
                 cotation: cotation,
                 amount: parseFloat(amount),
                 month_key: monthKey
-            }]);
+            }])
+            .select();
         
         if (error) throw error;
+        
+        if (insertedData && insertedData.length > 0) {
+            const newEntry = {
+                id: insertedData[0].id,
+                patientId: patientId,
+                patientName: patientName,
+                date: visitDate,
+                location: visitLocation,
+                cotation: cotation,
+                amount: parseFloat(amount),
+                monthKey: monthKey
+            };
+            entries.unshift(newEntry);
+        }
         
         // Save to Google Sheets if configured
         await savePassageToGoogleSheets({
@@ -1906,6 +1921,8 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
         });
         
         closePassageModal();
+        renderEntriesForDashboard();
+        renderEntriesForModal();
         loadData();
         loadData();
         alert('Passage ajouté avec succès');
