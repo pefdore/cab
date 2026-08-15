@@ -1713,6 +1713,8 @@ window.deleteEntryModal = async function(id) {
         const { error } = await supabaseClient.from('passages').delete().eq('id', entryId);
         if (error) throw error;
         
+        entries = entries.filter(e => e.id !== entryId);
+        
         if (entryToDelete && spreadsheetId) {
             console.log('[DELETE] Calling Google Sheets delete function...');
             try {
@@ -1752,11 +1754,13 @@ window.deleteEntryDashboard = async function(id) {
         
         const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
         const googleSettings = settings.googleSheets || {};
-        const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
+const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
         console.log('[DELETE] Google Settings:', googleSettings, 'spreadsheetId:', spreadsheetId);
         
-const { error } = await supabaseClient.from('passages').delete().eq('id', entryId);
+        const { error } = await supabaseClient.from('passages').delete().eq('id', entryId);
         if (error) throw error;
+        
+        entries = entries.filter(e => e.id !== entryId);
         
         if (entryToDelete && spreadsheetId) {
             console.log('[DELETE] Calling Google Sheets delete function...');
