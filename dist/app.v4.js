@@ -1624,7 +1624,7 @@ function renderEntriesForDashboard() {
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
     
     if (monthEntries.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Aucun passage ce mois</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Aucun passage ce mois</td></tr>';
         return;
     }
     
@@ -1637,6 +1637,13 @@ function renderEntriesForDashboard() {
                 <td><span class="location-badge" style="background:${locationColor}">${e.location}</span></td>
                 <td>${e.cotation}</td>
                 <td>${parseFloat(e.amount).toFixed(2)}€</td>
+                <td>
+                    <button class="delete-btn" onclick="deleteEntryDashboard('${e.id}')" title="Supprimer">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                </td>
             </tr>
         `;
     }).join('');
@@ -1698,6 +1705,22 @@ window.deleteEntryModal = async function(id) {
         if (error) throw error;
         
         renderEntriesForModal();
+        loadData();
+        loadData();
+    } catch (err) {
+        console.error('Erreur:', err);
+        alert('Erreur lors de la suppression');
+    }
+};
+
+window.deleteEntryDashboard = async function(id) {
+    if (!confirm('Supprimer ce passage?')) return;
+    
+    try {
+        const { error } = await supabaseClient.from('passages').delete().eq('id', id);
+        if (error) throw error;
+        
+        renderEntriesForDashboard();
         loadData();
         loadData();
     } catch (err) {
