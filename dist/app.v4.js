@@ -1701,8 +1701,24 @@ window.deleteEntryModal = async function(id) {
     if (!confirm('Supprimer ce passage?')) return;
     
     try {
+        const entryToDelete = entries.find(e => e.id === id);
+        
         const { error } = await supabaseClient.from('passages').delete().eq('id', id);
         if (error) throw error;
+        
+        if (entryToDelete && settings?.googleSheets?.spreadsheetId) {
+            try {
+                await supabaseClient.functions.invoke('save-to-google-sheet', {
+                    body: {
+                        action: 'delete',
+                        passage: entryToDelete,
+                        spreadsheetId: settings.googleSheets.spreadsheetId
+                    }
+                });
+            } catch (gsErr) {
+                console.error('[GSheets] Erreur suppression:', gsErr);
+            }
+        }
         
         renderEntriesForModal();
         loadData();
@@ -1717,8 +1733,24 @@ window.deleteEntryDashboard = async function(id) {
     if (!confirm('Supprimer ce passage?')) return;
     
     try {
+        const entryToDelete = entries.find(e => e.id === id);
+        
         const { error } = await supabaseClient.from('passages').delete().eq('id', id);
         if (error) throw error;
+        
+        if (entryToDelete && settings?.googleSheets?.spreadsheetId) {
+            try {
+                await supabaseClient.functions.invoke('save-to-google-sheet', {
+                    body: {
+                        action: 'delete',
+                        passage: entryToDelete,
+                        spreadsheetId: settings.googleSheets.spreadsheetId
+                    }
+                });
+            } catch (gsErr) {
+                console.error('[GSheets] Erreur suppression:', gsErr);
+            }
+        }
         
         renderEntriesForDashboard();
         loadData();
