@@ -194,21 +194,30 @@ window.attemptLogin = function() {
 
         <!-- VL Info Modal -->
         <div id="vl-info-modal" class="modal-overlay" style="display: none; z-index: 10000;">
-            <div class="modal-card" style="max-width: 400px;">
+            <div class="modal-card" style="max-width: 450px;">
                 <div class="modal-header">
                     <h3>Patients avec VL</h3>
                     <button class="modal-close" onclick="closeModal('vl-info-modal')">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <p style="font-size: 0.875rem; line-height: 1.5;">
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <p style="font-size: 0.875rem; line-height: 1.5; margin-bottom: 12px;">
                         Cette section affiche les patients ayant eu une <strong>Visite Longue (VL)</strong> ces 90 derniers jours.
                     </p>
                     <ul style="font-size: 0.8125rem; margin-top: 12px; padding-left: 20px; line-height: 1.6;">
                         <li>La date de fin de validité (90 jours) est affichée</li>
                         <li>Le badge <span style="background: #22c55e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">✓</span> indique que le patient est éligible à une nouvelle VL</li>
                         <li>Un chiffre indique le nombre de jours restants avant la nouvelle VL</li>
+                    </ul>
+                    <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--color-border);">
+                    <h4 style="font-size: 0.875rem; margin-bottom: 8px;">Conditions d'utilisation VL</h4>
+                    <ul style="font-size: 0.8125rem; padding-left: 20px; line-height: 1.6;">
+                        <li><strong>VL (60€)</strong> : Consultation longue ≥30 min pour patient en ALD ou perte d'autonomie, à domicile ou en établissement (EHPAD)</li>
+                        <li><strong>VL+MD (70€)</strong> : VL avec majoration dépassement pour patient hors parcours de soins</li>
+                        <li><strong>Fréquence</strong> : Maximum 1 VL par patient sur 90 jours (recommandation)</li>
+                        <li><strong>Documentation</strong> : Mentionner le motif (ALD, dépendance, soins palliatifs) et durée réelle de la visite</li>
+                        <li><strong>Patientèle</strong> : Patients en affection longue durée, perte d'autonomie, personnes âgées, soins palliatifs</li>
                     </ul>
                 </div>
                 <div class="modal-footer">
