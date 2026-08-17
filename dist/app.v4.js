@@ -1680,7 +1680,7 @@ function renderVLForDashboard() {
         const isEligible = daysUntil <= 0;
 
         return `
-            <div class="recent-vl-item compact">
+            <div class="recent-vl-item compact" onclick="window.showPatientPassages('${v.patientName.replace(/'/g, "\\'")}')" style="cursor: pointer;">
                 <span class="vl-patient">${v.patientName}</span>
                 <span class="vl-dates">${vlDate.toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})} → ${nextDate.toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})}</span>
                 <span class="vl-badge ${isEligible ? 'eligible' : ''}">${isEligible ? '✓' : daysUntil}</span>
