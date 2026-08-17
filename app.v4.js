@@ -1016,7 +1016,8 @@ const COTATIONS = {
         'VL': 60,
         'VL+MD': 70,
         'VG+MD+MSH': 63,
-        'VG+MD+2IK': 41.22
+        'VG+MD+2IK': 41.22,
+        'Acte gratuit': 0
     }
 };
 
@@ -2154,7 +2155,8 @@ function populateCotationSelect() {
         { key: 'VL', amount: 60 },
         { key: 'VL+MD', amount: 70 },
         { key: 'VG+MD+MSH', amount: 63 },
-        { key: 'VG+MD+2IK', amount: 41.22 }
+        { key: 'VG+MD+2IK', amount: 41.22 },
+        { key: 'Acte gratuit', amount: 0 }
     ];
     
     // Get custom cotations from user settings
