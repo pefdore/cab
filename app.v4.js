@@ -1631,13 +1631,13 @@ function renderEntriesForDashboard() {
     tbody.innerHTML = monthEntries.map(e => {
         const locationColor = getLocationColor(e.location);
         return `
-            <tr>
+            <tr onclick="window.showPatientPassages('${e.patientName.replace(/'/g, "\\'")}')" style="cursor: pointer;">
                 <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})}</td>
-                <td><a href="javascript:void(0)" onclick="window.showPatientPassages('${e.patientName.replace(/'/g, "\\'")}')" style="color: var(--color-primary); text-decoration: underline;">${e.patientName}</a></td>
+                <td>${e.patientName}</td>
                 <td><span class="location-badge" style="background:${locationColor}">${e.location}</span></td>
                 <td>${e.cotation}</td>
                 <td>${parseFloat(e.amount).toFixed(2)}€</td>
-                <td>
+                <td onclick="event.stopPropagation()">
                     <button class="delete-btn" onclick="deleteEntryDashboard('${e.id}')" title="Supprimer">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
