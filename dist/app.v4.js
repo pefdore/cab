@@ -1633,7 +1633,7 @@ function renderEntriesForDashboard() {
         return `
             <tr>
                 <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})}</td>
-                <td>${e.patientName}</td>
+                <td><a href="javascript:void(0)" onclick="window.showPatientPassages('${e.patientName.replace(/'/g, "\\'")}')" style="color: var(--color-primary); text-decoration: underline;">${e.patientName}</a></td>
                 <td><span class="location-badge" style="background:${locationColor}">${e.location}</span></td>
                 <td>${e.cotation}</td>
                 <td>${parseFloat(e.amount).toFixed(2)}€</td>
@@ -1689,6 +1689,50 @@ function renderVLForDashboard() {
     }).join('');
 }
 
+window.showPatientPassages = function(patientName) {
+    const patientEntries = entries
+        .filter(e => e.patientName === patientName)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    const totalAmount = patientEntries.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+    const uniqueLocations = [...new Set(patientEntries.map(e => e.location))];
+    const cotations = [...new Set(patientEntries.map(e => e.cotation))];
+    
+    const dateRange = patientEntries.length > 0 
+        ? `${new Date(patientEntries[patientEntries.length - 1].date).toLocaleDateString('fr-FR')} - ${new Date(patientEntries[0].date).toLocaleDateString('fr-FR')}`
+        : '-';
+    
+    document.getElementById('patient-passages-title').textContent = `Historique: ${patientName}`;
+    document.getElementById('patient-passages-summary').innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 0.8125rem;">
+            <div><strong>Total passages:</strong> ${patientEntries.length}</div>
+            <div><strong>Montant total:</strong> ${totalAmount.toFixed(2)}€</div>
+            <div><strong>Période:</strong> ${dateRange}</div>
+            <div><strong>Lieux:</strong> ${uniqueLocations.join(', ')}</div>
+            <div><strong>Cotations:</strong> ${cotations.join(', ')}</div>
+        </div>
+    `;
+    
+    const tbody = document.getElementById('patient-passages-body');
+    if (patientEntries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Aucun passage trouvé</td></tr>';
+    } else {
+        tbody.innerHTML = patientEntries.map(e => {
+            const locationColor = getLocationColor(e.location);
+            return `
+                <tr>
+                    <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'numeric', year:'numeric'})}</td>
+                    <td><span class="location-badge" style="background:${locationColor}">${e.location}</span></td>
+                    <td>${e.cotation}</td>
+                    <td style="text-align: right;">${parseFloat(e.amount).toFixed(2)}€</td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    document.getElementById('patient-passages-modal').style.display = 'flex';
+};
+
 function renderDashboardLists() {
     updateMonthDisplayDashboard();
     renderEntriesForDashboard();
@@ -1710,7 +1754,7 @@ window.deleteEntryModal = async function(id) {
         const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
         console.log('[DELETE] Google Settings:', googleSettings, 'spreadsheetId:', spreadsheetId);
         
-        const { error } = await supabaseClient.from('passages').delete().eq('id', entryId);
+        const { error } = await supabaseClient.from('passages').delete().eq('id', id);
         if (error) throw error;
         
         entries = entries.filter(e => e.id !== entryId);
@@ -1756,10 +1800,10 @@ window.deleteEntryDashboard = async function(id) {
         
         const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
         const googleSettings = settings.googleSheets || {};
-const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
+        const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
         console.log('[DELETE] Google Settings:', googleSettings, 'spreadsheetId:', spreadsheetId);
         
-        const { error } = await supabaseClient.from('passages').delete().eq('id', entryId);
+        const { error } = await supabaseClient.from('passages').delete().eq('id', id);
         if (error) throw error;
         
         entries = entries.filter(e => e.id !== entryId);
@@ -1778,7 +1822,7 @@ const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWA
             } catch (gsErr) {
                 console.error('[DELETE] GSheets exception:', gsErr);
             }
-} else {
+        } else {
             console.log('[DELETE] No Google Sheets config or entry, skipping');
         }
         
@@ -1915,6 +1959,15 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
             };
             entries.unshift(newEntry);
         }
+        
+        // Save to Google Sheets if configured
+        await savePassageToGoogleSheets({
+            date: visitDate,
+            patientName: patientName,
+            location: visitLocation,
+            cotation: cotation,
+            amount: parseFloat(amount)
+        });
         
         closePassageModal();
         renderEntriesForDashboard();
@@ -2412,6 +2465,51 @@ async function handleSubmit(e) {
     renderCharts();
     
     alert('Passage enregistré!');
+    
+    // Save to Google Sheets if configured
+    await savePassageToGoogleSheets({
+        date: date,
+        patientName: patientName,
+        location: location,
+        cotation: cotation,
+        amount: parseFloat(amount)
+    });
+}
+
+async function savePassageToGoogleSheets(passage) {
+    console.log('[GSheets] savePassageToGoogleSheets called with:', passage);
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const googleSettings = settings.googleSheets || {};
+    
+    const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
+    
+    console.log('[GSheets] Using spreadsheetId:', spreadsheetId);
+    
+    if (!spreadsheetId) {
+        console.log('[GSheets] No spreadsheet ID configured, skipping');
+        return;
+    }
+    
+    try {
+        console.log('[GSheets] Saving passage to Google Sheets...');
+        
+        const { data, error } = await supabaseClient.functions.invoke('save-to-google-sheet', {
+            body: {
+                passage: passage,
+                spreadsheetId: spreadsheetId
+            }
+        });
+        
+        if (error) {
+            console.error('[GSheets] Error:', error);
+            return;
+        }
+        
+        console.log('[GSheets] Success:', data);
+    } catch (err) {
+        console.error('[GSheets] Exception:', err);
+    }
 }
 
 function handleLocationChange() {
@@ -3325,6 +3423,8 @@ async function openSettingsPage(pageName) {
     } else if (pageName === 'preferences') {
         loadTheme();
         await loadOpenRouterKey();
+    } else if (pageName === 'googlesheets') {
+        loadGoogleSheetsSettings();
     }
 }
 
@@ -3436,6 +3536,75 @@ window.loadOpenRouterKey = async function() {
         }
     } catch (e) {
         console.log('[LLM] loadOpenRouterKey error:', e);
+    }
+};
+
+// Google Sheets functions
+window.saveGoogleSheetsSettings = async function() {
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    settings.googleSheets = {
+        spreadsheetId: '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U'
+    };
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    
+    const overlay = document.querySelector('.settings-page-overlay');
+    const status = overlay ? overlay.querySelector('#googleSheetsStatus') : document.getElementById('googleSheetsStatus');
+    
+    if (status) {
+        status.textContent = 'Paramètres enregistrés!';
+    }
+    setTimeout(() => {
+        if (status) status.textContent = '';
+    }, 3000);
+};
+
+window.loadGoogleSheetsSettings = function() {
+    // Spreadsheet is pre-configured, no need to load anything
+    console.log('[GSheets] Using default spreadsheet ID');
+};
+
+window.testGoogleSheetsConnection = async function() {
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const googleSettings = settings.googleSheets || {};
+    
+    const spreadsheetId = googleSettings.spreadsheetId || '1-In5C8uZMceL3h0HoCd4ovWAczgIFihnig2HTlvP29U';
+    
+    const overlay = document.querySelector('.settings-page-overlay');
+    const status = overlay ? overlay.querySelector('#googleSheetsTestStatus') : document.getElementById('googleSheetsTestStatus');
+    
+    if (status) {
+        status.textContent = 'Test en cours...';
+        status.style.color = 'var(--color-text-secondary)';
+    }
+    
+    try {
+        const { data, error } = await supabaseClient.functions.invoke('save-to-google-sheet', {
+            body: {
+                passage: {
+                    date: new Date().toISOString().split('T')[0],
+                    patientName: 'Test',
+                    location: 'Test',
+                    cotation: 'G',
+                    amount: 30
+                },
+                spreadsheetId: spreadsheetId
+            }
+        });
+        
+        if (error) {
+            throw error;
+        }
+        
+        if (status) {
+            status.textContent = 'Connexion réussie! Feuille: ' + data.sheet + ', Ligne: ' + data.row;
+            status.style.color = 'var(--color-success)';
+        }
+    } catch (err) {
+        console.error('[GSheets] Test error:', err);
+        if (status) {
+            status.textContent = 'Erreur: ' + (err.message || err);
+            status.style.color = 'var(--color-error)';
+        }
     }
 };
 

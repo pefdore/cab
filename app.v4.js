@@ -1633,7 +1633,7 @@ function renderEntriesForDashboard() {
         return `
             <tr>
                 <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'numeric'})}</td>
-                <td>${e.patientName}</td>
+                <td><a href="javascript:void(0)" onclick="window.showPatientPassages('${e.patientName.replace(/'/g, "\\'")}')" style="color: var(--color-primary); text-decoration: underline;">${e.patientName}</a></td>
                 <td><span class="location-badge" style="background:${locationColor}">${e.location}</span></td>
                 <td>${e.cotation}</td>
                 <td>${parseFloat(e.amount).toFixed(2)}€</td>
@@ -1688,6 +1688,50 @@ function renderVLForDashboard() {
         `;
     }).join('');
 }
+
+window.showPatientPassages = function(patientName) {
+    const patientEntries = entries
+        .filter(e => e.patientName === patientName)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    const totalAmount = patientEntries.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+    const uniqueLocations = [...new Set(patientEntries.map(e => e.location))];
+    const cotations = [...new Set(patientEntries.map(e => e.cotation))];
+    
+    const dateRange = patientEntries.length > 0 
+        ? `${new Date(patientEntries[patientEntries.length - 1].date).toLocaleDateString('fr-FR')} - ${new Date(patientEntries[0].date).toLocaleDateString('fr-FR')}`
+        : '-';
+    
+    document.getElementById('patient-passages-title').textContent = `Historique: ${patientName}`;
+    document.getElementById('patient-passages-summary').innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 0.8125rem;">
+            <div><strong>Total passages:</strong> ${patientEntries.length}</div>
+            <div><strong>Montant total:</strong> ${totalAmount.toFixed(2)}€</div>
+            <div><strong>Période:</strong> ${dateRange}</div>
+            <div><strong>Lieux:</strong> ${uniqueLocations.join(', ')}</div>
+            <div><strong>Cotations:</strong> ${cotations.join(', ')}</div>
+        </div>
+    `;
+    
+    const tbody = document.getElementById('patient-passages-body');
+    if (patientEntries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Aucun passage trouvé</td></tr>';
+    } else {
+        tbody.innerHTML = patientEntries.map(e => {
+            const locationColor = getLocationColor(e.location);
+            return `
+                <tr>
+                    <td>${new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'numeric', year:'numeric'})}</td>
+                    <td><span class="location-badge" style="background:${locationColor}">${e.location}</span></td>
+                    <td>${e.cotation}</td>
+                    <td style="text-align: right;">${parseFloat(e.amount).toFixed(2)}€</td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    document.getElementById('patient-passages-modal').style.display = 'flex';
+};
 
 function renderDashboardLists() {
     updateMonthDisplayDashboard();
