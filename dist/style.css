@@ -3099,6 +3099,10 @@ h2 {
         height: 150px;
     }
     
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .chart-bars {
         gap: 8px;
     }
@@ -3115,6 +3119,10 @@ h2 {
         width: 100px;
         height: 100px;
         margin-bottom: 16px;
+    }
+    
+    .donut-wrapper {
+        flex-direction: column;
     }
     
     .donut-chart::after {
