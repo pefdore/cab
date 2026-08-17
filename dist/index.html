@@ -192,6 +192,31 @@ window.attemptLogin = function() {
             </div>
         </div>
 
+        <!-- VL Info Modal -->
+        <div id="vl-info-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3>Patients avec VL</h3>
+                    <button class="modal-close" onclick="closeModal('vl-info-modal')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p style="font-size: 0.875rem; line-height: 1.5;">
+                        Cette section affiche les patients ayant eu une <strong>Visite Longue (VL)</strong> ces 90 derniers jours.
+                    </p>
+                    <ul style="font-size: 0.8125rem; margin-top: 12px; padding-left: 20px; line-height: 1.6;">
+                        <li>La date de fin de validité (90 jours) est affichée</li>
+                        <li>Le badge <span style="background: #22c55e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">✓</span> indique que le patient est éligible à une nouvelle VL</li>
+                        <li>Un chiffre indique le nombre de jours restants avant la nouvelle VL</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeModal('vl-info-modal')">Fermer</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Relevé Upload Modal (standalone) -->
         <div id="releve-upload-modal" class="modal-overlay" style="display: none; z-index: 10000;">
             <div class="modal-card" style="max-width: 540px; width: 95%; max-height: 85vh; overflow-y: auto;">
@@ -450,7 +475,7 @@ window.attemptLogin = function() {
                 </div>
 
                 <div class="recent-section">
-                    <h3>Patients avec VL <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="tooltip-text">Patients ayant eu une visite longue (VL) ces 90 derniers jours, avec indication des délais avant nouvelle VL possible.</span></span></h3>
+                    <h3>Patients avec VL <span class="cabinet-tooltip" tabindex="0" onclick="openInfoModal('vl-info-modal')" style="cursor: pointer;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span></h3>
                     <div id="dashboardVLList" class="recent-vl-list" style="max-height: 150px; overflow-y: auto;"></div>
                 </div>
 

@@ -9,6 +9,11 @@ window.closeModal = function(modalId) {
     if (modal) modal.style.display = 'none';
 };
 
+window.openInfoModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'flex';
+};
+
 // ============================================
 // AUTHENTIFICATION - Module complet et robuste
 // ============================================
