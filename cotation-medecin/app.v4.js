@@ -3063,6 +3063,14 @@ function renderCharts() {
 }
 
 function showMonthPopup(month, total, ehpad, medecin) {
+    const medecinVal = parseFloat(medecin) || 0;
+    const ehpadVal = parseFloat(ehpad) || 0;
+    const totalVal = parseFloat(total) || 0;
+    const retentionRate = 0.10;
+    const retentionMedecin = medecinVal * retentionRate;
+    const netMedecin = medecinVal - retentionMedecin;
+    const netTotal = ehpadVal + netMedecin;
+    
     let popup = document.getElementById('monthPopup');
     if (!popup) {
         popup = document.createElement('div');
@@ -3091,6 +3099,14 @@ function showMonthPopup(month, total, ehpad, medecin) {
                         <span class="popup-label"><span class="dot-medecin"></span> Médecine/SSR</span>
                         <span class="popup-value" id="popupMedecin"></span>
                     </div>
+                    <div class="popup-row retention">
+                        <span class="popup-label"><span class="dot-retention"></span> Retenue hopital (10%)</span>
+                        <span class="popup-value" id="popupRetention"></span>
+                    </div>
+                    <div class="popup-row net">
+                        <span class="popup-label"><span class="dot-net"></span> Net à percevoir</span>
+                        <span class="popup-value" id="popupNet"></span>
+                    </div>
                 </div>
             </div>
         `;
@@ -3101,9 +3117,11 @@ function showMonthPopup(month, total, ehpad, medecin) {
     }
     
     document.getElementById('popupMonthTitle').textContent = month + ' 2026';
-    document.getElementById('popupTotal').textContent = total + '€';
-    document.getElementById('popupEhpad').textContent = ehpad + '€';
-    document.getElementById('popupMedecin').textContent = medecin + '€';
+    document.getElementById('popupTotal').textContent = totalVal.toFixed(2) + '€';
+    document.getElementById('popupEhpad').textContent = ehpadVal.toFixed(2) + '€';
+    document.getElementById('popupMedecin').textContent = medecinVal.toFixed(2) + '€';
+    document.getElementById('popupRetention').textContent = retentionMedecin.toFixed(2) + '€';
+    document.getElementById('popupNet').textContent = netTotal.toFixed(2) + '€';
     popup.style.display = 'flex';
 }
 

@@ -4922,6 +4922,24 @@ h2 {
     color: white;
 }
 
+.popup-row.retention {
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+    color: white;
+}
+
+.popup-row.net {
+    background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+    color: white;
+}
+
+.dot-retention, .dot-net {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    background: white;
+}
+
 .popup-label {
     display: flex;
     align-items: center;
