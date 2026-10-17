@@ -108,8 +108,13 @@ pdf.add_font("DejaVu", "B", os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"))
 pdf.add_font("DejaVu", "I", os.path.join(FONT_DIR, "DejaVuSans-Oblique.ttf"))
 
 def entete(pdf, refs, avec_retenue):
+    logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo.jpg")
+    if os.path.exists(logo):
+        pdf.image(logo, x=18, y=12, w=22)
     pdf.set_font("DejaVu", "B", 11)
     pdf.set_text_color(0, 0, 0)
+    pdf.multi_cell(0, 6, "", align="C")
+    pdf.set_y(pdf.get_y() + 0)
     pdf.multi_cell(0, 6, "CENTRE HOSPITALIER SAINT JEAN\n63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE", align="C")
     pdf.ln(4)
     pdf.set_font("DejaVu", "B", 14)
@@ -256,7 +261,56 @@ pdf.set_font("DejaVu", "B", 11)
 pdf.cell(0, 6, "Docteur DORE", align="R")
 
 out = "/workspace/demo-pdf-option-b/honoraires_demo.pdf"
-pdf.output(out)
+
+pdf.add_page()
+logo = "/workspace/demo-pdf-option-b/logo.jpg"
+if os.path.exists(logo):
+    pdf.image(logo, x=18, y=12, w=22)
+pdf.set_font("DejaVu", "B", 11)
+pdf.set_text_color(0, 0, 0)
+pdf.set_y(40)
+pdf.multi_cell(0, 6, "CENTRE HOSPITALIER SAINT JEAN\n63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE", align="C")
+pdf.ln(6)
+pdf.set_font("DejaVu", "B", 13)
+pdf.multi_cell(0, 7, "LISTE DES PATIENTS VUS", align="C")
+pdf.ln(2)
+pdf.set_font("DejaVu", "B", 10)
+pdf.write(6, "Mois de : ")
+pdf.set_font("DejaVu", "U", 10)
+pdf.write(6, MOIS.upper())
+pdf.ln(10)
+
+import random
+random.seed(42)
+noms = ["BERTRAND Margot", "LE GALL Hervé", "MARTIN Solène", "DUVAL Jacques", "QUERRIEN Yves",
+        "GAUTIER Nicole", "PERRIN Camille", "LE ROUX Bernard", "THOMAS Janine", "COIC Monique",
+        "RIO Monique", "GENDRY Alain", "BRIANT Louise", "CHARPIN Gilbert", "MERCIER Raymonde",
+        "OGÉ Sylvie", "PAITARD Denise", "ROBIN Ernest", "SIMON Odette", "VAUGRENARD Yvonne"]
+lieux = ["SSR", "Médecine", "Availles", "Lilas Rdc", "Lilas 1er", "Tamaris"]
+cotations = ["G", "VG", "MPA", "VG+MD", "VL", "VL+MD", "VG+MU", "ALQP003"]
+
+WP = [24, 34, 62, 30, 32]
+pdf.set_font("DejaVu", "B", 9)
+pdf.set_fill_color(230, 230, 230)
+for h, w in zip(["Date", "Médecin", "Nom patient", "Lieu", "Cotation"], WP):
+    pdf.cell(w, 7, h, border=1, align="C", fill=True)
+pdf.ln()
+pdf.set_font("DejaVu", "", 8)
+patients = sorted(
+    [(f"2026-01-{d:02d}", random.choice(noms), random.choice(lieux), random.choice(cotations))
+     for d in range(2, 29)],
+    key=lambda t: t[0],
+)
+for date, nom, lieu, cot in patients:
+    pdf.cell(WP[0], 6.5, date, border=1, align="C")
+    pdf.cell(WP[1], 6.5, "Dr DORE", border=1, align="C")
+    pdf.cell(WP[2], 6.5, nom, border=1)
+    pdf.cell(WP[3], 6.5, lieu, border=1, align="C")
+    pdf.cell(WP[4], 6.5, cot, border=1, align="C")
+    pdf.ln()
+
 print("PDF généré :", out)
 print(f"Page 1 : total {fmt(total)} €, retenue {fmt(retenue)} €, à verser {fmt(averser)} € ({en_lettres(averser)})")
 print(f"Page 2 : total EHPAD {fmt(total_ehpad)} € ({en_lettres(total_ehpad)})")
+
+pdf.output(out)
