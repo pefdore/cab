@@ -185,26 +185,23 @@ pdf.ln(8)
 W = [26, 20, 46, 22, 32, 34]
 
 def entete_tableau_ehpad():
-    pdf.set_font("DejaVu", "B", 9)
+    pdf.set_font("DejaVu", "B", 7.5)
     pdf.set_fill_color(230, 230, 230)
     for h, w in zip(["Services", "Nombre", "Actes", "Prix", "Montant par actes", "Total par service"], W):
-        pdf.cell(w, 8, h, border=1, align="C", fill=True)
+        pdf.cell(w, 6, h, border=1, align="C", fill=True)
     pdf.ln()
 
 entete_tableau_ehpad()
 
 total_ehpad = 0
-RH = 8
+RH = 4.7
 for service, actes in EHPAD.items():
     total_service = sum(n * TARIFS[a] for a, n in actes.items())
     total_ehpad += total_service
     premier = True
     for key, libelle in ACTES_EHPAD:
         n = actes.get(key, 0)
-        if pdf.get_y() + RH > 280:
-            pdf.add_page()
-            entete_tableau_ehpad()
-        pdf.set_font("DejaVu", "", 9)
+        pdf.set_font("DejaVu", "", 7.5)
         pdf.cell(W[0], RH, service if premier else "", border=1, align="C")
         premier = False
         pdf.cell(W[1], RH, str(n), border=1, align="C")
