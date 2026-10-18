@@ -2814,35 +2814,41 @@ function downloadPDF(id) {
         return;
     }
     
-    // Fix: ensure proper data URI format
-    let downloadUrl = pdfData;
-    if (pdfData.includes('filename=generated.pdf;')) {
-        downloadUrl = pdfData.replace('filename=generated.pdf;', '');
-        console.log('[DOWNLOAD] Fixed URL format');
-    }
-    
     const monthName = record.monthName || record.monthKey || 'document';
     const fileName = 'honoraires-' + monthName + '.pdf';
     
-    console.log('[DOWNLOAD] Creating download link for:', fileName);
-    console.log('[DOWNLOAD] Download URL (first 50):', downloadUrl.substring(0, 50));
-    
     try {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        
-        if (isMobile) {
-            // On mobile, open in new tab
-            window.open(downloadUrl, '_blank');
+        // Convertir le data-URI en Blob : marche partout (desktop + mobile),
+        // évite window.open sur data:URI bloqué par les navigateurs mobiles
+        let byteString;
+        let mimeType = 'application/pdf';
+        if (pdfData.startsWith('data:')) {
+            const commaIdx = pdfData.indexOf(',');
+            const header = pdfData.substring(5, commaIdx);
+            const isBase64 = /;base64/.test(header);
+            mimeType = header.split(';')[0] || mimeType;
+            if (pdfData.startsWith('data:text/html')) {
+                mimeType = 'text/html';
+            }
+            const payload = pdfData.substring(commaIdx + 1);
+            byteString = isBase64 ? atob(payload) : decodeURIComponent(payload);
         } else {
-            // On desktop, use download link
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            byteString = pdfData;
         }
-        console.log('[DOWNLOAD] Done!');
+        const ext = mimeType === 'text/html' ? 'html' : 'pdf';
+        const bytes = new Uint8Array(byteString.length);
+        for (let i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i);
+        const blob = new Blob([bytes], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName.replace(/\.pdf$/, '') + '.' + ext;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        console.log('[DOWNLOAD] Done via blob:', link.download);
     } catch (error) {
         console.error('Erreur téléchargement PDF:', error);
         alert('Erreur lors du téléchargement: ' + error.message);
