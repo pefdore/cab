@@ -134,8 +134,8 @@ const MARGE = 18
 const LARGEUR = 210 - 2 * MARGE
 
 function newDoc(): any {
+  // marges passees au constructeur (jsPDF n'a pas de setMargins)
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
-  doc.setMargins(MARGE, 12, MARGE)
   return doc
 }
 
@@ -209,7 +209,10 @@ function tableauMedecine(doc: any, y: number, passages: Passage[]): { total: num
   doc.setLineWidth(0.2)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  headers.forEach((h, i) => doc.rect(cumSum(col, i), y, col[i], 8, 'FD') || doc.text(h, cumSum(col, i) + col[i] / 2, y + 5.5, { align: 'center' }))
+  headers.forEach((h, i) => {
+    doc.rect(cumSum(col, i), y, col[i], 8, 'FD')
+    doc.text(h, cumSum(col, i) + col[i] / 2, y + 5.5, { align: 'center' })
+  })
   y += 8
   doc.setFont('helvetica', 'normal')
 
@@ -226,7 +229,10 @@ function tableauMedecine(doc: any, y: number, passages: Passage[]): { total: num
     const montant = n * tarif(acte)
     total += montant
     const cells = [String(n), acte, fmt(tarif(acte)), fmt(montant)]
-    cells.forEach((c, i) => doc.rect(cumSum(col, i), y, col[i], 8) || doc.text(c, i >= 1 ? cumSum(col, i) + col[i] / 2 : cumSum(col, i) + col[i] / 2, y + 5.5, { align: 'center' }))
+    cells.forEach((c, i) => {
+      doc.rect(cumSum(col, i), y, col[i], 8)
+      doc.text(c, cumSum(col, i) + col[i] / 2, y + 5.5, { align: 'center' })
+    })
     y += 8
     lignes++
   }
@@ -269,7 +275,10 @@ function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: strin
   doc.setFillColor(230, 230, 230)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7.5)
-  headers.forEach((h, i) => doc.rect(cumSum(W, i), y, W[i], 6, 'FD') || doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y + 4, { align: 'center' }))
+  headers.forEach((h, i) => {
+    doc.rect(cumSum(W, i), y, W[i], 6, 'FD')
+    doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y + 4, { align: 'center' })
+  })
   y += 6
   doc.setFont('helvetica', 'normal')
 
@@ -342,7 +351,10 @@ function pagePatients(doc: any, passages: Passage[], moisLabel: string, dateStr:
     doc.setFillColor(230, 230, 230)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
-    headers.forEach((h, i) => doc.rect(cumSum(WP, i), y, WP[i], 7, 'FD') || doc.text(h, cumSum(WP, i) + WP[i] / 2, y + 5, { align: 'center' }))
+    headers.forEach((h, i) => {
+      doc.rect(cumSum(WP, i), y, WP[i], 7, 'FD')
+      doc.text(h, cumSum(WP, i) + WP[i] / 2, y + 5, { align: 'center' })
+    })
     y += 7
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
@@ -357,7 +369,10 @@ function pagePatients(doc: any, passages: Passage[], moisLabel: string, dateStr:
       enteteTableau()
     }
     const cells = [p.date || '-', 'Dr DORE', (p.patients?.name || 'Inconnu').substring(0, 28), p.location || '', p.cotation || '']
-    cells.forEach((c, i) => doc.rect(cumSum(WP, i), y, WP[i], 6.5) || doc.text(String(c), i === 2 ? cumSum(WP, i) + 2 : cumSum(WP, i) + WP[i] / 2, y + 4.7, { align: i === 2 ? 'left' : 'center' }))
+    cells.forEach((c, i) => {
+      doc.rect(cumSum(WP, i), y, WP[i], 6.5)
+      doc.text(String(c), i === 2 ? cumSum(WP, i) + 2 : cumSum(WP, i) + WP[i] / 2, y + 4.7, { align: i === 2 ? 'left' : 'center' })
+    })
     y += 6.5
     count++
   }
