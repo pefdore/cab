@@ -127,8 +127,11 @@ try {
         console.error('[AUTH] loadCabinetData error:', e);
     }
     
-    // NOW switch to dashboard and render - data is ready
-    switchView('dashboard');
+    // NOW switch to the view the user was on before reload (dashboard by default) - data is ready
+    let lastView = 'dashboard';
+    try { lastView = sessionStorage.getItem('cab_current_view') || 'dashboard'; } catch (e) {}
+    if (['dashboard', 'add', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
+    switchView(lastView);
     
     // Expose currentUser and supabaseClient globally for other modules
     window.currentUser = currentUser;
@@ -3873,7 +3876,7 @@ document.getElementById('deleteAllData')?.addEventListener('click', async () => 
 });
 
 function switchView(viewName) {
-    // Close settings overlay on mobile when navigating away
+    try { sessionStorage.setItem('cab_current_view', viewName); } catch (e) {}
     if (viewName !== 'settings') {
         const overlay = document.querySelector('.settings-page-overlay');
         if (overlay) overlay.classList.remove('active');
@@ -3929,6 +3932,9 @@ function switchView(viewName) {
         renderCharts();
     } else if (viewName === 'history') {
         renderHistory();
+        if (typeof loadDocuments === 'function') {
+            loadDocuments();
+        }
     } else if (viewName === 'settings') {
         // Reset to settings menu
         closeSettingsPage();
