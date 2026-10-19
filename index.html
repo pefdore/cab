@@ -2725,7 +2725,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610191500" defer></script>
+    <script src="app.v5.js?v=202610191600" defer></script>
     <script src="secretariat.js?v=202610191100" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3860,9 +3860,16 @@ window.attemptLogin = function() {
 
           const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
           const cumSum = (arr, upto) => { let s = MARGE; for (let i = 0; i < upto; i++) s += arr[i]; return s; };
-          const ls = window.localStorage.getItem('userSettings');
-          const settingsObj = ls ? JSON.parse(ls) : {};
-          const logoData = settingsObj.logo || null;
+          // Logo : objet settings global (charge depuis Supabase par loadUserSettings),
+          // identique a renderLogoPreview ; localStorage en secours
+          let logoData = null;
+          try { logoData = (typeof settings !== 'undefined' && settings && settings.logo) ? settings.logo : null; } catch (e) {}
+          if (!logoData) {
+            try {
+              const ls = window.localStorage.getItem('userSettings');
+              logoData = ls ? (JSON.parse(ls).logo || null) : null;
+            } catch (e) {}
+          }
 
           const entete = (refs, avecRetenue) => {
             if (logoData) { try { doc.addImage(logoData, 'JPEG', MARGE, 12, 23.5, 20); } catch (e) {} }
