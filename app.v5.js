@@ -3511,20 +3511,36 @@ function setupSettingsDelegation() {
         } else if (t.id === 'notifEmail') {
             saveNotifPref('notif_email', t.checked);
             showToast(t.checked ? 'Email mensuel activé' : 'Email mensuel désactivé');
+        } else if (t.id === 'pdfShowDoctorName') {
+            saveSetting('pdf_show_doctor_name', t.checked ? 'true' : 'false');
+        } else if (t.id === 'pdfShowNir') {
+            saveSetting('pdf_show_nir', t.checked ? 'true' : 'false');
+        } else if (t.id === 'pdfRepeatTotal') {
+            saveSetting('pdf_repeat_total', t.checked ? 'true' : 'false');
+        } else if (t.id === 'prefAnimations') {
+            saveSetting('pref_animations', t.checked ? 'true' : 'false');
+            applyAnimationsPref();
+            showToast(t.checked ? 'Animations activées' : 'Animations désactivées');
+        } else if (t.id === 'prefConfirmDelete') {
+            saveSetting('pref_confirm_delete', t.checked ? 'true' : 'false');
+        }
+    });
+
+    document.addEventListener('change', (e) => {
+        const t = e.target;
+        if (t.id === 'prefDecimalSeparator') {
+            saveSetting('pref_decimal_separator', t.value);
+            showToast(t.value === 'dot' ? 'Montants au format 30.50 €' : 'Montants au format 30,50 €');
+        } else if (t.id === 'prefDefaultAddView') {
+            saveSetting('pref_default_add_view', t.value);
+            showToast(t.value === 'depenses' ? 'Dépenses/Recettes par défaut' : 'Passages par défaut');
         }
     });
 }
 
 // Show a settings sub-page inside the mobile overlay clone
 function showOverlaySettingsPage(overlay, pageName) {
-    const pageNames = {
-        'profil': 'Profil',
-        'cotation': 'Cotations',
-        'pdf': 'PDF',
-        'preferences': 'Préférences',
-        'donnees': 'Données'
-    };
-    const displayName = pageNames[pageName] || pageName;
+    const meta = SETTINGS_PAGES[pageName] || { title: pageName, subtitle: '' };
 
     const menu = overlay.querySelector('.settings-menu');
     if (menu) menu.style.display = 'none';
@@ -3532,17 +3548,22 @@ function showOverlaySettingsPage(overlay, pageName) {
     const page = overlay.querySelector(`#settings-page-${pageName}`);
     if (page) { page.style.display = 'block'; page.classList.add('active'); }
 
-    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-    if (logoutBtn) logoutBtn.style.display = 'none';
+    const backBtn = overlay.querySelector('#settingsBackBtn');
+    if (backBtn) backBtn.style.display = 'flex';
 
     const h2 = overlay.querySelector('h2');
     if (h2) {
-        h2.innerHTML = `<span class="back-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span> <span class="page-title">${displayName}</span>`;
+        h2.innerHTML = `<span class="back-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span> <span class="page-title">${meta.title}</span>`;
         const backLink = h2.querySelector('.back-link');
         if (backLink) {
             backLink.addEventListener('click', () => resetOverlaySettings(overlay));
         }
     }
+    const subtitleEl = overlay.querySelector('#settingsSubtitle');
+    if (subtitleEl) subtitleEl.textContent = meta.subtitle;
+
+    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+    if (logoutBtn) logoutBtn.style.display = 'none';
 
     if (pageName === 'profil') {
         const ln = overlay.querySelector('#profileLastname');
@@ -3568,6 +3589,7 @@ function showOverlaySettingsPage(overlay, pageName) {
                     if (error) throw error;
                     if (currentProfile) { currentProfile.last_name = lastname; currentProfile.first_name = firstname; }
                     showToast('Profil mis à jour');
+                    updateSettingsMenuValues();
                 } catch (err) {
                     showToast('Erreur lors de la mise à jour: ' + (err.message || err), 'error');
                 }
@@ -3597,18 +3619,17 @@ function showOverlaySettingsPage(overlay, pageName) {
         }
     } else if (pageName === 'pdf') {
         renderLogoPreview();
+        loadPdfPrefs();
     } else if (pageName === 'preferences') {
         loadTheme();
         loadNotifPrefs();
+        loadUiPrefs();
         loadOpenRouterKey();
     } else if (pageName === 'cotation') {
         renderSettingsCotationList();
     } else if (pageName === 'donnees') {
         loadDataCounters();
     }
-
-    const logoutBtn2 = overlay.querySelector('.mobile-logout-btn');
-    if (logoutBtn2) logoutBtn2.style.display = 'none';
 }
 
 // Back to the settings main menu inside the mobile overlay
@@ -3616,50 +3637,61 @@ function resetOverlaySettings(overlay) {
     const menu = overlay.querySelector('.settings-menu');
     if (menu) menu.style.display = 'flex';
     overlay.querySelectorAll('.settings-page').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+    const backBtn = overlay.querySelector('#settingsBackBtn');
+    if (backBtn) backBtn.style.display = 'none';
     const h2 = overlay.querySelector('h2');
     if (h2) h2.innerHTML = 'Paramètres';
+    const subtitleEl = overlay.querySelector('#settingsSubtitle');
+    if (subtitleEl) subtitleEl.textContent = 'Gérez votre compte et vos préférences';
     const logoutBtn = overlay.querySelector('.mobile-logout-btn');
     if (logoutBtn) logoutBtn.style.display = 'flex';
+    updateSettingsMenuValues();
 }
 
 // Settings page navigation
+const SETTINGS_PAGES = {
+    'profil': { title: 'Profil', subtitle: 'Vos informations personnelles et votre mot de passe' },
+    'cotation': { title: 'Cotations', subtitle: 'Vos clés de cotation et montants' },
+    'pdf': { title: 'PDF & Documents', subtitle: 'Logo, signature et options du PDF' },
+    'preferences': { title: 'Préférences', subtitle: 'Thème, cotation hors cabinet et notifications' },
+    'donnees': { title: 'Données', subtitle: 'Compteur, export et suppression de vos données' }
+};
+
+function updateSettingsHeader(pageName, inOverlay) {
+    const root = inOverlay ? document.querySelector('.settings-page-overlay') : document;
+    if (!root) return;
+    const backBtn = root.querySelector('#settingsBackBtn');
+    const title = root.querySelector('#settingsTitle, h2');
+    const subtitle = root.querySelector('#settingsSubtitle');
+    if (pageName) {
+        const meta = SETTINGS_PAGES[pageName] || { title: pageName, subtitle: '' };
+        if (backBtn) backBtn.style.display = 'flex';
+        if (title) title.textContent = meta.title;
+        if (subtitle) subtitle.textContent = meta.subtitle;
+    } else {
+        if (backBtn) backBtn.style.display = 'none';
+        if (title) title.textContent = 'Paramètres';
+        if (subtitle) subtitle.textContent = 'Gérez votre compte et vos préférences';
+    }
+}
+
 async function openSettingsPage(pageName) {
     const menu = document.getElementById('settings-menu');
-    const backBtn = document.getElementById('settingsBackBtn');
-    const title = document.querySelector('#view-settings h2');
-    
-    // Page names mapping to display names
-    const pageNames = {
-        'profil': 'Profil',
-        'cotation': 'Cotations',
-        'pdf': 'PDF',
-        'preferences': 'Préférences',
-        'donnees': 'Données'
-    };
-    
-    // Hide back button only for preferences page (the main settings page)
-    // Show for all other sub-pages (profil, pdf, cotation, donnees)
-    const hideBackButton = pageName === 'preferences';
-    
-    if (backBtn) {
-        backBtn.style.display = hideBackButton ? 'none' : 'flex';
-    }
-    if (title) {
-        title.textContent = pageNames[pageName] || pageName;
-    }
-    
+    updateSettingsHeader(pageName, false);
+
     if (menu) menu.style.display = 'none';
-    
+
     // Hide all settings pages
-    document.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
-    
+    document.querySelectorAll('#view-settings .settings-page').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+
     // Show the selected page
     const page = document.getElementById(`settings-page-${pageName}`);
     if (page) {
         page.style.display = 'block';
         page.classList.add('active');
+        page.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    
+
     // Load data for specific pages
     if (pageName === 'profil') {
         loadProfileData();
@@ -3667,8 +3699,11 @@ async function openSettingsPage(pageName) {
         renderSettingsCotationList();
     } else if (pageName === 'pdf') {
         renderLogoPreview();
+        loadPdfPrefs();
     } else if (pageName === 'preferences') {
         loadTheme();
+        loadNotifPrefs();
+        loadUiPrefs();
         await loadOpenRouterKey();
     } else if (pageName === 'googlesheets') {
         loadGoogleSheetsSettings();
@@ -3679,19 +3714,16 @@ async function openSettingsPage(pageName) {
 
 function closeSettingsPage() {
     const menu = document.getElementById('settings-menu');
-    const backBtn = document.getElementById('settingsBackBtn');
-    const title = document.querySelector('#view-settings h2');
-    
+    updateSettingsHeader(null, false);
+
     if (menu) menu.style.display = 'flex';
-    if (backBtn) backBtn.style.display = 'none';
-    if (title) title.textContent = 'Paramètres';
-    
+
     // Hide all settings pages
     document.querySelectorAll('.settings-page').forEach(p => {
         p.style.display = 'none';
         p.classList.remove('active');
     });
-    
+
     // Close mobile overlay if open
     const overlay = document.querySelector('.settings-page-overlay');
     if (overlay) overlay.classList.remove('active');
@@ -4294,47 +4326,8 @@ function switchView(viewName) {
                 overlay.innerHTML = settingsSection.innerHTML;
                 document.body.appendChild(overlay);
                 
-                // Set up click handlers for settings cards in overlay
-                overlay.querySelectorAll('.settings-card').forEach(card => {
-                    card.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const pageName = card.dataset.settingsPage;
-                        const pageNames = {
-                            'profil': 'Profil',
-                            'cotation': 'Cotations',
-                            'pdf': 'PDF',
-                            'preferences': 'Préférences',
-                            'donnees': 'Données'
-                        };
-                        const displayName = pageNames[pageName] || pageName;
-                        
-                        if (pageName) {
-                            // Hide menu
-                            const menu = overlay.querySelector('.settings-menu');
-                            if (menu) menu.style.display = 'none';
-                            
-                            // Hide all settings pages in overlay
-                            overlay.querySelectorAll('.settings-page').forEach(p => p.style.display = 'none');
-                            
-                            // Show selected page
-                            const page = overlay.querySelector(`#settings-page-${pageName}`);
-                            if (page) {
-                                page.style.display = 'block';
-                                page.classList.add('active');
-                            }
-                            
-                            // Masquer le bouton déconnexion sur les sous-pages
-                            const logoutBtn = overlay.querySelector('.mobile-logout-btn');
-                            if (logoutBtn) logoutBtn.style.display = 'none';
-                            
-                            // Show sub-page header with back link above title
-                            const h2 = overlay.querySelector('h2');
-                            if (h2) {
-                                h2.innerHTML = `<span class="back-link" onclick="const o=this.closest('.settings-page-overlay');o.querySelectorAll('.settings-page').forEach(p=>{p.style.display='none';p.classList.remove('active')});const m=o.querySelector('.settings-menu');if(m)m.style.display='flex';o.querySelector('h2').innerHTML='Paramètres';const lb=o.querySelector('.mobile-logout-btn');if(lb)lb.style.display='flex'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span><span class="page-title">${displayName}</span>`;
-                            }
-                        }
-                    });
-                });
+                // Settings cards clicks are handled by the global delegation
+                // (setupSettingsDelegation routes to showOverlaySettingsPage)
                 
                 // Set up tabs in overlay
                 overlay.querySelectorAll('.settings-tab').forEach(tab => {
@@ -5340,7 +5333,8 @@ async function generatePDF() {
             { match: ['tamaris'], label: 'Tamaris' },
         ];
         const norm = s => (s || '').toLowerCase().trim();
-        const fmt = x => x.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €';
+        const decSep = (typeof settings !== 'undefined' && settings.pref_decimal_separator === 'dot') ? '.' : ',';
+        const fmt = x => x.toFixed(2).replace('.', decSep).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €';
 
         // ==== Montant en toutes lettres ====
         const UNITS = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
@@ -5436,7 +5430,8 @@ async function generatePDF() {
             }
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(11);
-            doc.text('Docteur ' + ((currentProfile && currentProfile.last_name) || 'DORE'), 210 - MARGE, y + 40, { align: 'right' });
+            const showDoctor = (typeof settings !== 'undefined' && settings.pdf_show_doctor_name !== 'false');
+            if (showDoctor) doc.text('Docteur ' + ((currentProfile && currentProfile.last_name) || 'DORE'), 210 - MARGE, y + 40, { align: 'right' });
         };
 
         const locations = { 'Medecine': false, 'SSR': false, 'Lilas Rdc': true, 'Lilias RdC': true, 'Lilas 1er étage': true, 'Lilas 1er': true, 'Lilias 1er étage': true, 'Lilias 1er': true, 'Tamaris': true, 'Availles': true };
@@ -6745,6 +6740,7 @@ async function loadUserSettings() {
     renderLogoPreview();
     loadTheme();
     applyCotationVisibility();
+    updateSettingsMenuValues();
 }
 
 function getSetting(key) {
@@ -6813,6 +6809,55 @@ function handleThemeSelect(theme) {
     });
     document.documentElement.setAttribute('data-theme', theme);
     saveSetting('theme', theme);
+}
+
+// PDF preferences (page PDF)
+function loadPdfPrefs() {
+    const doctor = getSetting('pdf_show_doctor_name');
+    const nir = getSetting('pdf_show_nir');
+    const repeat = getSetting('pdf_repeat_total');
+    document.querySelectorAll('#pdfShowDoctorName').forEach(el => { el.checked = doctor !== 'false'; });
+    document.querySelectorAll('#pdfShowNir').forEach(el => { el.checked = nir === 'true'; });
+    document.querySelectorAll('#pdfRepeatTotal').forEach(el => { el.checked = repeat !== 'false'; });
+}
+
+// UI preferences (page Préférences)
+function loadUiPrefs() {
+    const anims = getSetting('pref_animations');
+    const decSep = getSetting('pref_decimal_separator');
+    const addView = getSetting('pref_default_add_view');
+    const confirmDel = getSetting('pref_confirm_delete');
+    document.querySelectorAll('#prefAnimations').forEach(el => { el.checked = anims !== 'false'; });
+    document.querySelectorAll('#prefDecimalSeparator').forEach(el => { el.value = decSep || 'comma'; });
+    document.querySelectorAll('#prefDefaultAddView').forEach(el => { el.value = addView || 'passages'; });
+    document.querySelectorAll('#prefConfirmDelete').forEach(el => { el.checked = confirmDel !== 'false'; });
+    applyAnimationsPref();
+}
+
+function applyAnimationsPref() {
+    const anims = getSetting('pref_animations');
+    document.documentElement.classList.toggle('no-anim', anims === 'false');
+}
+
+// Summary values on the settings menu cards
+function updateSettingsMenuValues() {
+    const profilVal = document.querySelectorAll('#menuProfilValue');
+    const name = (currentProfile && (currentProfile.first_name || currentProfile.last_name))
+        ? [currentProfile.first_name, currentProfile.last_name].filter(Boolean).join(' ')
+        : '';
+    profilVal.forEach(el => { el.textContent = name || ''; });
+
+    const pdfVal = document.querySelectorAll('#menuPdfValue');
+    const hasLogo = !!(settings.logo);
+    const hasSig = !!(settings.signature);
+    pdfVal.forEach(el => { el.textContent = [hasLogo ? 'Logo ✓' : null, hasSig ? 'Signature ✓' : null].filter(Boolean).join(' · ') || 'Aucun logo ni signature'; });
+
+    const prefsVal = document.querySelectorAll('#menuPrefsValue');
+    const theme = getSetting('theme') || 'light';
+    prefsVal.forEach(el => { el.textContent = 'Thème ' + (theme === 'dark' ? 'sombre' : 'clair'); });
+
+    const dataVal = document.querySelectorAll('#menuDataValue');
+    dataVal.forEach(el => { el.textContent = (typeof entries !== 'undefined' && entries.length) ? entries.length + ' passages' : ''; });
 }
 
 function loadNotifPrefs() {
