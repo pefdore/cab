@@ -2725,7 +2725,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610191100" defer></script>
+    <script src="app.v5.js?v=202610191200" defer></script>
     <script src="secretariat.js?v=202610191100" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3810,7 +3810,10 @@ window.attemptLogin = function() {
             .lt(now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01')
             .order('date', { ascending: true });
 
-          if (passagesError) throw passagesError;
+          if (passagesError) {
+            console.error('[PDF PASSAGE] Erreur chargement passages:', passagesError);
+            throw new Error('Chargement des passages impossible: ' + (passagesError.message || JSON.stringify(passagesError)));
+          }
           if (!passages || passages.length === 0) {
             alert('Aucun passage trouvé pour ' + monthDisplay);
             return;
@@ -4002,14 +4005,17 @@ window.attemptLogin = function() {
           const blob = await fetch(pdfBase64).then(r => r.blob());
           const file = new File([blob], fileName, { type: 'application/pdf' });
 
-          const filePath = 'passages/' + prevMonthKey + '/' + Date.now() + '-' + fileName;
+          const filePath = 'passages/' + prevMonthKey + '-' + Date.now() + '.pdf';
 
           const { data: uploadData, error: uploadError } = await window.supabaseClient
             .storage
             .from('documents')
-            .upload(filePath, file);
+            .upload(filePath, file, { upsert: true });
 
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('[PDF PASSAGE] Upload Storage error:', uploadError);
+            throw new Error('Upload du fichier impossible: ' + (uploadError.message || JSON.stringify(uploadError)));
+          }
 
           const { data: urlData } = window.supabaseClient
             .storage
@@ -4032,7 +4038,10 @@ window.attemptLogin = function() {
             .from('documents')
             .insert(docRecord);
 
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('[PDF PASSAGE] Insert documents error:', insertError);
+            throw new Error('Enregistrement du document impossible: ' + (insertError.message || JSON.stringify(insertError)));
+          }
 
           console.log('[PDF PASSAGE] PDF generated and saved successfully!');
 
