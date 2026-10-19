@@ -1118,14 +1118,17 @@ window.attemptLogin = function() {
             <!-- Settings View -->
             <section id="view-settings" class="view">
                 <!-- Settings Header -->
-                <div class="settings-header">
-                    <button class="settings-back-btn" id="settingsBackBtn" style="display: none;" onclick="closeSettingsPage()">
+                <div class="settings-header" id="settingsHeader">
+                    <button class="settings-back-btn" id="settingsBackBtn" style="display: none;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 12H5M12 19l-7-7 7-7"/>
                         </svg>
                         <span>Retour</span>
                     </button>
-                    <h2>Paramètres</h2>
+                    <div class="settings-title-block">
+                        <h2 id="settingsTitle">Paramètres</h2>
+                        <span class="settings-subtitle" id="settingsSubtitle">Gérez votre compte et vos préférences</span>
+                    </div>
                 </div>
 
                 <!-- Settings Menu (main page) -->
@@ -1139,12 +1142,12 @@ window.attemptLogin = function() {
                         <div class="settings-card-content">
                             <h3>Profil</h3>
                             <p>Informations du compte et mot de passe</p>
+                            <span class="settings-card-value" id="menuProfilValue"></span>
                         </div>
                         <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M9 18l6-6-6-6"/>
                         </svg>
                     </button>
-
                     <button type="button" class="settings-card" data-settings-page="pdf" onclick="openSettingsPage('pdf')">
                         <div class="settings-card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -1152,14 +1155,14 @@ window.attemptLogin = function() {
                             </svg>
                         </div>
                         <div class="settings-card-content">
-                            <h3>PDF</h3>
+                            <h3>PDF & Documents</h3>
                             <p>Logo, signature et modèle</p>
+                            <span class="settings-card-value" id="menuPdfValue"></span>
                         </div>
                         <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M9 18l6-6-6-6"/>
                         </svg>
                     </button>
-
                     <button type="button" class="settings-card" data-settings-page="preferences" onclick="openSettingsPage('preferences')">
                         <div class="settings-card-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -1168,15 +1171,15 @@ window.attemptLogin = function() {
                         </div>
                         <div class="settings-card-content">
                             <h3>Préférences</h3>
-                            <p>Thème et notifications</p>
+                            <p>Thème, cotation hors cabinet et notifications</p>
+                            <span class="settings-card-value" id="menuPrefsValue"></span>
                         </div>
                         <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M9 18l6-6-6-6"/>
                         </svg>
                     </button>
-
                     <button type="button" class="settings-card" data-settings-page="donnees" onclick="openSettingsPage('donnees')">
-                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
                                 <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
                             </svg>
@@ -1184,14 +1187,14 @@ window.attemptLogin = function() {
                         <div class="settings-card-content">
                             <h3>Données</h3>
                             <p>Exporter ou supprimer vos données</p>
+                            <span class="settings-card-value" id="menuDataValue"></span>
                         </div>
                         <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M9 18l6-6-6-6"/>
                         </svg>
                     </button>
                 </div>
-
-                <!-- Profil Page -->
+                                <!-- Profil Page -->
                 <div id="settings-page-profil" class="settings-page" style="display: none;">
                     <div class="settings-section">
                         <h3>Informations du compte</h3>
@@ -1261,7 +1264,7 @@ window.attemptLogin = function() {
                 <div id="settings-page-pdf" class="settings-page" style="display: none;">
                     <div class="settings-section">
                         <h3>Logo du PDF</h3>
-                        <p class="settings-desc">Uploadez le logo de l'établissement (affiché en haut à gauche)</p>
+                        <p class="settings-desc">Uploadez le logo de l'établissement (affiché en haut à gauche du PDF)</p>
                         <div class="logo-upload-wrapper">
                             <div class="logo-preview" id="logoPreview">
                                 <img id="logoImage" src="" alt="Logo" style="display: none;">
@@ -1271,11 +1274,12 @@ window.attemptLogin = function() {
                             <button id="uploadLogoBtn" class="add-btn">Choisir une image</button>
                             <button id="removeLogoBtn" class="remove-btn" style="display: none;">Supprimer</button>
                         </div>
+                        <p class="settings-hint">Le logo est automatiquement redimensionné (800px max) pour un PDF léger</p>
                     </div>
                     
                     <div class="settings-section">
                         <h3>Signature</h3>
-                        <p class="settings-desc">Uploadez votre signature (affichée en bas de page)</p>
+                        <p class="settings-desc">Uploadez votre signature (affichée en bas de page du PDF)</p>
                         <div class="logo-upload-wrapper">
                             <div class="logo-preview" id="signaturePreview">
                                 <img id="signatureImage" src="" alt="Signature" style="display: none;">
@@ -1284,6 +1288,41 @@ window.attemptLogin = function() {
                             <input type="file" id="signatureInput" accept="image/*" style="display: none;">
                             <button id="uploadSignatureBtn" class="add-btn">Choisir une image</button>
                             <button id="removeSignatureBtn" class="remove-btn" style="display: none;">Supprimer</button>
+                        </div>
+                        <p class="settings-hint">Signature redimensionnée automatiquement (500px max)</p>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Options du PDF</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Nom du médecin sur le PDF</span>
+                                <span class="preference-desc">Afficher « Docteur … » en en-tête des feuilles</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="pdfShowDoctorName">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Numéro de sécurité sociale du patient</span>
+                                <span class="preference-desc">Inclure le NIR du patient dans les tableaux</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="pdfShowNir">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Ligne de total par page</span>
+                                <span class="preference-desc">Répeter le total du mois en bas de chaque page</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="pdfRepeatTotal">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                     
@@ -1295,14 +1334,13 @@ window.attemptLogin = function() {
                         </a>
                     </div>
                 </div>
-
-                <!-- Préférences Page -->
+                                <!-- Préférences Page -->
                 <div id="settings-page-preferences" class="settings-page" style="display: none;">
                     <div class="settings-section" id="cotation-settings-section">
                         <h3>Cotation hors cabinet</h3>
                         <div class="preference-item" style="display: flex;">
                             <div class="preference-info">
-                                <span class="preference-label">Cotation hors cabinet</span>
+                                <span class="preference-label">Activer</span>
                                 <span class="preference-desc">Afficher les sections de gestion des passages et du DAB</span>
                             </div>
                             <label class="toggle cotation-toggle-wrap" title="Activer / désactiver la cotation hors cabinet">
@@ -1334,6 +1372,50 @@ window.attemptLogin = function() {
                                 </button>
                             </div>
                         </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Animations</span>
+                                <span class="preference-desc">Transitions et effets visuels de l'interface</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="prefAnimations" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Format des montants</span>
+                                <span class="preference-desc">Séparateur décimal des montants affichés</span>
+                            </div>
+                            <select id="prefDecimalSeparator" class="settings-select">
+                                <option value="comma">Virgule (30,50 €)</option>
+                                <option value="dot">Point (30.50 €)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Saisie des passages</h3>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Vue par défaut à l'ajout</span>
+                                <span class="preference-desc">Écran ouvert par défaut quand on ajoute une entrée</span>
+                            </div>
+                            <select id="prefDefaultAddView" class="settings-select">
+                                <option value="passages">Passages</option>
+                                <option value="depenses">Dépenses / Recettes</option>
+                            </select>
+                        </div>
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <span class="preference-label">Confirmer avant suppression</span>
+                                <span class="preference-desc">Demander confirmation pour supprimer un passage</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="prefConfirmDelete" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
                     
                     <div class="settings-section">
@@ -1359,7 +1441,6 @@ window.attemptLogin = function() {
                             </label>
                         </div>
                     </div>
-
                     <div class="settings-section">
                         <h3>Intelligence Artificielle</h3>
                         <p class="settings-desc">Configurez l'accès aux modèles IA pour l'analyse financière.</p>
@@ -1372,8 +1453,7 @@ window.attemptLogin = function() {
                         </div>
                     </div>
                 </div>
-
-                <!-- Données Page -->
+                                <!-- Données Page -->
                 <div id="settings-page-donnees" class="settings-page" style="display: none;">
                     <div class="settings-section">
                         <h3>Vos données</h3>
@@ -2754,7 +2834,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610231200" defer></script>
+    <script src="app.v5.js?v=202610241200" defer></script>
     <script src="secretariat.js?v=202610191100" defer></script>
     <script>
       // Toggle form function for mobile
