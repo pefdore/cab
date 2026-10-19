@@ -2664,11 +2664,12 @@ function renderSettingsCotationList() {
     const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
     const customCotations = settings.customCotations || [];
     
-    // Get unique cotations from user's entries
-    supabase.from('entries')
-        .select('cotation_key, amount')
+    // Get unique cotations from user's passages
+    supabaseClient.from('passages')
+        .select('cotation, amount')
         .eq('user_id', currentUser.id)
         .then(({ data }) => {
+            data = (data || []).map(e => ({ cotation_key: e.cotation, amount: e.amount }));
             if (data && data.length > 0) {
                 // Group by cotation_key and get average amount
                 const cotationsMap = {};
@@ -3017,42 +3018,28 @@ function renderCabinetHistory() {
 }
 
 function renderLogoPreview() {
-    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
-    
-    const logoImg = document.getElementById('logoImage');
-    const logoPlaceholder = document.getElementById('logoPlaceholder');
-    const logoPreview = document.getElementById('logoPreview');
-    const removeLogoBtn = document.getElementById('removeLogoBtn');
-    
-    if (settings.logo) {
-        if (logoImg) {
-            logoImg.src = settings.logo;
-            logoImg.style.display = 'block';
-        }
-        if (logoPlaceholder) logoPlaceholder.style.display = 'none';
-        if (removeLogoBtn) removeLogoBtn.style.display = 'inline-block';
-    } else {
-        if (logoImg) logoImg.style.display = 'none';
-        if (logoPlaceholder) logoPlaceholder.style.display = 'block';
-        if (removeLogoBtn) removeLogoBtn.style.display = 'none';
-    }
-    
-    const sigImg = document.getElementById('signatureImage');
-    const sigPlaceholder = document.getElementById('signaturePlaceholder');
-    const removeSigBtn = document.getElementById('removeSignatureBtn');
-    
-    if (settings.signature) {
-        if (sigImg) {
-            sigImg.src = settings.signature;
-            sigImg.style.display = 'block';
-        }
-        if (sigPlaceholder) sigPlaceholder.style.display = 'none';
-        if (removeSigBtn) removeSigBtn.style.display = 'inline-block';
-    } else {
-        if (sigImg) sigImg.style.display = 'none';
-        if (sigPlaceholder) sigPlaceholder.style.display = 'block';
-        if (removeSigBtn) removeSigBtn.style.display = 'none';
-    }
+    let lsLogo = null, lsSig = null;
+    try {
+        const ls = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        lsLogo = ls.logo || null;
+        lsSig = ls.signature || null;
+    } catch (e) {}
+    const logo = settings.logo || lsLogo;
+    const signature = settings.signature || lsSig;
+
+    document.querySelectorAll('#logoImage').forEach(img => {
+        if (logo) { img.src = logo; img.style.display = 'block'; }
+        else { img.style.display = 'none'; }
+    });
+    document.querySelectorAll('#logoPlaceholder').forEach(el => { el.style.display = logo ? 'none' : 'block'; });
+    document.querySelectorAll('#removeLogoBtn').forEach(el => { el.style.display = logo ? 'inline-block' : 'none'; });
+
+    document.querySelectorAll('#signatureImage').forEach(img => {
+        if (signature) { img.src = signature; img.style.display = 'block'; }
+        else { img.style.display = 'none'; }
+    });
+    document.querySelectorAll('#signaturePlaceholder').forEach(el => { el.style.display = signature ? 'none' : 'block'; });
+    document.querySelectorAll('#removeSignatureBtn').forEach(el => { el.style.display = signature ? 'inline-block' : 'none'; });
 }
 
 function init() {
@@ -3304,41 +3291,7 @@ function setupEventListeners() {
     
     document.getElementById('saveCustomCotation')?.addEventListener('click', saveCustomCotation);
     
-    // Logo upload
-    document.getElementById('uploadLogoBtn')?.addEventListener('click', () => {
-        document.getElementById('logoInput').click();
-    });
-    
-    document.getElementById('logoInput')?.addEventListener('change', handleLogoUpload);
-    
-    document.getElementById('removeLogoBtn')?.addEventListener('click', async () => {
-        await saveSetting('logo', null);
-        renderLogoPreview();
-    });
-    
-    document.getElementById('uploadSignatureBtn')?.addEventListener('click', () => {
-        document.getElementById('signatureInput').click();
-    });
-    
-    document.getElementById('signatureInput')?.addEventListener('change', handleSignatureUpload);
-    
-    document.getElementById('removeSignatureBtn')?.addEventListener('click', async () => {
-        await saveSetting('signature', null);
-        renderLogoPreview();
-    });
-    
-    // Settings cards navigation (new page-based system)
-    document.querySelectorAll('.settings-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const page = card.dataset.settingsPage;
-            openSettingsPage(page);
-        });
-    });
-    
-    // Settings back button
-    document.getElementById('settingsBackBtn')?.addEventListener('click', () => {
-        closeSettingsPage();
-    });
+    setupSettingsDelegation();
     
     // Cabinet tabs
     document.querySelectorAll('.cabinet-tab').forEach(tab => {
@@ -3392,6 +3345,232 @@ function handleSignatureUpload(e) {
         renderLogoPreview();
     };
     reader.readAsDataURL(file);
+}
+
+// Delegated event handling for the Settings view (works in desktop view AND mobile overlay clone)
+function setupSettingsDelegation() {
+    document.addEventListener('click', (e) => {
+        const t = e.target;
+
+        const settingsCard = t.closest('.settings-card');
+        if (settingsCard) {
+            e.preventDefault();
+            const pageName = settingsCard.dataset.settingsPage;
+            openSettingsPage(pageName);
+            const overlay = settingsCard.closest('.settings-page-overlay');
+            if (overlay) showOverlaySettingsPage(overlay, pageName);
+            return;
+        }
+
+        if (t.closest('#settingsBackBtn')) {
+            const overlay = t.closest('.settings-page-overlay');
+            if (overlay) resetOverlaySettings(overlay);
+            else closeSettingsPage();
+            return;
+        }
+
+        if (t.closest('#uploadLogoBtn')) {
+            e.preventDefault();
+            const input = t.closest('.logo-upload-wrapper')?.querySelector('#logoInput') || getSettingsInput('logoInput');
+            if (input) input.click();
+            return;
+        }
+
+        if (t.closest('#removeLogoBtn')) {
+            e.preventDefault();
+            saveSetting('logo', null);
+            return;
+        }
+
+        if (t.closest('#uploadSignatureBtn')) {
+            e.preventDefault();
+            const input = t.closest('.logo-upload-wrapper')?.querySelector('#signatureInput') || getSettingsInput('signatureInput');
+            if (input) input.click();
+            return;
+        }
+
+        if (t.closest('#removeSignatureBtn')) {
+            e.preventDefault();
+            saveSetting('signature', null);
+            return;
+        }
+
+        if (t.closest('#saveProfileBtn')) {
+            e.preventDefault();
+            document.getElementById('saveProfileBtn')?.click();
+            return;
+        }
+
+        if (t.closest('#exportCSV')) {
+            e.preventDefault();
+            const btn = document.getElementById('exportCSV');
+            if (btn && !btn.contains(t)) btn.click();
+            return;
+        }
+
+        if (t.closest('#exportJSON')) {
+            e.preventDefault();
+            const btn = document.getElementById('exportJSON');
+            if (btn && !btn.contains(t)) btn.click();
+            return;
+        }
+
+        if (t.closest('#exportPDF')) {
+            e.preventDefault();
+            const btn = document.getElementById('exportPDF');
+            if (btn && !btn.contains(t)) btn.click();
+            return;
+        }
+
+        if (t.closest('#deleteAllData')) {
+            e.preventDefault();
+            const btn = document.getElementById('deleteAllData');
+            if (btn && !btn.contains(t)) btn.click();
+            return;
+        }
+
+        if (t.closest('#changePasswordBtn')) {
+            e.preventDefault();
+            const btn = document.getElementById('changePasswordBtn');
+            if (btn && !btn.contains(t)) btn.click();
+            return;
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        const cotationBtn = e.target.closest('#cotationToggleBtn');
+        if (cotationBtn) {
+            e.preventDefault();
+            const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
+            window.toggleCotationEnabled(!isEnabled);
+        }
+    });
+
+    document.addEventListener('change', (e) => {
+        const t = e.target;
+        if (t.id === 'logoInput' && t.files && t.files[0]) {
+            const file = t.files[0];
+            const reader = new FileReader();
+            reader.onload = async () => { await saveSetting('logo', reader.result); };
+            reader.readAsDataURL(file);
+            t.value = '';
+        } else if (t.id === 'signatureInput' && t.files && t.files[0]) {
+            const file = t.files[0];
+            const reader = new FileReader();
+            reader.onload = async () => { await saveSetting('signature', reader.result); };
+            reader.readAsDataURL(file);
+            t.value = '';
+        } else if (t.id === 'notifVL') {
+            saveNotifPref('notif_vl', t.checked);
+        } else if (t.id === 'notifEmail') {
+            saveNotifPref('notif_email', t.checked);
+        }
+    });
+}
+
+// Show a settings sub-page inside the mobile overlay clone
+function showOverlaySettingsPage(overlay, pageName) {
+    const pageNames = {
+        'profil': 'Profil',
+        'cotation': 'Cotations',
+        'pdf': 'PDF',
+        'preferences': 'Préférences',
+        'donnees': 'Données'
+    };
+    const displayName = pageNames[pageName] || pageName;
+
+    const menu = overlay.querySelector('.settings-menu');
+    if (menu) menu.style.display = 'none';
+    overlay.querySelectorAll('.settings-page').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+    const page = overlay.querySelector(`#settings-page-${pageName}`);
+    if (page) { page.style.display = 'block'; page.classList.add('active'); }
+
+    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+
+    const h2 = overlay.querySelector('h2');
+    if (h2) {
+        h2.innerHTML = `<span class="back-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span> <span class="page-title">${displayName}</span>`;
+        const backLink = h2.querySelector('.back-link');
+        if (backLink) {
+            backLink.addEventListener('click', () => resetOverlaySettings(overlay));
+        }
+    }
+
+    if (pageName === 'profil') {
+        const ln = overlay.querySelector('#profileLastname');
+        const fn = overlay.querySelector('#profileFirstname');
+        const em = overlay.querySelector('#profileEmail');
+        const rl = overlay.querySelector('#profileRole');
+        if (currentProfile) {
+            if (ln) ln.value = currentProfile.last_name || '';
+            if (fn) fn.value = currentProfile.first_name || '';
+            if (rl) rl.value = currentProfile.role || 'medecin_installe';
+        }
+        if (em && currentUser) { em.value = currentUser.email || ''; em.readOnly = true; }
+
+        const saveBtn = overlay.querySelector('#saveProfileBtn');
+        if (saveBtn && !saveBtn.dataset.bound) {
+            saveBtn.dataset.bound = '1';
+            saveBtn.addEventListener('click', async () => {
+                const lastname = (overlay.querySelector('#profileLastname')?.value || '').trim();
+                const firstname = (overlay.querySelector('#profileFirstname')?.value || '').trim();
+                if (!lastname || !firstname) { alert('Veuillez remplir tous les champs'); return; }
+                try {
+                    const { error } = await supabaseClient.from('profiles').update({ last_name: lastname, first_name: firstname }).eq('id', currentUser.id);
+                    if (error) throw error;
+                    if (currentProfile) { currentProfile.last_name = lastname; currentProfile.first_name = firstname; }
+                    alert('Profil mis à jour');
+                } catch (err) {
+                    alert('Erreur lors de la mise à jour: ' + (err.message || err));
+                }
+            });
+        }
+        const cpwBtn = overlay.querySelector('#changePasswordBtn');
+        if (cpwBtn && !cpwBtn.dataset.bound) {
+            cpwBtn.dataset.bound = '1';
+            cpwBtn.addEventListener('click', async () => {
+                const cur = overlay.querySelector('#currentPassword')?.value;
+                const nw = overlay.querySelector('#newPassword')?.value;
+                const cf = overlay.querySelector('#confirmPassword')?.value;
+                if (!cur || !nw || !cf) { alert('Veuillez remplir tous les champs'); return; }
+                if (nw !== cf) { alert('Les mots de passe ne correspondent pas'); return; }
+                if (nw.length < 6) { alert('Le mot de passe doit contenir au moins 6 caractères'); return; }
+                try {
+                    const { error } = await supabaseClient.auth.updateUser({ password: nw });
+                    if (error) throw error;
+                    overlay.querySelector('#currentPassword').value = '';
+                    overlay.querySelector('#newPassword').value = '';
+                    overlay.querySelector('#confirmPassword').value = '';
+                    alert('Mot de passe modifié');
+                } catch (err) {
+                    alert('Erreur: ' + (err.message || err));
+                }
+            });
+        }
+    } else if (pageName === 'pdf') {
+        renderLogoPreview();
+    } else if (pageName === 'preferences') {
+        loadTheme();
+        loadNotifPrefs();
+        loadOpenRouterKey();
+    } else if (pageName === 'cotation') {
+        renderSettingsCotationList();
+    }
+
+    const logoutBtn2 = overlay.querySelector('.mobile-logout-btn');
+    if (logoutBtn2) logoutBtn2.style.display = 'none';
+}
+
+// Back to the settings main menu inside the mobile overlay
+function resetOverlaySettings(overlay) {
+    const menu = overlay.querySelector('.settings-menu');
+    if (menu) menu.style.display = 'flex';
+    overlay.querySelectorAll('.settings-page').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+    const h2 = overlay.querySelector('h2');
+    if (h2) h2.innerHTML = 'Paramètres';
+    const logoutBtn = overlay.querySelector('.mobile-logout-btn');
+    if (logoutBtn) logoutBtn.style.display = 'flex';
 }
 
 // Settings page navigation
@@ -3696,90 +3875,104 @@ window.callLLM = async function(prompt, taskType) {
 // Profile functions
 async function loadProfileData() {
     if (!currentUser) return;
-    
-    document.getElementById('profileLastname').value = currentUser.lastname || '';
-    document.getElementById('profileFirstname').value = currentUser.firstname || '';
-    document.getElementById('profileEmail').value = currentUser.email || '';
-    document.getElementById('profileRole').value = currentUser.role || '';
-}
 
+    if (!currentProfile) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            if (!error && data) currentProfile = data;
+        } catch (e) {
+            console.error('[PROFILE] loadProfileData error:', e);
+        }
+    }
+
+    const lastname = (currentProfile && currentProfile.last_name) || '';
+    const firstname = (currentProfile && currentProfile.first_name) || '';
+    const role = (currentProfile && currentProfile.role) || '';
+
+    document.querySelectorAll('#profileLastname').forEach(el => { el.value = lastname; });
+    document.querySelectorAll('#profileFirstname').forEach(el => { el.value = firstname; });
+    document.querySelectorAll('#profileEmail').forEach(el => { el.value = currentUser.email || ''; el.readOnly = true; });
+    document.querySelectorAll('#profileRole').forEach(el => { el.value = role || 'medecin_installe'; });
+}
 document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
-    const lastname = document.getElementById('profileLastname').value.trim();
-    const firstname = document.getElementById('profileFirstname').value.trim();
-    const email = document.getElementById('profileEmail').value.trim();
-    
-    if (!lastname || !firstname || !email) {
+    const lastnameEl = getSettingsInput('profileLastname');
+    const firstnameEl = getSettingsInput('profileFirstname');
+    if (!lastnameEl || !firstnameEl) return;
+    const lastname = lastnameEl.value.trim();
+    const firstname = firstnameEl.value.trim();
+
+    if (!lastname || !firstname) {
         alert('Veuillez remplir tous les champs');
         return;
     }
-    
+
     try {
-        const { error } = await supabase.from('users').update({
-            lastname,
-            firstname,
-            email
+        const { error } = await supabaseClient.from('profiles').update({
+            last_name: lastname,
+            first_name: firstname
         }).eq('id', currentUser.id);
-        
+
         if (error) throw error;
-        
-        currentUser.lastname = lastname;
-        currentUser.firstname = firstname;
-        currentUser.email = email;
-        localStorage.setItem('cotation_user', JSON.stringify(currentUser));
-        
+
+        if (currentProfile) {
+            currentProfile.last_name = lastname;
+            currentProfile.first_name = firstname;
+        }
+
         alert('Profil mis à jour');
     } catch (err) {
         console.error('Error updating profile:', err);
-        alert('Erreur lors de la mise à jour');
+        alert('Erreur lors de la mise à jour: ' + (err.message || err));
     }
 });
-
 document.getElementById('changePasswordBtn')?.addEventListener('click', async () => {
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
+    const currentPasswordEl = getSettingsInput('currentPassword');
+    const newPasswordEl = getSettingsInput('newPassword');
+    const confirmPasswordEl = getSettingsInput('confirmPassword');
+    if (!currentPasswordEl || !newPasswordEl || !confirmPasswordEl) return;
+    const currentPassword = currentPasswordEl.value;
+    const newPassword = newPasswordEl.value;
+    const confirmPassword = confirmPasswordEl.value;
+
     if (!currentPassword || !newPassword || !confirmPassword) {
         alert('Veuillez remplir tous les champs');
         return;
     }
-    
+
     if (newPassword !== confirmPassword) {
         alert('Les mots de passe ne correspondent pas');
         return;
     }
-    
+
     if (newPassword.length < 6) {
         alert('Le mot de passe doit contenir au moins 6 caractères');
         return;
     }
-    
+
     try {
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        
+        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+
         if (error) throw error;
-        
-        document.getElementById('currentPassword').value = '';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmPassword').value = '';
-        
+
+        currentPasswordEl.value = '';
+        newPasswordEl.value = '';
+        confirmPasswordEl.value = '';
+
         alert('Mot de passe modifié');
     } catch (err) {
         console.error('Error changing password:', err);
-        alert('Erreur lors du changement de mot de passe');
+        alert('Erreur lors du changement de mot de passe: ' + (err.message || err));
     }
 });
-
-// Theme switcher
-document.querySelectorAll('.theme-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        const theme = btn.dataset.theme;
-        document.documentElement.setAttribute('data-theme', theme);
-        await saveSetting('theme', theme);
-    });
+// Theme switcher (delegated: works for the desktop view AND the mobile overlay clone)
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.theme-btn');
+    if (!btn) return;
+    handleThemeSelect(btn.dataset.theme);
 });
 
 // Cotation toggle handler - wrapper to handle the checkbox change
@@ -3798,8 +3991,8 @@ window.toggleCotationEnabled = async function(enabled) {
 };
 
 // Load saved theme
-async function loadTheme() {
-    const savedTheme = await getSetting('theme') || 'light';
+function loadTheme() {
+    const savedTheme = getSetting('theme') || 'light';
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.theme === savedTheme);
     });
@@ -3808,43 +4001,47 @@ async function loadTheme() {
 
 // Export functions
 document.getElementById('exportCSV')?.addEventListener('click', async () => {
-    const { data: entries } = await supabase
-        .from('entries')
-        .select('*')
+    if (!currentUser || !supabaseClient) { alert('Non connecté'); return; }
+    const { data: rows, error } = await supabaseClient
+        .from('passages')
+        .select('date, patients(name), location, cotation, amount')
+        .eq('user_id', currentUser.id)
         .order('date', { ascending: false });
-    
-    if (!entries || entries.length === 0) {
-        alert('Aucune donnée à exporter');
-        return;
-    }
-    
+
+    if (error) { alert('Erreur: ' + error.message); return; }
+    if (!rows || rows.length === 0) { alert('Aucune donnée à exporter'); return; }
+
     const headers = ['Date', 'Patient', 'Lieu', 'Cotation', 'Montant'];
-    const rows = entries.map(e => [
-        e.date,
-        e.patient_name,
-        e.location,
-        e.cotation_key,
-        e.amount
+    const csvRows = rows.map(e => [
+        e.date || '',
+        (e.patients && e.patients.name) || 'Inconnu',
+        (e.location || '').replace(/"/g, '""'),
+        e.cotation || '',
+        e.amount != null ? e.amount : ''
     ]);
-    
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    downloadFile(csv, 'cotation-export.csv', 'text/csv');
+    const csv = [headers, ...csvRows]
+        .map(row => row.map(v => `"${String(v)}"`).join(','))
+        .join('\n');
+    downloadFile('\ufeff' + csv, 'cotation-export.csv', 'text/csv;charset=utf-8');
 });
-
 document.getElementById('exportJSON')?.addEventListener('click', async () => {
-    const { data: entries } = await supabase
-        .from('entries')
-        .select('*')
+    if (!currentUser || !supabaseClient) { alert('Non connecté'); return; }
+    const { data: rows, error } = await supabaseClient
+        .from('passages')
+        .select('date, patient_id, location, cotation, amount')
+        .eq('user_id', currentUser.id)
         .order('date', { ascending: false });
-    
-    const json = JSON.stringify(entries, null, 2);
-    downloadFile(json, 'cotation-export.json', 'application/json');
-});
 
+    if (error) { alert('Erreur: ' + error.message); return; }
+    if (!rows || rows.length === 0) { alert('Aucune donnée à exporter'); return; }
+
+    downloadFile(JSON.stringify(rows, null, 2), 'cotation-export.json', 'application/json');
+});
 document.getElementById('exportPDF')?.addEventListener('click', () => {
-    generateMonthlyPDF();
+    const btn = getSettingsInput('exportPDF');
+    if (!btn) return;
+    generatePDF();
 });
-
 function downloadFile(content, filename, type) {
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
@@ -3857,21 +4054,25 @@ function downloadFile(content, filename, type) {
 
 // Delete all data
 document.getElementById('deleteAllData')?.addEventListener('click', async () => {
+    if (!currentUser || !supabaseClient) { alert('Non connecté'); return; }
     if (!confirm('Êtes-vous sûr de vouloir supprimer toutes vos données? Cette action est irréversible.')) {
         return;
     }
-    
     if (!confirm('Vraiment? Toutes les données seront perdues définitivement.')) {
         return;
     }
-    
+
     try {
-        await supabase.from('entries').delete().neq('id', 0);
-        alert('Toutes les données ont été supprimées');
+        const { error } = await supabaseClient
+            .from('passages')
+            .delete()
+            .eq('user_id', currentUser.id);
+        if (error) throw error;
+        alert('Toutes vos données ont été supprimées');
         location.reload();
     } catch (err) {
         console.error('Error deleting data:', err);
-        alert('Erreur lors de la suppression');
+        alert('Erreur lors de la suppression: ' + (err.message || err));
     }
 });
 
@@ -6358,67 +6559,133 @@ async function loadUserProfile() {
 }
 
 async function loadUserSettings() {
-    console.log('[SETTINGS] Loading user settings');
+    console.log('[SETTINGS] Loading user settings (key/value)');
     try {
-        const { data } = await supabaseClient
+        const ls = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        Object.keys(ls).forEach(k => {
+            if (settings[k] === undefined || settings[k] === null) settings[k] = ls[k];
+        });
+    } catch (e) {
+        console.log('[SETTINGS] localStorage parse error:', e);
+    }
+
+    if (!currentUser || !supabaseClient) {
+        renderLogoPreview();
+        loadTheme();
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient
             .from('user_settings')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .single();
-        
-        if (data) {
-            window.userSettings = data;
-            console.log('[SETTINGS] Loaded');
+            .select('key, value')
+            .eq('user_id', currentUser.id);
+
+        if (error) {
+            console.error('[SETTINGS] Load error:', error);
+        } else if (data) {
+            data.forEach(s => {
+                settings[s.key] = s.value;
+                if (s.key === 'cotation_enabled') {
+                    localStorage.setItem('cotation_enabled', s.value);
+                }
+            });
+            window.userSettings = Object.assign({}, settings);
+            console.log('[SETTINGS] Loaded', data.length, 'settings');
         }
     } catch (e) {
-        console.log('[SETTINGS] No settings found');
+        console.error('[SETTINGS] Exception:', e);
     }
+
+    renderLogoPreview();
+    loadTheme();
+    applyCotationVisibility();
+}
+
+function getSetting(key) {
+    if (settings[key] !== undefined && settings[key] !== null) return settings[key];
+    try {
+        const ls = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        if (ls[key] !== undefined && ls[key] !== null) return ls[key];
+    } catch (e) {}
+    return null;
+}
+
+function getSettingsInput(id) {
+    const els = document.querySelectorAll('#' + id);
+    for (const el of els) {
+        if (el.offsetParent !== null) return el;
+    }
+    return els[0] || null;
 }
 
 async function saveSetting(key, value) {
-    if (!currentUser) return;
-    
-    const existing = await supabaseClient
-        .from('user_settings')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .single();
-    
-    if (existing.data) {
-        await supabaseClient
-            .from('user_settings')
-            .update({ [key]: value })
-            .eq('user_id', currentUser.id);
-    } else {
-        await supabaseClient
-            .from('user_settings')
-            .insert({ user_id: currentUser.id, [key]: value });
+    if (value === null) delete settings[key]; else settings[key] = value;
+
+    try {
+        const ls = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        if (value === null) delete ls[key]; else ls[key] = value;
+        localStorage.setItem('userSettings', JSON.stringify(ls));
+    } catch (e) {
+        console.error('[SETTINGS] localStorage update error:', e);
+    }
+    window.userSettings = Object.assign({}, settings);
+    renderLogoPreview();
+
+    if (!currentUser || !supabaseClient) return;
+    try {
+        if (value === null) {
+            await supabaseClient
+                .from('user_settings')
+                .delete()
+                .eq('user_id', currentUser.id)
+                .eq('key', key);
+        } else {
+            await supabaseClient
+                .from('user_settings')
+                .upsert({
+                    user_id: currentUser.id,
+                    key: key,
+                    value: value
+                }, {
+                    onConflict: 'user_id,key'
+                });
+        }
+    } catch (e) {
+        console.error('[SETTINGS] saveSetting error:', e);
     }
 }
 
-async function handleLogoUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = async () => {
-        await saveSetting('logo', reader.result);
-        renderLogoPreview();
-    };
-    reader.readAsDataURL(file);
+function handleThemeSelect(theme) {
+    document.querySelectorAll('.theme-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.theme === theme);
+    });
+    document.documentElement.setAttribute('data-theme', theme);
+    saveSetting('theme', theme);
 }
 
-async function handleSignatureUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = async () => {
-        await saveSetting('signature', reader.result);
-        renderLogoPreview();
-    };
-    reader.readAsDataURL(file);
+function loadNotifPrefs() {
+    const vl = getSetting('notif_vl');
+    const email = getSetting('notif_email');
+    document.querySelectorAll('#notifVL').forEach(el => {
+        el.checked = vl === null ? true : vl === 'true';
+    });
+    document.querySelectorAll('#notifEmail').forEach(el => {
+        el.checked = email === 'true';
+    });
 }
+
+function saveNotifPref(key, checked) {
+    saveSetting(key, checked ? 'true' : 'false');
+}
+
+window.getSetting = getSetting;
+window.saveSetting = saveSetting;
+window.handleThemeSelect = handleThemeSelect;
+
+
+
+
 
 // Expose login functions globally for mobile
 window.handleLoginClick = function() {
