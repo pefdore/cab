@@ -4945,23 +4945,23 @@ renderComptaSummary = function() {
 
 async function generatePDF() {
     console.log('[PDF] Starting generation...');
-    
+
     let jsPDF = null;
     if (window.jspdf && window.jspdf.jsPDF) {
         jsPDF = window.jspdf.jsPDF;
     } else if (window.jsPDF) {
         jsPDF = window.jsPDF;
     }
-    
+
     if (!jsPDF) {
         alert('Erreur: jsPDF non chargé. Attendez 2-3 secondes puis réessayez.');
         return;
     }
-    
+
     try {
         const monthDisplay = document.getElementById('currentMonthAdd')?.textContent || 'N/A';
         const monthKey = currentMonthAdd.getFullYear() + '-' + String(currentMonthAdd.getMonth() + 1).padStart(2, '0');
-        
+
         const monthEntries = entries.filter(e => {
             if (!e.date || !e.monthKey) return false;
             const [year, month] = e.monthKey.split('-');
@@ -4969,220 +4969,310 @@ async function generatePDF() {
             const entryYear = currentMonthAdd.getFullYear();
             return parseInt(month) === entryMonth && parseInt(year) === entryYear;
         });
-        
-        const doc = new jsPDF();
-        
-        const locations = {
-            'Medecine': { name: 'MÉDECINE', ehpad: false },
-            'SSR': { name: 'SSR', ehpad: false },
-            'Lilas Rdc': { name: 'LILIAS RdC', ehpad: true },
-            'Lilas 1er étage': { name: 'LILAS 1er étage', ehpad: true },
-            'Tamaris': { name: 'TAMARIS', ehpad: true }
+
+        // ==== Constantes de mise en page (modèle CH Saint Jean) ====
+        const MARGE = 18;
+        const LARGEUR = 210 - 2 * MARGE;
+        const TARIFS = { 'G': 30, 'VG': 40, 'MPA': 5, 'VG+MD': 40, 'VG+MU': 52.60, 'V+MU': 52.60, 'ALQP003': 69.12, 'ALQP006': 69.12, 'VL': 60, 'VL+MD': 70, 'VG+MD+MSH': 63, 'VG+MD+2IK': 41.22 };
+        const tarif = c => TARIFS[(c || '').toUpperCase().trim()] || 0;
+        const MEDECINE_ACTES = ['G', 'VG', 'MPA'];
+        const EHPAD_ACTES = ['G', 'VG+MD', 'VG+MU', 'V+MU', 'ALQP003', 'ALQP006', 'VL', 'VL+MD', 'VG+MD+MSH', 'VG+MD+2IK'];
+        const EHPAD_LIBELLES = { 'G': 'G', 'VG+MD': 'VG+MD', 'VG+MU': 'VG+MU ou V+MU', 'V+MU': 'VG+MU ou V+MU', 'ALQP003': 'ALQP003 (ou ALQP006)', 'ALQP006': 'ALQP003 (ou ALQP006)', 'VL': 'VL', 'VL+MD': 'VL+MD', 'VG+MD+MSH': 'VG+MD+MSH', 'VG+MD+2IK': 'VG+MD+2IK' };
+        const EHPAD_SERVICES = [
+            { match: ['availles'], label: 'Availles' },
+            { match: ['lilas rdc', 'lilias rdc'], label: 'Lilas Rdc' },
+            { match: ['lilas 1er', 'lilas 1er étage', 'lilas 1er etage', 'lilias 1er étage', 'lilias 1er etage', 'lilias 1er'], label: 'Lilas 1er' },
+            { match: ['tamaris'], label: 'Tamaris' },
+        ];
+        const norm = s => (s || '').toLowerCase().trim();
+        const fmt = x => x.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €';
+
+        // ==== Montant en toutes lettres ====
+        const UNITS = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+        const TENS = { 2: 'vingt', 3: 'trente', 4: 'quarante', 5: 'cinquante', 6: 'soixante', 7: 'soixante', 8: 'quatre-vingt', 9: 'quatre-vingt' };
+        const sousCent = n => {
+            if (n === 0) return '';
+            if (n < 20) return UNITS[n];
+            const t = Math.floor(n / 10), u = n % 10;
+            if (t === 8) return 'quatre-vingt' + (u === 0 ? 's' : '-' + UNITS[u]);
+            if (t === 7 || t === 9) return u === 0 ? TENS[t] : TENS[t] + '-' + UNITS[10 + u];
+            if (u === 0) return TENS[t];
+            if (u === 1) return TENS[t] + '-et-un';
+            return TENS[t] + '-' + UNITS[u];
         };
-        
-        const medicoSSR = monthEntries.filter(e => !locations[e.location]?.ehpad);
-        const ehpad = monthEntries.filter(e => locations[e.location]?.ehpad);
-        
-        // ========== PAGE 1: MÉDECIN SSR ==========
-        doc.addPage();
-        doc.setFillColor(240, 244, 252);
-        doc.rect(0, 0, 210, 40, 'F');
-        
-        doc.setFontSize(24);
-        doc.setTextColor(30, 41, 59);
-        doc.text('HONORAIRES', 105, 20, { align: 'center' });
-        
-        doc.setFontSize(16);
-        doc.text(monthDisplay.toUpperCase(), 105, 32, { align: 'center' });
-        
-        doc.setFontSize(14);
-        doc.setTextColor(99, 102, 241);
-        doc.text('MÉDECIN / SSR', 15, 55);
-        
-        doc.setFontSize(11);
-        doc.setTextColor(71, 85, 105);
-        
-        let y = 70;
-        doc.setFontSize(11);
-        
-        const medicoByCotation = {};
-        medicoSSR.forEach(e => {
-            if (!medicoByCotation[e.cotation]) {
-                medicoByCotation[e.cotation] = { count: 0, amount: 0 };
+        const troisChiffres = n => {
+            let s = '';
+            const c = Math.floor(n / 100), rest = n % 100;
+            if (c) s += UNITS[c] + ' cent' + (c > 1 && rest === 0 ? 's' : '');
+            if (rest) s += (s ? ' ' : '') + sousCent(rest);
+            return s;
+        };
+        const enLettres = montant => {
+            const total = Math.round(montant * 100);
+            const euros = Math.floor(total / 100), cents = total % 100;
+            const partie = [];
+            const mil = Math.floor(euros / 1000), reste = euros % 1000;
+            if (mil) partie.push((mil > 1 ? troisChiffres(mil) + ' ' : '') + 'mille');
+            if (reste) partie.push(troisChiffres(reste));
+            let texte = (partie.join(' ').trim() || 'zéro') + ' euros';
+            if (cents) texte += ' et ' + sousCent(cents) + ' centimes';
+            return texte;
+        };
+
+        // ==== Logo / signature utilisateur (Paramètres > Logo du PDF) ====
+        const logoData = settings.logo || null;
+        const signatureData = settings.signature || null;
+
+        const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+        const cumSum = (arr, upto) => { let s = MARGE; for (let i = 0; i < upto; i++) s += arr[i]; return s; };
+
+        const entete = (refs, avecRetenue) => {
+            if (logoData) {
+                try { doc.addImage(logoData, 'JPEG', MARGE, 12, 23.5, 20); } catch (e) { /* logo optionnel */ }
             }
-            medicoByCotation[e.cotation].count++;
-            medicoByCotation[e.cotation].amount += parseFloat(e.amount) || 0;
-        });
-        
-        const sortedMedico = Object.entries(medicoByCotation).sort((a, b) => b[1].amount - a[1].amount);
-        
-        doc.setFillColor(249, 250, 251);
-        doc.rect(15, y - 6, 180, 10, 'F');
-        doc.setFontSize(10);
-        doc.setTextColor(100, 116, 139);
-        doc.text('Acte', 20, y);
-        doc.text('Nombre', 110, y);
-        doc.text('Montant', 170, y);
-        
-        y += 10;
-        doc.setTextColor(30, 41, 59);
-        
-        sortedMedico.forEach(([cotation, data]) => {
-            doc.text(cotation, 20, y);
-            doc.text(String(data.count), 110, y);
-            doc.text(data.amount.toFixed(2) + ' €', 170, y);
-            y += 8;
-        });
-        
-        y += 5;
-        doc.setDrawColor(226, 232, 240);
-        doc.line(15, y, 195, y);
-        y += 10;
-        
-        doc.setFontSize(12);
-        doc.setTextColor(99, 102, 241);
-        doc.text('TOTAL MÉDECIN / SSR', 20, y);
-        const totalMedico = medicoSSR.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-        doc.text(totalMedico.toFixed(2) + ' €', 170, y);
-        doc.text('(' + medicoSSR.length + ' actes)', 100, y);
-        
-        // ========== PAGE 2: EHPAD ==========
-        doc.addPage();
-        doc.setFillColor(240, 244, 252);
-        doc.rect(0, 0, 210, 40, 'F');
-        
-        doc.setFontSize(24);
-        doc.setTextColor(30, 41, 59);
-        doc.text('HONORAIRES', 105, 20, { align: 'center' });
-        
-        doc.setFontSize(16);
-        doc.text(monthDisplay.toUpperCase(), 105, 32, { align: 'center' });
-        
-        doc.setFontSize(14);
-        doc.setTextColor(99, 102, 241);
-        doc.text('EHPAD', 15, 55);
-        
-        doc.setFontSize(11);
-        doc.setTextColor(71, 85, 105);
-        
-        y = 70;
-        
-        const ehpadByLocation = {};
-        ehpad.forEach(e => {
-            const loc = locations[e.location]?.name || e.location;
-            if (!ehpadByLocation[loc]) {
-                ehpadByLocation[loc] = {};
-            }
-            if (!ehpadByLocation[loc][e.cotation]) {
-                ehpadByLocation[loc][e.cotation] = { count: 0, amount: 0 };
-            }
-            ehpadByLocation[loc][e.cotation].count++;
-            ehpadByLocation[loc][e.cotation].amount += parseFloat(e.amount) || 0;
-        });
-        
-        const sortedLocations = Object.keys(ehpadByLocation).sort();
-        
-        sortedLocations.forEach(locName => {
+            doc.setFont('helvetica', 'bold');
             doc.setFontSize(12);
-            doc.setTextColor(30, 41, 59);
-            doc.text(locName, 20, y);
-            y += 8;
-            
-            doc.setFillColor(249, 250, 251);
-            doc.rect(15, y - 6, 180, 10, 'F');
-            doc.setFontSize(10);
-            doc.setTextColor(100, 116, 139);
-            doc.text('Acte', 20, y);
-            doc.text('Nombre', 110, y);
-            doc.text('Montant', 170, y);
-            
-            y += 10;
-            doc.setTextColor(30, 41, 59);
-            
-            const sortedCotations = Object.entries(ehpadByLocation[locName]).sort((a, b) => b[1].amount - a[1].amount);
-            
-            sortedCotations.forEach(([cotation, data]) => {
-                doc.text(cotation, 20, y);
-                doc.text(String(data.count), 110, y);
-                doc.text(data.amount.toFixed(2) + ' €', 170, y);
-                y += 8;
-            });
-            
-            y += 5;
-        });
-        
-        y += 5;
-        doc.setDrawColor(226, 232, 240);
-        doc.line(15, y, 195, y);
-        y += 10;
-        
-        doc.setFontSize(12);
-        doc.setTextColor(99, 102, 241);
-        doc.text('TOTAL EHPAD', 20, y);
-        const totalEhpad = ehpad.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-        doc.text(totalEhpad.toFixed(2) + ' €', 170, y);
-        doc.text('(' + ehpad.length + ' actes)', 100, y);
-        
-        // ========== PAGE 3+: LISTE COMPLÈTE ==========
-        doc.addPage();
-        doc.setFillColor(240, 244, 252);
-        doc.rect(0, 0, 210, 40, 'F');
-        
-        doc.setFontSize(24);
-        doc.setTextColor(30, 41, 59);
-        doc.text('LISTE DES PATIENTS', 105, 20, { align: 'center' });
-        
-        doc.setFontSize(16);
-        doc.text(monthDisplay.toUpperCase(), 105, 32, { align: 'center' });
-        
-        y = 55;
-        
-        doc.setFillColor(249, 250, 251);
-        doc.rect(15, y - 6, 180, 10, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(100, 116, 139);
-        doc.text('Date', 20, y);
-        doc.text('Patient', 50, y);
-        doc.text('Lieu', 110, y);
-        doc.text('Acte', 140, y);
-        doc.text('Montant', 175, y);
-        
-        y += 10;
-        
-        const sortedEntries = [...monthEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        sortedEntries.forEach((e, i) => {
-            if (y > 270) {
-                doc.addPage();
-                y = 30;
-            }
-            
-            doc.setTextColor(30, 41, 59);
+            doc.text('CENTRE HOSPITALIER SAINT JEAN', 42, 17);
             doc.setFontSize(9);
-            doc.text(e.date || '-', 20, y);
-            doc.text((e.patientName || '').substring(0, 25), 50, y);
-            doc.text((e.location || '').substring(0, 12), 110, y);
-            doc.text(e.cotation || '', 140, y);
-            doc.text((e.amount || '0') + ' €', 175, y);
-            
-            y += 7;
+            doc.text('63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE', 42, 23);
+            doc.setFontSize(13);
+            doc.text('HONORAIRES MEDICAUX', 105, 38, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text('EN SERVICES DE MEDECINE - SSR', 105, 45, { align: 'center' });
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('REFERENCES :', MARGE, 56);
+            doc.setFont('helvetica', 'normal');
+            const refsLines = doc.splitTextToSize(refs, LARGEUR - 22);
+            doc.text(refsLines, MARGE + 22, 56);
+            let y = 56 + refsLines.length * 5;
+            if (avecRetenue) {
+                const r = ['Les honoraires sont fixés à 100% de la valeur de l\'acte conventionné.', 'Sur ces honoraires est due à l\'établissement une redevance de 10% pour', 'participation aux frais de structure, de personnel et d\'équipements hospitaliers de l\'établissement.'];
+                doc.text(r, MARGE, y + 4);
+                y += 4 + r.length * 5 + 3;
+            }
+            doc.setFont('helvetica', 'bold');
+            doc.text('DESIGNATION : ', MARGE, y);
+            doc.setFont('helvetica', 'normal');
+            const nomComplet = (currentProfile && (currentProfile.first_name || currentProfile.last_name))
+                ? `Docteur ${currentProfile.last_name || ''} ${currentProfile.first_name || ''}`.trim()
+                : 'Docteur';
+            doc.text(doc.splitTextToSize(`${nomComplet}, Médecin généraliste, autorisé à exercer dans l\'établissement.`, LARGEUR - 26), MARGE + 26, y);
+            y += 5;
+            doc.text('CCM BETTON IBAN FR7615589351100287012394050', MARGE, y);
+            return y + 7;
+        };
+
+        const jour = new Date();
+        const dateStr = jour.getDate() + ' ' + ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'][jour.getMonth()] + ' ' + jour.getFullYear();
+
+        const memoire = (montant, y) => {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text('Arrêt le présent mémoire à la somme de :', MARGE, y);
+            doc.setFont('helvetica', 'bold');
+            const txt = enLettres(montant);
+            doc.text(doc.splitTextToSize(txt.charAt(0).toUpperCase() + txt.slice(1) + ' €', LARGEUR), MARGE, y + 6);
+            doc.setFont('helvetica', 'normal');
+            doc.text('La Guerche de Bretagne, le ' + dateStr, MARGE, y + 18);
+            if (signatureData) {
+                try { doc.addImage(signatureData, 'PNG', 140, y + 24, 50, 15); } catch (e) { /* signature optionnelle */ }
+            }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text('Docteur ' + ((currentProfile && currentProfile.last_name) || 'DORE'), 210 - MARGE, y + 40, { align: 'right' });
+        };
+
+        const locations = { 'Medecine': false, 'SSR': false, 'Lilas Rdc': true, 'Lilias RdC': true, 'Lilas 1er étage': true, 'Lilas 1er': true, 'Lilias 1er étage': true, 'Lilias 1er': true, 'Tamaris': true, 'Availles': true };
+        const isEhpad = e => locations[e.location] === true;
+
+        // ================= PAGE 1 : MEDECINE / SSR =================
+        const medicoSSR = monthEntries.filter(e => !isEhpad(e));
+        let y1 = entete("Application de la loi 2021-502 du 26 avril 2021 (notamment l'article 19) - Application des articles L 6146-2 et L 6146-41 du Code de la santé publique", true);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        y1 += 4;  // marge de securite
+        doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', MARGE, y1 + 6);
+        doc.text(monthDisplay.toUpperCase(), MARGE + 75, y1 + 6);
+        const wMois = doc.getTextWidth(monthDisplay.toUpperCase());
+        doc.setLineWidth(0.3);
+        doc.line(MARGE + 75, y1 + 7.2, MARGE + 75 + wMois, y1 + 7.2);
+        y1 += 10;
+
+        const col = [28, 58, 30, 58];
+        const medHeaders = ['Nombre', 'Actes', 'Prix', 'Montant'];
+        doc.setFillColor(230, 230, 230);
+        doc.setLineWidth(0.2);
+        medHeaders.forEach((h, i) => {
+            doc.rect(cumSum(col, i), y1, col[i], 8, 'FD');
+            doc.text(h, cumSum(col, i) + col[i] / 2, y1 + 5.5, { align: 'center' });
         });
-        
-        y += 10;
-        doc.setDrawColor(226, 232, 240);
-        doc.line(15, y, 195, y);
-        y += 10;
-        
+        y1 += 8;
+
+        const medByCotation = {};
+        medicoSSR.forEach(e => {
+            const c = (e.cotation || 'G').toUpperCase().trim();
+            medByCotation[c] = (medByCotation[c] || 0) + 1;
+        });
+
+        let totalMedico = 0;
+        doc.setFont('helvetica', 'normal');
+        MEDECINE_ACTES.forEach(acte => {
+            const n = medByCotation[acte] || 0;
+            const montant = n * tarif(acte);
+            totalMedico += montant;
+            const cells = [String(n), acte, fmt(tarif(acte)), fmt(montant)];
+            cells.forEach((c, i) => {
+                doc.rect(cumSum(col, i), y1, col[i], 8);
+                doc.text(c, cumSum(col, i) + col[i] / 2, y1 + 5.5, { align: 'center' });
+            });
+            y1 += 8;
+        });
+
+        const retenue = totalMedico * 0.10;
+        const verser = totalMedico - retenue;
+        y1 += 6;
+        doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
-        doc.setTextColor(99, 102, 241);
-        doc.text('TOTAL GÉNÉRAL', 20, y);
-        const totalAmount = monthEntries.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-        doc.text(totalAmount.toFixed(2) + ' €', 170, y);
-        
+        doc.text('Montant total', 134, y1, { align: 'right' });
+        doc.line(134, y1 - 5, 192, y1 - 5);
+        doc.text(fmt(totalMedico), 192, y1, { align: 'right' });
+        y1 += 8;
+        doc.text('Retenue 10%', 134, y1, { align: 'right' });
+        doc.text(fmt(retenue), 192, y1, { align: 'right' });
+        y1 += 8;
+        doc.text('Montant à verser', 134, y1, { align: 'right' });
+        doc.line(134, y1 - 5, 192, y1 - 5);
+        doc.line(134, y1 + 2, 192, y1 + 2);
+        doc.text(fmt(verser), 192, y1, { align: 'right' });
+        memoire(verser, 232);
+
+        // ================= PAGE 2 : EHPAD (1 page) =================
+        doc.addPage();
+        const ehpadEntries = monthEntries.filter(e => isEhpad(e));
+        let y2 = entete("contrat pluriannuel d'Objectif et de Moyens signés le 29 juin 2020 - Articles L 313-11, L 313-12, L313-12-2 du Code de l'Action Sociale et des Familles", false);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        y2 += 4;  // marge de securite
+        doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', MARGE, y2 + 6);
+        doc.text(monthDisplay.toUpperCase(), MARGE + 75, y2 + 6);
+        const wMois2 = doc.getTextWidth(monthDisplay.toUpperCase());
+        doc.setLineWidth(0.3);
+        doc.line(MARGE + 75, y2 + 7.2, MARGE + 75 + wMois2, y2 + 7.2);
+        y2 += 9;
+
+        const W = [26, 20, 46, 22, 32, 34];
+        const ehHeaders = ['Services', 'Nombre', 'Actes', 'Prix', 'Montant par actes', 'Total par service'];
+        doc.setFontSize(7.5);
+        ehHeaders.forEach((h, i) => {
+            doc.rect(cumSum(W, i), y2, W[i], 6, 'FD');
+            doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y2 + 4, { align: 'center' });
+        });
+        y2 += 6;
+
+        let totalEhpad = 0;
+        const RH = 4.7;
+        EHPAD_SERVICES.forEach(svc => {
+            const svcEntries = ehpadEntries.filter(e => svc.match.includes(norm(e.location)));
+            if (svcEntries.length === 0) return;
+            const byCot = {};
+            svcEntries.forEach(e => {
+                const c = (e.cotation || 'G').toUpperCase().trim();
+                byCot[c] = (byCot[c] || 0) + 1;
+            });
+            const totalSvc = Object.entries(byCot).reduce((s, [c, n]) => s + n * tarif(c), 0);
+            totalEhpad += totalSvc;
+            let premier = true;
+            const vus = {};
+            EHPAD_ACTES.forEach(acte => {
+                if (vus[EHPAD_LIBELLES[acte]]) return;
+                vus[EHPAD_LIBELLES[acte]] = true;
+                const n = byCot[acte] || 0;
+                const montant = n * tarif(acte);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7.5);
+                doc.rect(cumSum(W, 0), y2, W[0], RH);
+                if (premier) doc.text(svc.label, cumSum(W, 0) + W[0] / 2, y2 + 3.5, { align: 'center' });
+                doc.rect(cumSum(W, 1), y2, W[1], RH);
+                doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.5, { align: 'center' });
+                doc.rect(cumSum(W, 2), y2, W[2], RH);
+                doc.text(EHPAD_LIBELLES[acte], cumSum(W, 2) + W[2] / 2, y2 + 3.5, { align: 'center' });
+                doc.rect(cumSum(W, 3), y2, W[3], RH);
+                doc.text(fmt(tarif(acte)), cumSum(W, 3) + W[3] / 2, y2 + 3.5, { align: 'center' });
+                doc.rect(cumSum(W, 4), y2, W[4], RH);
+                doc.text(fmt(montant), cumSum(W, 4) + W[4] / 2, y2 + 3.5, { align: 'center' });
+                doc.rect(cumSum(W, 5), y2, W[5], RH);
+                if (premier) doc.text(fmt(totalSvc), cumSum(W, 5) + W[5] / 2, y2 + 3.5, { align: 'center' });
+                premier = false;
+                y2 += RH;
+            });
+        });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('MONTANT TOTAL :', 154, y2 + 8, { align: 'right' });
+        doc.text(fmt(totalEhpad), 192, y2 + 8, { align: 'right' });
+        memoire(totalEhpad, y2 + 16);
+
+        // ================= PAGE 3 : LISTE DES PATIENTS =================
+        doc.addPage();
+        if (logoData) {
+            try { doc.addImage(logoData, 'JPEG', MARGE, 12, 23.5, 20); } catch (e) { /* logo optionnel */ }
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('CENTRE HOSPITALIER SAINT JEAN', 42, 17);
+        doc.setFontSize(9);
+        doc.text('63, Faubourg de Rennes, 35130 LA GUERCHE DE BRETAGNE', 42, 23);
+        doc.setFontSize(13);
+        doc.text('LISTE DES PATIENTS VUS', 105, 40, { align: 'center' });
+        doc.setFontSize(10);
+        doc.text('Mois de : ' + monthDisplay.toUpperCase(), 105, 48, { align: 'center' });
+
+        const WP = [24, 34, 62, 30, 32];
+        let y3 = 56;
+        const enteteTableauPatients = () => {
+            doc.setFillColor(230, 230, 230);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            ['Date', 'Médecin', 'Nom patient', 'Lieu', 'Cotation'].forEach((h, i) => {
+                doc.rect(cumSum(WP, i), y3, WP[i], 7, 'FD');
+                doc.text(h, cumSum(WP, i) + WP[i] / 2, y3 + 5, { align: 'center' });
+            });
+            y3 += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+        };
+        enteteTableauPatients();
+
+        const sortedEntries = [...monthEntries].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const rowsPerPage = Math.floor((275 - y3) / 6.5);
+        let count = 0;
+        sortedEntries.forEach(e => {
+            if (count > 0 && count % rowsPerPage === 0) {
+                doc.addPage();
+                y3 = 18;
+                enteteTableauPatients();
+            }
+            const cells = [e.date || '-', 'Dr ' + ((currentProfile && currentProfile.last_name) || 'DORE'), (e.patientName || 'Inconnu').substring(0, 28), e.location || '', e.cotation || ''];
+            cells.forEach((c, i) => {
+                doc.rect(cumSum(WP, i), y3, WP[i], 6.5);
+                doc.text(String(c), i === 2 ? cumSum(WP, i) + 2 : cumSum(WP, i) + WP[i] / 2, y3 + 4.7, { align: i === 2 ? 'left' : 'center' });
+            });
+            y3 += 6.5;
+            count++;
+        });
+
         // Save to database
+        const totalAmount = monthEntries.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
         const pdfBase64 = doc.output('datauristring');
-        
-        const { data: savedRecord, error: saveError } = await supabaseClient
+
+        let savedRecord = null;
+        let saveError = null;
+        const saveResult = await supabaseClient
             .from('comptabilite')
             .insert([{
                 user_id: currentUser.id,
@@ -5195,13 +5285,36 @@ async function generatePDF() {
             }])
             .select()
             .single();
-        
+        savedRecord = saveResult.data;
+        saveError = saveResult.error;
+
         if (saveError) {
-            console.error('[PDF] Save error:', saveError);
-            alert('Erreur lors de la sauvegarde: ' + saveError.message);
-            return;
+            // doublon du mois : mettre à jour
+            if (saveError.code === '23505') {
+                const { data: updated, error: updErr } = await supabaseClient
+                    .from('comptabilite')
+                    .update({
+                        total_amount: totalAmount,
+                        total_visits: monthEntries.length,
+                        pdf_data: pdfBase64,
+                        generated_at: new Date().toISOString()
+                    })
+                    .eq('user_id', currentUser.id)
+                    .eq('month_key', monthKey)
+                    .select()
+                    .single();
+                if (updErr) {
+                    alert('Erreur lors de la sauvegarde: ' + updErr.message);
+                    return;
+                }
+                savedRecord = updated;
+            } else {
+                console.error('[PDF] Save error:', saveError);
+                alert('Erreur lors de la sauvegarde: ' + saveError.message);
+                return;
+            }
         }
-        
+
         history.unshift({
             id: savedRecord.id,
             monthKey: monthKey,
@@ -5211,10 +5324,9 @@ async function generatePDF() {
             pdfData: pdfBase64,
             generatedAt: savedRecord.generated_at
         });
-        
+
         renderHistory();
-        
-        alert('PDF généré et sauvegardé!');
+
         console.log('[PDF] Done and saved!');
     } catch (err) {
         console.error('[PDF] Error:', err);
