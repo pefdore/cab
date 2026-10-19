@@ -3757,6 +3757,10 @@ function showOverlaySettingsPage(overlay, pageName) {
                     if (error) throw error;
                     overlay.querySelector('#currentPassword').value = '';
                     overlay.querySelector('#newPassword').value = '';
+                    const ofill = overlay.querySelector('#passwordStrengthFill');
+                    const olabel = overlay.querySelector('#passwordStrengthLabel');
+                    if (ofill) ofill.style.width = '0%';
+                    if (olabel) olabel.textContent = '';
                     overlay.querySelector('#confirmPassword').value = '';
                     showToast('Mot de passe modifié');
                 } catch (err) {
@@ -4147,6 +4151,45 @@ function updateProfileHero() {
     document.querySelectorAll('#profileHeroEmail').forEach(el => { el.textContent = currentUser?.email || ''; });
     document.querySelectorAll('#profileRoleBadge').forEach(el => { el.textContent = roleLabel; });
 }
+// Password strength meter
+const PASSWORD_STRENGTH_LEVELS = [
+    { label: 'Trop faible', color: '#ef4444', width: '15%' },
+    { label: 'Faible', color: '#f97316', width: '35%' },
+    { label: 'Moyen', color: '#eab308', width: '60%' },
+    { label: 'Fort', color: '#22c55e', width: '80%' },
+    { label: 'Très fort', color: '#16a34a', width: '100%' }
+];
+
+function getPasswordStrength(pw) {
+    let score = 0;
+    if (pw.length >= 6) score++;
+    if (pw.length >= 10) score++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+    if (/\d/.test(pw)) score++;
+    if (/[^a-zA-Z0-9]/.test(pw)) score++;
+    return Math.min(score, PASSWORD_STRENGTH_LEVELS.length - 1);
+}
+
+function updatePasswordStrength(pw) {
+    const fill = document.getElementById('passwordStrengthFill');
+    const label = document.getElementById('passwordStrengthLabel');
+    if (!fill || !label) return;
+    if (!pw) {
+        fill.style.width = '0%';
+        label.textContent = '';
+        return;
+    }
+    const lvl = PASSWORD_STRENGTH_LEVELS[getPasswordStrength(pw)];
+    fill.style.width = lvl.width;
+    fill.style.background = lvl.color;
+    label.textContent = lvl.label;
+    label.style.color = lvl.color;
+}
+
+document.addEventListener('input', (e) => {
+    if (e.target && e.target.id === 'newPassword') updatePasswordStrength(e.target.value);
+});
+
 document.getElementById('saveProfileBtn')?.addEventListener('click', (e) => {
     withButtonBusy(e.currentTarget, 'Enregistrement...', async () => {
         const lastnameEl = getSettingsInput('profileLastname');

@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=202610251000">
+    <link rel="stylesheet" href="style.css?v=202610251100">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -1291,6 +1291,10 @@ window.attemptLogin = function() {
                                 <div class="form-group">
                                     <label>Nouveau mot de passe</label>
                                     <input type="password" id="newPassword" placeholder="••••••••">
+                                    <div class="password-strength">
+                                        <div class="password-strength-track"><div class="password-strength-fill" id="passwordStrengthFill"></div></div>
+                                        <span class="password-strength-label" id="passwordStrengthLabel"></span>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label>Confirmer</label>
@@ -2889,7 +2893,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610251000" defer></script>
+    <script src="app.v5.js?v=202610251100" defer></script>
     <script src="secretariat.js?v=202610191100" defer></script>
     <script>
       // Toggle form function for mobile

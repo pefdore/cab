@@ -1979,13 +1979,45 @@ h2 {
 
 /* Profile page */
 .profile-hero {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 18px;
+    overflow: hidden;
+    padding: 24px 22px;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.08) 55%, transparent 80%);
+}
+
+.profile-hero::before,
+.profile-hero::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(46px);
+    pointer-events: none;
+}
+
+.profile-hero::before {
+    width: 190px;
+    height: 190px;
+    top: -95px;
+    right: -55px;
+    background: rgba(99, 102, 241, 0.35);
+}
+
+.profile-hero::after {
+    width: 130px;
+    height: 130px;
+    bottom: -70px;
+    left: -45px;
+    background: rgba(168, 85, 247, 0.28);
 }
 
 .profile-avatar {
     flex: 0 0 auto;
+    position: relative;
+    z-index: 1;
     width: 72px;
     height: 72px;
     border-radius: 50%;
@@ -1996,11 +2028,19 @@ h2 {
     font-weight: 700;
     color: #fff;
     background: linear-gradient(135deg, var(--color-primary), #a855f7);
-    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
     letter-spacing: 1px;
+    animation: profileAvatarIn 0.5s var(--transition-base, cubic-bezier(0.4, 0, 0.2, 1)) both;
+}
+
+@keyframes profileAvatarIn {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .profile-hero-info {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -2008,8 +2048,9 @@ h2 {
 }
 
 .profile-hero-name {
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--color-text);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2017,6 +2058,8 @@ h2 {
 }
 
 .profile-hero-email {
+    display: inline-flex;
+    align-items: center;
     font-size: 0.875rem;
     color: var(--color-text-secondary);
     overflow: hidden;
@@ -2027,12 +2070,13 @@ h2 {
 .profile-role-badge {
     align-self: flex-start;
     margin-top: 4px;
-    padding: 3px 10px;
+    padding: 4px 12px;
     border-radius: 999px;
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--color-primary);
     background: var(--color-primary-soft, rgba(99, 102, 241, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.25);
 }
 
 .profile-email-field {
@@ -2060,11 +2104,52 @@ h2 {
     gap: 8px;
     align-self: flex-start;
     min-width: 160px;
+    background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    transition: transform 0.15s var(--transition-base, ease), box-shadow 0.2s, background 0.2s;
+}
+
+.profile-save-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+}
+
+.profile-save-btn:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .password-form .btn-primary {
     align-self: flex-start;
     min-width: 160px;
+}
+
+/* Password strength meter */
+.password-strength {
+    margin-top: -8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.password-strength-track {
+    height: 5px;
+    border-radius: 999px;
+    background: var(--color-bg-muted, rgba(0, 0, 0, 0.08));
+    overflow: hidden;
+}
+
+.password-strength-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: #ef4444;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.password-strength-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
 }
 
 /* Preferences */
@@ -5757,6 +5842,10 @@ h2 {
     .profile-save-btn,
     .password-form .btn-primary {
         align-self: stretch;
+    }
+    .profile-hero::before,
+    .profile-hero::after {
+        filter: blur(30px);
     }
     .profile-form .form-row,
     .password-form .form-row {
