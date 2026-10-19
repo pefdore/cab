@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-B4_4KqOT.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-BQQ1nWV2.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1236,8 +1236,17 @@ window.attemptLogin = function() {
                 </div>
                                 <!-- Profil Page -->
                 <div id="settings-page-profil" class="settings-page" style="display: none;">
+                    <div class="settings-section profile-hero">
+                        <div class="profile-avatar" id="profileAvatar" aria-hidden="true">--</div>
+                        <div class="profile-hero-info">
+                            <div class="profile-hero-name" id="profileHeroName">Votre nom</div>
+                            <div class="profile-hero-email" id="profileHeroEmail"></div>
+                            <span class="profile-role-badge" id="profileRoleBadge">Médecin installé</span>
+                        </div>
+                    </div>
                     <div class="settings-section">
                         <h3>Informations du compte</h3>
+                        <div class="settings-desc">Votre nom apparaît sur les factures et dans l'application.</div>
                         <div class="profile-form">
                             <div class="form-row">
                                 <div class="form-group">
@@ -1251,7 +1260,10 @@ window.attemptLogin = function() {
                             </div>
                             <div class="form-group">
                                 <label>Email</label>
-                                <input type="email" id="profileEmail" placeholder="votre@email.com">
+                                <div class="profile-email-field">
+                                    <input type="email" id="profileEmail" placeholder="votre@email.com" readonly>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Fonction</label>
@@ -1261,7 +1273,10 @@ window.attemptLogin = function() {
                                     <option value="secretaire">Secrétaire</option>
                                 </select>
                             </div>
-                            <button id="saveProfileBtn" class="btn-primary">Enregistrer</button>
+                            <button id="saveProfileBtn" class="btn-primary profile-save-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+                                Enregistrer
+                            </button>
                         </div>
                     </div>
                     
@@ -2874,7 +2889,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610241300" defer></script>
+    <script src="app.v5.js?v=202610251000" defer></script>
     <script src="secretariat.js?v=202610191100" defer></script>
     <script>
       // Toggle form function for mobile

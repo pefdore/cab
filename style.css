@@ -1977,6 +1977,96 @@ h2 {
     gap: 16px;
 }
 
+/* Profile page */
+.profile-hero {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.profile-avatar {
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--color-primary), #a855f7);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+    letter-spacing: 1px;
+}
+
+.profile-hero-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.profile-hero-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-hero-email {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-role-badge {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-primary-soft, rgba(99, 102, 241, 0.1));
+}
+
+.profile-email-field {
+    position: relative;
+}
+
+.profile-email-field input {
+    padding-right: 40px;
+    background: var(--color-bg-muted);
+}
+
+.profile-email-field svg {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+}
+
+.profile-save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    align-self: flex-start;
+    min-width: 160px;
+}
+
+.password-form .btn-primary {
+    align-self: flex-start;
+    min-width: 160px;
+}
+
 /* Preferences */
 .preference-item {
     display: flex;
@@ -5653,6 +5743,21 @@ h2 {
         height: 14px;
     }
     
+    .profile-hero {
+        gap: 14px;
+    }
+    .profile-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.25rem;
+    }
+    .profile-hero-name {
+        font-size: 1.1rem;
+    }
+    .profile-save-btn,
+    .password-form .btn-primary {
+        align-self: stretch;
+    }
     .profile-form .form-row,
     .password-form .form-row {
         flex-direction: column;
