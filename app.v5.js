@@ -35,7 +35,10 @@ function initAuth() {
     
     const { createClient } = supabase;
     supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('[AUTH] Client Supabase initialisé');
+    // Exposer immediatement (avant l'auth) : les fonctions inline de index.html
+    // (generatePassagePDF, loadDocuments...) en dependent des le chargement
+    window.supabaseClient = supabaseClient;
+    console.log('[AUTH] Client Supabase initialisé et exposé');
     
     // Écouter les changements d'état d'authentification
     supabaseClient.auth.onAuthStateChange((event, session) => {
