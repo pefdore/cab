@@ -1,8 +1,8 @@
-const CACHE_NAME = 'cotation-v202610211200';
+const CACHE_NAME = 'cotation-v202610221200';
 const ASSETS = [
   '/',
   '/index.html',
-  '/app.v5.js?v=202610211200',
+  '/app.v5.js?v=202610221200',
   '/style.css?v=202610181100',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
