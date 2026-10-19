@@ -928,6 +928,26 @@ h2 {
     display: inline-block;
 }
 
+.chart-bar-column .chart-bar-label {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.chart-lines-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
 .data-point {
     position: absolute;
     left: 50%;
@@ -979,6 +999,10 @@ h2 {
         top: -16px;
     }
     
+    .chart-bar-column .chart-bar-label {
+        font-size: 9px;
+    }
+    
     .data-point {
         width: 8px;
         height: 8px;
@@ -1022,6 +1046,10 @@ h2 {
     
     .chart-bar .bar-value {
         display: none;
+    }
+    
+    .chart-bar-column .chart-bar-label {
+        font-size: 7px;
     }
     
     .chart-labels {
@@ -1975,6 +2003,96 @@ h2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+}
+
+/* Profile page */
+.profile-hero {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.profile-avatar {
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--color-primary), #a855f7);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+    letter-spacing: 1px;
+}
+
+.profile-hero-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.profile-hero-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-hero-email {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-role-badge {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-primary-soft, rgba(99, 102, 241, 0.1));
+}
+
+.profile-email-field {
+    position: relative;
+}
+
+.profile-email-field input {
+    padding-right: 40px;
+    background: var(--color-bg-muted);
+}
+
+.profile-email-field svg {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+}
+
+.profile-save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    align-self: flex-start;
+    min-width: 160px;
+}
+
+.password-form .btn-primary {
+    align-self: flex-start;
+    min-width: 160px;
 }
 
 /* Preferences */
@@ -5653,6 +5771,21 @@ h2 {
         height: 14px;
     }
     
+    .profile-hero {
+        gap: 14px;
+    }
+    .profile-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.25rem;
+    }
+    .profile-hero-name {
+        font-size: 1.1rem;
+    }
+    .profile-save-btn,
+    .password-form .btn-primary {
+        align-self: stretch;
+    }
     .profile-form .form-row,
     .password-form .form-row {
         flex-direction: column;
@@ -8564,4 +8697,47 @@ html.no-anim *::after {
     transition-duration: 0.001s !important;
     transition-delay: 0s !important;
     scroll-behavior: auto !important;
+}
+
+/* EHPAD dashboard card */
+.ehpad-card-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.ehpad-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--color-bg-secondary, #f1f5f9);
+    border-radius: 8px;
+    padding: 3px;
+}
+.ehpad-tab {
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.ehpad-tab:hover {
+    color: var(--color-text-primary, #0f172a);
+}
+.ehpad-tab.active {
+    background: var(--color-surface, #ffffff);
+    color: var(--color-text-primary, #0f172a);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.ehpad-summary {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+.ehpad-card-content .entries-table tbody tr:hover {
+    background: var(--color-bg-secondary, rgba(0, 0, 0, 0.03));
 }
