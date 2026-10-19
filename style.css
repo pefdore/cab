@@ -8565,3 +8565,46 @@ html.no-anim *::after {
     transition-delay: 0s !important;
     scroll-behavior: auto !important;
 }
+
+/* EHPAD dashboard card */
+.ehpad-card-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.ehpad-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--color-bg-secondary, #f1f5f9);
+    border-radius: 8px;
+    padding: 3px;
+}
+.ehpad-tab {
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.ehpad-tab:hover {
+    color: var(--color-text-primary, #0f172a);
+}
+.ehpad-tab.active {
+    background: var(--color-surface, #ffffff);
+    color: var(--color-text-primary, #0f172a);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.ehpad-summary {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+.ehpad-card-content .entries-table tbody tr:hover {
+    background: var(--color-bg-secondary, rgba(0, 0, 0, 0.03));
+}
