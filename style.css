@@ -8474,3 +8474,26 @@ h2 {
     .data-counter-value { font-size: 1.15rem; }
     .data-counter-label { font-size: 0.65rem; }
 }
+
+/* ===== Cotation hors cabinet: switch visible et cliquable ===== */
+.cotation-toggle-wrap {
+    flex-shrink: 0;
+    width: 52px;
+    height: 28px;
+    cursor: pointer;
+}
+.cotation-toggle-wrap .toggle-slider {
+    border-radius: 999px;
+}
+.cotation-toggle-wrap input:checked + .toggle-slider {
+    background: var(--color-success, #10b981);
+}
+.cotation-toggle-wrap input:focus-visible + .toggle-slider {
+    outline: 2px solid var(--color-primary, #6366f1);
+    outline-offset: 2px;
+}
+@media (max-width: 768px) {
+    .cotation-toggle-wrap {
+        align-self: flex-end;
+    }
+}
