@@ -406,10 +406,7 @@ function applyCotationVisibility() {
     const fabAddPassage = document.getElementById('fab-add-passage');
     const cotationSettingsSection = document.getElementById('cotation-settings-section');
     
-    const toggleCheckbox = document.getElementById('cotationEnabled');
-    if (toggleCheckbox) {
-        toggleCheckbox.checked = cotationEnabled;
-    }
+    document.querySelectorAll('#cotationEnabledCheckbox').forEach(cb => { cb.checked = cotationEnabled; });
     
     if (cotationDash) {
         console.log('[COTATION] Setting cotation-dashboard display to:', cotationEnabled ? 'block' : 'none');
@@ -612,18 +609,16 @@ window.showToast = showToast;
 // Apply cotation visibility immediately on page load (before auth)
 function initCotationVisibility() {
     const checkAndApply = () => {
-        const toggleBtn = document.getElementById('cotationToggleBtn');
+        const toggleCb = document.getElementById('cotationEnabledCheckbox');
         
-        if (!toggleBtn) {
+        if (!toggleCb) {
             setTimeout(checkAndApply, 100);
             return;
         }
         
-        // Set initial button state
+        // Set initial switch state
         const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-        toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
-        toggleBtn.classList.toggle('active', isEnabled);
-        toggleBtn.style.background = isEnabled ? '#10b981' : '#6b7280';
+        document.querySelectorAll('#cotationEnabledCheckbox').forEach(cb => { cb.checked = isEnabled; });
         
         // Set initial visibility
         const cotationDash = document.getElementById('cotation-dashboard');
@@ -648,12 +643,8 @@ function initCotationVisibility() {
 }
 
 function updateToggleButton() {
-    const toggleBtn = document.getElementById('cotationToggleBtn');
-    if (!toggleBtn) return;
-    
     const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-    toggleBtn.textContent = isEnabled ? 'Activé' : 'Désactivé';
-    toggleBtn.style.background = isEnabled ? 'var(--color-success)' : 'var(--color-text-subtle)';
+    document.querySelectorAll('#cotationEnabledCheckbox').forEach(cb => { cb.checked = isEnabled; });
     
     const cotationDash = document.getElementById('cotation-dashboard');
     const addPassagesSection = document.getElementById('add-passages-section');
@@ -3502,17 +3493,12 @@ function setupSettingsDelegation() {
         }
     });
 
-    document.addEventListener('click', (e) => {
-        const cotationBtn = e.target.closest('#cotationToggleBtn');
-        if (cotationBtn) {
-            e.preventDefault();
-            const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-            window.toggleCotationEnabled(!isEnabled);
-        }
-    });
-
     document.addEventListener('change', (e) => {
         const t = e.target;
+        if (t.id === 'cotationEnabledCheckbox') {
+            window.toggleCotationEnabled(t.checked);
+            return;
+        }
         if (t.id === 'logoInput' && t.files && t.files[0]) {
             compressImageSetting(t.files[0], 800).then(dataUrl => saveSetting('logo', dataUrl));
             t.value = '';
@@ -4052,10 +4038,10 @@ window.handleCotationToggle = function(checkbox) {
 // Cotation enabled toggle - using global function
 window.toggleCotationEnabled = async function(enabled) {
     console.log('[COTATION] Toggle called, enabled:', enabled);
-    console.log('[COTATION] currentUser at toggle:', currentUser ? currentUser.id : 'null');
     await saveCotationSetting(enabled);
     applyCotationVisibility();
     updateToggleButton();
+    showToast(enabled ? 'Cotation hors cabinet activée' : 'Cotation hors cabinet désactivée');
 };
 
 // Load saved theme

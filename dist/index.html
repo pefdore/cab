@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-D-slG_5s.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-BpcBiTKx.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1302,10 +1302,13 @@ window.attemptLogin = function() {
                         <h3>Cotation hors cabinet</h3>
                         <div class="preference-item" style="display: flex;">
                             <div class="preference-info">
-                                <span class="preference-label">Activer</span>
+                                <span class="preference-label">Cotation hors cabinet</span>
                                 <span class="preference-desc">Afficher les sections de gestion des passages et du DAB</span>
                             </div>
-                            <button id="cotationToggleBtn" type="button" class="cotation-toggle-btn">Désactivé</button>
+                            <label class="toggle cotation-toggle-wrap" title="Activer / désactiver la cotation hors cabinet">
+                                <input type="checkbox" id="cotationEnabledCheckbox">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                     
@@ -2751,7 +2754,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610221200" defer></script>
+    <script src="app.v5.js?v=202610231200" defer></script>
     <script src="secretariat.js?v=202610191100" defer></script>
     <script>
       // Toggle form function for mobile
