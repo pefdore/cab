@@ -6314,18 +6314,33 @@ function renderCharts() {
         series.forEach(({ selector, color }) => {
             const pts = Array.from(barsContainer.querySelectorAll(selector)).map(el => {
                 const r = el.getBoundingClientRect();
-                return `${(r.left + r.width / 2 - chartRect.left).toFixed(1)},${(r.top + r.height / 2 - chartRect.top).toFixed(1)}`;
+                return {
+                    x: r.left + r.width / 2 - chartRect.left,
+                    y: r.top + r.height / 2 - chartRect.top
+                };
             });
             if (pts.length < 2) return;
-            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-            polyline.setAttribute('points', pts.join(' '));
-            polyline.setAttribute('fill', 'none');
-            polyline.setAttribute('stroke', color);
-            polyline.setAttribute('stroke-width', '2');
-            polyline.setAttribute('stroke-linecap', 'round');
-            polyline.setAttribute('stroke-linejoin', 'round');
-            polyline.setAttribute('opacity', '0.85');
-            svg.appendChild(polyline);
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const p0 = pts[i - 1] || pts[i];
+                const p1 = pts[i];
+                const p2 = pts[i + 1];
+                const p3 = pts[i + 2] || p2;
+                const c1x = p1.x + (p2.x - p0.x) / 6;
+                const c1y = p1.y + (p2.y - p0.y) / 6;
+                const c2x = p2.x - (p3.x - p1.x) / 6;
+                const c2y = p2.y - (p3.y - p1.y) / 6;
+                d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+            }
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('opacity', '0.85');
+            svg.appendChild(path);
         });
         
         const firstLabel = barsContainer.querySelector('.chart-bar-label');
