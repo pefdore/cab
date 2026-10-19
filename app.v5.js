@@ -3735,6 +3735,7 @@ function showOverlaySettingsPage(overlay, pageName) {
                     if (error) throw error;
                     if (currentProfile) { currentProfile.last_name = lastname; currentProfile.first_name = firstname; }
                     showToast('Profil mis à jour');
+                    updateProfileHero();
                     updateSettingsMenuValues();
                 } catch (err) {
                     showToast('Erreur lors de la mise à jour: ' + (err.message || err), 'error');
@@ -4125,6 +4126,26 @@ async function loadProfileData() {
     document.querySelectorAll('#profileFirstname').forEach(el => { el.value = firstname; });
     document.querySelectorAll('#profileEmail').forEach(el => { el.value = currentUser.email || ''; el.readOnly = true; });
     document.querySelectorAll('#profileRole').forEach(el => { el.value = role || 'medecin_installe'; });
+    updateProfileHero();
+}
+
+const PROFILE_ROLE_LABELS = {
+    medecin_installe: 'Médecin installé',
+    medecin_remplacant: 'Médecin remplaçant',
+    secretaire: 'Secrétaire'
+};
+
+function updateProfileHero() {
+    const lastname = (currentProfile && currentProfile.last_name) || '';
+    const firstname = (currentProfile && currentProfile.first_name) || '';
+    const role = (currentProfile && currentProfile.role) || 'medecin_installe';
+    const initials = ((firstname[0] || '') + (lastname[0] || '')).toUpperCase() || '--';
+    const displayName = [firstname, lastname].filter(Boolean).join(' ') || 'Votre nom';
+    const roleLabel = PROFILE_ROLE_LABELS[role] || PROFILE_ROLE_LABELS.medecin_installe;
+    document.querySelectorAll('#profileAvatar').forEach(el => { el.textContent = initials; });
+    document.querySelectorAll('#profileHeroName').forEach(el => { el.textContent = displayName; });
+    document.querySelectorAll('#profileHeroEmail').forEach(el => { el.textContent = currentUser?.email || ''; });
+    document.querySelectorAll('#profileRoleBadge').forEach(el => { el.textContent = roleLabel; });
 }
 document.getElementById('saveProfileBtn')?.addEventListener('click', (e) => {
     withButtonBusy(e.currentTarget, 'Enregistrement...', async () => {
@@ -4153,6 +4174,7 @@ document.getElementById('saveProfileBtn')?.addEventListener('click', (e) => {
             }
 
             showToast('Profil mis à jour');
+            updateProfileHero();
         } catch (err) {
             console.error('Error updating profile:', err);
             showToast('Erreur lors de la mise à jour: ' + (err.message || err), 'error');
