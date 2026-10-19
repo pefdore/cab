@@ -2725,7 +2725,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610191300" defer></script>
+    <script src="app.v5.js?v=202610191400" defer></script>
     <script src="secretariat.js?v=202610191100" defer></script>
     <script>
       // Toggle form function for mobile
@@ -4039,13 +4039,25 @@ window.attemptLogin = function() {
             doc_date: prevMonth.toISOString().split('T')[0]
           };
 
-          const { error: insertError } = await window.supabaseClient
-            .from('documents')
-            .insert(docRecord);
-
+          let insertError = null;
+          try {
+            const r = await window.supabaseClient.from('documents').insert(docRecord);
+            insertError = r.error;
+          } catch (e) { insertError = e; }
           if (insertError) {
-            console.error('[PDF PASSAGE] Insert documents error:', insertError);
-            throw new Error('Enregistrement du document impossible: ' + (insertError.message || JSON.stringify(insertError)));
+            console.error('[PDF PASSAGE] Insert documents error:', insertError, '- nouvelle tentative sans doc_type/doc_date');
+            // Fallback: la table documents peut ne pas avoir les colonnes doc_type/doc_date
+            const r2 = await window.supabaseClient.from('documents').insert({
+              user_id: docRecord.user_id,
+              file_name: docRecord.file_name,
+              file_url: docRecord.file_url,
+              category: docRecord.category,
+              description: docRecord.description
+            });
+            if (r2.error) {
+              console.error('[PDF PASSAGE] Insert fallback error:', r2.error);
+              throw new Error('Enregistrement du document impossible: ' + (r2.error.message || JSON.stringify(r2.error)) + ' | detail initial: ' + (insertError.message || ''));
+            }
           }
 
           console.log('[PDF PASSAGE] PDF generated and saved successfully!');
