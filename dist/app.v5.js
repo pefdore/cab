@@ -6285,8 +6285,8 @@ function renderCharts() {
                         ` : ''}
                     </div>
                     <span class="chart-bar-label">${monthName}</span>
-                    <span class="data-point data-point-ehpad" style="bottom: calc(${ehpadPct}% + 8px);" title="EHPAD: ${ehpadVal.toFixed(0)}€"></span>
-                    <span class="data-point data-point-medecin" style="bottom: calc(${medecinPct}% + 8px);" title="Medecine/SSR: ${medecinVal.toFixed(0)}€"></span>
+                    <span class="data-point data-point-ehpad" style="bottom: ${ehpadPct}%;" title="EHPAD: ${ehpadVal.toFixed(0)}€"></span>
+                    <span class="data-point data-point-medecin" style="bottom: ${medecinPct}%;" title="Medecine/SSR: ${medecinVal.toFixed(0)}€"></span>
                 </div>
             `;
         }).join('');
@@ -6299,6 +6299,30 @@ function renderCharts() {
     // Draw lines connecting the EHPAD and Medecine/SSR data points
     const drawMonthlyLines = () => {
         if (!monthlyChartContainer || !barsContainer) return;
+        // Reposition points precisely on the bars' scale (bars sit above the month labels)
+        const columns = Array.from(barsContainer.querySelectorAll('.chart-bar-column'));
+        let plotH = 0;
+        columns.forEach(col => {
+            const bar = col.querySelector('.chart-bar');
+            if (bar) plotH = Math.max(plotH, bar.getBoundingClientRect().height);
+        });
+        if (plotH > 0) {
+            columns.forEach((col, idx) => {
+                const bar = col.querySelector('.chart-bar');
+                if (!bar) return;
+                const colRect = col.getBoundingClientRect();
+                const axisY = bar.getBoundingClientRect().bottom;
+                const key = sortedKeys[idx];
+                const place = (el, v) => {
+                    if (!el) return;
+                    const y = axisY - (v / maxVal) * plotH;
+                    el.style.bottom = (colRect.bottom - y).toFixed(1) + 'px';
+                };
+                place(col.querySelector('.data-point-ehpad'), ehpadData[key]);
+                place(col.querySelector('.data-point-medecin'), medecinData[key]);
+            });
+        }
+        
         const oldSvg = monthlyChartContainer.querySelector('.chart-lines-overlay');
         if (oldSvg) oldSvg.remove();
         const chartRect = monthlyChartContainer.getBoundingClientRect();
