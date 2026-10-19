@@ -590,9 +590,24 @@ function showError(message) {
     alert(message);
 }
 
-function showToast(message) {
-    alert(message);
+function showToast(message, type) {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    toast.textContent = message;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
 }
+window.showToast = showToast;
 
 // Apply cotation visibility immediately on page load (before auth)
 function initCotationVisibility() {
@@ -3347,6 +3362,47 @@ function handleSignatureUpload(e) {
     reader.readAsDataURL(file);
 }
 
+// Resize + compress an image file for PDF embedding (returns JPEG data URL)
+function compressImageSetting(file, maxSize) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Lecture du fichier impossible'));
+        reader.onload = () => {
+            const img = new Image();
+            img.onerror = () => reject(new Error('Image invalide'));
+            img.onload = () => {
+                try {
+                    const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round(img.width * scale));
+                    canvas.height = Math.max(1, Math.round(img.height * scale));
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.82));
+                } catch (e) { reject(e); }
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Disable a button while an async action runs (prevents double clicks)
+async function withButtonBusy(btn, label, fn) {
+    if (!btn || btn.disabled) return;
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = label;
+    try {
+        await fn();
+    } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+    }
+}
+
 // Delegated event handling for the Settings view (works in desktop view AND mobile overlay clone)
 function setupSettingsDelegation() {
     document.addEventListener('click', (e) => {
@@ -3429,6 +3485,15 @@ function setupSettingsDelegation() {
             return;
         }
 
+        const granularBtn = t.closest('#deletePassagesBtn, #deleteComptaBtn, #deleteDocumentsBtn');
+        if (granularBtn) {
+            e.preventDefault();
+            const scope = granularBtn.id === 'deletePassagesBtn' ? 'passages'
+                : granularBtn.id === 'deleteComptaBtn' ? 'compta' : 'documents';
+            withButtonBusy(granularBtn, '...', () => deleteUserData(scope));
+            return;
+        }
+
         if (t.closest('#changePasswordBtn')) {
             e.preventDefault();
             const btn = document.getElementById('changePasswordBtn');
@@ -3449,21 +3514,17 @@ function setupSettingsDelegation() {
     document.addEventListener('change', (e) => {
         const t = e.target;
         if (t.id === 'logoInput' && t.files && t.files[0]) {
-            const file = t.files[0];
-            const reader = new FileReader();
-            reader.onload = async () => { await saveSetting('logo', reader.result); };
-            reader.readAsDataURL(file);
+            compressImageSetting(t.files[0], 800).then(dataUrl => saveSetting('logo', dataUrl));
             t.value = '';
         } else if (t.id === 'signatureInput' && t.files && t.files[0]) {
-            const file = t.files[0];
-            const reader = new FileReader();
-            reader.onload = async () => { await saveSetting('signature', reader.result); };
-            reader.readAsDataURL(file);
+            compressImageSetting(t.files[0], 500).then(dataUrl => saveSetting('signature', dataUrl));
             t.value = '';
         } else if (t.id === 'notifVL') {
             saveNotifPref('notif_vl', t.checked);
+            showToast(t.checked ? 'Rappels VL activés' : 'Rappels VL désactivés');
         } else if (t.id === 'notifEmail') {
             saveNotifPref('notif_email', t.checked);
+            showToast(t.checked ? 'Email mensuel activé' : 'Email mensuel désactivé');
         }
     });
 }
@@ -3515,14 +3576,14 @@ function showOverlaySettingsPage(overlay, pageName) {
             saveBtn.addEventListener('click', async () => {
                 const lastname = (overlay.querySelector('#profileLastname')?.value || '').trim();
                 const firstname = (overlay.querySelector('#profileFirstname')?.value || '').trim();
-                if (!lastname || !firstname) { alert('Veuillez remplir tous les champs'); return; }
+                if (!lastname || !firstname) { showToast('Veuillez remplir tous les champs', 'error'); return; }
                 try {
                     const { error } = await supabaseClient.from('profiles').update({ last_name: lastname, first_name: firstname }).eq('id', currentUser.id);
                     if (error) throw error;
                     if (currentProfile) { currentProfile.last_name = lastname; currentProfile.first_name = firstname; }
-                    alert('Profil mis à jour');
+                    showToast('Profil mis à jour');
                 } catch (err) {
-                    alert('Erreur lors de la mise à jour: ' + (err.message || err));
+                    showToast('Erreur lors de la mise à jour: ' + (err.message || err), 'error');
                 }
             });
         }
@@ -3533,18 +3594,18 @@ function showOverlaySettingsPage(overlay, pageName) {
                 const cur = overlay.querySelector('#currentPassword')?.value;
                 const nw = overlay.querySelector('#newPassword')?.value;
                 const cf = overlay.querySelector('#confirmPassword')?.value;
-                if (!cur || !nw || !cf) { alert('Veuillez remplir tous les champs'); return; }
-                if (nw !== cf) { alert('Les mots de passe ne correspondent pas'); return; }
-                if (nw.length < 6) { alert('Le mot de passe doit contenir au moins 6 caractères'); return; }
+                if (!cur || !nw || !cf) { showToast('Veuillez remplir tous les champs', 'error'); return; }
+                if (nw !== cf) { showToast('Les mots de passe ne correspondent pas', 'error'); return; }
+                if (nw.length < 6) { showToast('Le mot de passe doit contenir au moins 6 caractères', 'error'); return; }
                 try {
                     const { error } = await supabaseClient.auth.updateUser({ password: nw });
                     if (error) throw error;
                     overlay.querySelector('#currentPassword').value = '';
                     overlay.querySelector('#newPassword').value = '';
                     overlay.querySelector('#confirmPassword').value = '';
-                    alert('Mot de passe modifié');
+                    showToast('Mot de passe modifié');
                 } catch (err) {
-                    alert('Erreur: ' + (err.message || err));
+                    showToast('Erreur: ' + (err.message || err), 'error');
                 }
             });
         }
@@ -3556,6 +3617,8 @@ function showOverlaySettingsPage(overlay, pageName) {
         loadOpenRouterKey();
     } else if (pageName === 'cotation') {
         renderSettingsCotationList();
+    } else if (pageName === 'donnees') {
+        loadDataCounters();
     }
 
     const logoutBtn2 = overlay.querySelector('.mobile-logout-btn');
@@ -3623,6 +3686,8 @@ async function openSettingsPage(pageName) {
         await loadOpenRouterKey();
     } else if (pageName === 'googlesheets') {
         loadGoogleSheetsSettings();
+    } else if (pageName === 'donnees') {
+        loadDataCounters();
     }
 }
 
@@ -3654,13 +3719,11 @@ window.deleteCotation = deleteCotation;
 
 // LLM API functions
 window.saveOpenRouterKey = async function() {
-    // On mobile, the settings are in an overlay, so we need to look there first
-    const overlay = document.querySelector('.settings-page-overlay');
-    const input = overlay ? overlay.querySelector('#openrouterApiKey') : document.getElementById('openrouterApiKey');
-    const status = overlay ? overlay.querySelector('#openrouterStatus') : document.getElementById('openrouterStatus');
-    
+    const input = getSettingsInput('openrouterApiKey');
+    const status = getSettingsInput('openrouterStatus');
+
     if (!input || !input.value.trim()) {
-        alert('Veuillez entrer une clé API');
+        showToast('Veuillez entrer une clé API', 'error');
         return;
     }
     
@@ -3700,6 +3763,7 @@ window.saveOpenRouterKey = async function() {
         console.log('[API Key] Cannot save to Supabase - currentUser or supabaseClient undefined');
     }
     
+    showToast('Clé API enregistrée');
     if (status) {
         status.textContent = 'Clé enregistrée!';
     }
@@ -3898,75 +3962,79 @@ async function loadProfileData() {
     document.querySelectorAll('#profileEmail').forEach(el => { el.value = currentUser.email || ''; el.readOnly = true; });
     document.querySelectorAll('#profileRole').forEach(el => { el.value = role || 'medecin_installe'; });
 }
-document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
-    const lastnameEl = getSettingsInput('profileLastname');
-    const firstnameEl = getSettingsInput('profileFirstname');
-    if (!lastnameEl || !firstnameEl) return;
-    const lastname = lastnameEl.value.trim();
-    const firstname = firstnameEl.value.trim();
+document.getElementById('saveProfileBtn')?.addEventListener('click', (e) => {
+    withButtonBusy(e.currentTarget, 'Enregistrement...', async () => {
+        const lastnameEl = getSettingsInput('profileLastname');
+        const firstnameEl = getSettingsInput('profileFirstname');
+        if (!lastnameEl || !firstnameEl) return;
+        const lastname = lastnameEl.value.trim();
+        const firstname = firstnameEl.value.trim();
 
-    if (!lastname || !firstname) {
-        alert('Veuillez remplir tous les champs');
-        return;
-    }
-
-    try {
-        const { error } = await supabaseClient.from('profiles').update({
-            last_name: lastname,
-            first_name: firstname
-        }).eq('id', currentUser.id);
-
-        if (error) throw error;
-
-        if (currentProfile) {
-            currentProfile.last_name = lastname;
-            currentProfile.first_name = firstname;
+        if (!lastname || !firstname) {
+            showToast('Veuillez remplir tous les champs', 'error');
+            return;
         }
 
-        alert('Profil mis à jour');
-    } catch (err) {
-        console.error('Error updating profile:', err);
-        alert('Erreur lors de la mise à jour: ' + (err.message || err));
-    }
+        try {
+            const { error } = await supabaseClient.from('profiles').update({
+                last_name: lastname,
+                first_name: firstname
+            }).eq('id', currentUser.id);
+
+            if (error) throw error;
+
+            if (currentProfile) {
+                currentProfile.last_name = lastname;
+                currentProfile.first_name = firstname;
+            }
+
+            showToast('Profil mis à jour');
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            showToast('Erreur lors de la mise à jour: ' + (err.message || err), 'error');
+        }
+    });
 });
-document.getElementById('changePasswordBtn')?.addEventListener('click', async () => {
-    const currentPasswordEl = getSettingsInput('currentPassword');
-    const newPasswordEl = getSettingsInput('newPassword');
-    const confirmPasswordEl = getSettingsInput('confirmPassword');
-    if (!currentPasswordEl || !newPasswordEl || !confirmPasswordEl) return;
-    const currentPassword = currentPasswordEl.value;
-    const newPassword = newPasswordEl.value;
-    const confirmPassword = confirmPasswordEl.value;
+document.getElementById('changePasswordBtn')?.addEventListener('click', (e) => {
+    withButtonBusy(e.currentTarget, 'Vérification...', async () => {
+        const currentPasswordEl = getSettingsInput('currentPassword');
+        const newPasswordEl = getSettingsInput('newPassword');
+        const confirmPasswordEl = getSettingsInput('confirmPassword');
+        if (!currentPasswordEl || !newPasswordEl || !confirmPasswordEl) return;
+        const currentPassword = currentPasswordEl.value;
+        const newPassword = newPasswordEl.value;
+        const confirmPassword = confirmPasswordEl.value;
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-        alert('Veuillez remplir tous les champs');
-        return;
-    }
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showToast('Veuillez remplir tous les champs', 'error');
+            return;
+        }
 
-    if (newPassword !== confirmPassword) {
-        alert('Les mots de passe ne correspondent pas');
-        return;
-    }
+        if (newPassword !== confirmPassword) {
+            showToast('Les mots de passe ne correspondent pas', 'error');
+            return;
+        }
 
-    if (newPassword.length < 6) {
-        alert('Le mot de passe doit contenir au moins 6 caractères');
-        return;
-    }
+        if (newPassword.length < 6) {
+            showToast('Le mot de passe doit contenir au moins 6 caractères', 'error');
+            return;
+        }
 
-    try {
-        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        try {
+            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
 
-        if (error) throw error;
+            if (error) throw error;
 
-        currentPasswordEl.value = '';
-        newPasswordEl.value = '';
-        confirmPasswordEl.value = '';
+            currentPasswordEl.value = '';
+            newPasswordEl.value = '';
+            confirmPasswordEl.value = '';
 
-        alert('Mot de passe modifié');
-    } catch (err) {
-        console.error('Error changing password:', err);
-        alert('Erreur lors du changement de mot de passe: ' + (err.message || err));
-    }
+            showToast('Mot de passe modifié');
+        } catch (err) {
+            console.error('Error changing password:', err);
+            showToast('Erreur lors du changement de mot de passe: ' + (err.message || err), 'error');
+        }
+    });
 });
 // Theme switcher (delegated: works for the desktop view AND the mobile overlay clone)
 document.addEventListener('click', (e) => {
@@ -4000,47 +4068,90 @@ function loadTheme() {
 }
 
 // Export functions
-document.getElementById('exportCSV')?.addEventListener('click', async () => {
-    if (!currentUser || !supabaseClient) { alert('Non connecté'); return; }
-    const { data: rows, error } = await supabaseClient
+async function fetchPassagesForExport() {
+    const { data, error } = await supabaseClient
         .from('passages')
-        .select('date, patients(name), location, cotation, amount')
+        .select('date, patients(name), location, cotation, amount, month_key')
         .eq('user_id', currentUser.id)
         .order('date', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data || [];
+}
 
-    if (error) { alert('Erreur: ' + error.message); return; }
-    if (!rows || rows.length === 0) { alert('Aucune donnée à exporter'); return; }
-
-    const headers = ['Date', 'Patient', 'Lieu', 'Cotation', 'Montant'];
-    const csvRows = rows.map(e => [
-        e.date || '',
-        (e.patients && e.patients.name) || 'Inconnu',
-        (e.location || '').replace(/"/g, '""'),
-        e.cotation || '',
-        e.amount != null ? e.amount : ''
-    ]);
-    const csv = [headers, ...csvRows]
-        .map(row => row.map(v => `"${String(v)}"`).join(','))
-        .join('\n');
-    downloadFile('\ufeff' + csv, 'cotation-export.csv', 'text/csv;charset=utf-8');
-});
-document.getElementById('exportJSON')?.addEventListener('click', async () => {
-    if (!currentUser || !supabaseClient) { alert('Non connecté'); return; }
-    const { data: rows, error } = await supabaseClient
-        .from('passages')
-        .select('date, patient_id, location, cotation, amount')
+async function fetchComptabiliteForExport() {
+    const { data, error } = await supabaseClient
+        .from('comptabilite')
+        .select('month_key, month_name, type, category, amount, entry_date')
         .eq('user_id', currentUser.id)
-        .order('date', { ascending: false });
+        .order('entry_date', { ascending: false });
+    if (error) return [];  // table/colonnes optionnelles : export passages seulement
+    return data || [];
+}
 
-    if (error) { alert('Erreur: ' + error.message); return; }
-    if (!rows || rows.length === 0) { alert('Aucune donnée à exporter'); return; }
+function csvEscape(v) {
+    return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+}
 
-    downloadFile(JSON.stringify(rows, null, 2), 'cotation-export.json', 'application/json');
+document.getElementById('exportCSV')?.addEventListener('click', (e) => {
+    withButtonBusy(e.currentTarget, 'Export...', async () => {
+        if (!currentUser || !supabaseClient) { showToast('Non connecté', 'error'); return; }
+        try {
+            const [rows, compta] = await Promise.all([fetchPassagesForExport(), fetchComptabiliteForExport()]);
+            if ((rows.length === 0) && (compta.length === 0)) { showToast('Aucune donnée à exporter', 'info'); return; }
+
+            const lines = [];
+            if (rows.length) {
+                lines.push(['Type', 'Date', 'Patient', 'Lieu', 'Cotation', 'Montant'].map(csvEscape).join(','));
+                rows.forEach(r => lines.push([
+                    'Passage', r.date || '', (r.patients && r.patients.name) || 'Inconnu',
+                    r.location || '', r.cotation || '', r.amount != null ? r.amount : ''
+                ].map(csvEscape).join(',')));
+            }
+            if (compta.length) {
+                lines.push('');
+                lines.push(['Type', 'Mois', 'Categorie', 'Montant', 'Date'].map(csvEscape).join(','));
+                compta.forEach(c => lines.push([
+                    (c.type === 'depense' ? 'Dépense' : 'Recette'), c.month_name || c.month_key || '',
+                    c.category || '', c.amount != null ? c.amount : '', c.entry_date || ''
+                ].map(csvEscape).join(',')));
+            }
+            downloadFile('\ufeff' + lines.join('\n'), 'cotation-export.csv', 'text/csv;charset=utf-8');
+            showToast('Export CSV téléchargé (' + rows.length + ' passages)');
+        } catch (err) {
+            console.error('Export CSV error:', err);
+            showToast('Erreur export: ' + (err.message || err), 'error');
+        }
+    });
 });
-document.getElementById('exportPDF')?.addEventListener('click', () => {
-    const btn = getSettingsInput('exportPDF');
-    if (!btn) return;
-    generatePDF();
+document.getElementById('exportJSON')?.addEventListener('click', (e) => {
+    withButtonBusy(e.currentTarget, 'Export...', async () => {
+        if (!currentUser || !supabaseClient) { showToast('Non connecté', 'error'); return; }
+        try {
+            const [rows, compta] = await Promise.all([fetchPassagesForExport(), fetchComptabiliteForExport()]);
+            if ((rows.length === 0) && (compta.length === 0)) { showToast('Aucune donnée à exporter', 'info'); return; }
+            const payload = {
+                exportedAt: new Date().toISOString(),
+                user: { id: currentUser.id, email: currentUser.email },
+                passages: rows.map(r => ({
+                    date: r.date,
+                    patient: (r.patients && r.patients.name) || null,
+                    location: r.location,
+                    cotation: r.cotation,
+                    amount: r.amount
+                })),
+                comptabilite: compta
+            };
+            downloadFile(JSON.stringify(payload, null, 2), 'cotation-export.json', 'application/json');
+            showToast('Export JSON téléchargé');
+        } catch (err) {
+            console.error('Export JSON error:', err);
+            showToast('Erreur export: ' + (err.message || err), 'error');
+        }
+    });
+});
+document.getElementById('exportPDF')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof generatePDF === 'function') generatePDF();
 });
 function downloadFile(content, filename, type) {
     const blob = new Blob([content], { type });
@@ -4052,28 +4163,76 @@ function downloadFile(content, filename, type) {
     URL.revokeObjectURL(url);
 }
 
-// Delete all data
-document.getElementById('deleteAllData')?.addEventListener('click', async () => {
-    if (!currentUser || !supabaseClient) { alert('Non connecté'); return; }
-    if (!confirm('Êtes-vous sûr de vouloir supprimer toutes vos données? Cette action est irréversible.')) {
-        return;
+// Data counters (page Donnees)
+async function loadDataCounters() {
+    if (!currentUser || !supabaseClient) return;
+    const els = {
+        passages: document.querySelectorAll('#counterPassages'),
+        compta: document.querySelectorAll('#counterCompta'),
+        documents: document.querySelectorAll('#counterDocuments')
+    };
+    try {
+        const [p, c, d] = await Promise.all([
+            supabaseClient.from('passages').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id),
+            supabaseClient.from('comptabilite').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id),
+            supabaseClient.from('documents').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id)
+        ]);
+        els.passages.forEach(el => { el.textContent = (p.error ? '—' : (p.count != null ? p.count : 0)); });
+        els.compta.forEach(el => { el.textContent = (c.error ? '—' : (c.count != null ? c.count : 0)); });
+        els.documents.forEach(el => { el.textContent = (d.error ? '—' : (d.count != null ? d.count : 0)); });
+    } catch (e) {
+        console.error('[DATA] counters error:', e);
     }
-    if (!confirm('Vraiment? Toutes les données seront perdues définitivement.')) {
-        return;
+}
+
+// Granular + full deletion
+async function deleteUserData(scope) {
+    if (!currentUser || !supabaseClient) { showToast('Non connecté', 'error'); return false; }
+    if (scope === 'all') {
+        const typed = prompt('Cette action supprimera TOUTES vos données (passages, comptabilité, documents).\nTapez SUPPRIMER pour confirmer :');
+        if (typed !== 'SUPPRIMER') { showToast('Suppression annulée', 'info'); return false; }
+    } else {
+        const labels = { passages: 'tous vos passages', compta: 'toutes vos écritures comptables', documents: 'tous vos documents' };
+        if (!confirm('Êtes-vous sûr de vouloir supprimer ' + (labels[scope] || 'ces données') + ' ?')) return false;
     }
 
     try {
-        const { error } = await supabaseClient
-            .from('passages')
-            .delete()
-            .eq('user_id', currentUser.id);
-        if (error) throw error;
-        alert('Toutes vos données ont été supprimées');
-        location.reload();
+        let hadError = false;
+        if (scope === 'passages' || scope === 'all') {
+            const { error } = await supabaseClient.from('passages').delete().eq('user_id', currentUser.id);
+            if (error) { hadError = true; console.error('delete passages:', error); }
+        }
+        if (scope === 'compta' || scope === 'all') {
+            const { error } = await supabaseClient.from('comptabilite').delete().eq('user_id', currentUser.id);
+            if (error) { console.error('delete compta:', error); }
+        }
+        if (scope === 'documents' || scope === 'all') {
+            const { error } = await supabaseClient.from('documents').delete().eq('user_id', currentUser.id);
+            if (error) { console.error('delete documents:', error); }
+        }
+        if (hadError && scope !== 'all') { showToast('Erreur pendant la suppression', 'error'); return false; }
+        showToast(scope === 'all' ? 'Toutes vos données ont été supprimées' : 'Données supprimées');
+        await loadDataCounters();
+        return true;
     } catch (err) {
         console.error('Error deleting data:', err);
-        alert('Erreur lors de la suppression: ' + (err.message || err));
+        showToast('Erreur lors de la suppression: ' + (err.message || err), 'error');
+        return false;
     }
+}
+
+document.getElementById('deletePassagesBtn')?.addEventListener('click', (e) => {
+    withButtonBusy(e.currentTarget, '...', () => deleteUserData('passages'));
+});
+document.getElementById('deleteComptaBtn')?.addEventListener('click', (e) => {
+    withButtonBusy(e.currentTarget, '...', () => deleteUserData('compta'));
+});
+document.getElementById('deleteDocumentsBtn')?.addEventListener('click', (e) => {
+    withButtonBusy(e.currentTarget, '...', () => deleteUserData('documents'));
+});
+document.getElementById('deleteAllData')?.addEventListener('click', async (e) => {
+    const ok = await deleteUserData('all');
+    if (ok) setTimeout(() => location.reload(), 1200);
 });
 
 function switchView(viewName) {
@@ -6631,6 +6790,12 @@ async function saveSetting(key, value) {
     }
     window.userSettings = Object.assign({}, settings);
     renderLogoPreview();
+    if (key === 'logo' || key === 'signature') {
+        showToast(value ? (key === 'logo' ? 'Logo enregistré' : 'Signature enregistrée') : (key === 'logo' ? 'Logo supprimé' : 'Signature supprimée'));
+    }
+    if (key === 'theme') {
+        showToast(value === 'dark' ? 'Thème sombre activé' : 'Thème clair activé');
+    }
 
     if (!currentUser || !supabaseClient) return;
     try {
