@@ -6258,6 +6258,7 @@ function renderCharts() {
         `;
     }
     
+    const monthlyChartContainer = document.getElementById('monthlyChart');
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
     
@@ -6271,42 +6272,88 @@ function renderCharts() {
             const height = val > 0 ? (val / maxVal) * 100 : 0;
             const ehpadVal = ehpadData[key];
             const medecinVal = medecinData[key];
-            const ehpadPct = val > 0 ? (ehpadVal / maxVal) * 100 : 0;
-            const medecinPct = val > 0 ? (medecinVal / maxVal) * 100 : 0;
-            const monthName = monthNames[parseInt(key.split('-')[1]) - 1];
+            const ehpadPct = (ehpadVal / maxVal) * 100;
+            const medecinPct = (medecinVal / maxVal) * 100;
+            const m = parseInt(key.split('-')[1]) - 1;
+            const monthName = monthNames[m];
             
             return `
                 <div class="chart-bar-column" data-month="${monthName}" data-total="${val.toFixed(2)}" data-ehpad="${ehpadVal.toFixed(2)}" data-medecin="${medecinVal.toFixed(2)}">
                     <div class="chart-bar" style="height: ${height}%;">
                         ${val > 0 ? `
                             <span class="bar-value">${val.toFixed(0)}€</span>
-                            <span class="data-point data-point-ehpad" style="bottom: ${ehpadPct}%;" title="EHPAD: ${ehpadVal.toFixed(0)}€"></span>
-                            <span class="data-point data-point-medecin" style="bottom: ${medecinPct}%;" title="Medecine/SSR: ${medecinVal.toFixed(0)}€"></span>
                         ` : ''}
                     </div>
+                    <span class="chart-bar-label">${monthName}</span>
+                    <span class="data-point data-point-ehpad" style="bottom: calc(${ehpadPct}% + 8px);" title="EHPAD: ${ehpadVal.toFixed(0)}€"></span>
+                    <span class="data-point data-point-medecin" style="bottom: calc(${medecinPct}% + 8px);" title="Medecine/SSR: ${medecinVal.toFixed(0)}€"></span>
                 </div>
             `;
         }).join('');
     }
     
     if (labelsContainer) {
-        labelsContainer.innerHTML = sortedKeys.map(key => {
-            const m = parseInt(key.split('-')[1]) - 1;
-            return `<span>${monthNames[m]}</span>`;
-        }).join('');
+        labelsContainer.style.display = 'none';
     }
     
-    // Add click handlers for bar columns with popup
-    document.querySelectorAll('.chart-bar-column').forEach(col => {
-        col.style.cursor = 'pointer';
-        col.addEventListener('click', function() {
-            const month = this.dataset.month;
-            const total = this.dataset.total;
-            const ehpad = this.dataset.ehpad;
-            const medecin = this.dataset.medecin;
-            showMonthPopup(month, total, ehpad, medecin);
+    // Draw lines connecting the EHPAD and Medecine/SSR data points
+    const drawMonthlyLines = () => {
+        if (!monthlyChartContainer || !barsContainer) return;
+        const oldSvg = monthlyChartContainer.querySelector('.chart-lines-overlay');
+        if (oldSvg) oldSvg.remove();
+        const chartRect = monthlyChartContainer.getBoundingClientRect();
+        if (!chartRect.width || !chartRect.height) return;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'chart-lines-overlay');
+        svg.setAttribute('viewBox', `0 0 ${chartRect.width} ${chartRect.height}`);
+        
+        const series = [
+            { selector: '.data-point-ehpad', color: '#10b981' },
+            { selector: '.data-point-medecin', color: '#f59e0b' }
+        ];
+        series.forEach(({ selector, color }) => {
+            const pts = Array.from(barsContainer.querySelectorAll(selector)).map(el => {
+                const r = el.getBoundingClientRect();
+                return `${(r.left + r.width / 2 - chartRect.left).toFixed(1)},${(r.top + r.height / 2 - chartRect.top).toFixed(1)}`;
+            });
+            if (pts.length < 2) return;
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline.setAttribute('points', pts.join(' '));
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('stroke', color);
+            polyline.setAttribute('stroke-width', '2');
+            polyline.setAttribute('stroke-linecap', 'round');
+            polyline.setAttribute('stroke-linejoin', 'round');
+            polyline.setAttribute('opacity', '0.85');
+            svg.appendChild(polyline);
         });
-    });
+        
+        const firstLabel = barsContainer.querySelector('.chart-bar-label');
+        if (firstLabel) {
+            const labelRect = firstLabel.getBoundingClientRect();
+            const axisY = (labelRect.top - chartRect.top - 8).toFixed(1);
+            const axisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            axisLine.setAttribute('x1', '0');
+            axisLine.setAttribute('y1', axisY);
+            axisLine.setAttribute('x2', chartRect.width);
+            axisLine.setAttribute('y2', axisY);
+            axisLine.setAttribute('stroke', 'var(--color-border-subtle, #e5e7eb)');
+            axisLine.setAttribute('stroke-width', '1');
+            svg.appendChild(axisLine);
+        }
+        
+        monthlyChartContainer.appendChild(svg);
+    };
+    requestAnimationFrame(drawMonthlyLines);
+    
+    if (!window.__monthlyChartResizeBound) {
+        window.__monthlyChartResizeBound = true;
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(drawMonthlyLines, 150);
+        });
+    }
     
     // ========== PASSAGES MENSUELS ==========
     const visitsData = {};
