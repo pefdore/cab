@@ -2725,7 +2725,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610191400" defer></script>
+    <script src="app.v5.js?v=202610191500" defer></script>
     <script src="secretariat.js?v=202610191100" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3800,6 +3800,10 @@ window.attemptLogin = function() {
           alert('Connexion à la base pas encore prête. Attendez 2-3 secondes (chargement de l\'app) puis réessayez.');
           return;
         }
+        if (!window.currentUser || !window.currentUser.id) {
+          alert('Utilisateur non connecté. Reconnectez-vous puis réessayez.');
+          return;
+        }
 
         try {
           const now = new Date();
@@ -3808,16 +3812,25 @@ window.attemptLogin = function() {
           const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
           const monthDisplay = monthNames[prevMonth.getMonth()] + ' ' + prevMonth.getFullYear();
 
+          // Dernier jour du mois precedent
+          const lastDay = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
+          const startDate = prevMonthKey + '-01';
+          const endDate = prevMonthKey + '-' + lastDay;
+
+          // Requete IDENTIQUE aux requetes qui marchent dans l'app (loadData) :
+          // filtre user_id + gte/lte sur date
           const { data: passages, error: passagesError } = await window.supabaseClient
             .from('passages')
             .select('*, patients(name)')
-            .gte('date', prevMonthKey + '-01')
-            .lt(now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01')
+            .eq('user_id', window.currentUser.id)
+            .gte('date', startDate)
+            .lte('date', endDate)
             .order('date', { ascending: true });
 
           if (passagesError) {
             console.error('[PDF PASSAGE] Erreur chargement passages:', passagesError);
-            throw new Error('Chargement des passages impossible: ' + (passagesError.message || JSON.stringify(passagesError)));
+            alert('Chargement des passages impossible.\n\nMessage: ' + (passagesError.message || '?') + '\nCode: ' + (passagesError.code || '?') + '\nDétail: ' + (passagesError.details || '?') + '\nHint: ' + (passagesError.hint || '?'));
+            throw passagesError;
           }
           if (!passages || passages.length === 0) {
             alert('Aucun passage trouvé pour ' + monthDisplay);
