@@ -1766,6 +1766,10 @@ function isEhpadLocation(location) {
     const norm = (location || '').toLowerCase().trim();
     return EHPAD_CARD_SERVICES.some(s => s.match.some(m => norm.includes(m)));
 }
+function ehpadServiceOrder(label) {
+    const idx = EHPAD_CARD_SERVICES.findIndex(s => s.label === label);
+    return idx === -1 ? EHPAD_CARD_SERVICES.length : idx;
+}
 function ehpadServiceLabel(location) {
     const norm = (location || '').toLowerCase().trim();
     const svc = EHPAD_CARD_SERVICES.find(s => s.match.some(m => norm.includes(m)));
@@ -1796,16 +1800,26 @@ function renderEhpadDashboardCard() {
         const byPatient = {};
         yearEhpad.forEach(e => {
             const key = e.patientName || 'Inconnu';
-            if (!byPatient[key]) byPatient[key] = { name: key, count: 0, total: 0, first: e.date, last: e.date, vlCount: 0, services: new Set() };
+            if (!byPatient[key]) byPatient[key] = { name: key, count: 0, total: 0, first: e.date, last: e.date, vlCount: 0, services: new Set(), service: ehpadServiceLabel(e.location) };
             const p = byPatient[key];
             p.count++;
             p.total += parseFloat(e.amount || 0);
             if (new Date(e.date) < new Date(p.first)) p.first = e.date;
-            if (new Date(e.date) > new Date(p.last)) p.last = e.date;
+            if (new Date(e.date) >= new Date(p.last)) { p.last = e.date; p.service = ehpadServiceLabel(e.location); }
             if (e.cotation === 'VL' || e.cotation === 'VL+MD') p.vlCount++;
             p.services.add(ehpadServiceLabel(e.location));
         });
-        const rows = Object.values(byPatient).sort((a, b) => new Date(b.last) - new Date(a.last));
+        const rows = Object.values(byPatient).sort((a, b) => {
+            const so = ehpadServiceOrder(a.service) - ehpadServiceOrder(b.service);
+            if (so !== 0) return so;
+            return new Date(b.last) - new Date(a.last);
+        });
+        const serviceGroups = EHPAD_CARD_SERVICES.map(svc => ({
+            label: svc.label,
+            patients: rows.filter(p => p.service === svc.label)
+        })).filter(g => g.patients.length > 0);
+        const otherPatients = rows.filter(p => ehpadServiceOrder(p.service) >= EHPAD_CARD_SERVICES.length);
+        if (otherPatients.length > 0) serviceGroups.push({ label: 'Autres lieux', patients: otherPatients });
         if (summaryEl) summaryEl.textContent = yearEhpad.length + ' passages · ' + rows.length + ' patients · ' + vlEntries.length + ' VL';
         const fmtDate = d => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
         container.innerHTML = '<div style="max-height: 420px; overflow-y: auto;">' +
@@ -1814,16 +1828,24 @@ function renderEhpadDashboardCard() {
             '<th style="padding: 6px 4px;">1ère visite</th><th style="padding: 6px 4px;">Dernière visite</th>' +
             '<th style="padding: 6px 4px; text-align: center;">VL</th><th style="padding: 6px 4px; text-align: right;">Total</th>' +
             '</tr></thead><tbody>' +
-            rows.map(p =>
-                '<tr onclick="window.showPatientPassages(\'' + escName(p.name) + '\')" style="cursor: pointer;">' +
-                '<td>' + p.name + (p.services.size > 1 ? ' <span style="color: var(--color-text-secondary); font-size: 0.6875rem;">(' + [...p.services].join(', ') + ')</span>' : '') + '</td>' +
-                '<td style="text-align: center;">' + p.count + '</td>' +
-                '<td>' + fmtDate(p.first) + '</td>' +
-                '<td>' + fmtDate(p.last) + '</td>' +
-                '<td style="text-align: center;">' + (p.vlCount > 0 ? p.vlCount : '—') + '</td>' +
-                '<td style="text-align: right;">' + p.total.toFixed(2) + '€</td>' +
-                '</tr>'
-            ).join('') +
+            serviceGroups.map(g => {
+                const color = getLocationColor(g.label);
+                const groupTotal = g.patients.reduce((sum, p) => sum + p.total, 0);
+                const headerHtml = '<tr class="ehpad-group-header" style="background: ' + color + '14;">' +
+                    '<td colspan="6" style="padding: 6px 4px;"><span class="location-badge" style="background:' + color + ';">' + g.label + '</span>' +
+                    '<span style="font-size: 0.6875rem; color: var(--color-text-secondary); margin-left: 8px;">' + g.patients.length + ' patients · ' + groupTotal.toFixed(2) + '€</span></td></tr>';
+                const rowsHtml = g.patients.map(p =>
+                    '<tr onclick="window.showPatientPassages(\'' + escName(p.name) + '\')" style="cursor: pointer;">' +
+                    '<td><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background:' + color + '; margin-right: 6px; vertical-align: middle;"></span>' + p.name + (p.services.size > 1 ? ' <span style="color: var(--color-text-secondary); font-size: 0.6875rem;">(' + [...p.services].join(', ') + ')</span>' : '') + '</td>' +
+                    '<td style="text-align: center;">' + p.count + '</td>' +
+                    '<td>' + fmtDate(p.first) + '</td>' +
+                    '<td>' + fmtDate(p.last) + '</td>' +
+                    '<td style="text-align: center;">' + (p.vlCount > 0 ? p.vlCount : '—') + '</td>' +
+                    '<td style="text-align: right;">' + p.total.toFixed(2) + '€</td>' +
+                    '</tr>'
+                ).join('');
+                return headerHtml + rowsHtml;
+            }).join('') +
             '</tbody></table></div>';
         return;
     }
@@ -1833,13 +1855,18 @@ function renderEhpadDashboardCard() {
         vlEntries.forEach(e => {
             const key = e.patientName || 'Inconnu';
             if (!byPatient[key]) byPatient[key] = { name: key, vls: [], services: new Set() };
-            byPatient[key].vls.push({ date: e.date, cotation: e.cotation });
+            byPatient[key].vls.push({ date: e.date, cotation: e.cotation, location: e.location });
             byPatient[key].services.add(ehpadServiceLabel(e.location));
         });
         const rows = Object.values(byPatient).map(p => {
             p.vls.sort((a, b) => new Date(b.date) - new Date(a.date));
+            p.service = ehpadServiceLabel(p.vls[0].location || '');
             return p;
-        }).sort((a, b) => new Date(b.vls[0].date) - new Date(a.vls[0].date));
+        }).sort((a, b) => {
+            const so = ehpadServiceOrder(a.service) - ehpadServiceOrder(b.service);
+            if (so !== 0) return so;
+            return new Date(b.vls[0].date) - new Date(a.vls[0].date);
+        });
         if (summaryEl) summaryEl.textContent = vlEntries.length + ' VL · ' + rows.length + ' patients';
         if (rows.length === 0) {
             container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucune VL en EHPAD cette année</p>';
@@ -1851,9 +1878,10 @@ function renderEhpadDashboardCard() {
                 const nextDate = getNextQuarterDate(lastVl.date);
                 const daysUntil = Math.ceil((nextDate - now) / (24 * 60 * 60 * 1000));
                 const isEligible = daysUntil <= 0;
+                const serviceColor = getLocationColor(p.service);
                 return '<div class="recent-vl-item compact" onclick="window.showPatientPassages(\'' + escName(p.name) + '\')" style="cursor: pointer;">' +
                     '<div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">' +
-                    '<span class="vl-patient">' + p.name + ' <span style="color: var(--color-text-secondary); font-size: 0.6875rem;">(' + [...p.services].join(', ') + ')</span></span>' +
+                    '<span class="vl-patient"><span class="location-badge" style="background:' + serviceColor + '; margin-right: 6px;">' + p.service + '</span>' + p.name + ' <span style="color: var(--color-text-secondary); font-size: 0.6875rem;">(' + [...p.services].join(', ') + ')</span></span>' +
                     '<span style="font-size: 0.6875rem; color: var(--color-text-secondary);">' +
                     p.vls.map(v => (v.cotation || 'VL') + ' : ' + new Date(v.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })).join(' · ') +
                     '</span></div>' +
@@ -1876,7 +1904,7 @@ function renderEhpadDashboardCard() {
             s.vlPatients.add(e.patientName || 'Inconnu');
         }
     });
-    const services = Object.values(byService).filter(s => s.patients.size > 0).sort((a, b) => b.vl - a.vl);
+    const services = Object.values(byService).filter(s => s.patients.size > 0).sort((a, b) => ehpadServiceOrder(a.label) - ehpadServiceOrder(b.label));
     if (summaryEl) summaryEl.textContent = vlEntries.length + ' VL · ' + services.reduce((n, s) => n + (s.patients.size - s.vlPatients.size), 0) + ' patients sans VL';
     if (services.length === 0) {
         container.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 0.8125rem;">Aucun passage en EHPAD cette année</p>';
@@ -2802,6 +2830,7 @@ function getLocationColor(location) {
     const colors = {
         'Medecine': '#0ea5e9',
         'SSR': '#8b5cf6',
+        'Availles': '#06b6d4',
         'Lilas Rdc': '#10b981',
         'Lilas 1er étage': '#f59e0b',
         'Tamaris': '#ec4899'

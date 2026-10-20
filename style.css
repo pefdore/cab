@@ -8739,3 +8739,11 @@ html.no-anim *::after {
 .ehpad-card-content .entries-table tbody tr:hover {
     background: var(--color-bg-secondary, rgba(0, 0, 0, 0.03));
 }
+
+/* EHPAD card: grouped rows by service */
+.ehpad-group-header td {
+    border-top: 1px solid var(--color-border);
+}
+.ehpad-card-content .entries-table tr.ehpad-group-header:hover {
+    background: inherit;
+}
