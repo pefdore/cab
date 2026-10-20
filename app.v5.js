@@ -6456,7 +6456,7 @@ function renderCharts() {
     const locationAliases = [
         [/^m[ée]decine$/i, 'Médecine'],
         [/^(lilas\s*)?1(er|[eè]re)?(\s*[ée]tage)?$/i, 'Lilas 1er étage'],
-        [/^(lilas\s*)?r\s*d\s*c$/i, 'Lilas RdC']
+        [/^(lili?as\s*)?r\s*d\s*c$/i, 'Lilas RdC']
     ];
     const normalizeLocation = loc => {
         const trimmed = (loc || '').trim();
