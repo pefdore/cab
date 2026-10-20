@@ -6453,9 +6453,22 @@ function renderCharts() {
     }
     
     // Donut chart by location
+    const locationAliases = [
+        [/^m[ée]decine$/i, 'Médecine'],
+        [/^(lilas\s*)?1(er|[eè]re)?(\s*[ée]tage)?$/i, 'Lilas 1er étage'],
+        [/^(lilas\s*)?r\s*d\s*c$/i, 'Lilas RdC']
+    ];
+    const normalizeLocation = loc => {
+        const trimmed = (loc || '').trim();
+        if (!trimmed) return 'Autre';
+        for (const [pattern, canonical] of locationAliases) {
+            if (pattern.test(trimmed)) return canonical;
+        }
+        return trimmed;
+    };
     const locationData = {};
     entries.forEach(e => {
-        const loc = e.location || 'Autre';
+        const loc = normalizeLocation(e.location || 'Autre');
         locationData[loc] = (locationData[loc] || 0) + (e.amount || 0);
     });
     
