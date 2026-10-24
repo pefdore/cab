@@ -8974,3 +8974,101 @@ html.no-anim *::after {
 .urgence-alerts-quick {
     margin-bottom: 12px;
 }
+
+/* Protocoles détaillés + calculateur de doses */
+.urgence-dose-calculator {
+    margin-bottom: 20px;
+}
+
+.urgence-weight-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.urgence-weight-row label {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.urgence-weight-row .form-input {
+    width: 110px;
+    text-align: center;
+}
+
+.urgence-weight-unit {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+.urgence-protocol-section {
+    margin-top: 14px;
+}
+
+.urgence-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-secondary);
+    margin: 0 0 8px;
+}
+
+.urgence-criteria {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.urgence-criteria li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border-left: 3px solid var(--color-primary);
+    background: var(--color-bg-muted);
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 6px;
+}
+
+.urgence-criteria li strong {
+    font-size: 0.8125rem;
+}
+
+.urgence-criteria li span {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+.urgence-differential {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    background: rgba(245, 158, 11, 0.10);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    color: var(--color-text);
+}
+
+.urgence-material {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 6px;
+}
+
+.urgence-material li {
+    font-size: 0.8125rem;
+    padding: 6px 10px;
+    background: var(--color-bg-muted);
+    border-radius: 6px;
+}
+
+.urgence-material li::before {
+    content: "✓ ";
+    color: #16a34a;
+    font-weight: 700;
+}
