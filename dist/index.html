@@ -2889,7 +2889,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610261300" defer></script>
+    <script src="app.v5.js?v=202610261400" defer></script>
     <script src="secretariat.js?v=202610261300" defer></script>
     <script>
       // Toggle form function for mobile
@@ -4105,8 +4105,8 @@ window.attemptLogin = function() {
           doc.setLineWidth(0.3); doc.line(MARGE + 75, y1 + 7.2, MARGE + 75 + wM, y1 + 7.2);
           y1 += 14;
           const col = [28, 58, 30, 58];
-          doc.setFillColor(230, 230, 230); doc.setLineWidth(0.2);
-          ['Nombre', 'Actes', 'Prix', 'Montant'].forEach((h, i) => { doc.rect(cumSum(col, i), y1, col[i], 8, 'FD'); doc.text(h, cumSum(col, i) + col[i] / 2, y1 + 5.5, { align: 'center' }); });
+          doc.setLineWidth(0.2); 
+          ['Nombre', 'Actes', 'Prix', 'Montant'].forEach((h, i) => { doc.rect(cumSum(col, i), y1, col[i], 8, 'S'); doc.text(h, cumSum(col, i) + col[i] / 2, y1 + 5.5, { align: 'center' }); });
           y1 += 8;
           const medBy = {};
           medicoSSR.forEach(e => { const c = (e.cotation || 'G').toUpperCase().trim(); medBy[c] = (medBy[c] || 0) + 1; });
@@ -4114,7 +4114,7 @@ window.attemptLogin = function() {
           doc.setFont('helvetica', 'normal');
           MEDECINE_ACTES.forEach(a => {
             const n = medBy[a] || 0; const m = n * tarif(a); totalMedico += m;
-            [String(n), a, fmt(tarif(a)), fmt(m)].forEach((c, i) => { doc.rect(cumSum(col, i), y1, col[i], 8); doc.text(c, cumSum(col, i) + col[i] / 2, y1 + 5.5, { align: 'center' }); });
+            [String(n), a, fmt(tarif(a)), fmt(m)].forEach((c, i) => { doc.rect(cumSum(col, i), y1, col[i], 8, 'S'); doc.text(c, cumSum(col, i) + col[i] / 2, y1 + 5.5, { align: 'center' }); });
             y1 += 8;
           });
           const retenue = totalMedico * 0.10, verser = totalMedico - retenue;
@@ -4138,7 +4138,7 @@ window.attemptLogin = function() {
           y2 += 13;
           const W = [26, 20, 46, 22, 32, 34];
           doc.setFontSize(7.5);
-          ['Services', 'Nombre', 'Actes', 'Prix', 'Montant par actes', 'Total par service'].forEach((h, i) => { doc.rect(cumSum(W, i), y2, W[i], 6, 'FD'); doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y2 + 4, { align: 'center' }); });
+          ['Services', 'Nombre', 'Actes', 'Prix', 'Montant par actes', 'Total par service'].forEach((h, i) => { doc.rect(cumSum(W, i), y2, W[i], 6, 'S'); doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y2 + 4, { align: 'center' }); });
           y2 += 6;
           let totalEhpad = 0; const RH = 4.7;
           EHPAD_SERVICES.forEach(svc => {
@@ -4154,13 +4154,13 @@ window.attemptLogin = function() {
               vus[EHPAD_LIBELLES[a]] = true;
               const n = by[a] || 0; const m = n * tarif(a);
               doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
-              doc.rect(cumSum(W, 0), y2, W[0], RH);
+              doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
               if (premier) doc.text(svc.label, cumSum(W, 0) + W[0] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 1), y2, W[1], RH); doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 2), y2, W[2], RH); doc.text(EHPAD_LIBELLES[a], cumSum(W, 2) + W[2] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 3), y2, W[3], RH); doc.text(fmt(tarif(a)), cumSum(W, 3) + W[3] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 4), y2, W[4], RH); doc.text(fmt(m), cumSum(W, 4) + W[4] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 5), y2, W[5], RH);
+              doc.rect(cumSum(W, 1), y2, W[1], RH, 'S'); doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.5, { align: 'center' });
+              doc.rect(cumSum(W, 2), y2, W[2], RH, 'S'); doc.text(EHPAD_LIBELLES[a], cumSum(W, 2) + W[2] / 2, y2 + 3.5, { align: 'center' });
+              doc.rect(cumSum(W, 3), y2, W[3], RH, 'S'); doc.text(fmt(tarif(a)), cumSum(W, 3) + W[3] / 2, y2 + 3.5, { align: 'center' });
+              doc.rect(cumSum(W, 4), y2, W[4], RH, 'S'); doc.text(fmt(m), cumSum(W, 4) + W[4] / 2, y2 + 3.5, { align: 'center' });
+              doc.rect(cumSum(W, 5), y2, W[5], RH, 'S');
               if (premier) doc.text(fmt(ts), cumSum(W, 5) + W[5] / 2, y2 + 3.5, { align: 'center' });
               premier = false; y2 += RH;
             });
@@ -4184,9 +4184,9 @@ window.attemptLogin = function() {
           const WP = [24, 34, 62, 30, 32];
           let y3 = 56;
           const entetePat = () => {
-            doc.setFillColor(230, 230, 230);
+            
             doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-            ['Date', 'Médecin', 'Nom patient', 'Lieu', 'Cotation'].forEach((h, i) => { doc.rect(cumSum(WP, i), y3, WP[i], 7, 'FD'); doc.text(h, cumSum(WP, i) + WP[i] / 2, y3 + 5, { align: 'center' }); });
+            ['Date', 'Médecin', 'Nom patient', 'Lieu', 'Cotation'].forEach((h, i) => { doc.rect(cumSum(WP, i), y3, WP[i], 7, 'S'); doc.text(h, cumSum(WP, i) + WP[i] / 2, y3 + 5, { align: 'center' }); });
             y3 += 7;
             doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
           };
@@ -4196,7 +4196,7 @@ window.attemptLogin = function() {
           passages.forEach(e => {
             if (count > 0 && count % rpp === 0) { doc.addPage(); y3 = 18; entetePat(); }
             [e.date || '-', 'Dr DORE', (e.patients && e.patients.name || 'Inconnu').substring(0, 28), e.location || '', e.cotation || ''].forEach((c, i) => {
-              doc.rect(cumSum(WP, i), y3, WP[i], 6.5);
+              doc.rect(cumSum(WP, i), y3, WP[i], 6.5, 'S');
               doc.text(String(c), i === 2 ? cumSum(WP, i) + 2 : cumSum(WP, i) + WP[i] / 2, y3 + 4.7, { align: i === 2 ? 'left' : 'center' });
             });
             y3 += 6.5; count++;

@@ -205,12 +205,11 @@ function tableauMedecine(doc: any, y: number, passages: Passage[]): { total: num
   y += 10
   const col = [28, 58, 30, 58]
   const headers = ['Nombre', 'Actes', 'Prix', 'Montant']
-  doc.setFillColor(230, 230, 230)
   doc.setLineWidth(0.2)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   headers.forEach((h, i) => {
-    doc.rect(cumSum(col, i), y, col[i], 8, 'FD')
+    doc.rect(cumSum(col, i), y, col[i], 8, 'S')
     doc.text(h, cumSum(col, i) + col[i] / 2, y + 5.5, { align: 'center' })
   })
   y += 8
@@ -230,7 +229,7 @@ function tableauMedecine(doc: any, y: number, passages: Passage[]): { total: num
     total += montant
     const cells = [String(n), acte, fmt(tarif(acte)), fmt(montant)]
     cells.forEach((c, i) => {
-      doc.rect(cumSum(col, i), y, col[i], 8)
+      doc.rect(cumSum(col, i), y, col[i], 8, 'S')
       doc.text(c, cumSum(col, i) + col[i] / 2, y + 5.5, { align: 'center' })
     })
     y += 8
@@ -272,11 +271,10 @@ function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: strin
   y += 9
   const W = [26, 20, 46, 22, 32, 34]
   const headers = ['Services', 'Nombre', 'Actes', 'Prix', 'Montant par actes', 'Total par service']
-  doc.setFillColor(230, 230, 230)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7.5)
   headers.forEach((h, i) => {
-    doc.rect(cumSum(W, i), y, W[i], 6, 'FD')
+    doc.rect(cumSum(W, i), y, W[i], 6, 'S')
     doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y + 4, { align: 'center' })
   })
   y += 6
@@ -304,13 +302,13 @@ function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: strin
       const n = byCotation[acte] || 0
       const montant = n * tarif(acte)
       const x0 = cumSum(W, 0), x1 = cumSum(W, 1), x2 = cumSum(W, 2), x3 = cumSum(W, 3), x4 = cumSum(W, 4), x5 = cumSum(W, 5)
-      doc.rect(x0, y, W[0], RH)
+      doc.rect(x0, y, W[0], RH, 'S')
       if (premier) doc.text(svc.label, x0 + W[0] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x1, y, W[1], RH); doc.text(String(n), x1 + W[1] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x2, y, W[2], RH); doc.text(EHPAD_ACTES_LIBELLES[acte], x2 + W[2] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x3, y, W[3], RH); doc.text(fmt(tarif(acte)), x3 + W[3] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x4, y, W[4], RH); doc.text(fmt(montant), x4 + W[4] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x5, y, W[5], RH)
+      doc.rect(x1, y, W[1], RH, 'S'); doc.text(String(n), x1 + W[1] / 2, y + 3.5, { align: 'center' })
+      doc.rect(x2, y, W[2], RH, 'S'); doc.text(EHPAD_ACTES_LIBELLES[acte], x2 + W[2] / 2, y + 3.5, { align: 'center' })
+      doc.rect(x3, y, W[3], RH, 'S'); doc.text(fmt(tarif(acte)), x3 + W[3] / 2, y + 3.5, { align: 'center' })
+      doc.rect(x4, y, W[4], RH, 'S'); doc.text(fmt(montant), x4 + W[4] / 2, y + 3.5, { align: 'center' })
+      doc.rect(x5, y, W[5], RH, 'S')
       if (premier) doc.text(fmt(totalSvc), x5 + W[5] / 2, y + 3.5, { align: 'center' })
       premier = false
       y += RH
@@ -348,11 +346,10 @@ function pagePatients(doc: any, passages: Passage[], moisLabel: string, dateStr:
   const headers = ['Date', 'Médecin', 'Nom patient', 'Lieu', 'Cotation']
   let y = 56
   const enteteTableau = () => {
-    doc.setFillColor(230, 230, 230)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
     headers.forEach((h, i) => {
-      doc.rect(cumSum(WP, i), y, WP[i], 7, 'FD')
+      doc.rect(cumSum(WP, i), y, WP[i], 7, 'S')
       doc.text(h, cumSum(WP, i) + WP[i] / 2, y + 5, { align: 'center' })
     })
     y += 7
@@ -370,7 +367,7 @@ function pagePatients(doc: any, passages: Passage[], moisLabel: string, dateStr:
     }
     const cells = [p.date || '-', 'Dr DORE', (p.patients?.name || 'Inconnu').substring(0, 28), p.location || '', p.cotation || '']
     cells.forEach((c, i) => {
-      doc.rect(cumSum(WP, i), y, WP[i], 6.5)
+      doc.rect(cumSum(WP, i), y, WP[i], 6.5, 'S')
       doc.text(String(c), i === 2 ? cumSum(WP, i) + 2 : cumSum(WP, i) + WP[i] / 2, y + 4.7, { align: i === 2 ? 'left' : 'center' })
     })
     y += 6.5
