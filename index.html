@@ -1333,6 +1333,13 @@ window.attemptLogin = function() {
                     </div>
                     
                     <div class="settings-section">
+                        <h3>IBAN</h3>
+                        <p class="settings-desc">IBAN affiché sur les PDF d'honoraires (zone DESIGNATION)</p>
+                        <input type="text" id="ibanInput" placeholder="FR76..." style="width: 100%; max-width: 420px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.9rem; background: var(--color-bg-elevated); color: var(--color-text); margin-bottom: 8px;">
+                        <p class="settings-hint">Ex : FR76 1558 9351 1002 8701 2394 050 — sauvegardé automatiquement quand vous quittez le champ</p>
+                    </div>
+                    
+                    <div class="settings-section">
                         <h3>Signature</h3>
                         <p class="settings-desc">Uploadez votre signature (affichée en bas de page du PDF)</p>
                         <div class="logo-upload-wrapper">
@@ -2889,7 +2896,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610261400" defer></script>
+    <script src="app.v5.js?v=202610261500" defer></script>
     <script src="secretariat.js?v=202610261300" defer></script>
     <script>
       // Toggle form function for mobile
@@ -4024,6 +4031,8 @@ window.attemptLogin = function() {
 
           const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
           const cumSum = (arr, upto) => { let s = MARGE; for (let i = 0; i < upto; i++) s += arr[i]; return s; };
+          // Profil du medecin de la session (nom DESIGNATION, signature, liste patients)
+          const leProfile = (typeof currentProfile !== 'undefined') ? currentProfile : window.currentProfile;
           // Logo : celui des Parametres si uploadé, sinon logo CH Saint Jean (comme la fonction edge)
           const LOGO_CHSJ_B64 = [
 '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',
@@ -4073,9 +4082,13 @@ window.attemptLogin = function() {
             doc.setFont('helvetica', 'bold');
             doc.text('DESIGNATION : ', MARGE, y);
             doc.setFont('helvetica', 'normal');
-            doc.text(doc.splitTextToSize('Docteur DORE Pierre-François, Médecin généraliste, autorisé à exercer dans l\'établissement.', LARGEUR - 26), MARGE + 26, y);
+            const nomComplet = (leProfile && (leProfile.first_name || leProfile.last_name))
+              ? ('Docteur ' + (leProfile.last_name || '') + ' ' + (leProfile.first_name || '')).trim()
+              : 'Docteur';
+            doc.text(doc.splitTextToSize(nomComplet + ', Médecin généraliste, autorisé à exercer dans l\'établissement.', LARGEUR - 26), MARGE + 26, y);
             y += 5;
-            doc.text('CCM BETTON IBAN FR7615589351100287012394050', MARGE, y);
+            const ibanPdf = ((typeof settings !== 'undefined' && settings && settings.iban) || '').trim();
+            if (ibanPdf) doc.text('IBAN ' + ibanPdf, MARGE, y);
             return y + 7;
           };
 
@@ -4089,7 +4102,8 @@ window.attemptLogin = function() {
             doc.setFont('helvetica', 'normal');
             doc.text('La Guerche de Bretagne, le ' + dateStr, MARGE, y + 18);
             doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-            doc.text('Docteur DORE', 210 - MARGE, y + 40, { align: 'right' });
+            const nomSignature = (leProfile && leProfile.last_name) ? ('Docteur ' + leProfile.last_name) : 'Docteur';
+            doc.text(nomSignature, 210 - MARGE, y + 40, { align: 'right' });
           };
 
           const isEhpadLoc = e => EHPAD_SERVICES.some(s => s.match.includes(norm(e.location)));
@@ -4099,10 +4113,12 @@ window.attemptLogin = function() {
           // PAGE 1 : MEDECINE / SSR
           let y1 = entete("Application de la loi 2021-502 du 26 avril 2021 (notamment l'article 19) - Application des articles L 6146-2 et L 6146-41 du Code de la santé publique", true);
           doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-          doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', MARGE, y1 + 6);
-          doc.text(monthDisplay.toUpperCase(), MARGE + 75, y1 + 6);
+          const libMois1 = 'ETAT DES SOMMES DUES POUR LE MOIS DE ';
+          doc.text(libMois1, MARGE, y1 + 6);
+          const wLib1 = doc.getTextWidth(libMois1);
+          doc.text(monthDisplay.toUpperCase(), MARGE + wLib1 + 2, y1 + 6);
           const wM = doc.getTextWidth(monthDisplay.toUpperCase());
-          doc.setLineWidth(0.3); doc.line(MARGE + 75, y1 + 7.2, MARGE + 75 + wM, y1 + 7.2);
+          doc.setLineWidth(0.3); doc.line(MARGE + wLib1 + 2, y1 + 7.2, MARGE + wLib1 + 2 + wM, y1 + 7.2);
           y1 += 14;
           const col = [28, 58, 30, 58];
           doc.setLineWidth(0.2); 
@@ -4131,10 +4147,12 @@ window.attemptLogin = function() {
           doc.addPage();
           let y2 = entete("contrat pluriannuel d'Objectif et de Moyens signés le 29 juin 2020 - Articles L 313-11, L 313-12, L313-12-2 du Code de l'Action Sociale et des Familles", false);
           doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-          doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', MARGE, y2 + 6);
-          doc.text(monthDisplay.toUpperCase(), MARGE + 75, y2 + 6);
+          const libMois2 = 'ETAT DES SOMMES DUES POUR LE MOIS DE ';
+          doc.text(libMois2, MARGE, y2 + 6);
+          const wLib2 = doc.getTextWidth(libMois2);
+          doc.text(monthDisplay.toUpperCase(), MARGE + wLib2 + 2, y2 + 6);
           const wM2 = doc.getTextWidth(monthDisplay.toUpperCase());
-          doc.setLineWidth(0.3); doc.line(MARGE + 75, y2 + 7.2, MARGE + 75 + wM2, y2 + 7.2);
+          doc.setLineWidth(0.3); doc.line(MARGE + wLib2 + 2, y2 + 7.2, MARGE + wLib2 + 2 + wM2, y2 + 7.2);
           y2 += 13;
           const W = [26, 20, 46, 22, 32, 34];
           doc.setFontSize(7.5);
@@ -4195,7 +4213,7 @@ window.attemptLogin = function() {
           let count = 0;
           passages.forEach(e => {
             if (count > 0 && count % rpp === 0) { doc.addPage(); y3 = 18; entetePat(); }
-            [e.date || '-', 'Dr DORE', (e.patients && e.patients.name || 'Inconnu').substring(0, 28), e.location || '', e.cotation || ''].forEach((c, i) => {
+            [e.date || '-', (leProfile && leProfile.last_name) ? ('Dr ' + leProfile.last_name) : 'Dr', (e.patients && e.patients.name || 'Inconnu').substring(0, 28), e.location || '', e.cotation || ''].forEach((c, i) => {
               doc.rect(cumSum(WP, i), y3, WP[i], 6.5, 'S');
               doc.text(String(c), i === 2 ? cumSum(WP, i) + 2 : cumSum(WP, i) + WP[i] / 2, y3 + 4.7, { align: i === 2 ? 'left' : 'center' });
             });
