@@ -2985,9 +2985,9 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610262600" defer></script>
-    <script src="secretariat.js?v=202610262600" defer></script>
-    <script src="urgence.js?v=202610262600" defer></script>
+    <script src="app.v5.js?v=202610262800" defer></script>
+    <script src="secretariat.js?v=202610262800" defer></script>
+    <script src="urgence.js?v=202610262800" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
@@ -3198,7 +3198,7 @@ window.attemptLogin = function() {
         setTimeout(function() {
           // The fallback is already set, but we can try to load the real script
           var script = document.createElement('script');
-          script.src = 'secretariat.js?v=202610262600';
+          script.src = 'secretariat.js?v=202610262800';
           script.onload = function() {
             console.log('[DEBUG] Secretariat script loaded');
             if (typeof window.showAddEmployeeModal === 'function' && window.showAddEmployeeModal.toString().indexOf('[FALLBACK]') > -1) {
@@ -4102,9 +4102,29 @@ window.attemptLogin = function() {
           // ==== Modèle CH Saint Jean (identique au PDF mensuel) ====
           const MARGE = 18, LARGEUR = 210 - 2 * MARGE;
           const TARIFS = { 'G': 30, 'VG': 40, 'MPA': 5, 'VG+MD': 40, 'VG+MU': 52.60, 'V+MU': 52.60, 'ALQP003': 69.12, 'ALQP006': 69.12, 'VL': 60, 'VL+MD': 70, 'VG+MD+MSH': 63, 'VG+MD+2IK': 41.22 };
-          const tarif = c => TARIFS[(c || '').toUpperCase().trim()] || 0;
-          const MEDECINE_ACTES = ['G', 'VG', 'MPA'];
-          const EHPAD_ACTES = ['G', 'VG+MD', 'VG+MU', 'V+MU', 'ALQP003', 'ALQP006', 'VL', 'VL+MD', 'VG+MD+MSH', 'VG+MD+2IK'];
+          // Actes speciaux (cotations personnalisees): tarif unitaire = moyenne des montants enregistres
+          const actesSpeciaux = {};
+          const specGroupes = {};
+          passages.forEach(e => {
+            const c = (e.cotation || '').toUpperCase().trim();
+            if (!TARIFS[c] && c) {
+              const m = parseFloat(e.amount);
+              if (!isNaN(m)) {
+                if (!specGroupes[c]) specGroupes[c] = [];
+                specGroupes[c].push(m);
+              }
+            }
+          });
+          Object.keys(specGroupes).forEach(c => {
+            const arr = specGroupes[c];
+            actesSpeciaux[c] = arr.reduce((s, v) => s + v, 0) / arr.length;
+          });
+          const tarif = c => {
+            const k = (c || '').toUpperCase().trim();
+            return TARIFS[k] || actesSpeciaux[k] || 0;
+          };
+          const MEDECINE_ACTES_BASE = ['G', 'VG', 'MPA'];
+          const EHPAD_ACTES_BASE = ['G', 'VG+MD', 'VG+MU', 'V+MU', 'ALQP003', 'ALQP006', 'VL', 'VL+MD', 'VG+MD+MSH', 'VG+MD+2IK'];
           const EHPAD_LIBELLES = { 'G': 'G', 'VG+MD': 'VG+MD', 'VG+MU': 'VG+MU ou V+MU', 'V+MU': 'VG+MU ou V+MU', 'ALQP003': 'ALQP003 (ou ALQP006)', 'ALQP006': 'ALQP003 (ou ALQP006)', 'VL': 'VL', 'VL+MD': 'VL+MD', 'VG+MD+MSH': 'VG+MD+MSH', 'VG+MD+2IK': 'VG+MD+2IK' };
           const EHPAD_SERVICES = [
             { match: ['availles'], label: 'Availles' },
@@ -4113,6 +4133,12 @@ window.attemptLogin = function() {
             { match: ['tamaris'], label: 'Tamaris' },
           ];
           const norm = s => (s || '').toLowerCase().trim();
+          // reperer les actes speciaux presents dans les passages medecine/SSR et EHPAD
+          const isEhpadLocP = e => EHPAD_SERVICES.some(s => s.match.includes(norm(e.location)));
+          const actesSpeciauxMed = [...new Set(passages.filter(e => !isEhpadLocP(e)).map(e => (e.cotation || '').toUpperCase().trim()).filter(c => c && !TARIFS[c]))];
+          const actesSpeciauxEhpad = [...new Set(passages.filter(e => isEhpadLocP(e)).map(e => (e.cotation || '').toUpperCase().trim()).filter(c => c && !TARIFS[c]))];
+          const MEDECINE_ACTES = MEDECINE_ACTES_BASE.concat(actesSpeciauxMed);
+          const EHPAD_ACTES = EHPAD_ACTES_BASE.concat(actesSpeciauxEhpad);
           const fmt = x => x.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €';
           const UNITS = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
           const TENS = { 2: 'vingt', 3: 'trente', 4: 'quarante', 5: 'cinquante', 6: 'soixante', 7: 'soixante', 8: 'quatre-vingt', 9: 'quatre-vingt' };
@@ -4240,11 +4266,11 @@ window.attemptLogin = function() {
           const retenue = totalMedico * 0.10, verser = totalMedico - retenue;
           y1 += 6;
           doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-          doc.text('Montant total', 134, y1, { align: 'right' }); doc.line(134, y1 - 5, 192, y1 - 5); doc.text(fmt(totalMedico), 192, y1, { align: 'right' });
+          doc.text('Montant total', 134, y1, { align: 'right' }); doc.text(fmt(totalMedico), 192, y1, { align: 'right' });
           y1 += 8;
           doc.text('Retenue 10%', 134, y1, { align: 'right' }); doc.text(fmt(retenue), 192, y1, { align: 'right' });
           y1 += 8;
-          doc.text('Montant à verser', 134, y1, { align: 'right' }); doc.line(134, y1 - 5, 192, y1 - 5); doc.line(134, y1 + 2, 192, y1 + 2); doc.text(fmt(verser), 192, y1, { align: 'right' });
+          doc.text('Montant à verser', 134, y1, { align: 'right' }); doc.text(fmt(verser), 192, y1, { align: 'right' });
           memoire(verser, 232);
 
           // PAGE 2 : EHPAD
@@ -4279,7 +4305,7 @@ window.attemptLogin = function() {
               doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
               if (premier) doc.text(svc.label, cumSum(W, 0) + W[0] / 2, y2 + 3.5, { align: 'center' });
               doc.rect(cumSum(W, 1), y2, W[1], RH, 'S'); doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 2), y2, W[2], RH, 'S'); doc.text(EHPAD_LIBELLES[a], cumSum(W, 2) + W[2] / 2, y2 + 3.5, { align: 'center' });
+              doc.rect(cumSum(W, 2), y2, W[2], RH, 'S'); doc.text(EHPAD_LIBELLES[a] || a, cumSum(W, 2) + W[2] / 2, y2 + 3.5, { align: 'center' });
               doc.rect(cumSum(W, 3), y2, W[3], RH, 'S'); doc.text(fmt(tarif(a)), cumSum(W, 3) + W[3] / 2, y2 + 3.5, { align: 'center' });
               doc.rect(cumSum(W, 4), y2, W[4], RH, 'S'); doc.text(fmt(m), cumSum(W, 4) + W[4] / 2, y2 + 3.5, { align: 'center' });
               doc.rect(cumSum(W, 5), y2, W[5], RH, 'S');
