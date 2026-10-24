@@ -3121,7 +3121,7 @@ function doDelete(id) {
                 successModal.style.position = 'fixed';
                 successModal.style.zIndex = '9999999';
             } else {
-                alert('Feuille de comptabilité supprimée avec succès!');
+                alert('Feuille de comptabilité hôpital EHPAD supprimée avec succès!');
             }
         })
         .catch(err => {
