@@ -695,15 +695,25 @@ function urgenceGetLocation() {
 }
 
 async function urgenceFetchDaeAround(lat, lon, radiusKm) {
-    const query = `[out:json][timeout:25];
+    const radius = Math.round(radiusKm * 1000);
+    // 1) Proxy serveur (evite le blocage CORS navigateur)
+    // 2) Retour direct Overpass en secours (local/dev)
+    let data = null;
+    try {
+        const resp = await fetch(`/api/dae?lat=${lat}&lon=${lon}&radius=${radius}`);
+        if (resp.ok) data = await resp.json();
+    } catch (e) { /* CORS ou proxy absent : on tente le direct */ }
+    if (!data) {
+        const query = `[out:json][timeout:25];
 (
-  node["emergency"="defibrillator"](around:${Math.round(radiusKm * 1000)},${lat},${lon});
+  node["emergency"="defibrillator"](around:${radius},${lat},${lon});
 );
 out body 60;`;
-    const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('Service de cartes momentan\u00E9ment indisponible');
-    const data = await resp.json();
+        const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Service de cartes momentan\u00E9ment indisponible');
+        data = await resp.json();
+    }
     return (data.elements || []).filter(e => e.lat && e.lon).map(e => ({
         lat: e.lat,
         lon: e.lon,
