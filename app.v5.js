@@ -3484,6 +3484,7 @@ function setupEventListeners() {
     document.getElementById('saveCustomCotation')?.addEventListener('click', saveCustomCotation);
     
     setupSettingsDelegation();
+    setupSignatureDrawDelegation();
     
     // Cabinet tabs
     document.querySelectorAll('.cabinet-tab').forEach(tab => {
@@ -3578,6 +3579,113 @@ async function withButtonBusy(btn, label, fn) {
         btn.disabled = false;
         btn.textContent = original;
     }
+}
+
+// --- Signature drawing module ---
+const signatureDrawState = { drawing: false, hasInk: false, lastX: 0, lastY: 0 };
+
+function initSignatureDrawCanvas() {
+    const canvas = document.getElementById('signatureDrawCanvas');
+    if (!canvas || canvas.dataset.drawInit === '1') return;
+    canvas.dataset.drawInit = '1';
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1a1a1a';
+
+    const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const p = e.touches && e.touches.length ? e.touches[0] : e;
+        return {
+            x: (p.clientX - rect.left) * (canvas.width / rect.width),
+            y: (p.clientY - rect.top) * (canvas.height / rect.height)
+        };
+    };
+
+    const start = (e) => {
+        e.preventDefault();
+        const pos = getPos(e);
+        signatureDrawState.drawing = true;
+        signatureDrawState.hasInk = true;
+        signatureDrawState.lastX = pos.x;
+        signatureDrawState.lastY = pos.y;
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+    };
+
+    const move = (e) => {
+        if (!signatureDrawState.drawing) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(signatureDrawState.lastX, signatureDrawState.lastY);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        signatureDrawState.lastX = pos.x;
+        signatureDrawState.lastY = pos.y;
+    };
+
+    const end = () => { signatureDrawState.drawing = false; };
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+    canvas.addEventListener('touchcancel', end);
+}
+
+function openSignatureDrawModal() {
+    initSignatureDrawCanvas();
+    const canvas = document.getElementById('signatureDrawCanvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    signatureDrawState.hasInk = false;
+    document.getElementById('signature-draw-modal').style.display = 'flex';
+}
+
+function setupSignatureDrawDelegation() {
+    document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (t.closest('#drawSignatureBtn')) {
+            e.preventDefault();
+            openSignatureDrawModal();
+            return;
+        }
+        if (t.closest('#signatureDrawClearBtn')) {
+            e.preventDefault();
+            const canvas = document.getElementById('signatureDrawCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            signatureDrawState.hasInk = false;
+            return;
+        }
+        if (t.closest('#signatureDrawSaveBtn')) {
+            e.preventDefault();
+            if (!signatureDrawState.hasInk) {
+                showToast("Dessinez d'abord votre signature", 'error');
+                return;
+            }
+            const canvas = document.getElementById('signatureDrawCanvas');
+            if (canvas) {
+                const dataUrl = canvas.toDataURL('image/png');
+                saveSetting('signature', dataUrl);
+                closeModal('signature-draw-modal');
+            }
+            return;
+        }
+    });
 }
 
 // Delegated event handling for the Settings view (works in desktop view AND mobile overlay clone)
