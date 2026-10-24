@@ -2985,7 +2985,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610262800" defer></script>
+    <script src="app.v5.js?v=202610262900" defer></script>
     <script src="secretariat.js?v=202610262800" defer></script>
     <script src="urgence.js?v=202610262800" defer></script>
     <script>
@@ -4229,7 +4229,9 @@ window.attemptLogin = function() {
             doc.text('La Guerche de Bretagne, le ' + dateStr, MARGE, y + 18);
             // nom du praticien puis signature EN DESSOUS
             doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-            const nomSignature = (leProfile && leProfile.last_name) ? ('Docteur ' + leProfile.last_name) : 'Docteur';
+            const nomSignature = (leProfile && (leProfile.last_name || leProfile.first_name))
+              ? ('Docteur ' + (leProfile.last_name || '') + ' ' + (leProfile.first_name || '')).trim()
+              : 'Docteur';
             doc.text(nomSignature, 210 - MARGE, y + 28, { align: 'right' });
             if (signatureImg) {
               try { doc.addImage(signatureImg, 'PNG', 150, y + 31, 42, 13); } catch (e) { /* signature optionnelle */ }
@@ -4353,7 +4355,9 @@ window.attemptLogin = function() {
           // Signature + nom du praticien en bas de la page patients
           y3 += 14;
           doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-          const nomSignature3 = (leProfile && leProfile.last_name) ? ('Docteur ' + leProfile.last_name) : 'Docteur';
+          const nomSignature3 = (leProfile && (leProfile.last_name || leProfile.first_name))
+            ? ('Docteur ' + (leProfile.last_name || '') + ' ' + (leProfile.first_name || '')).trim()
+            : 'Docteur';
           doc.text(nomSignature3, 210 - MARGE, y3, { align: 'right' });
           if (signatureImg) {
             try { doc.addImage(signatureImg, 'PNG', 150, y3 + 3, 42, 13); } catch (e) { /* signature optionnelle */ }
