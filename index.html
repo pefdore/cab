@@ -2917,7 +2917,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610262500" defer></script>
+    <script src="app.v5.js?v=202610262600" defer></script>
     <script src="secretariat.js?v=202610262400" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3732,7 +3732,8 @@ window.attemptLogin = function() {
         if (currentDocFilter !== 'all' && currentDocFilter !== 'comptabilite') {
           filteredDocs = allDocuments.filter(doc => doc.category && doc.category.startsWith(currentDocFilter));
         } else if (currentDocFilter === 'comptabilite') {
-          filteredDocs = [];
+          // Feuille de comptabilite hopital EHPAD : les feuilles generees de cette categorie
+          filteredDocs = allDocuments.filter(doc => doc.category && doc.category.startsWith('comptabilite-hopital-ehpad'));
         }
         
         const sortSelect = document.getElementById('docSortSelect');
@@ -4292,7 +4293,7 @@ window.attemptLogin = function() {
             user_id: user.id,
             file_name: fileName,
             file_url: urlData.publicUrl,
-            category: '05 - Feuilles de passage',
+            category: 'comptabilite-hopital-ehpad - Feuille de comptabilité hôpital EHPAD',
             description: 'Feuille de comptabilité hôpital EHPAD - ' + monthDisplay,
             doc_type: 'passage',
             doc_date: new Date().toISOString().split('T')[0]
