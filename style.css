@@ -9087,3 +9087,22 @@ html.no-anim *::after {
 .urgence-suggested strong {
     color: var(--color-primary);
 }
+
+/* Métronome massage ACR */
+.urgence-metro-btn {
+    flex: 1;
+    min-width: 180px;
+    font-weight: 600;
+}
+
+.urgence-metro-btn.metro-on {
+    background: #dc2626;
+    color: white;
+    border-color: #dc2626;
+    animation: metro-pulse 0.55s ease-in-out infinite alternate;
+}
+
+@keyframes metro-pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+}
