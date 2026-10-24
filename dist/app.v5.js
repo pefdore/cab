@@ -5809,6 +5809,10 @@ async function generatePDF() {
         doc.text('Mois de : ' + monthDisplay.toUpperCase(), 105, 48, { align: 'center' });
 
         const WP = [24, 34, 62, 30, 32];
+        // signature en haut a droite de la page patients
+        if (signatureData) {
+            try { doc.addImage(signatureData, 'PNG', 150, 30, 42, 13); } catch (e) { /* signature optionnelle */ }
+        }
         let y3 = 56;
         const enteteTableauPatients = () => {
             
@@ -5902,6 +5906,10 @@ async function generatePDF() {
         });
 
         renderHistory();
+        // rafraichir la vue documents si visible
+        if (typeof renderDocuments === 'function') {
+            try { renderDocuments(); } catch (e) {}
+        }
 
         console.log('[PDF] Done and saved!');
     } catch (err) {
