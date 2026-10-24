@@ -2917,7 +2917,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610262400" defer></script>
+    <script src="app.v5.js?v=202610262500" defer></script>
     <script src="secretariat.js?v=202610262400" defer></script>
     <script>
       // Toggle form function for mobile
@@ -4264,7 +4264,7 @@ window.attemptLogin = function() {
           }
 
           const pdfBase64 = doc.output('datauristring');
-          const fileName = 'feuille-passage-' + prevMonthKey + '.pdf';
+          const fileName = 'feuille-comptabilite-hopital-ehpad-' + prevMonthKey + '.pdf';
 
           const blob = await fetch(pdfBase64).then(r => r.blob());
           const file = new File([blob], fileName, { type: 'application/pdf' });
@@ -4293,9 +4293,9 @@ window.attemptLogin = function() {
             file_name: fileName,
             file_url: urlData.publicUrl,
             category: '05 - Feuilles de passage',
-            description: 'Feuille de passage - ' + monthDisplay,
+            description: 'Feuille de comptabilité hôpital EHPAD - ' + monthDisplay,
             doc_type: 'passage',
-            doc_date: prevMonth.toISOString().split('T')[0]
+            doc_date: new Date().toISOString().split('T')[0]
           };
 
           let insertError = null;
