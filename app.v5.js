@@ -5664,10 +5664,9 @@ async function generatePDF() {
 
         const col = [28, 58, 30, 58];
         const medHeaders = ['Nombre', 'Actes', 'Prix', 'Montant'];
-        doc.setFillColor(230, 230, 230);
-        doc.setLineWidth(0.2);
+        doc.setLineWidth(0.2);        
         medHeaders.forEach((h, i) => {
-            doc.rect(cumSum(col, i), y1, col[i], 8, 'FD');
+            doc.rect(cumSum(col, i), y1, col[i], 8, 'S');
             doc.text(h, cumSum(col, i) + col[i] / 2, y1 + 5.5, { align: 'center' });
         });
         y1 += 8;
@@ -5686,7 +5685,7 @@ async function generatePDF() {
             totalMedico += montant;
             const cells = [String(n), acte, fmt(tarif(acte)), fmt(montant)];
             cells.forEach((c, i) => {
-                doc.rect(cumSum(col, i), y1, col[i], 8);
+                doc.rect(cumSum(col, i), y1, col[i], 8, 'S');
                 doc.text(c, cumSum(col, i) + col[i] / 2, y1 + 5.5, { align: 'center' });
             });
             y1 += 8;
@@ -5729,7 +5728,7 @@ async function generatePDF() {
         const ehHeaders = ['Services', 'Nombre', 'Actes', 'Prix', 'Montant par actes', 'Total par service'];
         doc.setFontSize(7.5);
         ehHeaders.forEach((h, i) => {
-            doc.rect(cumSum(W, i), y2, W[i], 6, 'FD');
+            doc.rect(cumSum(W, i), y2, W[i], 6, 'S');
             doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y2 + 4, { align: 'center' });
         });
         y2 += 6;
@@ -5755,17 +5754,17 @@ async function generatePDF() {
                 const montant = n * tarif(acte);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7.5);
-                doc.rect(cumSum(W, 0), y2, W[0], RH);
+                doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
                 if (premier) doc.text(svc.label, cumSum(W, 0) + W[0] / 2, y2 + 3.5, { align: 'center' });
-                doc.rect(cumSum(W, 1), y2, W[1], RH);
+                doc.rect(cumSum(W, 1), y2, W[1], RH, 'S');
                 doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.5, { align: 'center' });
-                doc.rect(cumSum(W, 2), y2, W[2], RH);
+                doc.rect(cumSum(W, 2), y2, W[2], RH, 'S');
                 doc.text(EHPAD_LIBELLES[acte], cumSum(W, 2) + W[2] / 2, y2 + 3.5, { align: 'center' });
-                doc.rect(cumSum(W, 3), y2, W[3], RH);
+                doc.rect(cumSum(W, 3), y2, W[3], RH, 'S');
                 doc.text(fmt(tarif(acte)), cumSum(W, 3) + W[3] / 2, y2 + 3.5, { align: 'center' });
-                doc.rect(cumSum(W, 4), y2, W[4], RH);
+                doc.rect(cumSum(W, 4), y2, W[4], RH, 'S');
                 doc.text(fmt(montant), cumSum(W, 4) + W[4] / 2, y2 + 3.5, { align: 'center' });
-                doc.rect(cumSum(W, 5), y2, W[5], RH);
+                doc.rect(cumSum(W, 5), y2, W[5], RH, 'S');
                 if (premier) doc.text(fmt(totalSvc), cumSum(W, 5) + W[5] / 2, y2 + 3.5, { align: 'center' });
                 premier = false;
                 y2 += RH;
@@ -5796,11 +5795,11 @@ async function generatePDF() {
         const WP = [24, 34, 62, 30, 32];
         let y3 = 56;
         const enteteTableauPatients = () => {
-            doc.setFillColor(230, 230, 230);
+            
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(9);
             ['Date', 'Médecin', 'Nom patient', 'Lieu', 'Cotation'].forEach((h, i) => {
-                doc.rect(cumSum(WP, i), y3, WP[i], 7, 'FD');
+                doc.rect(cumSum(WP, i), y3, WP[i], 7, 'S');
                 doc.text(h, cumSum(WP, i) + WP[i] / 2, y3 + 5, { align: 'center' });
             });
             y3 += 7;
@@ -5820,7 +5819,7 @@ async function generatePDF() {
             }
             const cells = [e.date || '-', 'Dr ' + ((currentProfile && currentProfile.last_name) || 'DORE'), (e.patientName || 'Inconnu').substring(0, 28), e.location || '', e.cotation || ''];
             cells.forEach((c, i) => {
-                doc.rect(cumSum(WP, i), y3, WP[i], 6.5);
+                doc.rect(cumSum(WP, i), y3, WP[i], 6.5, 'S');
                 doc.text(String(c), i === 2 ? cumSum(WP, i) + 2 : cumSum(WP, i) + WP[i] / 2, y3 + 4.7, { align: i === 2 ? 'left' : 'center' });
             });
             y3 += 6.5;
