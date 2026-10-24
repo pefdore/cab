@@ -2917,7 +2917,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610261700" defer></script>
+    <script src="app.v5.js?v=202610261800" defer></script>
     <script src="secretariat.js?v=202610261700" defer></script>
     <script>
       // Toggle form function for mobile
@@ -4131,13 +4131,13 @@ window.attemptLogin = function() {
             doc.text(doc.splitTextToSize(t.charAt(0).toUpperCase() + t.slice(1) + ' €', LARGEUR), MARGE, y + 6);
             doc.setFont('helvetica', 'normal');
             doc.text('La Guerche de Bretagne, le ' + dateStr, MARGE, y + 18);
-            // signature importee sous le nom du praticien
-            if (signatureImg) {
-              try { doc.addImage(signatureImg, 'PNG', 145, y + 23, 47, 14); } catch (e) { /* signature optionnelle */ }
-            }
+            // nom du praticien puis signature EN DESSOUS
             doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
             const nomSignature = (leProfile && leProfile.last_name) ? ('Docteur ' + leProfile.last_name) : 'Docteur';
-            doc.text(nomSignature, 210 - MARGE, y + 42, { align: 'right' });
+            doc.text(nomSignature, 210 - MARGE, y + 28, { align: 'right' });
+            if (signatureImg) {
+              try { doc.addImage(signatureImg, 'PNG', 150, y + 31, 42, 13); } catch (e) { /* signature optionnelle */ }
+            }
           };
 
           const isEhpadLoc = e => EHPAD_SERVICES.some(s => s.match.includes(norm(e.location)));
@@ -4234,10 +4234,6 @@ window.attemptLogin = function() {
           doc.setFontSize(10);
           doc.text('Mois de : ' + monthDisplay.toUpperCase(), 105, 48, { align: 'center' });
           const WP = [24, 34, 62, 30, 32];
-          // signature en haut a droite de la page patients
-          if (signatureImg) {
-            try { doc.addImage(signatureImg, 'PNG', 150, 30, 42, 13); } catch (e) {}
-          }
           let y3 = 56;
           const entetePat = () => {
             
@@ -4257,6 +4253,15 @@ window.attemptLogin = function() {
             });
             y3 += 6.5; count++;
           });
+
+          // Signature + nom du praticien en bas de la page patients
+          y3 += 14;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+          const nomSignature3 = (leProfile && leProfile.last_name) ? ('Docteur ' + leProfile.last_name) : 'Docteur';
+          doc.text(nomSignature3, 210 - MARGE, y3, { align: 'right' });
+          if (signatureImg) {
+            try { doc.addImage(signatureImg, 'PNG', 150, y3 + 3, 42, 13); } catch (e) { /* signature optionnelle */ }
+          }
 
           const pdfBase64 = doc.output('datauristring');
           const fileName = 'feuille-passage-' + prevMonthKey + '.pdf';
@@ -4316,6 +4321,8 @@ window.attemptLogin = function() {
 
           console.log('[PDF PASSAGE] PDF generated and saved successfully!');
 
+          alert('PDF généré avec succès pour ' + monthDisplay + '!');
+
           // Recharger l'historique des feuilles de comptabilite depuis la base
           try {
             const { data: historyData, error: historyError } = await window.supabaseClient
@@ -4337,9 +4344,17 @@ window.attemptLogin = function() {
             }
           } catch (e) { console.error('[PDF PASSAGE] Erreur rechargement historique:', e); }
 
-          // Recharger aussi la liste des documents (PDF de passages)
+          // Redessiner la liste des feuilles de comptabilite avec les donnees rechargees
+          if (typeof renderHistory === 'function') {
+            try { renderHistory(); } catch (e) { console.error('[PDF PASSAGE] renderHistory error:', e); }
+          }
+
+          // Recharger aussi la liste des documents (PDF de passages) et afficher la vue
           loadDocuments();
           filterDocuments('comptabilite');
+          if (typeof renderDocuments === 'function') {
+            try { renderDocuments(); } catch (e) {}
+          }
 
         } catch (err) {
           console.error('[PDF PASSAGE] Error:', err);

@@ -5756,13 +5756,14 @@ async function generatePDF() {
             doc.text(doc.splitTextToSize(txt.charAt(0).toUpperCase() + txt.slice(1) + ' €', LARGEUR), MARGE, y + 6);
             doc.setFont('helvetica', 'normal');
             doc.text('La Guerche de Bretagne, le ' + dateStr, MARGE, y + 18);
-            if (signatureData) {
-                try { doc.addImage(signatureData, 'PNG', 140, y + 24, 50, 15); } catch (e) { /* signature optionnelle */ }
-            }
+            // nom du praticien puis signature EN DESSOUS
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(11);
             const showDoctor = (typeof settings !== 'undefined' && settings.pdf_show_doctor_name !== 'false');
-            if (showDoctor) doc.text('Docteur ' + ((currentProfile && currentProfile.last_name) || 'DORE'), 210 - MARGE, y + 40, { align: 'right' });
+            if (showDoctor) doc.text('Docteur ' + ((currentProfile && currentProfile.last_name) || 'DORE'), 210 - MARGE, y + 28, { align: 'right' });
+            if (signatureData) {
+                try { doc.addImage(signatureData, 'PNG', 150, y + 31, 42, 13); } catch (e) { /* signature optionnelle */ }
+            }
         };
 
         const locations = { 'Medecine': false, 'SSR': false, 'Lilas Rdc': true, 'Lilias RdC': true, 'Lilas 1er étage': true, 'Lilas 1er': true, 'Lilias 1er étage': true, 'Lilias 1er': true, 'Tamaris': true, 'Availles': true };
@@ -5917,10 +5918,6 @@ async function generatePDF() {
         doc.text('Mois de : ' + monthDisplay.toUpperCase(), 105, 48, { align: 'center' });
 
         const WP = [24, 34, 62, 30, 32];
-        // signature en haut a droite de la page patients
-        if (signatureData) {
-            try { doc.addImage(signatureData, 'PNG', 150, 30, 42, 13); } catch (e) { /* signature optionnelle */ }
-        }
         let y3 = 56;
         const enteteTableauPatients = () => {
             
@@ -5953,6 +5950,15 @@ async function generatePDF() {
             y3 += 6.5;
             count++;
         });
+
+        // Signature + nom du praticien en bas de la page patients
+        y3 += 14;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('Docteur ' + ((currentProfile && currentProfile.last_name) || 'DORE'), 210 - MARGE, y3, { align: 'right' });
+        if (signatureData) {
+            try { doc.addImage(signatureData, 'PNG', 150, y3 + 3, 42, 13); } catch (e) { /* signature optionnelle */ }
+        }
 
         // Save to database
         const totalAmount = monthEntries.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
