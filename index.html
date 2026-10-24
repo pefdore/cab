@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-BWuoq2Pd.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-fE7stEsA.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -373,12 +373,11 @@ window.attemptLogin = function() {
                     </svg>
                     Dashboard
                 </a>
-                <a href="#" class="nav-item" data-view="add">
+                <a href="#" class="nav-item" data-view="urgence">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
-                        <line x1="8" y1="12" x2="16" y2="12"/>
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                     </svg>
-                    Ajouter
+                    Urgence
                 </a>
                 <a href="#" class="nav-item" data-view="history">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -821,321 +820,46 @@ window.attemptLogin = function() {
                 </div>
             </section>
 
-            <!-- Add View -->
-            <section id="view-add" class="view">
-                <div class="add-toggle-header">
-                    <button class="switch-btn active" data-mode="passages" onclick="switchAddMode('passages')">
-                        Passages
-                    </button>
-                    <button class="switch-btn" data-mode="depenses" onclick="switchAddMode('depenses')">
-                        Dépenses
-                    </button>
-                </div>
-                
-                <!-- Formulaire Passage (visible par défaut) -->
-                <div id="add-passages-content">
-                    <h2>Ajouter un passage</h2>
-                <form id="entryForm" class="add-form">
-                    <div class="form-group">
-                        <label>Patient</label>
-                        <div class="autocomplete-wrapper">
-                            <input type="text" id="patientName" required placeholder="NOM Prénom">
-                            <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="visitDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Lieu</label>
-                            <select id="visitLocation" required>
-                                <option value="">Sélectionner...</option>
-                                <option value="Medecine">Medecine</option>
-                                <option value="SSR">SSR</option>
-                                <option value="Lilas Rdc">Lilas Rdc</option>
-                                <option value="Lilas 1er étage">Lilas 1er étage</option>
-                                <option value="Tamaris">Tamaris</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Cotation</label>
-                            <select id="cotation" required>
-                                <option value="">Sélectionner...</option>
-                            </select>
-                            <button type="button" class="manage-cotations-btn" onclick="showCotationManager()">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                </svg>
-                                Gérer les cotations
-                            </button>
-                        </div>
-                        <div class="form-group" id="customCotation" style="display: none;">
-                            <label>Nouvelle cotation</label>
-                            <input type="text" id="customCotationKey" placeholder="Clé (ex: VG+MD)">
-                            <input type="number" id="customCotationAmount" placeholder="Montant" step="0.01">
-                            <button type="button" id="saveCustomCotation" class="add-btn">Ajouter</button>
-                        </div>
-                        <div class="form-group">
-                            <label>Montant</label>
-                            <div class="amount-display" id="amountDisplay">0€</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Cotation Manager Popup -->
-                    <div id="cotation-manager-popup" class="popup-overlay" style="display: none;">
-                        <div class="popup-card">
-                            <div class="popup-header">
-                                <h3>Mes Cotations</h3>
-                                <button class="popup-close" onclick="closeCotationManager()">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="popup-body">
-                                <div id="cotation-manager-list"></div>
-                                <div class="add-cotation-form">
-                                    <input type="text" id="newCotationKey" placeholder="Nouvelle clé (ex: VG+MD)">
-                                    <input type="number" id="newCotationAmount" placeholder="Montant" step="0.01">
-                                    <button id="addNewCotation" class="add-btn">Ajouter</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="submit-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        Enregistrer
-                    </button>
-                </form>
+  <!-- Salle d'urgence View -->
+            <section id="view-urgence" class="view">
+                <h2>Salle d'urgence</h2>
+                <p class="urgence-page-desc">En cas d'urgence : protocoles pas à pas et état des stocks disponibles. La gestion et le pointage des stocks restent dans la section Cabinet.</p>
 
-                <!-- Recent VL Section -->
-                <div class="recent-vl-section" style="margin-top: 24px;">
-                    <div class="recent-vl-header">
-                        <h3>Dernières cotations VL</h3>
-                        <button class="info-btn" onclick="showVLRulesPopup()">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <line x1="12" y1="16" x2="12" y2="12"/>
-                                <line x1="12" y1="8" x2="12.01" y2="8"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <p style="font-size: 0.8125rem; color: var(--color-text-secondary); margin-bottom: 12px;">
-                        Ces patients ont eu une VL récemment.
-                    </p>
-                    <div id="recentVLList" class="recent-vl-list"></div>
+                <div class="urgence-alert danger urgence-call-banner">
+                    <span class="urgence-call-number">Appel d'urgence : 15 (SAMU) · 112</span>
                 </div>
 
-                <!-- VL Rules Popup -->
-                <div id="vl-rules-popup" class="popup-overlay" style="display: none;">
-                    <div class="popup-card">
-                        <div class="popup-header">
-                            <h3>Règles de cotation VL</h3>
-                            <button class="popup-close" onclick="closeVLRulesPopup()">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="18" y1="6" x2="6" y2="18"/>
-                                    <line x1="6" y1="6" x2="18" y2="18"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="popup-body">
-                            <div class="rule-item">
-                                <span class="rule-icon">💰</span>
-                                <div class="rule-content">
-                                    <strong>VL</strong> = 60€ | <strong>VL+MD</strong> = 70€
-                                </div>
-                            </div>
-                            <div class="rule-item">
-                                <span class="rule-icon">👴</span>
-                                <div class="rule-content">
-                                    <strong>Bénéficiaires</strong> : Patients ALD 80+ ou pathologies neurodégénératives
-                                </div>
-                            </div>
-                            <div class="rule-item">
-                                <span class="rule-icon">📅</span>
-                                <div class="rule-content">
-                                    <strong>Fréquence</strong> : 4 fois/an (1x par trimestre civil)
-                                </div>
-                            </div>
-                            <div class="rule-item">
-                                <span class="rule-icon">🏥</span>
-                                <div class="rule-content">
-                                    <strong>Première visite</strong> : Code IMT (une seule fois)
-                                </div>
-                            </div>
-                            <div class="rule-item">
-                                <span class="rule-icon">🕊️</span>
-                                <div class="rule-content">
-                                    <strong>Soins palliatifs</strong> : Utiliser code <strong>VSP</strong> (pas de limite)
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="module-card urgence-quick-card">
+                    <h3>Protocoles d'urgence absolue</h3>
+                    <p class="module-desc">Diagnostic et prise en charge pas à pas, avec lecture audio (TTS) pour écouter le protocole pendant qu'on gère le patient.</p>
+                    <div id="urgenceProtocolsGrid" class="urgence-protocols-grid"></div>
                 </div>
 
-                <script>
-                function showVLRulesPopup() {
-                    document.getElementById('vl-rules-popup').style.display = 'flex';
-                }
-                function closeVLRulesPopup() {
-                    document.getElementById('vl-rules-popup').style.display = 'none';
-                }
-                document.getElementById('vl-rules-popup').addEventListener('click', function(e) {
-                    if (e.target === this) closeVLRulesPopup();
-                });
-                </script>
-                </div>
-                
-                <!-- Contenu Dépenses (caché par défaut) -->
-                <div id="add-depenses-content" style="display: none;">
-                    <h2>Ajouter une dépense ou recette</h2>
-                    
-                    <!-- Toggle Dépenses/Recettes -->
-                    <div class="depense-recette-toggle">
-                        <button class="switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')">Dépenses</button>
-                        <button class="switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')">Recettes</button>
-                    </div>
-                    
-                    <!-- Formulaire Dépense -->
-                    <div id="add-depense-form">
-                        <div class="depenses-form">
-                            <div class="form-group">
-                                <label>Description</label>
-                                <div class="autocomplete-wrapper">
-                                    <input type="text" id="add-depenseDescription" placeholder="Description (ex: Loyer, EDF...)" autocomplete="off">
-                                    <div id="add-depense-autocomplete" class="autocomplete-dropdown"></div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Catégorie</label>
-                                <select id="add-depenseCategory">
-                                    <option value="masse_salariale">Masse salariale</option>
-                                    <option value="urssaf">URSSAF</option>
-                                    <option value="logiciel">Logiciel</option>
-                                    <option value="services">Services</option>
-                                    <option value="charges">Charges (EDF, eau, assurance)</option>
-                                    <option value="consommables">Consommables</option>
-                                    <option value="materiel">Matériel</option>
-                                    <option value="reception">Réception/Représentation</option>
-                                </select>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Montant</label>
-                                    <input type="number" id="add-depenseAmount" placeholder="0.00" step="0.01">
-                                </div>
-                                <div class="form-group">
-                                    <label>Date</label>
-                                    <input type="date" id="add-depenseDate">
-                                </div>
-                            </div>
-                            <button id="add-saveDepenseBtn" class="btn-primary">Enregistrer la dépense</button>
+                <div class="module-card urgence-quick-card">
+                    <div class="module-header-row">
+                        <div>
+                            <h3>Stocks disponibles — Salle d'urgence</h3>
+                            <p class="module-desc">Aperçu rapide de ce qui est disponible pour gérer l'urgence.</p>
                         </div>
+                        <button class="action-btn" onclick="switchView('cabinet'); setTimeout(function(){ document.querySelector('.cabinet-tab[data-tab=\'stocks\']')?.click(); }, 100);">Gérer les stocks</button>
                     </div>
-                    
-                    <!-- Formulaire Recette (caché par défaut) -->
-                    <div id="add-recette-form" style="display: none;">
-                        <div class="recettes-form">
-                            <div class="form-group">
-                                <label>Description</label>
-                                <div class="autocomplete-wrapper">
-                                    <input type="text" id="add-recetteDescription" placeholder="Description (ex: Honoraires, Remboursement...)" autocomplete="off">
-                                    <div id="add-recette-autocomplete" class="autocomplete-dropdown"></div>
-                                </div>
-                            </div>
-                            <div class="form-group" id="add-recette-category-group">
-                                <label>Catégorie</label>
-                                <select id="add-recetteCategory">
-                                    <option value="participation_associe">Participation d'associé</option>
-                                    <option value="remboursements">Remboursements</option>
-                                    <option value="autres">Autres recettes</option>
-                                </select>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Montant</label>
-                                    <input type="number" id="add-recetteAmount" placeholder="0.00" step="0.01">
-                                </div>
-                                <div class="form-group">
-                                    <label>Date</label>
-                                    <input type="date" id="add-recetteDate">
-                                </div>
-                            </div>
-                            <button id="add-saveRecetteBtn" class="btn-primary">Enregistrer la recette</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Liste des dépenses et recettes du mois -->
-                    <div class="add-depenses-recettes-list" style="margin-top: 24px;">
-                        <div class="entries-header">
-                            <h3>Dépenses et recettes du mois</h3>
-                            <div class="month-selector">
-                                <button id="prevMonthAddDepenses">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M15 18l-6-6 6-6"/>
-                                    </svg>
-                                </button>
-                                <span id="currentMonthAddDepenses">Mai 2026</span>
-                                <button id="nextMonthAddDepenses">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M9 18l6-6-6-6"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="depenses-recettes-summary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                            <div class="stat-card" style="padding: 12px; background: var(--color-danger-bg); border-radius: 8px; border: 1px solid var(--color-danger-border);">
-                                <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Dépenses</span>
-                                <span class="stat-value" id="add-depenses-month-total" style="font-size: 1.125rem; font-weight: 600; color: var(--color-danger);">0€</span>
-                            </div>
-                            <div class="stat-card" style="padding: 12px; background: var(--color-success-bg); border-radius: 8px; border: 1px solid var(--color-success-border);">
-                                <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Recettes</span>
-                                <span class="stat-value" id="add-recettes-month-total" style="font-size: 1.125rem; font-weight: 600; color: var(--color-success);">0€</span>
-                            </div>
-                        </div>
-                        <div id="add-depenses-list" class="depenses-list"></div>
-                        <div id="add-recettes-list" class="recettes-list" style="margin-top: 24px;"></div>
-                    </div>
-                </div>
-                
-                <div class="entries-section" id="add-passages-section" style="display:none;">
-                    <div class="entries-header">
-                        <h3>Passages du mois</h3>
-                        <div class="month-selector">
-                            <button id="prevMonthAdd">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M15 18l-6-6 6-6"/>
-                                </svg>
-                            </button>
-                            <span id="currentMonthAdd">Avril 2026</span>
-                            <button id="nextMonthAdd">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 18l6-6-6-6"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="entries-table-wrapper">
-                        <table class="entries-table">
+                    <div class="urgence-alerts-quick" id="urgenceStockAlerts"></div>
+                    <div class="inventory-table">
+                        <table>
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Patient</th>
-                                    <th>Lieu</th>
-                                    <th>Cotation</th>
-                                    <th>Montant</th>
-                                    <th></th>
+                                    <th>Produit</th>
+                                    <th>Catégorie</th>
+                                    <th>Disponible</th>
+                                    <th>Péremption</th>
+                                    <th>État</th>
                                 </tr>
                             </thead>
-                            <tbody id="entriesBody"></tbody>
+                            <tbody id="urgenceStockBody"></tbody>
                         </table>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <button class="action-btn" id="urgenceCopyOrderBtn" disabled>Copier la liste à commander</button>
                     </div>
                 </div>
             </section>
@@ -1621,7 +1345,6 @@ window.attemptLogin = function() {
                     <button class="cabinet-tab active" data-tab="secretariat">Secrétariat</button>
                     <button class="cabinet-tab" data-tab="reunions">Réunions</button>
                     <button class="cabinet-tab" data-tab="stocks">Stocks</button>
-                    <button class="cabinet-tab" data-tab="urgence">Salle d'urgence</button>
                     <button class="cabinet-tab" data-tab="remplacants">Remplaçant</button>
                 </div>
                 
@@ -2087,79 +1810,17 @@ window.attemptLogin = function() {
                     </div>
                 </div>
                 
-                <!-- Stocks & Remplaissants -->
+<!-- Stocks -->
                 <div id="cabinet-stocks" class="cabinet-tab-content">
                     <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="stocks">Gestion Stocks</button>
-                        <button class="sub-tab" data-subtab="commande">Commande IA</button>
-                    </div>
-                    
-                    <div id="stocks-inventory" class="sub-tab-content active">
-                        <div class="module-card">
-                            <h3>Gestion des Stocks</h3>
-                            <p class="module-desc">Inventaire du petit matériel, consommables et azote</p>
-                            <div class="inventory-filters">
-                                <select id="stockCategory" class="form-input">
-                                    <option value="">Toutes catégories</option>
-                                    <option value="materiel">Petit matériel</option>
-                                    <option value="consommables">Consommables</option>
-                                    <option value="azote">Azote</option>
-                                    <option value="medicaments">Médicaments</option>
-                                </select>
-                                <button class="action-btn">Ajouter un article</button>
-                            </div>
-                            <div class="inventory-table">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Article</th>
-                                            <th>Catégorie</th>
-                                            <th>Quantité</th>
-                                            <th>Seuil</th>
-                                            <th>État</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="inventoryBody"></tbody>
-                                </table>
-                            </div>
-                            <div class="inventory-alerts" id="inventoryAlerts"></div>
-                        </div>
-                    </div>
-                    
-                    <div id="stocks-commande" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Assistant Commande IA</h3>
-                            <p class="module-desc">Optimisez vos commandes et réduisez vos dépenses</p>
-                            <div class="form-group">
-                                <label>Analyse automatique</label>
-                                <p class="form-hint">L'IA analyse vos stocks et propose une commande optimisée</p>
-                            </div>
-                            <button class="action-btn primary" onclick="analyzeCommande()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-                                Analyser et proposer commande
-                            </button>
-                            <div id="commandeSuggestions" class="suggestions-container"></div>
-                            <div class="budget-analysis">
-                                <h4>Analyse budget</h4>
-                                <div class="budget-chart" id="budgetChart"></div>
-                                <div class="budget-tips" id="budgetTips"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Remplaçant -->
-                <div id="cabinet-urgence" class="cabinet-tab-content">
-                    <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="urgence-stock">Stocks salle d'urgence</button>
+                        <button class="sub-tab active" data-subtab="urgence-stock">Gestion des stocks</button>
                         <button class="sub-tab" data-subtab="urgence-pointage">Pointage hebdomadaire</button>
-                        <button class="sub-tab" data-subtab="urgence-protocoles">Protocoles d'urgence</button>
                     </div>
 
                     <div id="urgence-stock" class="sub-tab-content active">
                         <div class="module-card">
                             <h3>Stocks — Salle d'urgence</h3>
-                            <p class="module-desc">Où en est le stock de la salle d'urgence : consommables, matériel et médicaments d'urgence.</p>
+                            <p class="module-desc">Inventaire du matériel et des médicaments de la salle d'urgence : consommables, petit matériel, injections/perfusion, médicaments.</p>
                             <div class="inventory-filters">
                                 <select id="urgenceStockFilter" class="form-input">
                                     <option value="">Toutes catégories</option>
@@ -2185,12 +1846,12 @@ window.attemptLogin = function() {
                                             <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody id="urgenceStockBody"></tbody>
+                                    <tbody id="cabinetUrgenceStockBody"></tbody>
                                 </table>
                             </div>
-                            <div class="inventory-alerts" id="urgenceStockAlerts"></div>
+                            <div class="inventory-alerts" id="cabinetUrgenceStockAlerts"></div>
                             <div style="margin-top: 12px;">
-                                <button class="action-btn" id="urgenceCopyOrderBtn" disabled>Copier la liste à commander</button>
+                                <button class="action-btn" id="urgenceCopyOrderBtnCabinet" disabled>Copier la liste à commander</button>
                             </div>
                         </div>
                     </div>
@@ -2206,16 +1867,7 @@ window.attemptLogin = function() {
                             </div>
                         </div>
                     </div>
-
-                    <div id="urgence-protocoles" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Protocoles d'urgence absolue</h3>
-                            <p class="module-desc">Diagnostic et prise en charge pas à pas, avec lecture audio (TTS) pour écouter le protocole pendant qu'on gère le patient.</p>
-                            <div id="urgenceProtocolsGrid" class="urgence-protocols-grid"></div>
-                        </div>
-                    </div>
                 </div>
-
                 <div id="cabinet-remplacants" class="cabinet-tab-content">
                     <!-- Sub-tabs for replacement module -->
                     <div class="sub-tabs replacement-sub-tabs">
@@ -2274,7 +1926,7 @@ window.attemptLogin = function() {
                     </div>
                     
                     <!-- REMPLAÇONS SECTION (Contacts) -->
-                    <div id="remplacants-liste" class="replacement-sub-content">
+                    <div id="remplacants-remplacants" class="replacement-sub-content">
                         <div class="section-header">
                             <div class="remplacants-search">
                                 <input type="text" id="remplacant-search-input" placeholder="Rechercher un remplaçant..." oninput="searchRemplacants(this.value)">
@@ -2927,12 +2579,11 @@ window.attemptLogin = function() {
                 </svg>
                 <span>Dashboard</span>
             </a>
-            <a href="#" class="mobile-nav-item" data-view="add">
+            <a href="#" class="mobile-nav-item" data-view="urgence">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
-                <span>Ajouter</span>
+                <span>Urgence</span>
             </a>
             <a href="#" class="mobile-nav-item" data-view="history">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2985,9 +2636,9 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610262900" defer></script>
-    <script src="secretariat.js?v=202610262800" defer></script>
-    <script src="urgence.js?v=202610262800" defer></script>
+    <script src="app.v5.js?v=202611013000" defer></script>
+    <script src="secretariat.js?v=202611013000" defer></script>
+    <script src="urgence.js?v=202611013000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
@@ -3198,7 +2849,7 @@ window.attemptLogin = function() {
         setTimeout(function() {
           // The fallback is already set, but we can try to load the real script
           var script = document.createElement('script');
-          script.src = 'secretariat.js?v=202610262800';
+          script.src = 'secretariat.js?v=202611013000';
           script.onload = function() {
             console.log('[DEBUG] Secretariat script loaded');
             if (typeof window.showAddEmployeeModal === 'function' && window.showAddEmployeeModal.toString().indexOf('[FALLBACK]') > -1) {
@@ -3331,11 +2982,6 @@ window.attemptLogin = function() {
         if (action === 'passage') {
           if (typeof openPassageModal === 'function') {
             openPassageModal();
-          } else {
-            switchView('add');
-            if (typeof switchAddMode === 'function') {
-              switchAddMode('passages');
-            }
           }
           return;
         }
@@ -3343,17 +2989,11 @@ window.attemptLogin = function() {
         // Use switchView from app.v4.js which properly handles view initialization
         if (typeof switchView === 'function') {
           switch(action) {
-            case 'passage':
-              switchView('add');
-              if (typeof switchAddMode === 'function') {
-                switchAddMode('passages');
-              }
-              break;
             case 'flux':
-              switchView('add');
-              if (typeof switchAddMode === 'function') {
-                switchAddMode('depenses');
-              }
+              switchView('cabinet');
+              setTimeout(() => {
+                document.querySelector('.cabinet-tab[data-tab="stocks"]')?.click();
+              }, 100);
               break;
             case 'releve':
               switchView('cabinet');
@@ -3364,12 +3004,9 @@ window.attemptLogin = function() {
             case 'contrat':
               switchView('cabinet');
               setTimeout(() => {
-                const remplacantsTab = document.querySelector('[data-subtab="remplacants"]');
-                if (remplacantsTab) {
-                  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-                  document.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
-                  remplacantsTab.classList.add('active');
-                  document.getElementById('stocks-remplacants').classList.add('active');
+                document.querySelector('.cabinet-tab[data-tab="remplacants"]')?.click();
+                if (typeof switchReplacementTab === 'function') {
+                  switchReplacementTab('remplacants');
                 }
               }, 300);
               break;
@@ -3382,8 +3019,7 @@ window.attemptLogin = function() {
               break;
           }
         } else {
-          // Fallback to custom navigation if switchView not available
-          navigateToView(action === 'passage' || action === 'flux' ? 'add' : 'cabinet');
+          window.location.hash = '';
         }
       };
 
