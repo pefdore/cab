@@ -676,15 +676,27 @@ let urgenceAdreState = {
     countdownEnd: null
 };
 
+let urgenceTTSPrimed = false;
+function urgencePrimeTTS() {
+    if (urgenceTTSPrimed || !('speechSynthesis' in window)) return;
+    urgenceTTSPrimed = true;
+    try {
+        speechSynthesis.getVoices();
+        const warm = new SpeechSynthesisUtterance(' ');
+        warm.volume = 0;
+        speechSynthesis.speak(warm);
+    } catch (e) {}
+}
+
 function urgenceToggleAdrePanel() {
+    urgencePrimeTTS();
     const panel = document.querySelector('[data-adre-panel]');
     if (!panel) return;
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-        urgenceRenderAdrePanel();
-    } else {
-        panel.style.display = 'none';
-    }
+    const open = panel.style.display === 'none' || panel.style.display === '';
+    panel.style.display = open ? 'block' : 'none';
+    const btn = document.querySelector('[data-adre-btn]');
+    if (btn) btn.classList.toggle('open', open);
+    if (open) urgenceRenderAdrePanel();
 }
 
 function urgenceRenderAdrePanel() {
@@ -735,12 +747,26 @@ function urgenceRenderAdrePanel() {
 function urgenceSpeakAdre(text) {
     if (!('speechSynthesis' in window)) return;
     try {
+        // Message prioritaire : on interrompt la lecture en cours (protocole long)
+        // pour ne pas manquer l'annonce de dose, puis on la relance apres.
+        speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = 'fr-FR';
         utter.rate = 1;
         const voice = urgenceTTSVoice();
         if (voice) utter.voice = voice;
         speechSynthesis.speak(utter);
+        // Filet de securite : certains navigateurs ignorent le 1er speak
+        // si les voix ne sont pas encore chargees -> une seule reprise.
+        setTimeout(() => {
+            if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+                const retry = new SpeechSynthesisUtterance(text);
+                retry.lang = 'fr-FR';
+                const v = urgenceTTSVoice();
+                if (v) retry.voice = v;
+                speechSynthesis.speak(retry);
+            }
+        }, 300);
     } catch (e) {}
 }
 
@@ -905,6 +931,7 @@ function urgenceTTSVoice() {
 }
 
 function urgenceTTSPlay(protoId) {
+    urgencePrimeTTS();
     const proto = URGENCE_PROTOCOLS.find(p => p.id === protoId);
     if (!proto || !('speechSynthesis' in window)) {
         if (typeof showToast === 'function') showToast('Synthèse vocale non disponible sur cet appareil', 'error');
