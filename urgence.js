@@ -805,10 +805,14 @@ function urgenceTTSPlay(protoId) {
     urgenceTTSStop();
 
     const critText = (proto.criteria || []).map(c => ` ${c.t} : ${c.d}`).join(' . ');
-    const fullText = `Protocole : ${proto.title.replace('—', '-')} . ${proto.intro} ` +
-        (critText ? ` Critères diagnostiques . ${critText} .` : '') +
-        proto.steps.map((s, i) => ` Étape ${i + 1} : ${s.title} . ${s.text}`).join(' ') +
-        ' Fin du protocole.';
+    const fullText = proto.id === 'acr'
+        ? `Protocole : ${proto.title.replace('—', '-')} . Conduite à tenir immédiatement. ` +
+            proto.steps.map((s, i) => ` Étape ${i + 1} : ${s.title} . ${s.text}`).join(' ') +
+            ' Fin du protocole.'
+        : `Protocole : ${proto.title.replace('—', '-')} . ${proto.intro} ` +
+            (critText ? ` Critères diagnostiques . ${critText} .` : '') +
+            proto.steps.map((s, i) => ` Étape ${i + 1} : ${s.title} . ${s.text}`).join(' ') +
+            ' Fin du protocole.';
 
     const utter = new SpeechSynthesisUtterance(fullText);
     utter.lang = 'fr-FR';

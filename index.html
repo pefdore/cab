@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=202611018000">
+    <link rel="stylesheet" href="style.css?v=202611019000">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -2651,9 +2651,9 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202611018000" defer></script>
-    <script src="secretariat.js?v=202611018000" defer></script>
-    <script src="urgence.js?v=202611018000" defer></script>
+    <script src="app.v5.js?v=202611019000" defer></script>
+    <script src="secretariat.js?v=202611019000" defer></script>
+    <script src="urgence.js?v=202611019000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
@@ -2864,7 +2864,7 @@ window.attemptLogin = function() {
         setTimeout(function() {
           // The fallback is already set, but we can try to load the real script
           var script = document.createElement('script');
-          script.src = 'secretariat.js?v=202611018000';
+          script.src = 'secretariat.js?v=202611019000';
           script.onload = function() {
             console.log('[DEBUG] Secretariat script loaded');
             if (typeof window.showAddEmployeeModal === 'function' && window.showAddEmployeeModal.toString().indexOf('[FALLBACK]') > -1) {
