@@ -614,12 +614,11 @@ function renderUrgenceProtocols() {
                 </div>
 
                 <div class="urgence-tts-controls">
-                    ${proto.id === 'acr' ? `<button class="action-btn urgence-metro-btn" onclick="urgenceToggleMetronome()" data-metro-btn>🧨 Métronome massage : OFF</button>
-                    <button class="action-btn urgence-adre-btn" onclick="urgenceToggleAdrePanel()" data-adre-btn>💉 Adrénaline : dose suivante</button>
-                    <div class="urgence-adre-panel" data-adre-panel style="display:none;"></div>` : ''}
                     <button class="action-btn primary" onclick="urgenceTTSPlay('${proto.id}')">🔊 Écouter le protocole</button>
                     <button class="action-btn" onclick="urgenceTTSStop()" style="display:none;" data-tts="stop-${proto.id}">⏹ Stop</button>
                 </div>
+                ${proto.id === 'acr' ? `
+                <div class="urgence-rea-panel" data-rea-panel></div>` : ''}
             </div>
         </div>`).join('');
 }
@@ -668,39 +667,36 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
 
 
 
-// ---------- Suivi des doses d'adrénaline (ACR) ----------
+// ---------- Session R\u00E9a (ACR) : start / \u00E9v\u00E9nements / stop / r\u00E9cap ----------
 
-const URGENCE_ACR_STATE_KEY = 'urgence_acr_session_v1';
+const URGENCE_REA_STATE_KEY = 'urgence_rea_session_v1';
 
-let urgenceAdreState = {
-    doses: [],       // { time: Date, context: 'asystolie' | 'choc3' }
-    countdown: null, // setInterval
-    countdownEnd: null
+let urgenceReaState = {
+    active: false,
+    startTime: null,
+    events: []          // { t: ms, type: 'choc'|'adre', n: num\u00E9ro, context: 'asystolie'|'choc3'|null }
 };
 
-let urgenceMetroWasOn = false; // metronome actif avant la mise en veille
+let urgenceMetroTimer = null;
+let urgenceMetroCtx = null;
+let urgenceMetroWasOn = false;
 
-function urgenceSaveAcrSession() {
+function urgenceSaveReaSession() {
     try {
-        sessionStorage.setItem(URGENCE_ACR_STATE_KEY, JSON.stringify({
-            doses: urgenceAdreState.doses,
-            countdownEnd: urgenceAdreState.countdownEnd,
-            metroOn: !!urgenceMetroTimer
-        }));
+        sessionStorage.setItem(URGENCE_REA_STATE_KEY, JSON.stringify(urgenceReaState));
     } catch (e) {}
 }
 
-function urgenceLoadAcrSession() {
+function urgenceLoadReaSession() {
     try {
-        const raw = sessionStorage.getItem(URGENCE_ACR_STATE_KEY);
+        const raw = sessionStorage.getItem(URGENCE_REA_STATE_KEY);
         if (!raw) return;
         const data = JSON.parse(raw);
-        if (Array.isArray(data.doses) && data.doses.length > 0) {
-            urgenceAdreState.doses = data.doses;
-            urgenceAdreState.countdownEnd = data.countdownEnd || null;
-            if (urgenceAdreState.countdownEnd && urgenceAdreState.countdownEnd > Date.now()) {
-                urgenceStartAdreCountdown();
-            }
+        if (data && data.active && data.startTime) {
+            urgenceReaState = data;
+            urgenceStartMetronome(true);
+            urgenceRenderReaPanel();
+            urgenceRequestWakeLock();
         }
     } catch (e) {}
 }
@@ -726,38 +722,24 @@ function urgenceReleaseWakeLock() {
     } catch (e) {}
 }
 
-// ---------- Reprise auto apres mise en veille / changement d'onglet ----------
+// ---------- Reprise auto apres mise en veille ----------
 
-function urgenceHandleVisibility() {
+document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        // Retour sur l'ecran : reprendre ce qui tournait
-        if (urgenceAdreState.countdownEnd) {
-            if (urgenceAdreState.countdownEnd <= Date.now()) {
-                // Le compte a rebours a expire pendant la veille
-                if (urgenceAdreState.countdown) clearInterval(urgenceAdreState.countdown);
-                urgenceAdreState.countdown = null;
-                urgenceRenderAdrePanel();
-                urgenceSpeakAdre('4 minutes passées. Nouvelle dose d\u2019adrénaline possible.');
-            } else {
-                urgenceStartAdreCountdown();
-            }
+        if (urgenceReaState.active) {
+            if (urgenceMetroWasOn && !urgenceMetroTimer) urgenceStartMetronome(true);
+            urgenceRequestWakeLock();
+            urgenceRenderReaPanel();
         }
-        if (urgenceMetroWasOn && !urgenceMetroTimer) {
-            urgenceStartMetronome();
-        }
-        urgenceRequestWakeLock();
-        urgenceRenderAdrePanel();
     } else {
-        // Ecran eteint / onglet cache : sauvegarder l'etat avant le gel
         urgenceMetroWasOn = !!urgenceMetroTimer;
-        urgenceSaveAcrSession();
+        urgenceSaveReaSession();
     }
-}
+});
 
-document.addEventListener('visibilitychange', urgenceHandleVisibility);
+setInterval(() => { if (urgenceReaState.active) urgenceSaveReaSession(); }, 5000);
 
-// Sauvegarde periodique (toutes les 5 s) : survit meme a un reload de page
-setInterval(urgenceSaveAcrSession, 5000);
+// ---------- TTS ----------
 
 let urgenceTTSPrimed = false;
 function urgencePrimeTTS() {
@@ -771,67 +753,9 @@ function urgencePrimeTTS() {
     } catch (e) {}
 }
 
-function urgenceToggleAdrePanel() {
-    urgencePrimeTTS();
-    const panel = document.querySelector('[data-adre-panel]');
-    if (!panel) return;
-    const open = panel.style.display === 'none' || panel.style.display === '';
-    panel.style.display = open ? 'block' : 'none';
-    const btn = document.querySelector('[data-adre-btn]');
-    if (btn) btn.classList.toggle('open', open);
-    if (open) urgenceRenderAdrePanel();
-}
-
-function urgenceRenderAdrePanel() {
-    const panel = document.querySelector('[data-adre-panel]');
-    if (!panel) return;
-    const nb = urgenceAdreState.doses.length;
-    const last = urgenceAdreState.doses[urgenceAdreState.doses.length - 1];
-
-    let html = '';
-    if (nb === 0) {
-        html = '<p class="urgence-adre-hint">1<sup>re</sup> dose — dans quel contexte ?</p>';
-    } else {
-        html = '<p class="urgence-adre-hint">Dose suivante — rappel du contexte :</p>';
-    }
-    html += `
-        <button class="action-btn urgence-adre-choice" onclick="urgenceRecordAdreDose('asystolie')">
-            ⚡ Asystolie / AESP (non chocable)
-        </button>
-        <button class="action-btn urgence-adre-choice" onclick="urgenceRecordAdreDose('choc3')">
-            🔋 3<sup>e</sup> choc non récupérateur (FV/FVT)
-        </button>`;
-
-    if (nb > 0) {
-        const ctxTxt = last.context === 'asystolie' ? 'asystolie/AESP' : '3e choc non récupérateur';
-        const heure = new Date(last.time).toLocaleTimeString('fr-FR');
-        html += `
-            <div class="urgence-adre-log">
-                <strong>💉 Dose №${nb}</strong> passée à <strong>${heure}</strong> (${ctxTxt})`;
-        if (urgenceAdreState.countdownEnd) {
-            const remaining = Math.max(0, Math.ceil((urgenceAdreState.countdownEnd - Date.now()) / 1000));
-            const m = Math.floor(remaining / 60);
-            const sec = remaining % 60;
-            html += remaining > 0
-                ? ` · <span class="urgence-adre-countdown">⏱ prochaine dose possible dans <strong>${m}:${String(sec).padStart(2, '0')}</strong></span>`
-                : ' · <span class="urgence-adre-countdown due">prochaine dose possible</span>';
-        }
-        const w = parseFloat(document.getElementById('urgenceWeightInput')?.value);
-        if (w > 0) {
-            const dose = w >= 30 ? 1 : Math.min(1, 0.01 * w);
-            html += ` · dose : <strong>${dose.toString().replace('.', ',')} mg</strong>`;
-        }
-        html += '</div>';
-    }
-
-    panel.innerHTML = html;
-}
-
-function urgenceSpeakAdre(text) {
+function urgenceSpeakRea(text) {
     if (!('speechSynthesis' in window)) return;
     try {
-        // Message prioritaire : on interrompt la lecture en cours (protocole long)
-        // pour ne pas manquer l'annonce de dose, puis on la relance apres.
         speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = 'fr-FR';
@@ -839,8 +763,6 @@ function urgenceSpeakAdre(text) {
         const voice = urgenceTTSVoice();
         if (voice) utter.voice = voice;
         speechSynthesis.speak(utter);
-        // Filet de securite : certains navigateurs ignorent le 1er speak
-        // si les voix ne sont pas encore chargees -> une seule reprise.
         setTimeout(() => {
             if (!speechSynthesis.speaking && !speechSynthesis.pending) {
                 const retry = new SpeechSynthesisUtterance(text);
@@ -853,50 +775,7 @@ function urgenceSpeakAdre(text) {
     } catch (e) {}
 }
 
-function urgenceRecordAdreDose(context) {
-    const now = Date.now();
-    urgenceAdreState.doses.push({ time: now, context });
-    urgenceAdreState.countdownEnd = Date.now() + 4 * 60 * 1000;
-    urgenceAdreState.dueAnnounced = false;
-    const nb = urgenceAdreState.doses.length;
-    urgenceStartAdreCountdown();
-    urgenceRenderAdrePanel();
-    urgenceRequestWakeLock();
-    const heure = new Date(now).toLocaleTimeString('fr-FR');
-    urgenceSpeakAdre(`Dose ${nb} d'adrénaline enregistrée à ${heure}. Nouveau compte à rebours de 4 minutes.`);
-}
-
-function urgenceStartAdreCountdown() {
-    if (urgenceAdreState.countdown) clearInterval(urgenceAdreState.countdown);
-    if (!urgenceAdreState.countdownEnd) {
-        urgenceAdreState.countdownEnd = Date.now() + 4 * 60 * 1000;
-    }
-    urgenceAdreState.countdown = setInterval(() => {
-        if (Date.now() >= urgenceAdreState.countdownEnd) {
-            clearInterval(urgenceAdreState.countdown);
-            urgenceAdreState.countdown = null;
-            urgenceAdreState.dueAnnounced = true;
-            urgenceRenderAdrePanel();
-            urgenceSpeakAdre('4 minutes passées. Nouvelle dose d\u2019adrénaline possible.');
-        } else {
-            urgenceRenderAdrePanel();
-        }
-    }, 1000);
-    urgenceSaveAcrSession();
-}
-
-function urgenceResetAdreState() {
-    if (urgenceAdreState.countdown) clearInterval(urgenceAdreState.countdown);
-    urgenceAdreState = { doses: [], countdown: null, countdownEnd: null };
-    urgenceMetroWasOn = false;
-    try { sessionStorage.removeItem(URGENCE_ACR_STATE_KEY); } catch (e) {}
-    urgenceReleaseWakeLock();
-}
-
-// ---------- Métronome de massage cardiaque (ACR, 110/min) ----------
-
-let urgenceMetroTimer = null;
-let urgenceMetroCtx = null;
+// ---------- M\u00E9tronome de massage cardiaque (110/min) ----------
 
 function urgenceMetroBeep() {
     if (!urgenceMetroCtx) return;
@@ -921,14 +800,11 @@ function urgenceMetroVibrate() {
 }
 
 function urgenceToggleMetronome() {
-    if (urgenceMetroTimer) {
-        urgenceStopMetronome();
-    } else {
-        urgenceStartMetronome();
-    }
+    if (urgenceMetroTimer) urgenceStopMetronome();
+    else urgenceStartMetronome();
 }
 
-function urgenceStartMetronome() {
+function urgenceStartMetronome(silent) {
     try {
         urgenceMetroCtx = urgenceMetroCtx || new (window.AudioContext || window.webkitAudioContext)();
         if (urgenceMetroCtx.state === 'suspended') urgenceMetroCtx.resume();
@@ -937,7 +813,6 @@ function urgenceStartMetronome() {
         return;
     }
     urgenceRequestWakeLock();
-    // 110 compressions par minute (centre de la fourchette 100-120/min)
     const intervalMs = 60000 / 110;
     urgenceMetroBeep();
     urgenceMetroVibrate();
@@ -945,7 +820,7 @@ function urgenceStartMetronome() {
         urgenceMetroBeep();
         urgenceMetroVibrate();
     }, intervalMs);
-    urgenceRefreshMetroButtons();
+    if (!silent) urgenceRenderReaPanel();
 }
 
 function urgenceStopMetronome() {
@@ -953,16 +828,257 @@ function urgenceStopMetronome() {
         clearInterval(urgenceMetroTimer);
         urgenceMetroTimer = null;
     }
-    urgenceRefreshMetroButtons();
+    urgenceRenderReaPanel();
 }
 
-function urgenceRefreshMetroButtons() {
-    const on = !!urgenceMetroTimer;
-    document.querySelectorAll('[data-metro-btn]').forEach(btn => {
-        btn.textContent = on ? '\u{1F9E8} M\u00E9tronome : ON (110/min) \u2014 cliquer pour arr\u00EAter' : '\u{1F9E8} M\u00E9tronome massage : OFF';
-        btn.classList.toggle('metro-on', on);
-    });
+// ---------- Session R\u00E9a ----------
+
+function urgenceReaElapsedMs() {
+    return urgenceReaState.startTime ? Date.now() - urgenceReaState.startTime : 0;
 }
+
+function urgenceFmtElapsed(ms) {
+    const total = Math.floor(ms / 1000);
+    const m = Math.floor(total / 60);
+    const sec = total % 60;
+    return m + ':' + String(sec).padStart(2, '0');
+}
+
+function urgenceReaEventTime(t) {
+    return new Date(t).toLocaleTimeString('fr-FR');
+}
+
+function urgenceStartRea() {
+    urgencePrimeTTS();
+    if (urgenceReaState.active) return;
+    urgenceReaState = { active: true, startTime: Date.now(), events: [] };
+    urgenceStartMetronome(true);
+    urgenceRenderReaPanel();
+    urgenceRequestWakeLock();
+    urgenceSaveReaSession();
+    urgenceSpeakRea('R\u00E9animation d\u00E9marr\u00E9e. M\u00E9tronome actif \u00E0 110 par minute.');
+}
+
+function urgenceStopRea() {
+    if (!urgenceReaState.active) return;
+    urgenceStopMetronome();
+    urgenceReleaseWakeLock();
+    urgenceReaState.active = false;
+    urgenceRenderReaPanel(true);
+    urgenceSpeakRea('R\u00E9animation arr\u00EAt\u00E9e. R\u00E9capitulatif affich\u00E9.');
+    try { sessionStorage.removeItem(URGENCE_REA_STATE_KEY); } catch (e) {}
+}
+
+function urgenceResetRea() {
+    if (urgenceReaState.countdown) clearInterval(urgenceReaState.countdown);
+    urgenceReaState = { active: false, startTime: null, events: [] };
+    urgenceMetroWasOn = false;
+    urgenceReleaseWakeLock();
+    try { sessionStorage.removeItem(URGENCE_REA_STATE_KEY); } catch (e) {}
+    urgenceRenderReaPanel();
+}
+
+function urgenceRecordChoc() {
+    if (!urgenceReaState.active) return;
+    const n = urgenceReaState.events.filter(e => e.type === 'choc').length + 1;
+    urgenceReaState.events.push({ t: Date.now(), type: 'choc', n });
+    urgenceRenderReaPanel();
+    urgenceSaveReaSession();
+    urgenceSpeakRea('Choc ' + n + ' d\u00E9livr\u00E9.');
+    if (n === 3) {
+        const nbAdre = urgenceReaState.events.filter(e => e.type === 'adre').length;
+        if (nbAdre === 0) {
+            urgenceSpeakRea('Troisi\u00E8me choc. Adr\u00E9naline 1 milligramme et amiodarone 300 milligrammes maintenant.');
+        }
+    }
+}
+
+function urgenceRecordAdre(context) {
+    if (!urgenceReaState.active) return;
+    if (!context) {
+        const lastAdre = [...urgenceReaState.events].reverse().find(e => e.type === 'adre');
+        context = lastAdre ? lastAdre.context : null;
+    }
+    const n = urgenceReaState.events.filter(e => e.type === 'adre').length + 1;
+    urgenceReaState.events.push({ t: Date.now(), type: 'adre', n, context });
+    urgenceReaState.lastAdreTime = Date.now();
+    urgenceReaState.adreDueAnnounced = false;
+    urgenceRenderReaPanel();
+    urgenceSaveReaSession();
+    const heure = urgenceReaEventTime(Date.now());
+    const dose = urgenceReaAdreDoseMg();
+    urgenceSpeakRea('Dose ' + n + ' d\u2019adr\u00E9naline enregistr\u00E9e \u00e0 ' + heure + '. ' + (dose ? dose + ' milligrammes. ' : '') + 'Prochaine dans 4 minutes.');
+    urgenceStartAdreWatch();
+}
+
+function urgenceReaAdreDoseMg() {
+    const w = parseFloat(document.getElementById('urgenceWeightInput')?.value);
+    if (!w || w <= 0) return null;
+    const dose = w >= 30 ? 1 : Math.min(1, 0.01 * w);
+    return Math.round(dose * 100) / 100;
+}
+
+// Compte a rebours 4 min affiche en direct dans le panneau (recalcule sur heure absolue)
+function urgenceStartAdreWatch() {
+    if (urgenceReaState.countdown) clearInterval(urgenceReaState.countdown);
+    urgenceReaState.countdown = setInterval(() => {
+        const last = [...urgenceReaState.events].reverse().find(e => e.type === 'adre');
+        if (!last) { clearInterval(urgenceReaState.countdown); urgenceReaState.countdown = null; return; }
+        const elapsed = Date.now() - last.t;
+        if (elapsed >= 4 * 60 * 1000) {
+            if (!urgenceReaState.adreDueAnnounced) {
+                urgenceReaState.adreDueAnnounced = true;
+            urgenceSpeakRea('4 minutes pass\u00E9es. Nouvelle dose d\u2019adr\u00E9naline possible.');
+            }
+        }
+        urgenceRenderReaPanel();
+        if (!urgenceReaState.active) { clearInterval(urgenceReaState.countdown); urgenceReaState.countdown = null; }
+    }, 1000);
+}
+
+// ---------- Rendu du panneau R\u00E9a ----------
+
+function urgenceRenderReaPanel(recap) {
+    const panel = document.querySelector('[data-rea-panel]');
+    if (!panel) return;
+
+    if (!urgenceReaState.active && !recap && !urgenceReaState.events.length) {
+        // Etat initial : proposer le demarrage
+        panel.innerHTML = `
+            <button class="action-btn primary urgence-rea-start" onclick="urgenceStartRea()">🚨 D\u00E9marrer la r\u00E9a</button>
+            <p class="urgence-rea-hint">Lance le m\u00E9tronome (110/min), le chronom\u00E8tre, garde l'\u00E9cran allum\u00E9 et trace tout : chocs, doses d'adr\u00E9naline, horaires.</p>`;
+        return;
+    }
+
+    if (!urgenceReaState.active) {
+        // Recap final apres arret
+        panel.innerHTML = urgenceBuildRecap();
+        return;
+    }
+
+    // ---- Rea en cours ----
+    const elapsed = urgenceReaElapsedMs();
+    const nbChoc = urgenceReaState.events.filter(e => e.type === 'choc').length;
+    const nbAdre = urgenceReaState.events.filter(e => e.type === 'adre').length;
+    const lastAdre = [...urgenceReaState.events].reverse().find(e => e.type === 'adre');
+    const lastChoc = [...urgenceReaState.events].reverse().find(e => e.type === 'choc');
+    const adreMg = urgenceReaAdreDoseMg();
+
+    let html = `
+        <div class="urgence-rea-live">
+            <div class="urgence-rea-chrono">\u23F1 <strong data-rea-chrono>${urgenceFmtElapsed(elapsed)}</strong></div>
+            <div class="urgence-rea-actions">
+                <button class="action-btn urgence-rea-choc" onclick="urgenceRecordChoc()">🔋 Choc d\u00E9livr\u00E9 (n\u00B0 ${nbChoc + 1})</button>
+                <button class="action-btn urgence-rea-adre" onclick="urgenceReaAdreClick()">💉 Adr\u00E9naline pass\u00E9e (n\u00B0 ${nbAdre + 1})</button>
+                <button class="action-btn urgence-rea-metro" onclick="urgenceToggleMetronome()">${urgenceMetroTimer ? '🧨 M\u00E9tronome ON' : '🧨 M\u00E9tronome OFF'}</button>
+                <button class="action-btn urgence-rea-stop" onclick="urgenceStopRea()">🛑 Arr\u00EAter la r\u00E9a</button>
+            </div>`;
+
+    // Compte a rebours adr\u00E9naline
+    if (lastAdre) {
+        const remaining = 4 * 60 * 1000 - (Date.now() - lastAdre.t);
+        if (remaining > 0) {
+            html += `<div class="urgence-rea-countdown">\u23F3 Prochaine adr\u00E9naline possible dans <strong>${urgenceFmtElapsed(remaining)}</strong></div>`;
+        } else {
+            html += `<div class="urgence-rea-countdown due">\u26A0\uFE0F 4 minutes pass\u00E9es \u2014 nouvelle dose d'adr\u00E9naline possible</div>`;
+        }
+    } else if (nbChoc >= 3) {
+        html += `<div class="urgence-rea-countdown due">\u26A0\uFE0F 3e choc pass\u00E9 \u2014 adr\u00E9naline 1 mg + amiodarone 300 mg maintenant</div>`;
+    }
+
+    // Historique live
+    html += '<div class="urgence-adre-log"><h5 class="urgence-section-title">Historique de la r\u00E9a (en direct)</h5>';
+    if (urgenceReaState.events.length === 0) {
+        html += '<p class="urgence-rea-hint">Les \u00E9v\u00E9nements (chocs, doses) appara\u00EEtront ici avec leur heure.</p>';
+    } else {
+        urgenceReaState.events.forEach(ev => {
+            const heure = urgenceReaEventTime(ev.t);
+            const since = urgenceFmtElapsed(ev.t - urgenceReaState.startTime);
+            if (ev.type === 'choc') {
+                html += `<div class="urgence-rea-event choc"><span class="ev-ico">🔋</span> <strong>Choc n\u00B0${ev.n}</strong> \u00e0 ${heure} <span class="ev-since">(+${since})</span></div>`;
+            } else {
+                const ctx = ev.context === 'asystolie' ? 'asystolie/AESP' : (ev.context === 'choc3' ? '3e choc non r\u00E9cup\u00E9rateur' : '');
+                html += `<div class="urgence-rea-event adre"><span class="ev-ico">💉</span> <strong>Adr\u00E9naline n\u00B0${ev.n}</strong>${adreMg ? ' (' + adreMg.toString().replace('.', ',') + ' mg)' : ''} \u00e0 ${heure}${ctx ? ' \u2014 ' + ctx : ''} <span class="ev-since">(+${since})</span></div>`;
+            }
+        });
+    }
+    html += '</div></div>';
+
+    panel.innerHTML = html;
+}
+
+// Choix du contexte : seulement pour la 1re dose d'adr\u00E9naline
+function urgenceReaAdreClick() {
+    const nbAdre = urgenceReaState.events.filter(e => e.type === 'adre').length;
+    const nbChoc = urgenceReaState.events.filter(e => e.type === 'choc').length;
+    if (nbAdre === 0) {
+        // 1re dose : demander le contexte
+        const panel = document.querySelector('[data-rea-panel]');
+        if (!panel) return;
+        panel.innerHTML = `
+            <div class="urgence-rea-live">
+                <div class="urgence-rea-chrono">\u23F1 <strong data-rea-chrono>${urgenceFmtElapsed(urgenceReaElapsedMs())}</strong></div>
+                <p class="urgence-adre-hint">1<sup>re</sup> dose d'adr\u00E9naline \u2014 dans quel contexte ?</p>
+                <button class="action-btn urgence-adre-choice" onclick="urgenceRecordAdre('asystolie')">\u26A1 Asystolie / AESP (non chocable)</button>
+                <button class="action-btn urgence-adre-choice" onclick="urgenceRecordAdre('choc3')">🔋 3<sup>e</sup> choc non r\u00E9cup\u00E9rateur (FV/FVT)</button>
+            </div>`;
+        return;
+    }
+    urgenceRecordAdre();
+}
+
+// ---------- R\u00E9cap de fin de r\u00E9a ----------
+
+function urgenceBuildRecap() {
+    const evs = urgenceReaState.events;
+    const nbChoc = evs.filter(e => e.type === 'choc').length;
+    const nbAdre = evs.filter(e => e.type === 'adre').length;
+    const startTime = urgenceReaState.startTime;
+    const endTime = urgenceReaState.stopTime || (evs.length ? evs[evs.length - 1].t : startTime);
+    const duration = endTime - startTime;
+    const adreMg = urgenceReaAdreDoseMg();
+
+    let html = `
+        <div class="urgence-rea-recap">
+            <h5 class="urgence-section-title">📋 R\u00E9capitulatif de la r\u00E9a</h5>
+            <p>D\u00E9but : <strong>${urgenceReaEventTime(startTime)}</strong> \u00b7 Dur\u00E9e : <strong>${urgenceFmtElapsed(duration)}</strong></p>
+            <p>Chocs d\u00E9livr\u00E9s : <strong>${nbChoc}</strong> \u00b7 Doses d'adr\u00E9naline : <strong>${nbAdre}</strong>${adreMg ? ' (' + adreMg.toString().replace('.', ',') + ' mg chacune)' : ''}</p>
+            <div class="urgence-adre-log">`;
+    if (evs.length === 0) {
+        html += '<p class="urgence-rea-hint">Aucun \u00E9v\u00E9nement enregistr\u00E9.</p>';
+    } else {
+        evs.forEach(ev => {
+            const heure = urgenceReaEventTime(ev.t);
+            if (ev.type === 'choc') {
+                html += `<div class="urgence-rea-event choc"><span class="ev-ico">🔋</span> <strong>Choc n\u00B0${ev.n}</strong> \u00e0 ${heure}</div>`;
+            } else {
+                const ctx = ev.context === 'asystolie' ? 'asystolie/AESP' : (ev.context === 'choc3' ? '3e choc non r\u00E9cup\u00E9rateur' : '');
+                html += `<div class="urgence-rea-event adre"><span class="ev-ico">💉</span> <strong>Adr\u00E9naline n\u00B0${ev.n}</strong> \u00e0 ${heure}${ctx ? ' \u2014 ' + ctx : ''}</div>`;
+            }
+        });
+    }
+    html += `</div>
+            <p class="urgence-rea-hint">📌 Transmettre ce r\u00E9cap au 15 / au SAMU.</p>
+            <button class="action-btn" onclick="urgenceResetRea()">\u2716 Effacer la session</button>
+        </div>`;
+    return html;
+}
+
+// Mise a jour du chrono chaque seconde pendant la rea
+setInterval(() => {
+    if (!urgenceReaState.active) return;
+    const el = document.querySelector('[data-rea-chrono]');
+    if (el) el.textContent = urgenceFmtElapsed(urgenceReaElapsedMs());
+}, 1000);
+
+// Sur stop : mémoriser l'heure de fin pour le récap
+const _origStopRea = urgenceStopRea;
+urgenceStopRea = function() {
+    if (urgenceReaState.active) {
+        urgenceReaState.stopTime = Date.now();
+    }
+    _origStopRea();
+};
 
 // ---------- Calculateur de doses selon le poids ----------
 
@@ -1103,7 +1219,8 @@ function initUrgenceModule() {
     renderUrgenceStocks();
     renderUrgencePointage();
     renderUrgenceProtocols();
-    urgenceRefreshMetroButtons();
+    urgenceRenderReaPanel();
+    urgenceLoadReaSession();
 
     if ('speechSynthesis' in window) {
         speechSynthesis.getVoices();
@@ -1113,12 +1230,14 @@ function initUrgenceModule() {
 
 function refreshUrgenceView() {
     if (!urgenceData) loadUrgenceData();
-    // Restaurer une session ACR en cours (mise en veille, reload) sans l'ecraser
-    if (urgenceAdreState.doses.length === 0) {
-        urgenceLoadAcrSession();
-    }
     renderUrgenceStocks();
     renderUrgenceProtocols();
+    // Restaurer une rea en cours (mise en veille, reload) et rafraichir son panneau
+    if (urgenceReaState.active) {
+        urgenceStartMetronome(true);
+        urgenceRequestWakeLock();
+    }
+    urgenceRenderReaPanel();
     urgenceTTSStop();
 }
 
@@ -1158,5 +1277,9 @@ window.refreshUrgenceView = refreshUrgenceView;
 window.urgenceToggleProtocol = urgenceToggleProtocol;
 window.urgenceComputeDoses = urgenceComputeDoses;
 window.urgenceToggleMetronome = urgenceToggleMetronome;
-window.urgenceToggleAdrePanel = urgenceToggleAdrePanel;
-window.urgenceRecordAdreDose = urgenceRecordAdreDose;
+window.urgenceStartRea = urgenceStartRea;
+window.urgenceStopRea = urgenceStopRea;
+window.urgenceResetRea = urgenceResetRea;
+window.urgenceRecordChoc = urgenceRecordChoc;
+window.urgenceRecordAdre = urgenceRecordAdre;
+window.urgenceReaAdreClick = urgenceReaAdreClick;
