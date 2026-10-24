@@ -331,6 +331,7 @@ async function loadUserProfile() {
         
         if (!error && data) {
             currentProfile = data;
+            window.currentProfile = currentProfile;
             console.log('[AUTH] Profil chargé:', currentProfile.role);
         }
     } catch (e) {
@@ -373,6 +374,9 @@ async function loadUserSettings() {
                 }
             });
         }
+        // champ IBAN des Parametres
+        const ibanInput = document.getElementById('ibanInput');
+        if (ibanInput && settings.iban) ibanInput.value = settings.iban;
         renderLogoPreview();
         loadTheme();
         applyCotationVisibility();
@@ -3452,6 +3456,13 @@ function setupEventListeners() {
     document.getElementById('prevMonthAddDepenses')?.addEventListener('click', () => changeMonthAddDepenses(-1));
     document.getElementById('nextMonthAddDepenses')?.addEventListener('click', () => changeMonthAddDepenses(1));
     document.getElementById('generatePdfBtn')?.addEventListener('click', generatePDF);
+    // IBAN des Parametres : sauvegarde automatique au blur
+    const ibanField = document.getElementById('ibanInput');
+    if (ibanField) {
+        ibanField.addEventListener('blur', async () => {
+            await saveSetting('iban', ibanField.value.trim() || null);
+        });
+    }
     const pdfBtn = document.getElementById('generatePdfBtn');
     if (pdfBtn) pdfBtn.disabled = false;
     document.getElementById('addNewCotation').addEventListener('click', addNewCotationFromSettings);
@@ -5620,7 +5631,8 @@ async function generatePDF() {
                 : 'Docteur';
             doc.text(doc.splitTextToSize(`${nomComplet}, Médecin généraliste, autorisé à exercer dans l\'établissement.`, LARGEUR - 26), MARGE + 26, y);
             y += 5;
-            doc.text('CCM BETTON IBAN FR7615589351100287012394050', MARGE, y);
+            const iban = (settings.iban || '').trim();
+            if (iban) doc.text('IBAN ' + iban, MARGE, y);
             return y + 7;
         };
 
@@ -5655,11 +5667,13 @@ async function generatePDF() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
         y1 += 4;  // marge de securite
-        doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', MARGE, y1 + 6);
-        doc.text(monthDisplay.toUpperCase(), MARGE + 75, y1 + 6);
+        const libelleMois = 'ETAT DES SOMMES DUES POUR LE MOIS DE ';
+        doc.text(libelleMois, MARGE, y1 + 6);
+        const wLib = doc.getTextWidth(libelleMois);
+        doc.text(monthDisplay.toUpperCase(), MARGE + wLib + 2, y1 + 6);
         const wMois = doc.getTextWidth(monthDisplay.toUpperCase());
         doc.setLineWidth(0.3);
-        doc.line(MARGE + 75, y1 + 7.2, MARGE + 75 + wMois, y1 + 7.2);
+        doc.line(MARGE + wLib + 2, y1 + 7.2, MARGE + wLib + 2 + wMois, y1 + 7.2);
         y1 += 10;
 
         const col = [28, 58, 30, 58];
@@ -5717,11 +5731,13 @@ async function generatePDF() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
         y2 += 4;  // marge de securite
-        doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', MARGE, y2 + 6);
-        doc.text(monthDisplay.toUpperCase(), MARGE + 75, y2 + 6);
+        const libelleMois2 = 'ETAT DES SOMMES DUES POUR LE MOIS DE ';
+        doc.text(libelleMois2, MARGE, y2 + 6);
+        const wLib2 = doc.getTextWidth(libelleMois2);
+        doc.text(monthDisplay.toUpperCase(), MARGE + wLib2 + 2, y2 + 6);
         const wMois2 = doc.getTextWidth(monthDisplay.toUpperCase());
         doc.setLineWidth(0.3);
-        doc.line(MARGE + 75, y2 + 7.2, MARGE + 75 + wMois2, y2 + 7.2);
+        doc.line(MARGE + wLib2 + 2, y2 + 7.2, MARGE + wLib2 + 2 + wMois2, y2 + 7.2);
         y2 += 9;
 
         const W = [26, 20, 46, 22, 32, 34];

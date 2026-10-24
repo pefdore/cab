@@ -139,7 +139,7 @@ function newDoc(): any {
   return doc
 }
 
-function entete(doc: any, refs: string, avecRetenue: boolean, doctorName: string): number {
+function entete(doc: any, refs: string, avecRetenue: boolean, doctorName: string, iban: string): number {
   // Logo à gauche (hauteur 20 mm), bloc texte à droite
   try {
     doc.addImage(LOGO_B64, 'JPEG', MARGE, 12, 23.5, 20)
@@ -177,11 +177,11 @@ function entete(doc: any, refs: string, avecRetenue: boolean, doctorName: string
   doc.setFont('helvetica', 'normal')
   doc.text(doc.splitTextToSize(`${doctorName}, Médecin généraliste, autorisé à exercer dans l'établissement.`, LARGEUR - 26), MARGE + 26, y)
   y += 5
-  doc.text('CCM BETTON IBAN FR7615589351100287012394050', MARGE, y)
+  if (iban) doc.text(`IBAN ${iban}`, MARGE, y)
   return y + 7
 }
 
-function memoire(doc: any, montant: number, y: number, dateStr: string) {
+function memoire(doc: any, montant: number, y: number, dateStr: string, doctorNameShort: string) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.text('Arrêt le présent mémoire à la somme de :', MARGE, y)
@@ -192,15 +192,17 @@ function memoire(doc: any, montant: number, y: number, dateStr: string) {
   doc.text(`La Guerche de Bretagne, le ${dateStr}`, MARGE, y + 18)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
-  doc.text('Docteur DORE', 210 - MARGE, y + 40, { align: 'right' })
+  doc.text(doctorNameShort || 'Docteur', 210 - MARGE, y + 40, { align: 'right' })
 }
 
 function tableauMedecine(doc: any, y: number, passages: Passage[]): { total: number, retenue: number, verser: number, y: number } {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', MARGE, y + 6)
+  const libMois = 'ETAT DES SOMMES DUES POUR LE MOIS DE '
+  doc.text(libMois, MARGE, y + 6)
+  const wLib = doc.getTextWidth(libMois)
   doc.setFont('helvetica', 'underline')
-  doc.text('{{MOIS}}', MARGE + 75, y + 6)
+  doc.text('{{MOIS}}', MARGE + wLib + 2, y + 6)
 
   y += 10
   const col = [28, 58, 30, 58]
@@ -264,9 +266,11 @@ function cumSum(arr: number[], upto: number): number {
 function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: string): { total: number, y: number } {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text('ETAT DES SOMMES DUES POUR LE MOIS DE :', MARGE, y + 6)
+  const libMois2 = 'ETAT DES SOMMES DUES POUR LE MOIS DE '
+  doc.text(libMois2, MARGE, y + 6)
+  const wLib2 = doc.getTextWidth(libMois2)
   doc.setFont('helvetica', 'underline')
-  doc.text(moisLabel, MARGE + 75, y + 6)
+  doc.text(moisLabel, MARGE + wLib2 + 2, y + 6)
 
   y += 9
   const W = [26, 20, 46, 22, 32, 34]
@@ -434,21 +438,33 @@ Deno.serve(async (req) => {
         : `Docteur ${profile.email.split('@')[0]}`
       const doctorNameShort = profile.last_name || profile.email.split('@')[0]
 
+      // IBAN depuis user_settings (champ Parametres > IBAN)
+      let iban = ''
+      try {
+        const { data: settingRow } = await supabase
+          .from('user_settings')
+          .select('value')
+          .eq('user_id', profile.id)
+          .eq('key', 'iban')
+          .maybeSingle()
+        iban = (settingRow && settingRow.value) || ''
+      } catch (_e) { iban = '' }
+
       const day = String(now.getDate()).padStart(2, '0')
       const dateStr = `${day} ${MOIS_NOMS[now.getMonth()]} ${now.getFullYear()}`
 
       const doc = newDoc()
 
       // ---- Page 1 : Médecine / SSR ----
-      let y = entete(doc, "Application de la loi 2021-502 du 26 avril 2021 (notamment l'article 19) - Application des articles L 6146-2 et L 6146-41 du Code de la santé publique", true, doctorName)
+      let y = entete(doc, "Application de la loi 2021-502 du 26 avril 2021 (notamment l'article 19) - Application des articles L 6146-2 et L 6146-41 du Code de la santé publique", true, doctorName, iban)
       const t1 = tableauMedecine(doc, y, medecinePassages)
-      memoire(doc, t1.verser, 232, dateStr)
+      memoire(doc, t1.verser, 232, dateStr, doctorNameShort)
 
       // ---- Page 2 : EHPAD (une page) ----
       doc.addPage()
-      y = entete(doc, 'contrat pluriannuel d\'Objectif et de Moyens signés le 29 juin 2020 - Articles L 313-11, L 313-12, L313-12-2 du Code de l\'Action Sociale et des Familles', false, doctorName)
+      y = entete(doc, 'contrat pluriannuel d\'Objectif et de Moyens signés le 29 juin 2020 - Articles L 313-11, L 313-12, L313-12-2 du Code de l\'Action Sociale et des Familles', false, doctorName, iban)
       const t2 = tableauEhpad(doc, y, ehpadPassages, moisLabel.toUpperCase())
-      memoire(doc, t2.total, t2.y + 4, dateStr)
+      memoire(doc, t2.total, t2.y + 4, dateStr, doctorNameShort)
 
       // ---- Page 3 : Liste des patients ----
       pagePatients(doc, passages, moisLabel.toUpperCase(), dateStr)
