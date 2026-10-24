@@ -410,14 +410,31 @@ const URGENCE_PROTOCOLS = [
         icon: '❤️',
         color: 'danger',
         intro: 'Douleur thoracique constrictive > 15 min, irradiant bras/mâchoire, sueurs, nausées. Penser au SCA chez le diabétique et la femme (symptômes atypiques).',
+        criteria: [
+            { t: 'Douleur typique', d: 'Constrictive, rétrosternale, en étau, > 15–20 min, non calmée par le repos, irradiant vers bras gauche, mâchoire ou dos.' },
+            { t: 'Signes associés', d: 'Sueurs, nausées/vomissements, dyspnée, anxiété, lipothymie.' },
+            { t: 'Formes atypiques (femme, diabétique, sujet âgé)', d: 'Douleur épigastrique ou fausse dyspepsie, fatigue isolée, malaise — le doute impose l’ECG.' },
+            { t: 'ECG (si disponible)', d: 'Sus-décalage ST ≥ 1 mm dans ≥ 2 dérivations contigués, ondes T pointues, bloc de branche nouveau, BAV ou FA récente.' }
+        ],
+        differential: 'Ne pas confondre avec : dissection aortique (douleur déchirante migratrice vers le dos, asymétrie des pouls ou de la TA aux deux bras → PAS de trinitrine), péricardite (douleur soulagée penché en avant, frottement), embolie pulmonaire (dyspnée prédominante, contexte thrombotique), douleur pariétale (reproduite à la palpation). Au doute : aspirine oui, trinitrine seulement si PAS ≥ 100 et pas de suspicion de dissection.',
+        material: [
+            'Aspirine 300 mg non entérosidé (à croquer)',
+            'Trinitrine cp sublingual 0,15 mg',
+            'Oxymètre de pouls (SpO2)',
+            'Tensiomètre',
+            'Scope / ECG 12 dérivations si disponible',
+            'VVP + sérum physiologique',
+            'Oxygène avec débitmètre',
+            'Ordonnances du patient (traitements en cours)'
+        ],
         steps: [
             { title: 'Appel', text: 'Appeler le 15 (SAMU) immédiatement et préciser « suspicion de SCA ». Ne jamais laisser le patient seul.' },
             { title: 'Position & repos', text: 'Patient au repos, position demi-assise. Déshabiller le torse pour le scope.' },
-            { title: 'Monitor', text: 'Prendre les constantes : fréquence cardiaque, tension artérielle, saturation, fréquence respiratoire. Poser scope si disponible et rechercher troubles du rythme.' },
-            { title: 'Aspirine', text: 'Aspirine 300 mg à croquer, per os, sauf allergie ou hémorragie active.' },
-            { title: 'Trinitrine', text: 'Trinitrine sublinguale 0,15 mg si douleur persistante, PAS si PAS inférieure à 100 mmHg, infarctus inférieur avec extension droite, ou traitement récent par inhibiteur de PDE5.' },
-            { title: 'Oxygène', text: 'Oxygène seulement si saturation inférieure à 90 % : débit 2 à 4 litres par minute.' },
-            { title: 'Voir', text: 'Poser une voie veineuse et garder le patient sous surveillance continue jusqu\'à l\'arrivée du SAMU. Transmettre ECG et constantes.' }
+            { title: 'Monitor', text: 'Constantes : FC, TA, SpO2, FR toutes les 5 min. Poser le scope et rechercher des troubles du rythme.' },
+            { title: 'Aspirine 300 mg', text: 'Aspirine 300 mg per os À CROQUER (effet plus rapide), sauf allergie, hémorragie active ou ulcère évolutif.' },
+            { title: 'Trinitrine 0,15 mg', text: 'Trinitrine sublinguale 0,15 mg si douleur persistante et PAS ≥ 100 mmHg, renouvelable 1 fois après 5 min. Ne PAS donner si PAS < 100, IDM inférieur avec extension droite, ou inhibiteur de PDE5 dans les 48 h.' },
+            { title: 'Oxygène', text: 'Oxygène seulement si SpO2 < 90 % : 2 à 4 L/min au masque.' },
+            { title: 'VVP & surveillance', text: 'Poser une voie veineuse, surveiller en continu jusqu’au SAMU, transmettre ECG et constantes. Douleur rebelle + TA effondrée = choc cardiogénique : le signaler au 15.' }
         ]
     },
     {
@@ -425,15 +442,29 @@ const URGENCE_PROTOCOLS = [
         title: 'AVC — Accident Vasculaire Cérébral',
         icon: '🧠',
         color: 'warning',
-        intro: 'Déficit neurologique brutal : asymétrie du visage, faiblesse d\'un bras, trouble de la parole. Règle FAST + heure de début exacte des symptômes = information capitale.',
+        intro: 'Déficit neurologique brutal : asymétrie du visage, faiblesse d’un bras, trouble de la parole. Règle FAST + heure de début exacte des symptômes = information capitale.',
+        criteria: [
+            { t: 'Déficit brutal (FAST)', d: 'Face : sourire asymétrique ? Bras : un bras qui tombe à l’élévation maintenue 10 s ? Parole : propos confus, aphasie ou dysarthrie ?' },
+            { t: 'Autres signes focaux', d: 'Hémianopsie, amaurose monoculaire, ataxie cérébelleuse (marche ivre), hypoesthésie d’un hémicorps, vertige rotatoire inquiétant si associé à des signes du tronc.' },
+            { t: 'Heure de début', d: 'Heure exacte d’apparition ou du « dernier examen normal » — critère clé pour la thrombolyse (< 4,5 h) et la thrombectomie (< 6 h).' },
+            { t: 'Terrain', d: 'Âge, HTA, diabète, FA (cardioembolique), sténose carotidienne, anticoagulants.' }
+        ],
+        differential: 'Ne pas confondre avec : hypoglycémie (glycémie capillaire obligatoire, se corrige par G5 — mais un vrai AVC peut coexister), migraine avec aura (aura progressive sur 20–30 min, céphalées, déficit qui ondule), déficit post-critique de Todd (crise épileptique initiale), hémorragie cérébrale (céphalées brutales + HTA sévère). Règle : tout déficit neurologique brutal = AVC jusqu’à preuve du contraire.',
+        material: [
+            'Glucomètre + bandelettes',
+            'Tensiomètre',
+            'Oxymètre de pouls (SpO2)',
+            'Ordonnances / pilulier du patient (anticoagulants !)',
+            'Carte vitale et documents médicaux'
+        ],
         steps: [
-            { title: 'Heure de début', text: 'Déterminer et noter l\'heure exacte de début des symptômes (ou l\'heure du dernier examen normal). C\'est le critère clé pour la thrombolyse.' },
-            { title: 'Appel', text: 'Appeler le 15 immédiatement et préciser « suspicion d\'AVC » pour orientation vers une unité neurovasculaire (UNV).' },
-            { title: 'Examen FAST', text: 'Face : sourire asymétrique ? Bras : faiblesse d\'un bras à l\'élévation ? Parole : propos confus ou impossibles ? Vision et équilibre : vérifier aussi.' },
-            { title: 'Constantes', text: 'Fréquence cardiaque, tension, saturation, glycémie capillaire : corriger une hypoglycémie qui peut mimer un AVC.' },
-            { title: 'Position', text: 'Patient allongé, tête légèrement surélevée à 30 degrés. Rien par voie orale : risque de fausse route.' },
-            { title: 'Ne pas faire', text: 'Ne PAS donner d\'aspirine ni d\'antihypertenseur en phase aiguë avant avis médical : hémorragie cérébrale non exclue.' },
-            { title: 'Documents', text: 'Préparer la liste des traitements et anticoagulants du patient, et les constantes pour le SAMU.' }
+            { title: 'Heure de début', text: 'Noter l’heure exacte de début des symptômes (ou du dernier examen normal) : critère clé pour la thrombolyse.' },
+            { title: 'Appel', text: 'Appeler le 15 immédiatement : « suspicion d’AVC » + heure de début, pour orientation vers une unité neurovasculaire (UNV).' },
+            { title: 'Examen + constantes', text: 'FAST, FC, TA, SpO2, glycémie capillaire : corriger une hypoglycémie qui peut mimer un AVC. Ne pas traiter l’HTA sans consigne du 15.' },
+            { title: 'Position', text: 'Patient allongé, tête surélevée à 30°. Rien par voie orale : risque de fausse route.' },
+            { title: 'Anticoagulants', text: 'Relever le traitement (AVK/AOD, heure de la dernière prise, INR si connu) : capital pour la décision de thrombolyse, à transmettre au 15.' },
+            { title: 'Ne pas faire', text: 'Ne PAS donner d’aspirine ni d’antihypertenseur en phase aiguë avant avis médical : hémorragie cérébrale non exclue.' },
+            { title: 'Surveillance & documents', text: 'Constantes toutes les 5 min, conscience et respiration sous surveillance. Préparer traitements et dossier pour le SAMU.' }
         ]
     },
     {
@@ -441,14 +472,30 @@ const URGENCE_PROTOCOLS = [
         title: 'Choc anaphylactique',
         icon: '⚡',
         color: 'danger',
-        intro: 'Réaction allergique brutale avec atteinte respiratoire (urticaire généralisé + détresse) et/ou hypotension. Urgence vitale absolue : l\'adrénaline IM est le traitement immédiat.',
+        intro: 'Réaction allergique brutale avec atteinte respiratoire et/ou hypotension. Urgence vitale absolue : adrénaline IM immédiate — la dose selon le poids est donnée par le calculateur en haut de page.',
+        criteria: [
+            { t: 'Terrain', d: 'Exposition récente : médicament, piqûre d’insecte, aliment, latex (dans les minutes ou l’heure).' },
+            { t: 'Atteinte cutanéo-muqueuse', d: 'Urticaire généralisé, flush, œdème des lèvres ou de la langue, prurit palmo-plantaire, larmoiement.' },
+            { t: 'Signes de gravité = adrénaline immédiate', d: 'Détresse respiratoire (dyspnée, sibilants, stridor, voix rauque = œdème laryngé), vomissements/diarrhée, tachycardie, hypotension, malaise ou syncope.' },
+            { t: 'Grades (SFAR)', d: 'Grade 1 : cutané isolé (surveillance). Grade 2 : cutané + signes modérés. Grade 3 : détresse respiratoire. Grade 4 : arrêt cardiaque. Adrénaline IM dès le grade 2, sans attendre le choc installé.' }
+        ],
+        differential: 'Ne pas confondre avec : malaise vagal (bradycardie, pâleur, régression allongé, PAS d’urticaire ni de signe respiratoire), crise d’asthme isolée (pas d’urticaire ni de contexte allergique), œdème bradykinique sous IEC (œdème isolé SANS urticaire, réponse médiocre → 15). Au doute avec un vrai choc : l’adrénaline IM correctement dosée est peu dangereuse — ne pas retarder.',
+        material: [
+            'Adrénaline ampoule 1 mg/mL (1 mg/1 mL)',
+            'Seringue 1 mL + aiguille IM 25G × 25 mm (adulte)',
+            'Oxygène haut débit + masque',
+            'VVP 18–20G + sérum physiologique 500 mL',
+            'Antihistaminique + corticoïde (en relais seulement)',
+            'Matériel de PLS / couverture'
+        ],
         steps: [
             { title: 'Appel 15', text: 'Appeler le 15 (SAMU) immédiatement.' },
-            { title: 'Adrénaline IM', text: 'Adrénaline 1 mg/mL, 0,5 mg en intramusculaire, face antéro-latérale de la cuisse. Adulte : 0,5 mg. Enfant : 0,01 mg par kilo, maximum 0,5 mg. À renouveler toutes les 5 à 15 minutes si pas d\'amélioration.' },
-            { title: 'Position', text: 'Patient allongé, jambes surélevées si hypotension. Si gêne respiratoire : position demi-assise. En cas de perte de conscience : PLS.' },
-            { title: 'Arrêter l\'exposition', text: 'Retirer le contact allergène : arrêter le médicament, retirer le repas, éloigner l\'insecte. Ne pas faire saigner ni aspirer un venin de piqûre.' },
-            { title: 'Oxygène & PLS', text: 'Oxygène haut débit si disponible. Voie veineuse avec sérum physiologique si choc : remplissage rapide.' },
-            { title: 'Surveillance', text: 'Réévaluer toutes les 5 minutes : conscience, respiration, tension. Réactions biphasiques possibles dans les 12 heures : hospitalisation systématique.' }
+            { title: 'Arrêter l’exposition', text: 'Arrêter le médicament en cause. Piqûre sur un membre : garrot large ≈ 10 cm au-dessus de la piqûre, à desserrer 2 min toutes les 15 min. Ne pas aspirer ni inciser.' },
+            { title: 'Adrénaline — dose selon le poids', text: 'ADULTE : 0,5 mg = 0,5 mL de solution à 1 mg/mL. ENFANT : 0,01 mg/kg, maximum 0,5 mg — dose exacte et volume à prélever dans le calculateur en haut de page. Renouveler toutes les 5 à 15 min si pas d’amélioration.' },
+            { title: 'Où et comment piquer', text: 'Face ANTÉRO-LATÉRALE de la cuisse (muscle vaste externe), au milieu du tiers moyen entre hanche et genou. Aiguille perpendiculaire à la peau, enfoncer d’un coup sec jusqu’au muscle, ne PAS aspirer, injecter en 3–5 s puis retirer. Patient en surpoids : aiguille plus longue (35–40 mm) pour atteindre le muscle. Deuxième injection : cuisse controlatérale.' },
+            { title: 'Position', text: 'Allongé, jambes surélevées si hypotension ; position demi-assise si gêne respiratoire ; PLS si perte de conscience ; massage cardiaque si arrêt cardiaque.' },
+            { title: 'Oxygène & remplissage', text: 'Oxygène 6–8 L/min si disponible. Remplissage par sérum physiologique si choc : 500 mL adulte, 20 mL/kg enfant (calculateur en haut), à répéter selon la tension.' },
+            { title: 'Surveillance', text: 'Réévaluer toutes les 5 min : conscience, respiration, TA. Bronchodilatateur si sibilants persistants. Hospitalisation 12 h systématique (réaction biphasique possible). Antihistaminique et corticoïde en RELAIS — jamais à la place de l’adrénaline.' }
         ]
     },
     {
@@ -456,14 +503,30 @@ const URGENCE_PROTOCOLS = [
         title: 'Purpura fulminans',
         icon: '🟣',
         color: 'danger',
-        intro: 'Purpura nécrotique extensif + fièvre + signes de choc. Urgence infectieuse absolue : l\'antibiotique est administré AVANT tout transfert, sans attendre le laboratoire.',
+        intro: 'Purpura fébrile évolutif = urgence infectieuse absolue. L’antibiotique est administré AVANT tout transfert, sans attendre le laboratoire — dose selon le poids dans le calculateur en haut de page.',
+        criteria: [
+            { t: 'Purpura typique', d: 'Pétéchies et/ou écchymoses diffuses, éléments NÉCROTIQUES « en carte de géographie » ou en étoile, NE S’EFFAÇANT PAS à la vitropression, extension rapide en 1–2 h.' },
+            { t: 'Contexte infectieux', d: 'Fièvre ≥ 38,5 °C, frissons, myalgies, céphalées, vomissements, syndrome méningé possible.' },
+            { t: 'Signes de choc', d: 'Marbrures, tachycardie, hypotension, cyanose, extrémités froides, oligurie, confusion ou agitation.' },
+            { t: 'Terrain', d: 'Sujet jeune sain, asplénie, déficit en complément ou properdine, antécédent de purpura fulminans.' }
+        ],
+        differential: 'Ne pas confondre avec : purpura vasculaire simple (petites pétéchies non palpables du sujet âgé ou sous corticoïdes : SANS fièvre, SANS choc, non extensif), purpura thrombopénique (saignements muqueux, pas de nécrose ni de fièvre), purpura rhumatoïde/IgA de l’enfant (lésions déclives en bottes + arthralgies et douleurs abdominales, enfant apyrétique). RÈGLE D’OR : tout purpura fébrile, a fortiori nécrotique et extensif, = purpura fulminans jusqu’à preuve du contraire → antibiotique immédiat.',
+        material: [
+            'Ceftriaxone flacon 1 g + solvant',
+            'Seringue 20 mL + aiguilles (IM si pas de VVP)',
+            'VVP 18–20G + sérum physiologique 500 mL',
+            'Tensiomètre, oxymètre',
+            '1 flacon d’hémoculture aérobie si possible',
+            'Oxygène'
+        ],
         steps: [
-            { title: 'Reconnaître', text: 'Purpura pétéchial ou écchymotique extensif, éléments nécrotiques, fièvre élevée, hypotension, confusion. Le purpura ne s\'efface pas à la vitropression.' },
-            { title: 'Appel 15', text: 'Appeler le 15 (SAMU) immédiatement en précisant « purpura fulminans ».' },
-            { title: 'Antibiotique immédiat', text: 'Rocéphine (ceftriaxone) 100 mg par kilo en intraveineuse lente ou intramusculaire, sans dépasser 2 g par injection, dès la suspicion, avant le transfert. Alternative : amoxicilline si disponible.' },
-            { title: 'Hémoculture', text: 'Si possible : une seule hémoculture prélevée avant ou en même temps que l\'antibiotique, SANS retarder l\'antibiothérapie.' },
-            { title: 'Remplissage', text: 'Poser une voie veineuse et débuter un remplissage par sérum physiologique si hypotension : 500 ml chez l\'adulte, 20 ml par kilo chez l\'enfant, à répéter selon la tension.' },
-            { title: 'Surveillance', text: 'Constantes toutes les 5 minutes : tension, conscience, respiration. Ne jamais laisser le patient debout ou marcher.' }
+            { title: 'Reconnaître', text: 'Vitropression négative + fièvre + extension rapide = diagnostic clinique immédiat, au cabinet, sans aucun examen complémentaire.' },
+            { title: 'Appel 15 & position', text: 'Appeler le 15 en précisant « purpura fulminans ». Patient couché, interdiction absolue de se lever ou de marcher.' },
+            { title: 'Ceftriaxone — dose selon le poids', text: '100 mg/kg en IV lente (3–5 min) ou IM, SANS dépasser 2 g par injection, dès la suspicion, AVANT tout transfert (dose exacte dans le calculateur en haut de page). Alternative : amoxicilline 100 mg/kg. Sans VVP : injection IM dans le vaste externe de la cuisse ou le deltoïde, aiguille perpendiculaire jusqu’au muscle.' },
+            { title: 'Hémoculture', text: 'Si possible : UNE seule hémoculture aérobie prélevée avant ou en même temps que l’antibiotique, SANS jamais retarder l’antibiothérapie. Pas de ponction lombaire au cabinet.' },
+            { title: 'Remplissage si choc', text: 'Sérum physiologique : 500 mL adulte, 20 mL/kg enfant (calculateur en haut), à répéter selon la TA jusqu’à régression des marbrures.' },
+            { title: 'Surveillance', text: 'Constantes toutes les 5 min : TA, FC, FR, SpO2, conscience. Oxygène si SpO2 < 92 %. Jamais debout.' },
+            { title: 'Transmettre', text: 'Heure de début des signes, heure de l’antibiotique, terrain (asplénie, vaccins), constantes → SAMU.' }
         ]
     }
 ];
@@ -481,16 +544,40 @@ function renderUrgenceProtocols() {
             </div>
             <div class="urgence-protocol-body">
                 <p class="urgence-protocol-intro">${urgenceEscapeHtml(proto.intro)}</p>
-                <ol class="urgence-steps">
-                    ${proto.steps.map((s, i) => `
-                        <li class="urgence-step" data-proto="${proto.id}" data-step="${i}">
-                            <span class="urgence-step-num">${i + 1}</span>
-                            <div class="urgence-step-content">
-                                <strong>${urgenceEscapeHtml(s.title)}</strong>
-                                <p>${urgenceEscapeHtml(s.text)}</p>
-                            </div>
-                        </li>`).join('')}
-                </ol>
+
+                <div class="urgence-protocol-section">
+                    <h5 class="urgence-section-title">🔍 Critères diagnostiques</h5>
+                    <ul class="urgence-criteria">
+                        ${proto.criteria.map(c => `
+                            <li>
+                                <strong>${urgenceEscapeHtml(c.t)}</strong>
+                                <span>${urgenceEscapeHtml(c.d)}</span>
+                            </li>`).join('')}
+                    </ul>
+                    ${proto.differential ? `<p class="urgence-differential"><strong>Ne pas confondre :</strong> ${urgenceEscapeHtml(proto.differential)}</p>` : ''}
+                </div>
+
+                <div class="urgence-protocol-section">
+                    <h5 class="urgence-section-title">🪚 Matériel nécessaire</h5>
+                    <ul class="urgence-material">
+                        ${proto.material.map(m => `<li>${urgenceEscapeHtml(m)}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="urgence-protocol-section">
+                    <h5 class="urgence-section-title">📑 Conduite à tenir</h5>
+                    <ol class="urgence-steps">
+                        ${proto.steps.map((st, i) => `
+                            <li class="urgence-step" data-proto="${proto.id}" data-step="${i}">
+                                <span class="urgence-step-num">${i + 1}</span>
+                                <div class="urgence-step-content">
+                                    <strong>${urgenceEscapeHtml(st.title)}</strong>
+                                    <p>${urgenceEscapeHtml(st.text)}</p>
+                                </div>
+                            </li>`).join('')}
+                    </ol>
+                </div>
+
                 <div class="urgence-tts-controls">
                     <button class="action-btn primary" onclick="urgenceTTSPlay('${proto.id}')">🔊 Écouter le protocole</button>
                     <button class="action-btn" onclick="urgenceTTSStop()" style="display:none;" data-tts="stop-${proto.id}">⏹ Stop</button>
@@ -517,6 +604,57 @@ function urgenceCollapseAllProtocols() {
     });
 }
 
+// ---------- Calculateur de doses selon le poids ----------
+
+function urgenceComputeDoses() {
+    const input = document.getElementById('urgenceWeightInput');
+    const out = document.getElementById('urgenceDoseResults');
+    if (!input || !out) return;
+
+    const w = parseFloat(input.value);
+    if (!w || w <= 0 || w > 250) {
+        out.innerHTML = '<div class="urgence-alert info">Entrez un poids en kg pour obtenir les doses.</div>';
+        return;
+    }
+    const isAdult = w >= 30;
+    const fmt = n => (Math.round(n * 100) / 100).toString().replace('.', ',');
+
+    let rows = '';
+    if (isAdult) {
+        const adreDose = Math.min(0.5, 0.01 * w);
+        const cefDose = Math.min(2, 0.1 * w);
+        const cefVol = cefDose / 0.1;
+        rows = `
+            <tr><td>Adrénaline IM (anaphylaxie)</td><td><strong>${fmt(adreDose)} mg</strong></td><td>${fmt(adreDose)} mL (sol. 1 mg/mL)</td><td>0,01 mg/kg, max 0,5 mg — renouvelable / 5–15 min</td></tr>
+            <tr><td>Ceftriaxone IVL/IM (purpura)</td><td><strong>${fmt(cefDose)} g</strong></td><td>${fmt(cefVol)} mL (1 g / 10 mL)</td><td>100 mg/kg, max 2 g par injection, avant transfert</td></tr>
+            <tr><td>Remplissage NaCl 0,9 % si choc</td><td><strong>500 mL</strong></td><td>1 poche 500 mL</td><td>500 mL chez l’adulte, à répéter selon la TA</td></tr>
+            <tr><td>Aspirine (SCA)</td><td><strong>300 mg</strong></td><td>1 cp à croquer</td><td>Dose fixe adulte, sauf allergie/hémorragie</td></tr>
+            <tr><td>Trinitrine (SCA, si PAS ≥ 100)</td><td><strong>0,15 mg</strong></td><td>1 cp sublingual</td><td>Renouvelable 1× après 5 min si douleur</td></tr>`;
+    } else {
+        const adreDose = Math.min(0.5, 0.01 * w);
+        const cefDose = Math.min(2, 0.1 * w);
+        const cefVol = cefDose / 0.1;
+        const rempl = Math.round(w * 20 / 10) * 10;
+        rows = `
+            <tr><td>Adrénaline IM (anaphylaxie)</td><td><strong>${fmt(adreDose)} mg</strong></td><td>${fmt(adreDose)} mL (sol. 1 mg/mL)</td><td>0,01 mg/kg, max 0,5 mg — cuisse, aiguille 25G</td></tr>
+            <tr><td>Ceftriaxone IVL/IM (purpura)</td><td><strong>${fmt(cefDose)} g</strong></td><td>${fmt(cefVol)} mL (1 g / 10 mL)</td><td>100 mg/kg, max 2 g, avant transfert</td></tr>
+            <tr><td>Remplissage NaCl 0,9 % si choc</td><td><strong>${rempl} mL</strong></td><td>${Math.max(1, Math.round(rempl / 100))} poche(s) 100 mL</td><td>20 mL/kg, à répéter selon la TA</td></tr>`;
+    }
+
+    out.innerHTML = `
+        <div class="urgence-alert ${isAdult ? 'info' : 'warning'}">
+            ${isAdult ? 'Poids adulte (≥ 30 kg)' : 'Poids pédiatrique (< 30 kg) : vérifier les doses de l’enfant avec le 15.'}
+        </div>
+        <div class="inventory-table">
+            <table>
+                <thead>
+                    <tr><th>Médicament</th><th>Dose</th><th>Prélever</th><th>Règle</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+}
+
 // ---------- TTS (synthèse vocale) ----------
 
 function urgenceTTSVoice() {
@@ -533,7 +671,9 @@ function urgenceTTSPlay(protoId) {
 
     urgenceTTSStop();
 
+    const critText = (proto.criteria || []).map(c => ` ${c.t} : ${c.d}`).join(' . ');
     const fullText = `Protocole : ${proto.title.replace('—', '-')} . ${proto.intro} ` +
+        (critText ? ` Critères diagnostiques . ${critText} .` : '') +
         proto.steps.map((s, i) => ` Étape ${i + 1} : ${s.title} . ${s.text}`).join(' ') +
         ' Fin du protocole.';
 
@@ -584,6 +724,10 @@ function initUrgenceModule() {
 
     const savePointageBtn = document.getElementById('urgenceSavePointageBtn');
     if (savePointageBtn) savePointageBtn.addEventListener('click', urgenceSavePointage);
+
+    const weightInput = document.getElementById('urgenceWeightInput');
+    if (weightInput) weightInput.addEventListener('input', urgenceComputeDoses);
+    urgenceComputeDoses();
 
     const exportBtn = document.getElementById('urgenceExportStocksBtn');
     if (exportBtn) exportBtn.addEventListener('click', urgenceExportStocks);
@@ -639,3 +783,4 @@ window.urgenceTTSStop = urgenceTTSStop;
 window.urgenceCopyOrderList = urgenceCopyOrderList;
 window.refreshUrgenceView = refreshUrgenceView;
 window.urgenceToggleProtocol = urgenceToggleProtocol;
+window.urgenceComputeDoses = urgenceComputeDoses;
