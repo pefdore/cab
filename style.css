@@ -9425,3 +9425,216 @@ html.no-anim *::after {
 .urgence-dae-manual .action-btn {
     flex: 1 1 30%;
 }
+
+/* ===== Résultats DAE — cartes ===== */
+.dae-count {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin: 10px 0 8px;
+}
+
+.dae-card {
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+/* --- Carte héros : le plus proche --- */
+.dae-hero {
+    border: 2px solid #dc2626;
+    background: linear-gradient(160deg, rgba(239, 68, 68, 0.07), var(--color-bg) 55%);
+}
+
+.dae-hero-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 0;
+}
+
+.dae-badge {
+    background: #dc2626;
+    color: white;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.dae-hero-dist {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #dc2626;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.dae-hero-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding: 8px 16px 2px;
+}
+
+.dae-hero-addr {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    padding: 0 16px;
+}
+
+.dae-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 16px 0;
+}
+
+.dae-tag {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+}
+
+.dae-tag.warn {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #b45309;
+    font-weight: 600;
+}
+
+.dae-access-detail {
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    padding: 6px 16px 0;
+}
+
+.dae-nav-btn {
+    display: block;
+    margin: 12px 16px 16px;
+    padding: 13px 16px;
+    background: #dc2626;
+    color: white;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: 10px;
+    text-decoration: none;
+}
+
+/* --- Lignes suivantes --- */
+.dae-others-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+    margin: 14px 0 8px;
+}
+
+.dae-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-bg);
+}
+
+.dae-row-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.dae-row-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.dae-row-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dae-row-sub {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dae-row-sub.dae-warn {
+    color: #b45309;
+    font-weight: 600;
+}
+
+.dae-row-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.dae-row-dist {
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 52px;
+    text-align: right;
+}
+
+.dae-row-nav {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.dae-footer {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.dae-footer .action-btn {
+    flex: 1;
+}
+
+.dae-source {
+    font-size: 0.68rem;
+    color: var(--color-text-tertiary);
+    text-align: center;
+    margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+    .dae-hero-dist { font-size: 1.3rem; }
+    .dae-nav-btn { font-size: 0.9rem; }
+}
