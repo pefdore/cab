@@ -2917,8 +2917,8 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610261500" defer></script>
-    <script src="secretariat.js?v=202610261300" defer></script>
+    <script src="app.v5.js?v=202610261600" defer></script>
+    <script src="secretariat.js?v=202610261400" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
@@ -3129,7 +3129,7 @@ window.attemptLogin = function() {
         setTimeout(function() {
           // The fallback is already set, but we can try to load the real script
           var script = document.createElement('script');
-          script.src = 'secretariat.js?v=202610261300';
+          script.src = 'secretariat.js?v=202610261400';
           script.onload = function() {
             console.log('[DEBUG] Secretariat script loaded');
             if (typeof window.showAddEmployeeModal === 'function' && window.showAddEmployeeModal.toString().indexOf('[FALLBACK]') > -1) {
