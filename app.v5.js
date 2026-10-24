@@ -130,7 +130,7 @@ try {
     // NOW switch to the view the user was on before reload (dashboard by default) - data is ready
     let lastView = 'dashboard';
     try { lastView = sessionStorage.getItem('cab_current_view') || 'dashboard'; } catch (e) {}
-    if (['dashboard', 'add', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
+    if (['dashboard', 'urgence', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
     switchView(lastView);
     
     // Expose currentUser and supabaseClient globally for other modules
@@ -1414,10 +1414,44 @@ window.switchAddDepenseRecette = switchAddDepenseRecette;
 // --- Passage Modal Functions ---
 function populateModalCotationSelect() {
     const modalSelect = document.getElementById('cotationModal');
-    const originalSelect = document.getElementById('cotation');
-    if (!modalSelect || !originalSelect) return;
+    if (!modalSelect) return;
     
-    modalSelect.innerHTML = originalSelect.innerHTML;
+    const cotations = [
+        { key: 'G', amount: 30 },
+        { key: 'VG', amount: 30 },
+        { key: 'VG+MD', amount: 40 },
+        { key: 'VG+MU', amount: 52.6 },
+        { key: 'ALQP003', amount: 69.12 },
+        { key: 'VL', amount: 60 },
+        { key: 'VL+MD', amount: 70 },
+        { key: 'VG+MD+MSH', amount: 63 },
+        { key: 'VG+MD+2IK', amount: 41.22 },
+        { key: 'Acte gratuit', amount: 0 }
+    ];
+    
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    const customCotations = settings.customCotations || [];
+    
+    modalSelect.innerHTML = '<option value="">Sélectionner...</option>';
+    
+    cotations.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.key + '|' + c.amount;
+        opt.textContent = c.key + ' - ' + c.amount.toFixed(2) + '€';
+        modalSelect.appendChild(opt);
+    });
+    
+    customCotations.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.key + '|' + c.amount;
+        opt.textContent = c.key + ' - ' + parseFloat(c.amount).toFixed(2) + '€';
+        modalSelect.appendChild(opt);
+    });
+    
+    const addOption = document.createElement('option');
+    addOption.value = '__manage__';
+    addOption.textContent = '+ Gérer mes cotations';
+    modalSelect.appendChild(addOption);
 }
 
 window.openPassageModal = async function() {
@@ -3448,13 +3482,6 @@ function setupEventListeners() {
         });
     });
     
-    document.getElementById('entryForm').addEventListener('submit', handleSubmit);
-    document.getElementById('visitLocation').addEventListener('change', handleLocationChange);
-    document.getElementById('cotation').addEventListener('change', handleCotationChange);
-    document.getElementById('prevMonthAdd')?.addEventListener('click', () => changeMonth(-1));
-    document.getElementById('nextMonthAdd')?.addEventListener('click', () => changeMonth(1));
-    document.getElementById('prevMonthAddDepenses')?.addEventListener('click', () => changeMonthAddDepenses(-1));
-    document.getElementById('nextMonthAddDepenses')?.addEventListener('click', () => changeMonthAddDepenses(1));
     document.getElementById('generatePdfBtn')?.addEventListener('click', generatePDF);
     // IBAN des Parametres : sauvegarde automatique au blur
     const ibanField = document.getElementById('ibanInput');
@@ -3467,17 +3494,9 @@ function setupEventListeners() {
     if (pdfBtn) pdfBtn.disabled = false;
     document.getElementById('addNewCotation').addEventListener('click', addNewCotationFromSettings);
     
-    const patientInput = document.getElementById('patientName');
-    patientInput.addEventListener('input', handlePatientSearch);
-    patientInput.addEventListener('focus', () => {
-        if (patientInput.value.length >= 2) {
-            handlePatientSearch({ target: patientInput });
-        }
-    });
-    
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.autocomplete-wrapper')) {
-            document.getElementById('autocomplete-dropdown').classList.remove('active');
+            document.getElementById('autocomplete-dropdown')?.classList.remove('active');
         }
     });
     
@@ -3485,22 +3504,6 @@ function setupEventListeners() {
     
     setupSettingsDelegation();
     setupSignatureDrawDelegation();
-    
-    // Cabinet tabs
-    document.querySelectorAll('.cabinet-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabName = tab.dataset.tab;
-            document.querySelectorAll('.cabinet-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.cabinet-tab-content').forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(`cabinet-${tabName}`).classList.add('active');
-        });
-    });
-    
-    // Add view - Depenses/Recettes buttons
-    document.getElementById('add-saveDepenseBtn')?.addEventListener('click', saveDepense);
-    document.getElementById('add-saveRecetteBtn')?.addEventListener('click', saveRecette);
-    document.getElementById('add-depenseCategory')?.addEventListener('change', updateSousCategoriesDepense);
     
     // Cabinet tabs
     document.querySelectorAll('.cabinet-tab').forEach(tab => {
@@ -4604,7 +4607,7 @@ function switchView(viewName) {
 
     const pageTitles = {
         'dashboard': 'Dashboard',
-        'add': 'Ajouter',
+        'urgence': 'Salle d’urgence',
         'history': 'Documents',
         'cabinet': 'Cabinet',
         'settings': 'Paramètres'
@@ -4672,9 +4675,8 @@ function switchView(viewName) {
         }
     } else if (viewName === 'cabinet') {
         loadCabinetData();
-    } else if (viewName === 'add') {
-        renderEntries();
-        loadVLHistory().then(() => renderRecentVLForAdd());
+    } else if (viewName === 'urgence') {
+        if (typeof refreshUrgenceView === 'function') refreshUrgenceView();
     }
 }
 
