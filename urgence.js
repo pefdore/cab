@@ -405,6 +405,40 @@ function urgenceSavePointage() {
 
 const URGENCE_PROTOCOLS = [
     {
+        id: 'acr',
+        title: 'ACR — Arrêt CardioRespiratoire',
+        icon: '💔',
+        color: 'danger',
+        intro: 'Inconscience + absence de ventilation normale = RCP immédiate. Ne pas chercher le pouls plus de 10 secondes. Chaque minute sans massage divise la survie par deux.',
+        criteria: [
+            { t: 'Inconscience', d: 'Patient ne répond pas, ne réagit à aucune stimulation (parole, secousse des épaules).' },
+            { t: 'Absence de ventilation normale', d: 'Regarder la poitrine 10 secondes maximum : aucun mouvement respiratoire, ou gasps agoniques (respirations lentes, bruyantes, inefficaces = signe d’ACR, pas d’une respiration normale).' },
+            { t: 'Pas de pouls (si formé)', d: 'Pouls carotidien absent — mais ne pas perdre de temps : inconscience + pas de ventilation normale = débuter la RCP sans chercher le pouls si doute.' }
+        ],
+        differential: 'Ne pas confondre avec : syncope (réveil spontané en position allongée, pouls présent, ventilation normale), coma hypoglycémique ou opiacé (ventilation présente même lente et bruyante), malaise vagal (bradycardie, pâleur, récupération rapide). Le gasp agonique = ACR : ne pas le prendre pour une respiration.',
+        material: [
+            'Plan dur / sol',
+            'DAE (défibrillateur) — le chercher en même temps que la RCP',
+            'Masque à oxygène + ballon de réanimation (BAVU)',
+            'VVP ou voie intra-osseuse (trocart IO)',
+            'Adrénaline ampoules 1 mg/mL',
+            'Amiodarone 150 mg si disponible',
+            'Couverture / protection du sol'
+        ],
+        steps: [
+            { title: 'Sécuriser & alerter', text: 'Vérifier sécurité, secouer les épaules, crier. Si pas de réaction : appeler le 15 (ou faire appeler par un témoin) et envoyer chercher le DAE immédiatement.' },
+            { title: 'Vérifier la ventilation', text: 'Basculer la tête en arrière, élever le menton, regarder la poitrine MAXIMUM 10 secondes. Pas de ventilation normale = commencer le massage.' },
+            { title: 'Massage cardiaque', text: 'Au centre du thorax, talon de la main nues les deux mains superposées, bras tendus : comprimer VERTICALEMENT de 5 à 6 cm, 100 à 120 compressions par minute, laisser le thorax se réexpandre complètement entre chaque compression. Enfant : une main ou deux doigts selon la taille. Ne pas interrompre plus de 10 s.' },
+            { title: 'Insufflations 30:2', text: 'Si seule : 30 compressions puis 2 insufflations (1 s chacune) avec bascule tête + pincement du nez, ou masque du BAVU. Si plusieurs sauveteurs formés ou DAE posé : RCP en continu sans insufflations tant que le DAE analyse.' },
+            { title: 'DAE dès que disponible', text: 'Poitrine nue, électrodes comme indiqué sur les dessins, personne ne touche le patient pendant l’analyse. Si choc conseillé : choc puis reprise immédiate du massage. Si choc non conseillé : reprendre le massage immédiatement.' },
+            { title: 'Identifier le rythme au DAE', text: 'Le DAE indique s’il conseille un choc : RYTHME CHOCABLE = fibrillation ventriculaire (FV) ou tachycardie ventriculaire (FVT) sans pouls. RYTHME NON CHOCABLE = asystolie ou activité électrique sans pouls (AESP). Le timing de l’adrénaline dépend de ce rythme — suivre la ligne correspondante ci-dessous.' },
+            { title: 'SI NON CHOCABLE (asystolie / AESP) : adrénaline immédiate', text: 'Adrénaline 1 mg IV/IO (1 mL de solution 1 mg/mL) DÈS QUE LA VOIE EST POSÉE, puis toutes les 3 à 5 min, sans jamais interrompre le massage. ENFANT : 0,01 mg/kg, maximum 1 mg. PAS d’amiodarone dans les rythmes non chocables.' },
+            { title: 'SI CHOCABLE (FV / FVT sans pouls) : RCP + chocs d’abord', text: 'Priorité aux chocs du DAE et à la RCP. PAS d’adrénaline avant le 3e choc. Après le 3e choc : adrénaline 1 mg IV/IO (puis toutes les 3 à 5 min) ET amiodarone 300 mg diluée dans 20 mL de G5 IV/IO (150 mg après le 5e choc). ENFANT : adrénaline 0,01 mg/kg (max 1 mg), amiodarone 5 mg/kg.' },
+            { title: 'Continuer jusqu’à', text: 'Reprise d’une ventilation normale ou d’un mouvement, épuisement du sauveteur, ou prise en charge par le SAMU. Changer de masseur toutes les 2 min si possible.' }
+        ]
+    },
+
+    {
         id: 'sca',
         title: 'SCA — Syndrome Coronarien Aigu',
         icon: '❤️',
@@ -529,39 +563,6 @@ const URGENCE_PROTOCOLS = [
             { title: 'Transmettre', text: 'Heure de début des signes, heure de l’antibiotique, terrain (asplénie, vaccins), constantes → SAMU.' }
         ]
     },
-    {
-        id: 'acr',
-        title: 'ACR — Arrêt CardioRespiratoire',
-        icon: '💔',
-        color: 'danger',
-        intro: 'Inconscience + absence de ventilation normale = RCP immédiate. Ne pas chercher le pouls plus de 10 secondes. Chaque minute sans massage divise la survie par deux.',
-        criteria: [
-            { t: 'Inconscience', d: 'Patient ne répond pas, ne réagit à aucune stimulation (parole, secousse des épaules).' },
-            { t: 'Absence de ventilation normale', d: 'Regarder la poitrine 10 secondes maximum : aucun mouvement respiratoire, ou gasps agoniques (respirations lentes, bruyantes, inefficaces = signe d’ACR, pas d’une respiration normale).' },
-            { t: 'Pas de pouls (si formé)', d: 'Pouls carotidien absent — mais ne pas perdre de temps : inconscience + pas de ventilation normale = débuter la RCP sans chercher le pouls si doute.' }
-        ],
-        differential: 'Ne pas confondre avec : syncope (réveil spontané en position allongée, pouls présent, ventilation normale), coma hypoglycémique ou opiacé (ventilation présente même lente et bruyante), malaise vagal (bradycardie, pâleur, récupération rapide). Le gasp agonique = ACR : ne pas le prendre pour une respiration.',
-        material: [
-            'Plan dur / sol',
-            'DAE (défibrillateur) — le chercher en même temps que la RCP',
-            'Masque à oxygène + ballon de réanimation (BAVU)',
-            'VVP ou voie intra-osseuse (trocart IO)',
-            'Adrénaline ampoules 1 mg/mL',
-            'Amiodarone 150 mg si disponible',
-            'Couverture / protection du sol'
-        ],
-        steps: [
-            { title: 'Sécuriser & alerter', text: 'Vérifier sécurité, secouer les épaules, crier. Si pas de réaction : appeler le 15 (ou faire appeler par un témoin) et envoyer chercher le DAE immédiatement.' },
-            { title: 'Vérifier la ventilation', text: 'Basculer la tête en arrière, élever le menton, regarder la poitrine MAXIMUM 10 secondes. Pas de ventilation normale = commencer le massage.' },
-            { title: 'Massage cardiaque', text: 'Au centre du thorax, talon de la main nues les deux mains superposées, bras tendus : comprimer VERTICALEMENT de 5 à 6 cm, 100 à 120 compressions par minute, laisser le thorax se réexpandre complètement entre chaque compression. Enfant : une main ou deux doigts selon la taille. Ne pas interrompre plus de 10 s.' },
-            { title: 'Insufflations 30:2', text: 'Si seule : 30 compressions puis 2 insufflations (1 s chacune) avec bascule tête + pincement du nez, ou masque du BAVU. Si plusieurs sauveteurs formés ou DAE posé : RCP en continu sans insufflations tant que le DAE analyse.' },
-            { title: 'DAE dès que disponible', text: 'Poitrine nue, électrodes comme indiqué sur les dessins, personne ne touche le patient pendant l’analyse. Si choc conseillé : choc puis reprise immédiate du massage. Si choc non conseillé : reprendre le massage immédiatement.' },
-            { title: 'Identifier le rythme au DAE', text: 'Le DAE indique s’il conseille un choc : RYTHME CHOCABLE = fibrillation ventriculaire (FV) ou tachycardie ventriculaire (FVT) sans pouls. RYTHME NON CHOCABLE = asystolie ou activité électrique sans pouls (AESP). Le timing de l’adrénaline dépend de ce rythme — suivre la ligne correspondante ci-dessous.' },
-            { title: 'SI NON CHOCABLE (asystolie / AESP) : adrénaline immédiate', text: 'Adrénaline 1 mg IV/IO (1 mL de solution 1 mg/mL) DÈS QUE LA VOIE EST POSÉE, puis toutes les 3 à 5 min, sans jamais interrompre le massage. ENFANT : 0,01 mg/kg, maximum 1 mg. PAS d’amiodarone dans les rythmes non chocables.' },
-            { title: 'SI CHOCABLE (FV / FVT sans pouls) : RCP + chocs d’abord', text: 'Priorité aux chocs du DAE et à la RCP. PAS d’adrénaline avant le 3e choc. Après le 3e choc : adrénaline 1 mg IV/IO (puis toutes les 3 à 5 min) ET amiodarone 300 mg diluée dans 20 mL de G5 IV/IO (150 mg après le 5e choc). ENFANT : adrénaline 0,01 mg/kg (max 1 mg), amiodarone 5 mg/kg.' },
-            { title: 'Continuer jusqu’à', text: 'Reprise d’une ventilation normale ou d’un mouvement, épuisement du sauveteur, ou prise en charge par le SAMU. Changer de masseur toutes les 2 min si possible.' }
-        ]
-    }
 ];
 
 
@@ -666,6 +667,126 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
 }
 
 
+
+// ---------- Chercheur de DAE (OpenStreetMap / G\u00E9o'DAE via Overpass) ----------
+
+function urgenceHaversineKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function urgenceGetLocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('G\u00E9olocalisation non disponible sur cet appareil'));
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+            err => reject(new Error(err.code === 1 ? 'Localisation refus\u00E9e \u2014 autorisez la g\u00E9olocalisation' : 'Localisation indisponible')),
+            { timeout: 10000, maximumAge: 60000 }
+        );
+    });
+}
+
+async function urgenceFetchDaeAround(lat, lon, radiusKm) {
+    const query = `[out:json][timeout:25];
+(
+  node["emergency"="defibrillator"](around:${Math.round(radiusKm * 1000)},${lat},${lon});
+);
+out body 60;`;
+    const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Service de cartes momentan\u00E9ment indisponible');
+    const data = await resp.json();
+    return (data.elements || []).filter(e => e.lat && e.lon).map(e => ({
+        lat: e.lat,
+        lon: e.lon,
+        name: e.tags && (e.tags['name'] || e.tags['defibrillator:location'] || e.tags['addr:street'] || null),
+        hours: e.tags && (e.tags.opening_hours || null),
+        phone: e.tags && (e.tags['emergency:phone'] || e.tags.phone || null),
+        indoor: e.tags && e.tags.indoor === 'yes'
+    }));
+}
+
+async function urgenceFindDae() {
+    const out = document.getElementById('urgenceDaeResults');
+    const btn = document.getElementById('urgenceDaeBtn');
+    if (!out) return;
+    out.innerHTML = '<div class="urgence-alert info">\u23F3 Localisation et recherche des DAE...</div>';
+    if (btn) btn.disabled = true;
+
+    let loc;
+    try {
+        loc = await urgenceGetLocation();
+    } catch (e) {
+        out.innerHTML = `<div class="urgence-alert warning">\u26A0\uFE0F ${e.message}. Vous pouvez chercher sans localisation sur la carte nationale : <a href="https://www.data.gouv.fr/reuses/carte-interactive-des-defibrillateurs-dae-en-france" target="_blank" rel="noopener">carte des DAE</a>.</div>`;
+        if (btn) btn.disabled = false;
+        return;
+    }
+
+    // rayon croissant jusqu'a trouver des DAE
+    const radii = [2, 5, 10, 25];
+    let daes = [];
+    let usedRadius = 0;
+    try {
+        for (const r of radii) {
+            daes = await urgenceFetchDaeAround(loc.lat, loc.lon, r);
+            usedRadius = r;
+            if (daes.length > 0) break;
+        }
+    } catch (e) {
+        out.innerHTML = `<div class="urgence-alert danger">\u26A0\uFE0F ${e.message}.</div>`;
+        if (btn) btn.disabled = false;
+        return;
+    }
+
+    if (daes.length === 0) {
+        out.innerHTML = `<div class="urgence-alert warning">Aucun DAE recens\u00E9 dans un rayon de ${usedRadius} km. Envisagez le cabinet le plus proche \u00E9quip\u00E9 (pharmacie, mairie, salle des f\u00EAtes) et restez au t\u00E9l\u00E9phone avec le 15.</div>`;
+        if (btn) btn.disabled = false;
+        return;
+    }
+
+    daes.forEach(d => { d.dist = urgenceHaversineKm(loc.lat, loc.lon, d.lat, d.lon); });
+    daes.sort((a, b) => a.dist - b.dist);
+    const top = daes.slice(0, 5);
+
+    out.innerHTML = `
+        <div class="urgence-alert success">\u2705 ${daes.length} DAE trouv\u00E9(s) dans un rayon de ${usedRadius} km — ${top.length} plus proches affich\u00E9s.</div>
+        <div class="inventory-table">
+            <table>
+                <thead>
+                    <tr><th></th><th>DAE</th><th>Distance</th><th>Acc\u00E8s</th><th></th></tr>
+                </thead>
+                <tbody>
+                    ${top.map((d, i) => `
+                        <tr>
+                            <td>${i === 0 ? '🎯' : i + 1}</td>
+                            <td>
+                                <strong>${d.name ? urgenceEscapeHtml(d.name) : 'DAE non nomm\u00E9'}</strong>
+                                ${d.hours ? `<span class="urgence-dae-sub">\u23F0 ${urgenceEscapeHtml(d.hours)}</span>` : ''}
+                                ${d.indoor ? '<span class="urgence-dae-sub">🏠 intérieur</span>' : ''}
+                            </td>
+                            <td><strong>${d.dist < 1 ? Math.round(d.dist * 1000) + ' m' : d.dist.toFixed(1) + ' km'}</strong></td>
+                            <td>${d.phone ? urgenceEscapeHtml(d.phone) : '-'}</td>
+                            <td>
+                                <a class="action-btn primary" target="_blank" rel="noopener"
+                                   href="https://www.google.com/maps/dir/?api=1&origin=${loc.lat},${loc.lon}&destination=${d.lat},${d.lon}&travelmode=walking">
+                                   🧭 Itinéraire</a>
+                            </td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
+    if (btn) btn.disabled = false;
+}
+
+window.urgenceFindDae = urgenceFindDae;
 
 // ---------- Session R\u00E9a (ACR) : start / \u00E9v\u00E9nements / stop / r\u00E9cap ----------
 
@@ -1059,9 +1180,46 @@ function urgenceBuildRecap() {
     }
     html += `</div>
             <p class="urgence-rea-hint">📌 Transmettre ce r\u00E9cap au 15 / au SAMU.</p>
-            <button class="action-btn" onclick="urgenceResetRea()">\u2716 Effacer la session</button>
+            <div class="urgence-rea-transmit">
+                <a class="action-btn primary" href="tel:15">📞 Appeler le 15</a>
+                <a class="action-btn" href="sms:?body=${encodeURIComponent(urgenceBuildRecapText())}">\u2709 SMS pr\u00E9-rempli</a>
+                <button class="action-btn" onclick="urgenceCopyRecap()">💽 Copier le r\u00E9cap</button>
+                <button class="action-btn" onclick="urgenceResetRea()">\u2716 Effacer la session</button>
+            </div>
         </div>`;
     return html;
+}
+
+function urgenceBuildRecapText() {
+    const evs = urgenceReaState.events;
+    const nbChoc = evs.filter(e => e.type === 'choc').length;
+    const nbAdre = evs.filter(e => e.type === 'adre').length;
+    const startTime = urgenceReaState.startTime;
+    const endTime = urgenceReaState.stopTime || (evs.length ? evs[evs.length - 1].t : startTime);
+    const adreMg = urgenceReaAdreDoseMg();
+    let txt = `R\u00E9cap r\u00E9animation - D\u00E9but ${urgenceReaEventTime(startTime)} - Dur\u00E9e ${urgenceFmtElapsed(endTime - startTime)} - ${nbChoc} choc(s), ${nbAdre} adr\u00E9naline${adreMg ? ' (' + adreMg + ' mg)' : ''}.
+`;
+    evs.forEach(ev => {
+        if (ev.type === 'choc') txt += `- Choc n\u00B0${ev.n} \u00E0 ${urgenceReaEventTime(ev.t)}
+`;
+        else {
+            const ctx = ev.context === 'asystolie' ? ' (asystolie/AESP)' : (ev.context === 'choc3' ? ' (3e choc)' : '');
+            txt += `- Adr\u00E9naline n\u00B0${ev.n}${ctx} \u00E0 ${urgenceReaEventTime(ev.t)}
+`;
+        }
+    });
+    return txt;
+}
+
+function urgenceCopyRecap() {
+    const txt = urgenceBuildRecapText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(() => {
+            if (typeof showToast === 'function') showToast('R\u00E9cap copi\u00E9 \u2014 collez-le dans l\u2019app du 15 ou un SMS', 'success');
+        }).catch(() => { alert(txt); });
+    } else {
+        alert(txt);
+    }
 }
 
 // Mise a jour du chrono chaque seconde pendant la rea

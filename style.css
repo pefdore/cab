@@ -9374,4 +9374,38 @@ html.no-anim *::after {
     .cab-health { flex-direction: column; align-items: flex-start; }
     .cab-health-right { gap: 12px; }
     .cab-section { padding: 14px; }
+
+
+/* Chercheur DAE */
+.urgence-dae-finder {
+    margin-bottom: 20px;
+}
+
+.urgence-dae-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.urgence-dae-row .action-btn {
+    flex: 1;
+    font-weight: 600;
+}
+
+.urgence-dae-sub {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.urgence-rea-transmit {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.urgence-rea-transmit .action-btn {
+    flex: 1 1 40%;
+    text-decoration: none;
+    text-align: center;
 }
