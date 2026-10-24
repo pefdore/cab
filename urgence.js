@@ -836,37 +836,57 @@ async function urgenceDaeSearchAndRender(loc) {
 
     const daes = result.daes.slice(0, 5);
     const origin = result.origin || loc;
+    const fmtDist = d => d < 1 ? Math.round(d * 1000) + ' m' : (d < 10 ? d.toFixed(1) : Math.round(d)) + ' km';
+    const hero = daes[0];
+    const others = daes.slice(1);
+
+    const heroHtml = `
+        <div class="dae-card dae-hero">
+            <div class="dae-hero-head">
+                <span class="dae-badge">🎯 LE PLUS PROCHE</span>
+                <span class="dae-hero-dist">${fmtDist(hero.dist)}</span>
+            </div>
+            <div class="dae-hero-name">${hero.name ? urgenceEscapeHtml(hero.name) : 'D\u00E9fibrillateur'}</div>
+            <div class="dae-hero-addr">${urgenceEscapeHtml([hero.addr, hero.city].filter(Boolean).join(', ') || 'Adresse non renseign\u00E9e')}</div>
+            <div class="dae-tags">
+                ${hero.hours ? `<span class="dae-tag">⏰ ${urgenceEscapeHtml(hero.hours)}</span>` : ''}
+                ${hero.access ? `<span class="dae-tag">${hero.access === 'Int\u00E9rieur' ? '🏠 Int\u00E9rieur' : '☀\uFE0F Ext\u00E9rieur'}</span>` : ''}
+                ${hero.state && hero.state !== 'En fonctionnement' ? `<span class="dae-tag warn">⚠\uFE0F ${urgenceEscapeHtml(hero.state)}</span>` : ''}
+            </div>
+            ${hero.accessComplt ? `<div class="dae-access-detail">${urgenceEscapeHtml(hero.accessComplt)}</div>` : ''}
+            <a class="dae-nav-btn" target="_blank" rel="noopener"
+               href="https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${hero.lat},${hero.lon}&travelmode=walking">
+               🧭 Y ALLER — ${fmtDist(hero.dist)} \u00E0 pied
+            </a>
+        </div>`;
+
+    const othersHtml = others.length > 0 ? `
+        <div class="dae-others-title">Autres DAE \u00E0 proximit\u00E9</div>
+        ${others.map((d, i) => `
+            <div class="dae-card dae-row">
+                <div class="dae-row-num">${i + 2}</div>
+                <div class="dae-row-main">
+                    <div class="dae-row-name">${d.name ? urgenceEscapeHtml(d.name) : 'DAE'}</div>
+                    <div class="dae-row-sub">${urgenceEscapeHtml([d.addr, d.city].filter(Boolean).join(', ') || '')}</div>
+                    ${(d.hours || d.access) ? `<div class="dae-row-sub">${d.hours ? '⏰ ' + urgenceEscapeHtml(d.hours) + (d.access ? ' \u00B7 ' : '') : ''}${d.access ? (d.access === 'Int\u00E9rieur' ? '🏠' : '☀\uFE0F') : ''}</div>` : ''}
+                    ${d.state && d.state !== 'En fonctionnement' ? `<div class="dae-row-sub dae-warn">⚠\uFE0F ${urgenceEscapeHtml(d.state)}</div>` : ''}
+                </div>
+                <div class="dae-row-right">
+                    <div class="dae-row-dist">${fmtDist(d.dist)}</div>
+                    <a class="dae-row-nav" target="_blank" rel="noopener"
+                       href="https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${d.lat},${d.lon}&travelmode=walking">🧭</a>
+                </div>
+            </div>`).join('')}` : '';
 
     out.innerHTML = `
-        <div class="urgence-alert success">\u2705 ${result.daes.length} DAE officiel(s) trouv\u00E9(s) autour de ${urgenceEscapeHtml((loc.label || 'votre position').split(',')[0])} \u2014 source : base nationale G\u00E9o\u2019DAE.</div>
-        <div class="inventory-table">
-            <table>
-                <thead>
-                    <tr><th></th><th>DAE</th><th>Distance</th><th>Acc\u00E8s</th><th></th></tr>
-                </thead>
-                <tbody>
-                    ${daes.map((d, i) => `
-                        <tr>
-                            <td>${i === 0 ? '\U0001F3AF' : i + 1}</td>
-                            <td>
-                                <strong>${d.name ? urgenceEscapeHtml(d.name) : 'DAE'}</strong>
-                                ${d.addr || d.city ? `<span class="urgence-dae-sub">${urgenceEscapeHtml([d.addr, d.city].filter(Boolean).join(', ') || '')}</span>` : ''}
-                                ${d.hours ? `<span class="urgence-dae-sub">\u23F0 ${urgenceEscapeHtml(d.hours)}</span>` : ''}
-                                ${d.access ? `<span class="urgence-dae-sub">${d.access === 'Int\u00E9rieur' ? '\U0001F3E0 int\u00E9rieur' : 'ext\u00E9rieur'}${d.accessComplt ? ' \u2014 ' + urgenceEscapeHtml(d.accessComplt) : ''}</span>` : ''}
-                                ${d.state && d.state !== 'En fonctionnement' ? `<span class="urgence-dae-sub" style="color:#d97706;">\u26A0\uFE0F ${urgenceEscapeHtml(d.state)}</span>` : ''}
-                            </td>
-                            <td><strong>${d.dist < 1 ? Math.round(d.dist * 1000) + ' m' : d.dist.toFixed(1) + ' km'}</strong></td>
-                            <td>${d.hours ? urgenceEscapeHtml(String(d.hours).slice(0, 30)) : '-'}</td>
-                            <td>
-                                <a class="action-btn primary" target="_blank" rel="noopener"
-                                   href="https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${d.lat},${d.lon}&travelmode=walking">
-                                   \U0001F9ED Itin\u00E9raire</a>
-                            </td>
-                        </tr>`).join('')}
-                </tbody>
-            </table>
+        ${result.daes.length > 5 ? `<div class="dae-count">${result.daes.length} DAE trouv\u00E9s autour de ${urgenceEscapeHtml((loc.label || 'votre position').split(',')[0])}</div>` : ''}
+        ${heroHtml}
+        ${othersHtml}
+        <div class="dae-footer">
+            <button class="action-btn" onclick="urgenceDaeShowManual()">🔍 Chercher ailleurs</button>
+            <button class="action-btn" onclick="urgenceFindDae()">📍 Actualiser</button>
         </div>
-        <button class="action-btn" onclick="urgenceDaeShowManual()" style="margin-top:8px;">Chercher ailleurs</button>`;
+        <div class="dae-source">Source : base nationale G\u00E9o\u2019DAE \u2014 Minist\u00E8re de la Sant\u00E9</div>`;
     if (btn) btn.disabled = false;
 }
 
