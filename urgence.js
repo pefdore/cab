@@ -613,6 +613,7 @@ function renderUrgenceProtocols() {
                 </div>
 
                 <div class="urgence-tts-controls">
+                    ${proto.id === 'acr' ? `<button class="action-btn urgence-metro-btn" onclick="urgenceToggleMetronome()" data-metro-btn>🧨 Métronome massage : OFF</button>` : ''}
                     <button class="action-btn primary" onclick="urgenceTTSPlay('${proto.id}')">🔊 Écouter le protocole</button>
                     <button class="action-btn" onclick="urgenceTTSStop()" style="display:none;" data-tts="stop-${proto.id}">⏹ Stop</button>
                 </div>
@@ -659,6 +660,77 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
     document.querySelectorAll('.urgence-suggested').forEach(el => {
         const id = el.dataset.suggested;
         if (id && content[id]) el.innerHTML = content[id];
+    });
+}
+
+
+// ---------- Métronome de massage cardiaque (ACR, 110/min) ----------
+
+let urgenceMetroTimer = null;
+let urgenceMetroCtx = null;
+
+function urgenceMetroBeep() {
+    if (!urgenceMetroCtx) return;
+    const ctx = urgenceMetroCtx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.6, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.09);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.1);
+}
+
+function urgenceMetroVibrate() {
+    if (navigator.vibrate) {
+        try { navigator.vibrate(80); } catch (e) {}
+    }
+}
+
+function urgenceToggleMetronome() {
+    if (urgenceMetroTimer) {
+        urgenceStopMetronome();
+    } else {
+        urgenceStartMetronome();
+    }
+}
+
+function urgenceStartMetronome() {
+    try {
+        urgenceMetroCtx = urgenceMetroCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (urgenceMetroCtx.state === 'suspended') urgenceMetroCtx.resume();
+    } catch (e) {
+        if (typeof showToast === 'function') showToast('Audio non disponible sur cet appareil', 'error');
+        return;
+    }
+    // 110 compressions par minute (centre de la fourchette 100-120/min)
+    const intervalMs = 60000 / 110;
+    urgenceMetroBeep();
+    urgenceMetroVibrate();
+    urgenceMetroTimer = setInterval(() => {
+        urgenceMetroBeep();
+        urgenceMetroVibrate();
+    }, intervalMs);
+    urgenceRefreshMetroButtons();
+}
+
+function urgenceStopMetronome() {
+    if (urgenceMetroTimer) {
+        clearInterval(urgenceMetroTimer);
+        urgenceMetroTimer = null;
+    }
+    urgenceRefreshMetroButtons();
+}
+
+function urgenceRefreshMetroButtons() {
+    const on = !!urgenceMetroTimer;
+    document.querySelectorAll('[data-metro-btn]').forEach(btn => {
+        btn.textContent = on ? '\u{1F9E8} M\u00E9tronome : ON (110/min) \u2014 cliquer pour arr\u00EAter' : '\u{1F9E8} M\u00E9tronome massage : OFF';
+        btn.classList.toggle('metro-on', on);
     });
 }
 
@@ -796,6 +868,7 @@ function initUrgenceModule() {
     renderUrgenceStocks();
     renderUrgencePointage();
     renderUrgenceProtocols();
+    urgenceRefreshMetroButtons();
 
     if ('speechSynthesis' in window) {
         speechSynthesis.getVoices();
@@ -845,3 +918,4 @@ window.urgenceCopyOrderList = urgenceCopyOrderList;
 window.refreshUrgenceView = refreshUrgenceView;
 window.urgenceToggleProtocol = urgenceToggleProtocol;
 window.urgenceComputeDoses = urgenceComputeDoses;
+window.urgenceToggleMetronome = urgenceToggleMetronome;
