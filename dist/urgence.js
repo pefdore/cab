@@ -686,16 +686,28 @@ function urgenceGetLocation() {
             reject(new Error('G\u00E9olocalisation non disponible sur cet appareil'));
             return;
         }
+        let settled = false;
+        const done = fn => (...a) => { if (!settled) { settled = true; clearTimeout(watch); fn(...a); } };
+        const watch = setTimeout(() => {
+            done(reject)(new Error('Localisation indisponible \u2014 cherchez par adresse'));
+        }, 9000);
         navigator.geolocation.getCurrentPosition(
-            pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'votre position' }),
-            err => reject(new Error(err.code === 1 ? 'Localisation refus\u00E9e' : 'Localisation indisponible (timeout)')),
+            done(pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'votre position' })),
+            done(err => reject(new Error(err.code === 1 ? 'Localisation refus\u00E9e' : 'Localisation indisponible'))),
             { timeout: 8000, maximumAge: 120000, enableHighAccuracy: false }
         );
     });
 }
 
+function urgenceFetchTimeout(url, ms) {
+    return Promise.race([
+        fetch(url),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
+    ]);
+}
+
 async function urgenceGeocode(address) {
-    const resp = await fetch('/api/dae?address=' + encodeURIComponent(address));
+    const resp = await urgenceFetchTimeout('/api/dae?address=' + encodeURIComponent(address), 9000);
     if (!resp.ok) throw new Error('G\u00E9ocodage indisponible');
     const data = await resp.json();
     if (!data.geocode) throw new Error('Adresse introuvable');
@@ -704,13 +716,12 @@ async function urgenceGeocode(address) {
 
 async function urgenceFetchDaeAround(lat, lon, radiusKm) {
     const radius = Math.round(radiusKm * 1000);
-    const resp = await fetch('/api/dae?lat=' + lat + '&lon=' + lon + '&radius=' + radius);
-    if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error || 'Service de cartes momentan\u00E9ment indisponible, r\u00E9essayez');
+    const resp = await urgenceFetchTimeout('/api/dae?lat=' + lat + '&lon=' + lon + '&radius=' + radius, 10000);
+    const data = await resp.json().catch(() => ({}));
+    if (data && data.unavailable) {
+        throw new Error(data.error || 'Service de cartes momentan\u00E9ment indisponible, r\u00E9essayez');
     }
-    const data = await resp.json();
-    if (!Array.isArray(data.elements)) {
+    if (!data || !Array.isArray(data.elements)) {
         throw new Error('Service de cartes momentan\u00E9ment indisponible, r\u00E9essayez');
     }
     return data.elements.filter(e => e.lat && e.lon).map(e => ({
