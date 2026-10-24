@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-7chnRz_x.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-U34G_x6G.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -996,6 +996,19 @@ window.attemptLogin = function() {
 
                 <div class="urgence-alert danger urgence-call-banner">
                     <span class="urgence-call-number">Appel d'urgence : 15 (SAMU) · 112</span>
+                </div>
+
+                <div class="module-card urgence-dae-finder">
+                    <div class="module-header-row">
+                        <div>
+                            <h3>🩺 Trouver un défibrillateur (DAE)</h3>
+                            <p class="module-desc">Base nationale Géo'DAE / OpenStreetMap — le DAE le plus proche, avec itinéraire en 1 clic.</p>
+                        </div>
+                    </div>
+                    <div class="urgence-dae-row">
+                        <button class="action-btn primary" id="urgenceDaeBtn" onclick="urgenceFindDae()">📍 DAE le plus proche</button>
+                    </div>
+                    <div id="urgenceDaeResults"></div>
                 </div>
 
                 <div class="module-card urgence-dose-calculator">
