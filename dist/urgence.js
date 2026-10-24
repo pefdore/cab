@@ -668,7 +668,7 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
 
 
 
-// ---------- Chercheur de DAE (OpenStreetMap / G\u00E9o'DAE via proxy /api/dae) ----------
+// ---------- Chercheur de DAE (base GeoDAE officielle via proxy /api/dae) ----------
 
 function urgenceHaversineKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -708,30 +708,22 @@ function urgenceFetchTimeout(url, ms) {
 
 async function urgenceGeocode(address) {
     const resp = await urgenceFetchTimeout('/api/dae?address=' + encodeURIComponent(address), 9000);
-    if (!resp.ok) throw new Error('G\u00E9ocodage indisponible');
-    const data = await resp.json();
-    if (!data.geocode) throw new Error('Adresse introuvable');
-    return { lat: parseFloat(data.geocode.lat), lon: parseFloat(data.geocode.lon), label: data.geocode.display_name };
+    const data = await resp.json().catch(() => ({}));
+    if (!data || !data.geocode) throw new Error(data && data.error ? data.error : 'Adresse introuvable');
+    const g = data.geocode;
+    return { lat: g.lat, lon: g.lon, label: g.label, cp: g.cp, dep: g.dep };
 }
 
-async function urgenceFetchDaeAround(lat, lon, radiusKm) {
-    const radius = Math.round(radiusKm * 1000);
-    const resp = await urgenceFetchTimeout('/api/dae?lat=' + lat + '&lon=' + lon + '&radius=' + radius, 10000);
+async function urgenceFetchDaeAround(lat, lon, radiusM) {
+    const resp = await urgenceFetchTimeout('/api/dae?lat=' + lat + '&lon=' + lon + '&radius=' + radiusM, 10000);
     const data = await resp.json().catch(() => ({}));
     if (data && data.unavailable) {
-        throw new Error(data.error || 'Service de cartes momentan\u00E9ment indisponible, r\u00E9essayez');
+        throw new Error(data.error || 'Service momentan\u00E9ment indisponible, r\u00E9essayez');
     }
     if (!data || !Array.isArray(data.elements)) {
-        throw new Error('Service de cartes momentan\u00E9ment indisponible, r\u00E9essayez');
+        throw new Error('Service momentan\u00E9ment indisponible, r\u00E9essayez');
     }
-    return data.elements.filter(e => e.lat && e.lon).map(e => ({
-        lat: e.lat,
-        lon: e.lon,
-        name: e.tags && (e.tags['name'] || e.tags['defibrillator:location'] || e.tags['addr:street'] || null),
-        hours: e.tags && (e.tags.opening_hours || null),
-        phone: e.tags && (e.tags['emergency:phone'] || e.tags.phone || null),
-        indoor: e.tags && e.tags.indoor === 'yes'
-    }));
+    return { daes: data.elements, origin: data.origin, source: data.source };
 }
 
 function urgenceDaeManualUI(msgHtml) {
@@ -818,17 +810,17 @@ async function urgenceDaeSearchAndRender(loc) {
     const out = document.getElementById('urgenceDaeResults');
     const btn = document.getElementById('urgenceDaeBtn');
     if (!out) return;
-    out.innerHTML = '<div class="urgence-alert info">\u23F3 Recherche des DAE autour de ' + urgenceEscapeHtml(loc.label || 'la position') + '...</div>';
+    out.innerHTML = '<div class="urgence-alert info">\u23F3 Recherche des DAE officiels (base G\u00E9o\u2019DAE) autour de ' + urgenceEscapeHtml((loc.label || 'la position').split(',')[0]) + '...</div>';
     if (btn) btn.disabled = true;
 
-    const radii = [2, 5, 10, 25];
-    let daes = [];
+    const radii = [3000, 8000, 15000, 25000];
+    let result = null;
     let usedRadius = 0;
     try {
         for (const r of radii) {
-            daes = await urgenceFetchDaeAround(loc.lat, loc.lon, r);
+            result = await urgenceFetchDaeAround(loc.lat, loc.lon, r);
             usedRadius = r;
-            if (daes.length > 0) break;
+            if (result.daes.length > 0) break;
         }
     } catch (e) {
         out.innerHTML = urgenceDaeManualUI('\u26A0\uFE0F ' + e.message);
@@ -836,38 +828,39 @@ async function urgenceDaeSearchAndRender(loc) {
         return;
     }
 
-    if (daes.length === 0) {
-        out.innerHTML = urgenceDaeManualUI('Aucun DAE recens\u00E9 dans un rayon de ' + usedRadius + ' km. Envisagez le cabinet le plus proche \u00E9quip\u00E9 (pharmacie, mairie) et restez au t\u00E9l\u00E9phone avec le 15.');
+    if (!result || result.daes.length === 0) {
+        out.innerHTML = urgenceDaeManualUI('Aucun DAE recens\u00E9 dans un rayon de ' + Math.round(usedRadius / 1000) + ' km (base G\u00E9o\u2019DAE). Envisagez le b\u00E2timent public le plus proche \u00E9quip\u00E9 (pharmacie, mairie) et restez au t\u00E9l\u00E9phone avec le 15.');
         if (btn) btn.disabled = false;
         return;
     }
 
-    daes.forEach(d => { d.dist = urgenceHaversineKm(loc.lat, loc.lon, d.lat, d.lon); });
-    daes.sort((a, b) => a.dist - b.dist);
-    const top = daes.slice(0, 5);
+    const daes = result.daes.slice(0, 5);
+    const origin = result.origin || loc;
 
     out.innerHTML = `
-        <div class="urgence-alert success">\u2705 ${daes.length} DAE trouv\u00E9(s) autour de ${urgenceEscapeHtml((loc.label || 'votre position').split(',')[0])}, rayon ${usedRadius} km.</div>
+        <div class="urgence-alert success">\u2705 ${result.daes.length} DAE officiel(s) trouv\u00E9(s) autour de ${urgenceEscapeHtml((loc.label || 'votre position').split(',')[0])} \u2014 source : base nationale G\u00E9o\u2019DAE.</div>
         <div class="inventory-table">
             <table>
                 <thead>
                     <tr><th></th><th>DAE</th><th>Distance</th><th>Acc\u00E8s</th><th></th></tr>
                 </thead>
                 <tbody>
-                    ${top.map((d, i) => `
+                    ${daes.map((d, i) => `
                         <tr>
-                            <td>${i === 0 ? 'ἺF' : i + 1}</td>
+                            <td>${i === 0 ? '\U0001F3AF' : i + 1}</td>
                             <td>
-                                <strong>${d.name ? urgenceEscapeHtml(d.name) : 'DAE non nomm\u00E9'}</strong>
+                                <strong>${d.name ? urgenceEscapeHtml(d.name) : 'DAE'}</strong>
+                                ${d.addr || d.city ? `<span class="urgence-dae-sub">${urgenceEscapeHtml([d.addr, d.city].filter(Boolean).join(', ') || '')}</span>` : ''}
                                 ${d.hours ? `<span class="urgence-dae-sub">\u23F0 ${urgenceEscapeHtml(d.hours)}</span>` : ''}
-                                ${d.indoor ? '<span class="urgence-dae-sub">Ἶ0 int\u00E9rieur</span>' : ''}
+                                ${d.access ? `<span class="urgence-dae-sub">${d.access === 'Int\u00E9rieur' ? '\U0001F3E0 int\u00E9rieur' : 'ext\u00E9rieur'}${d.accessComplt ? ' \u2014 ' + urgenceEscapeHtml(d.accessComplt) : ''}</span>` : ''}
+                                ${d.state && d.state !== 'En fonctionnement' ? `<span class="urgence-dae-sub" style="color:#d97706;">\u26A0\uFE0F ${urgenceEscapeHtml(d.state)}</span>` : ''}
                             </td>
                             <td><strong>${d.dist < 1 ? Math.round(d.dist * 1000) + ' m' : d.dist.toFixed(1) + ' km'}</strong></td>
-                            <td>${d.phone ? urgenceEscapeHtml(d.phone) : '-'}</td>
+                            <td>${d.hours ? urgenceEscapeHtml(String(d.hours).slice(0, 30)) : '-'}</td>
                             <td>
                                 <a class="action-btn primary" target="_blank" rel="noopener"
-                                   href="https://www.google.com/maps/dir/?api=1&origin=${loc.lat},${loc.lon}&destination=${d.lat},${d.lon}&travelmode=walking">
-                                   ᾞD Itin\u00E9raire</a>
+                                   href="https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${d.lat},${d.lon}&travelmode=walking">
+                                   \U0001F9ED Itin\u00E9raire</a>
                             </td>
                         </tr>`).join('')}
                 </tbody>
