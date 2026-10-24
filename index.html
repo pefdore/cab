@@ -1621,6 +1621,7 @@ window.attemptLogin = function() {
                     <button class="cabinet-tab active" data-tab="secretariat">Secrétariat</button>
                     <button class="cabinet-tab" data-tab="reunions">Réunions</button>
                     <button class="cabinet-tab" data-tab="stocks">Stocks</button>
+                    <button class="cabinet-tab" data-tab="urgence">Salle d'urgence</button>
                     <button class="cabinet-tab" data-tab="remplacants">Remplaçant</button>
                 </div>
                 
@@ -2148,6 +2149,73 @@ window.attemptLogin = function() {
                 </div>
 
                 <!-- Remplaçant -->
+                <div id="cabinet-urgence" class="cabinet-tab-content">
+                    <div class="sub-tabs">
+                        <button class="sub-tab active" data-subtab="urgence-stock">Stocks salle d'urgence</button>
+                        <button class="sub-tab" data-subtab="urgence-pointage">Pointage hebdomadaire</button>
+                        <button class="sub-tab" data-subtab="urgence-protocoles">Protocoles d'urgence</button>
+                    </div>
+
+                    <div id="urgence-stock" class="sub-tab-content active">
+                        <div class="module-card">
+                            <h3>Stocks — Salle d'urgence</h3>
+                            <p class="module-desc">Où en est le stock de la salle d'urgence : consommables, matériel et médicaments d'urgence.</p>
+                            <div class="inventory-filters">
+                                <select id="urgenceStockFilter" class="form-input">
+                                    <option value="">Toutes catégories</option>
+                                    <option value="desinfection">Désinfection</option>
+                                    <option value="suture">Suture / petit matériel</option>
+                                    <option value="injection">Injections / perfusion</option>
+                                    <option value="medicament">Médicaments</option>
+                                    <option value="divers">Divers</option>
+                                </select>
+                                <button class="action-btn primary" id="urgenceAddProductBtn">Ajouter un produit</button>
+                                <button class="action-btn" id="urgenceExportStocksBtn">Exporter CSV</button>
+                            </div>
+                            <div class="inventory-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Produit</th>
+                                            <th>Catégorie</th>
+                                            <th>Quantité</th>
+                                            <th>Seuil</th>
+                                            <th>Péremption</th>
+                                            <th>État</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="urgenceStockBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="inventory-alerts" id="urgenceStockAlerts"></div>
+                            <div style="margin-top: 12px;">
+                                <button class="action-btn" id="urgenceCopyOrderBtn" disabled>Copier la liste à commander</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="urgence-pointage" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Pointage hebdomadaire — Secrétariat</h3>
+                            <p class="module-desc">Cochez chaque semaine ce qu'il reste dans la salle d'urgence. La liste à recommander est générée automatiquement.</p>
+                            <div class="urgence-alert info" id="urgencePointageInfo"></div>
+                            <div id="urgencePointageList"></div>
+                            <div style="margin-top: 16px;">
+                                <button class="action-btn primary" id="urgenceSavePointageBtn">Enregistrer le pointage</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="urgence-protocoles" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Protocoles d'urgence absolue</h3>
+                            <p class="module-desc">Diagnostic et prise en charge pas à pas, avec lecture audio (TTS) pour écouter le protocole pendant qu'on gère le patient.</p>
+                            <div id="urgenceProtocolsGrid" class="urgence-protocols-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="cabinet-remplacants" class="cabinet-tab-content">
                     <!-- Sub-tabs for replacement module -->
                     <div class="sub-tabs replacement-sub-tabs">
@@ -2919,6 +2987,7 @@ window.attemptLogin = function() {
     
     <script src="app.v5.js?v=202610262600" defer></script>
     <script src="secretariat.js?v=202610262400" defer></script>
+    <script src="urgence.js?v=202610262400" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
