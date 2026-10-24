@@ -91,7 +91,7 @@ window.attemptLogin = function() {
                     <label for="register-role">Fonction</label>
                     <select id="register-role" required onchange="toggleRemplacantField()">
                         <option value="">Sélectionner...</option>
-                        <option value="medecin_installe">Médecin installé</option>
+                        <option value="medecin_associe">Médecin associé</option>
                         <option value="medecin_remplacant">Médecin remplaçant</option>
                         <option value="secretaire">Secrétaire</option>
                     </select>
@@ -101,6 +101,20 @@ window.attemptLogin = function() {
                     <select id="register-remplace">
                         <option value="">Sélectionner...</option>
                     </select>
+                </div>
+                <div class="form-group" id="register-city-group" style="display:none;">
+                    <label for="register-city">Ville d'exercice</label>
+                    <input type="text" id="register-city" placeholder="Votre ville d'exercice">
+                </div>
+                <div class="form-group" id="register-no-cabinet" style="display:none;">
+                    <p style="font-size:0.85rem;color:#6b7280;margin:0;">Aucun cabinet n'existe encore dans cette ville. Votre compte créera un nouveau cabinet.</p>
+                </div>
+                <div class="form-group" id="register-cabinet-select-group" style="display:none;">
+                    <label for="register-cabinet">Rejoindre un cabinet existant</label>
+                    <select id="register-cabinet">
+                        <option value="">Sélectionner un cabinet...</option>
+                    </select>
+                    <p style="font-size:0.8rem;color:#6b7280;margin:6px 0 0;">Votre accès au cabinet sera validé par un médecin associé du cabinet.</p>
                 </div>
                 <div class="form-group" id="cabinet-address-group" style="display:none;">
                     <label for="register-cabinet-address">Adresse du cabinet principal</label>
@@ -1114,6 +1128,7 @@ window.attemptLogin = function() {
 
                 <!-- Settings Menu (main page) -->
                 <div id="settings-menu" class="settings-menu">
+                    <div id="pending-join-requests" style="display:none;margin-bottom:16px;"></div>
                     <button type="button" class="settings-card" data-settings-page="profil" onclick="openSettingsPage('profil')">
                         <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -1209,7 +1224,7 @@ window.attemptLogin = function() {
                             <div class="form-group">
                                 <label>Fonction</label>
                                 <select id="profileRole" disabled>
-                                    <option value="medecin_installe">Médecin installé</option>
+                                    <option value="medecin_associe">Médecin associé</option>
                                     <option value="medecin_remplacant">Médecin remplaçant</option>
                                     <option value="secretaire">Secrétaire</option>
                                 </select>
@@ -2833,6 +2848,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
+    <script src="roles.js?v=202611023000" defer></script>
     <script src="app.v5.js?v=202611023000" defer></script>
     <script src="secretariat.js?v=202611023000" defer></script>
     <script src="urgence.js?v=202611023000" defer></script>
@@ -2848,24 +2864,8 @@ window.attemptLogin = function() {
         }
       };
       
-      // Toggle address field based on role
-      window.toggleRemplacantField = function() {
-        var role = document.getElementById('register-role')?.value;
-        var replaceGroup = document.getElementById('remplace-medecin-group');
-        var addressGroup = document.getElementById('cabinet-address-group');
-        
-        if (role === 'medecin_remplacant') {
-          if (replaceGroup) replaceGroup.style.display = 'block';
-        } else {
-          if (replaceGroup) replaceGroup.style.display = 'none';
-        }
-        
-        if (role === 'medecin_installe' || role === 'medecin_remplacant' || role === 'secretaire') {
-          if (addressGroup) addressGroup.style.display = 'block';
-        } else {
-          if (addressGroup) addressGroup.style.display = 'none';
-        }
-      };
+      // Toggle des champs d'inscription selon le rôle : géré par roles.js
+      // (ville d'exercice, cabinets existants, médecin remplacé)
       
       // Fallback: Define showAddEmployeeModal directly in case secretariat.js fails to load
       window.showAddEmployeeModal = function() {

@@ -9425,3 +9425,34 @@ html.no-anim *::after {
 .urgence-dae-manual .action-btn {
     flex: 1 1 30%;
 }
+
+/* ===== Demandes d'acces au cabinet (roles.js) ===== */
+.join-requests-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 10px;
+}
+.join-request-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: #fff;
+}
+.join-request-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.join-request-meta {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+.join-request-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}

@@ -242,6 +242,16 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
         return;
     }
     
+    const cityInput = document.getElementById('register-city');
+    const city = cityInput ? cityInput.value.trim() : '';
+    
+    if (!city) {
+        showError('Veuillez saisir votre ville d\'exercice');
+        return;
+    }
+    
+    const selectedCabinetId = document.getElementById('register-cabinet')?.value || cabinetId || null;
+    
     try {
         const button = document.querySelector('#register-form button[type="submit"]');
         if (button) {
@@ -259,7 +269,7 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
                     role: role,
                     remplace_medecin_id: replaceMedecinId,
                     cabinet_address: cabinetAddress,
-                    cabinet_id: cabinetId
+                    cabinet_id: selectedCabinetId
                 }
             }
         });
@@ -269,32 +279,64 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
             return;
         }
         
-        // Save cabinet address to public cabinets table if it's a new cabinet
-        if (cabinetAddress && !cabinetId) {
-            await supabaseClient.from('cabinets').insert({
-                address: cabinetAddress,
-                name: firstName + ' ' + lastName
-            });
-        }
+        const isCreator = role === 'medecin_associe' && !selectedCabinetId;
+        let targetCabinetId = selectedCabinetId;
+        let pendingValidation = false;
         
-        // Update user profile with cabinet_id
-        if (data.user && (cabinetId || cabinetAddress)) {
-            const { error: profileError } = await supabaseClient
-                .from('profiles')
-                .update({
-                    cabinet_id: cabinetId,
-                    cabinet_address: cabinetAddress
-                })
-                .eq('id', data.user.id);
+        if (isCreator) {
+            const { data: newCabinet, error: cabError } = await supabaseClient.from('cabinets').insert({
+                address: cabinetAddress || city,
+                name: 'Dr ' + lastName,
+                city: city,
+                created_by: data.user?.id || null
+            }).select().single();
             
-            if (profileError) {
-                console.error('[AUTH] Error updating profile:', profileError);
-            } else {
-                console.log('[AUTH] Profile updated with cabinet_id:', cabinetId);
+            if (cabError) {
+                console.error('[AUTH] Erreur création cabinet:', cabError);
+                showError('Erreur lors de la création du cabinet: ' + cabError.message);
+                return;
             }
+            targetCabinetId = newCabinet.id;
         }
         
-        alert('Compte créé! Veuillez vérifier votre email pour confirmer votre adresse.');
+        if (targetCabinetId) {
+            const { error: joinError } = await supabaseClient
+                .from('cabinet_join_requests')
+                .insert({
+                    cabinet_id: targetCabinetId,
+                    user_id: data.user.id,
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    role: role,
+                    remplace_medecin_id: replaceMedecinId,
+                    status: isCreator ? 'approved' : 'pending'
+                });
+            
+            if (joinError) console.error('[AUTH] Erreur demande de jonction:', joinError);
+            
+            if (!isCreator) pendingValidation = true;
+        }
+        
+        const { error: profileError } = await supabaseClient
+            .from('profiles')
+            .update({
+                cabinet_id: targetCabinetId,
+                cabinet_address: cabinetAddress,
+                role: role,
+                status: isCreator ? 'approved' : 'pending'
+            })
+            .eq('id', data.user.id);
+        
+        if (profileError) {
+            console.error('[AUTH] Error updating profile:', profileError);
+        }
+        
+        if (pendingValidation) {
+            alert('Compte créé ! Votre demande d\'accès au cabinet a été envoyée aux médecins associés. Vous pourrez accéder à l\'espace du cabinet après validation par un associé.');
+        } else {
+            alert('Compte créé! Veuillez vérifier votre email pour confirmer votre adresse.');
+        }
         showLoginForm();
         
     } catch (e) {
@@ -337,6 +379,68 @@ async function loadUserProfile() {
     } catch (e) {
         console.error('[AUTH] Erreur chargement profil:', e);
     }
+    
+    await enrichCurrentProfile();
+}
+
+async function enrichCurrentProfile() {
+    if (!currentUser) return;
+    
+    try {
+        const { data: profile, error } = await supabaseClient
+            .from('profiles')
+            .select('id, first_name, last_name, role, status, cabinet_id, remplace_medecin_id, cabinets(name)')
+            .eq('id', currentUser.id)
+            .single();
+        
+        if (!error && profile) {
+            currentProfile = Object.assign({}, currentProfile || {}, profile);
+            window.currentProfile = currentProfile;
+            console.log('[AUTH] Profil enrichi:', currentProfile.role, 'status:', currentProfile.status);
+            
+            if (profile.remplace_medecin_id) {
+                const { data: remplace } = await supabaseClient
+                    .from('profiles')
+                    .select('first_name, last_name')
+                    .eq('id', profile.remplace_medecin_id)
+                    .single();
+                if (remplace) {
+                    currentProfile.remplace_medecin_name = (remplace.first_name || '') + ' ' + (remplace.last_name || '');
+                    window.currentProfile = currentProfile;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('[AUTH] Erreur enrichissement profil:', e);
+    }
+    
+    if (currentProfile && currentProfile.status === 'pending') {
+        showPendingValidationScreen();
+    }
+}
+
+function showPendingValidationScreen() {
+    const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
+    
+    let pending = document.getElementById('pending-validation-screen');
+    if (!pending) {
+        pending = document.createElement('div');
+        pending.id = 'pending-validation-screen';
+        pending.style.cssText = 'position:fixed;inset:0;background:#f4f5fb;display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;';
+        appContainer.parentNode.appendChild(pending);
+    }
+    
+    pending.innerHTML = 
+        '<div style="max-width:420px;background:#fff;border-radius:16px;padding:32px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.08);">' +
+            '<div style="font-size:3rem;">\u23f3</div>' +
+            '<h2 style="margin:12px 0 8px;">Validation en attente</h2>' +
+            '<p style="color:#6b7280;margin:0 0 20px;">Votre demande d\'accès au cabinet est en attente de validation par un médecin associé. Vous accéderez à l\'espace du cabinet dès qu\'elle sera acceptée.</p>' +
+            '<button type="button" class="btn-primary" onclick="doSignOut()">Se déconnecter</button>' +
+            '<button type="button" class="btn-secondary" style="margin-left:8px;" onclick="location.reload()">Actualiser</button>' +
+        '</div>';
+    pending.style.display = 'flex';
+    appContainer.style.display = 'none';
 }
 
 async function loadUserSettings() {
@@ -534,25 +638,21 @@ function setupAuthListeners() {
             
             console.log('[REGISTER] Role:', role, 'Address:', cabinetAddress);
             
-            // Check if address already exists for medecin/secretaire
-            if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
-                console.log('[REGISTER] Checking for existing cabinet at address...');
-                const existingDoctors = await checkAddressExists(cabinetAddress);
-                console.log('[REGISTER] Existing doctors found:', existingDoctors);
-                
-                if (existingDoctors && existingDoctors.length > 0) {
-                    showCabinetModal(cabinetAddress, existingDoctors, {
-                        email, password, firstName, lastName, role, replaceMedecinId
-                    });
-                    return;
-                }
-            }
-            
             doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress, null);
         });
         
         // Initialize address autocomplete
         window.initAddressAutocomplete();
+        
+        // Ville d'exercice : recherche des cabinets existants
+        const cityInput = document.getElementById('register-city');
+        if (cityInput && typeof window.loadCabinetsForCity === 'function') {
+            let cityTimeout = null;
+            cityInput.addEventListener('input', function() {
+                clearTimeout(cityTimeout);
+                cityTimeout = setTimeout(window.loadCabinetsForCity, 400);
+            });
+        }
     }
     
     // Show register link
@@ -759,9 +859,6 @@ window.selectAddress = function(address) {
     input.value = address;
     hideAddressSuggestions();
   }
-  
-  // Check if this address already exists for medecin/secretaire
-  checkAddressOnSelect(address);
 };
 
 async function checkAddressOnSelect(address) {
@@ -803,20 +900,6 @@ window.handleRegisterSubmit = async function() {
     const cabinetAddress = addressInput ? addressInput.value.trim() : '';
     
     console.log('[REGISTER] Role:', role, 'Address:', cabinetAddress);
-    
-    // Check if address already exists for medecin/secretaire
-    if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
-        console.log('[REGISTER] Checking for existing cabinet at address...');
-        const existingDoctors = await checkAddressExists(cabinetAddress);
-        console.log('[REGISTER] Existing doctors found:', existingDoctors);
-        
-        if (existingDoctors && existingDoctors.length > 0) {
-            showCabinetModal(cabinetAddress, existingDoctors, {
-                email, password, firstName, lastName, role, replaceMedecinId
-            });
-            return;
-        }
-    }
     
     doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress, null);
 };
@@ -2168,7 +2251,7 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
         const { data: insertedData, error } = await supabaseClient
             .from('passages')
             .insert([{
-                user_id: currentUser.id,
+                user_id: window.getCotationUserId ? window.getCotationUserId() : currentUser.id,
                 patient_id: patientId,
                 date: visitDate,
                 location: visitLocation,
@@ -2655,7 +2738,7 @@ async function handleSubmit(e) {
     const { data: insertedData, error } = await supabaseClient
         .from('passages')
         .insert([{
-            user_id: currentUser.id,
+            user_id: window.getCotationUserId ? window.getCotationUserId() : currentUser.id,
             patient_id: patientId,
             date: date,
             location: location,
@@ -4285,7 +4368,8 @@ async function loadProfileData() {
 }
 
 const PROFILE_ROLE_LABELS = {
-    medecin_installe: 'Médecin installé',
+    medecin_associe: 'Médecin associé',
+    medecin_installe: 'Médecin associé',
     medecin_remplacant: 'Médecin remplaçant',
     secretaire: 'Secrétaire'
 };
@@ -4577,6 +4661,10 @@ document.getElementById('deleteAllData')?.addEventListener('click', async (e) =>
 });
 
 function switchView(viewName) {
+    if (window.hasViewAccess && !window.hasViewAccess(viewName)) {
+        console.log('[ROLES] Accès refusé à la vue:', viewName);
+        viewName = 'urgence';
+    }
     try { sessionStorage.setItem('cab_current_view', viewName); } catch (e) {}
     if (viewName !== 'settings') {
         const overlay = document.querySelector('.settings-page-overlay');
@@ -7144,7 +7232,24 @@ async function loadUserProfile() {
         }
         
         currentProfile = data;
+        window.currentProfile = currentProfile;
         console.log('[PROFILE] Loaded:', currentProfile);
+        
+        if (currentProfile && currentProfile.remplace_medecin_id) {
+            const { data: remplace } = await supabaseClient
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('id', currentProfile.remplace_medecin_id)
+                .single();
+            if (remplace) {
+                currentProfile.remplace_medecin_name = (remplace.first_name || '') + ' ' + (remplace.last_name || '');
+                window.currentProfile = currentProfile;
+            }
+        }
+        
+        if (currentProfile && currentProfile.status === 'pending') {
+            showPendingValidationScreen();
+        }
     } catch (e) {
         console.error('[PROFILE] Error:', e);
         currentProfile = { role: 'medecin_installe' };
