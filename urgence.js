@@ -614,7 +614,9 @@ function renderUrgenceProtocols() {
                 </div>
 
                 <div class="urgence-tts-controls">
-                    ${proto.id === 'acr' ? `<button class="action-btn urgence-metro-btn" onclick="urgenceToggleMetronome()" data-metro-btn>🧨 Métronome massage : OFF</button>` : ''}
+                    ${proto.id === 'acr' ? `<button class="action-btn urgence-metro-btn" onclick="urgenceToggleMetronome()" data-metro-btn>🧨 Métronome massage : OFF</button>
+                    <button class="action-btn urgence-adre-btn" onclick="urgenceToggleAdrePanel()" data-adre-btn>💉 Adrénaline : dose suivante</button>
+                    <div class="urgence-adre-panel" data-adre-panel style="display:none;"></div>` : ''}
                     <button class="action-btn primary" onclick="urgenceTTSPlay('${proto.id}')">🔊 Écouter le protocole</button>
                     <button class="action-btn" onclick="urgenceTTSStop()" style="display:none;" data-tts="stop-${proto.id}">⏹ Stop</button>
                 </div>
@@ -664,6 +666,113 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
     });
 }
 
+
+
+// ---------- Suivi des doses d'adrénaline (ACR) ----------
+
+let urgenceAdreState = {
+    doses: [],       // { time: Date, context: 'asystolie' | 'choc3' }
+    countdown: null, // setInterval
+    countdownEnd: null
+};
+
+function urgenceToggleAdrePanel() {
+    const panel = document.querySelector('[data-adre-panel]');
+    if (!panel) return;
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        urgenceRenderAdrePanel();
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+function urgenceRenderAdrePanel() {
+    const panel = document.querySelector('[data-adre-panel]');
+    if (!panel) return;
+    const nb = urgenceAdreState.doses.length;
+    const last = urgenceAdreState.doses[urgenceAdreState.doses.length - 1];
+
+    let html = '';
+    if (nb === 0) {
+        html = '<p class="urgence-adre-hint">1<sup>re</sup> dose — dans quel contexte ?</p>';
+    } else {
+        html = '<p class="urgence-adre-hint">Dose suivante — rappel du contexte :</p>';
+    }
+    html += `
+        <button class="action-btn urgence-adre-choice" onclick="urgenceRecordAdreDose('asystolie')">
+            ⚡ Asystolie / AESP (non chocable)
+        </button>
+        <button class="action-btn urgence-adre-choice" onclick="urgenceRecordAdreDose('choc3')">
+            🔋 3<sup>e</sup> choc non récupérateur (FV/FVT)
+        </button>`;
+
+    if (nb > 0) {
+        const ctxTxt = last.context === 'asystolie' ? 'asystolie/AESP' : '3e choc non récupérateur';
+        const heure = new Date(last.time).toLocaleTimeString('fr-FR');
+        html += `
+            <div class="urgence-adre-log">
+                <strong>💉 Dose №${nb}</strong> passée à <strong>${heure}</strong> (${ctxTxt})`;
+        if (urgenceAdreState.countdownEnd) {
+            const remaining = Math.max(0, Math.ceil((urgenceAdreState.countdownEnd - Date.now()) / 1000));
+            const m = Math.floor(remaining / 60);
+            const sec = remaining % 60;
+            html += remaining > 0
+                ? ` · <span class="urgence-adre-countdown">⏱ prochaine dose possible dans <strong>${m}:${String(sec).padStart(2, '0')}</strong></span>`
+                : ' · <span class="urgence-adre-countdown due">prochaine dose possible</span>';
+        }
+        const w = parseFloat(document.getElementById('urgenceWeightInput')?.value);
+        if (w > 0) {
+            const dose = w >= 30 ? 1 : Math.min(1, 0.01 * w);
+            html += ` · dose : <strong>${dose.toString().replace('.', ',')} mg</strong>`;
+        }
+        html += '</div>';
+    }
+
+    panel.innerHTML = html;
+}
+
+function urgenceSpeakAdre(text) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'fr-FR';
+        utter.rate = 1;
+        const voice = urgenceTTSVoice();
+        if (voice) utter.voice = voice;
+        speechSynthesis.speak(utter);
+    } catch (e) {}
+}
+
+function urgenceRecordAdreDose(context) {
+    const now = Date.now();
+    urgenceAdreState.doses.push({ time: now, context });
+    const nb = urgenceAdreState.doses.length;
+    urgenceStartAdreCountdown(nb);
+    urgenceRenderAdrePanel();
+    const heure = new Date(now).toLocaleTimeString('fr-FR');
+    urgenceSpeakAdre(`Dose ${nb} d'adrénaline enregistrée à ${heure}. Nouveau compte à rebours de 4 minutes.`);
+}
+
+function urgenceStartAdreCountdown(nb) {
+    if (urgenceAdreState.countdown) clearInterval(urgenceAdreState.countdown);
+    urgenceAdreState.countdownEnd = Date.now() + 4 * 60 * 1000;
+    urgenceAdreState.countdown = setInterval(() => {
+        if (Date.now() >= urgenceAdreState.countdownEnd) {
+            clearInterval(urgenceAdreState.countdown);
+            urgenceAdreState.countdown = null;
+            urgenceRenderAdrePanel();
+            urgenceSpeakAdre('4 minutes passées. Nouvelle dose d\u2019adrénaline possible.');
+        } else {
+            urgenceRenderAdrePanel();
+        }
+    }, 1000);
+}
+
+function urgenceResetAdreState() {
+    if (urgenceAdreState.countdown) clearInterval(urgenceAdreState.countdown);
+    urgenceAdreState = { doses: [], countdown: null, countdownEnd: null };
+}
 
 // ---------- Métronome de massage cardiaque (ACR, 110/min) ----------
 
@@ -882,6 +991,8 @@ function initUrgenceModule() {
 }
 
 function refreshUrgenceView() {
+    urgenceResetAdreState();
+    urgenceStopMetronome();
     if (!urgenceData) loadUrgenceData();
     renderUrgenceStocks();
     renderUrgenceProtocols();
@@ -924,3 +1035,5 @@ window.refreshUrgenceView = refreshUrgenceView;
 window.urgenceToggleProtocol = urgenceToggleProtocol;
 window.urgenceComputeDoses = urgenceComputeDoses;
 window.urgenceToggleMetronome = urgenceToggleMetronome;
+window.urgenceToggleAdrePanel = urgenceToggleAdrePanel;
+window.urgenceRecordAdreDose = urgenceRecordAdreDose;

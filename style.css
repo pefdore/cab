@@ -9106,3 +9106,53 @@ html.no-anim *::after {
     from { transform: scale(1); }
     to { transform: scale(1.05); }
 }
+
+/* Suivi doses adrénaline (ACR) */
+.urgence-adre-btn {
+    flex: 1;
+    min-width: 180px;
+    font-weight: 600;
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #dc2626;
+}
+
+.urgence-adre-panel {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--color-bg-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    width: 100%;
+}
+
+.urgence-adre-hint {
+    margin: 0 0 10px;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+.urgence-adre-choice {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.urgence-adre-log {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(239, 68, 68, 0.08);
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.urgence-adre-countdown {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.urgence-adre-countdown.due {
+    color: #dc2626;
+    animation: metro-pulse 0.55s ease-in-out infinite alternate;
+}
