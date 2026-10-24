@@ -556,8 +556,9 @@ const URGENCE_PROTOCOLS = [
             { title: 'Massage cardiaque', text: 'Au centre du thorax, talon de la main nues les deux mains superposées, bras tendus : comprimer VERTICALEMENT de 5 à 6 cm, 100 à 120 compressions par minute, laisser le thorax se réexpandre complètement entre chaque compression. Enfant : une main ou deux doigts selon la taille. Ne pas interrompre plus de 10 s.' },
             { title: 'Insufflations 30:2', text: 'Si seule : 30 compressions puis 2 insufflations (1 s chacune) avec bascule tête + pincement du nez, ou masque du BAVU. Si plusieurs sauveteurs formés ou DAE posé : RCP en continu sans insufflations tant que le DAE analyse.' },
             { title: 'DAE dès que disponible', text: 'Poitrine nue, électrodes comme indiqué sur les dessins, personne ne touche le patient pendant l’analyse. Si choc conseillé : choc puis reprise immédiate du massage. Si choc non conseillé : reprendre le massage immédiatement.' },
-            { title: 'Adrénaline IV/IO — dose selon le poids', text: 'ADULTE : 1 mg (1 mL de solution 1 mg/mL) en IV ou IO, toutes les 3 à 5 min, dès que la voie est posée, sans jamais interrompre le massage. ENFANT : 0,01 mg/kg IV/IO, maximum 1 mg (dose exacte dans le calculateur en haut de page).' },
-            { title: 'Amiodarone après 3e choc', text: 'ADULTE : amiodarone 300 mg diluée dans 20 mL de G5, IV/IO, après le 3e choc si FV persiste (150 mg pour le 4e choc). ENFANT : 5 mg/kg.' },
+            { title: 'Identifier le rythme au DAE', text: 'Le DAE indique s’il conseille un choc : RYTHME CHOCABLE = fibrillation ventriculaire (FV) ou tachycardie ventriculaire (FVT) sans pouls. RYTHME NON CHOCABLE = asystolie ou activité électrique sans pouls (AESP). Le timing de l’adrénaline dépend de ce rythme — suivre la ligne correspondante ci-dessous.' },
+            { title: 'SI NON CHOCABLE (asystolie / AESP) : adrénaline immédiate', text: 'Adrénaline 1 mg IV/IO (1 mL de solution 1 mg/mL) DÈS QUE LA VOIE EST POSÉE, puis toutes les 3 à 5 min, sans jamais interrompre le massage. ENFANT : 0,01 mg/kg, maximum 1 mg. PAS d’amiodarone dans les rythmes non chocables.' },
+            { title: 'SI CHOCABLE (FV / FVT sans pouls) : RCP + chocs d’abord', text: 'Priorité aux chocs du DAE et à la RCP. PAS d’adrénaline avant le 3e choc. Après le 3e choc : adrénaline 1 mg IV/IO (puis toutes les 3 à 5 min) ET amiodarone 300 mg diluée dans 20 mL de G5 IV/IO (150 mg après le 5e choc). ENFANT : adrénaline 0,01 mg/kg (max 1 mg), amiodarone 5 mg/kg.' },
             { title: 'Continuer jusqu’à', text: 'Reprise d’une ventilation normale ou d’un mouvement, épuisement du sauveteur, ou prise en charge par le SAMU. Changer de masseur toutes les 2 min si possible.' }
         ]
     }
@@ -654,7 +655,7 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
         avc: `<strong>Aucun médicament à donner (${fmt(w)} kg)</strong> — pas d’aspirine ni d’antihypertenseur avant avis du 15. Glycémie capillaire obligatoire.`,
         anaphylaxie: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Adrénaline IM : <strong>${fmt(adreIM)} mg = ${fmt(adreIM)} mL</strong> (sol. 1 mg/mL, cuisse)`,
         purpura: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Ceftriaxone : <strong>${fmt(cef)} g = ${fmt(cef * 10)} mL</strong> (1 g/10 mL, IVL ou IM) · Remplissage si choc : <strong>${isAdult ? '500 mL' : fmt(w * 20) + ' mL'}</strong>`,
-        acr: `<strong>Doses suggérées (${fmt(w)} kg)</strong> — Adrénaline IV/IO : <strong>${fmt(adreIV)} mg = ${fmt(adreIV)} mL</strong> / 3–5 min · Amiodarone après 3e choc : <strong>${fmt(amio)} mg</strong>`
+        acr: `<strong>Dose suggérée (${fmt(w)} kg) — selon le rythme :</strong> NON CHOCABLE (asystolie/AESP) : adrénaline <strong>${fmt(adreIV)} mg = ${fmt(adreIV)} mL</strong> IV/IO / 3–5 min, dès la voie posée · CHOCABLE (FV/FVT) : adrénaline <strong>${fmt(adreIV)} mg</strong> + amiodarone <strong>${fmt(amio)} mg</strong> seulement APRÈS le 3e choc`
     };
 
     document.querySelectorAll('.urgence-suggested').forEach(el => {
