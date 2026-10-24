@@ -2917,7 +2917,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610261800" defer></script>
+    <script src="app.v5.js?v=202610261900" defer></script>
     <script src="secretariat.js?v=202610261700" defer></script>
     <script>
       // Toggle form function for mobile
@@ -4287,6 +4287,43 @@ window.attemptLogin = function() {
             .getPublicUrl(filePath);
 
           const { data: { user } } = await window.supabaseClient.auth.getUser();
+
+          // Enregistrer AUSSI la feuille dans comptabilite (filtre 'Feuilles de comptabilite'),
+          // avec le meme mecanisme que le bouton Generer PDF du formulaire (insert, ou update si doublon du mois)
+          const totalAmountPdf = passages.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+          let comptabiliteError = null;
+          try {
+            const ins = await window.supabaseClient
+              .from('comptabilite')
+              .insert({
+                user_id: user.id,
+                month_key: prevMonthKey,
+                month_name: monthDisplay,
+                total_amount: totalAmountPdf,
+                total_visits: passages.length,
+                pdf_data: pdfBase64,
+                generated_at: new Date().toISOString()
+              });
+            comptabiliteError = ins.error;
+            if (comptabiliteError && comptabiliteError.code === '23505') {
+              // doublon du mois : mettre a jour la feuille existante
+              const upd = await window.supabaseClient
+                .from('comptabilite')
+                .update({
+                  month_name: monthDisplay,
+                  total_amount: totalAmountPdf,
+                  total_visits: passages.length,
+                  pdf_data: pdfBase64,
+                  generated_at: new Date().toISOString()
+                })
+                .eq('user_id', user.id)
+                .eq('month_key', prevMonthKey);
+              comptabiliteError = upd.error;
+            }
+          } catch (e) { comptabiliteError = e; }
+          if (comptabiliteError) {
+            console.error('[PDF PASSAGE] Erreur enregistrement comptabilite:', comptabiliteError);
+          }
 
           const docRecord = {
             user_id: user.id,
