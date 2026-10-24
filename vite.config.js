@@ -17,7 +17,7 @@ export default defineConfig({
     {
       name: 'copy-files',
       closeBundle() {
-        const files = ['app.v4.js', 'app.v5.js', 'style.css', 'manifest.json', 'icon-192.svg', 'sw.js', 'supabase/functions/generate-monthly-pdf/template.html', 'dist-package.json', 'dist-vercel.json'];
+        const files = ['app.v4.js', 'app.v5.js', 'secretariat.js', 'urgence.js', 'style.css', 'manifest.json', 'icon-192.svg', 'sw.js', 'supabase/functions/generate-monthly-pdf/template.html', 'dist-package.json', 'dist-vercel.json'];
         files.forEach(file => {
           if (existsSync(file)) {
             const parts = file.split('/');
