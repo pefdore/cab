@@ -9409,3 +9409,19 @@ html.no-anim *::after {
     text-decoration: none;
     text-align: center;
 }
+
+/* Recherche DAE par adresse (fallback) */
+.urgence-dae-manual {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.urgence-dae-manual .form-input {
+    flex: 1 1 100%;
+}
+
+.urgence-dae-manual .action-btn {
+    flex: 1 1 30%;
+}
