@@ -8856,13 +8856,25 @@ html.no-anim *::after {
     gap: 10px;
     padding: 14px 16px;
     color: white;
+    cursor: pointer;
+    user-select: none;
 }
 
 .urgence-protocol-header.danger { background: #dc2626; }
 .urgence-protocol-header.warning { background: #d97706; }
 
 .urgence-protocol-icon { font-size: 1.5rem; }
-.urgence-protocol-header h4 { margin: 0; font-size: 1rem; }
+.urgence-protocol-header h4 { margin: 0; font-size: 1rem; flex: 1; }
+
+.urgence-protocol-toggle {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.urgence-protocol-card.open .urgence-protocol-toggle { transform: rotate(180deg); }
+
+.urgence-protocol-card.collapsed .urgence-protocol-body { display: none; }
 
 .urgence-protocol-body { padding: 14px 16px; }
 .urgence-protocol-intro {
