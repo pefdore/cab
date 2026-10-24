@@ -98,33 +98,54 @@ function urgenceStockState(p) {
 
 function renderUrgenceStocks() {
     const tbody = document.getElementById('urgenceStockBody');
-    if (!tbody) return;
+    const cabinetTbody = document.getElementById('cabinetUrgenceStockBody');
 
     const filter = document.getElementById('urgenceStockFilter')?.value || '';
     const products = urgenceData.products.filter(p => !filter || p.category === filter);
 
-    if (products.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="urgence-empty">Aucun produit. Ajoutez-en avec le bouton « Ajouter un produit ».</td></tr>';
-    } else {
-        tbody.innerHTML = products.map(p => {
-            const state = urgenceStockState(p);
-            const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'À commander' : 'OK');
-            const stateClass = state === 'rupture' ? 'danger' : (state === 'bas' ? 'warning' : 'success');
-            const expiryHtml = p.expiry ? urgenceEscapeHtml(p.expiry) : '-';
-            return `
-                <tr>
-                    <td>${urgenceEscapeHtml(p.name)}</td>
-                    <td><span class="urgence-cat-badge">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</span></td>
-                    <td>${p.quantity} ${urgenceEscapeHtml(p.unit)}</td>
-                    <td>${p.minQuantity}</td>
-                    <td>${expiryHtml}</td>
-                    <td><span class="urgence-state ${stateClass}">${stateLabel}</span></td>
-                    <td class="urgence-actions">
-                        <button class="action-btn" onclick="urgenceEditProduct('${p.id}')" title="Modifier">✏️</button>
-                        <button class="action-btn" onclick="urgenceDeleteProduct('${p.id}')" title="Supprimer">🗑️</button>
-                    </td>
-                </tr>`;
-        }).join('');
+    if (tbody) {
+        // Page Salle d'urgence : lecture seule, vue rapide de ce qui est disponible
+        tbody.innerHTML = products.length === 0
+            ? '<tr><td colspan="5" class="urgence-empty">Aucun produit enregistré. Ajoutez-le depuis Cabinet → Stocks.</td></tr>'
+            : products.map(p => {
+                const state = urgenceStockState(p);
+                const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'Stock bas' : 'OK');
+                const stateClass = state === 'rupture' ? 'danger' : (state === 'bas' ? 'warning' : 'success');
+                const expiryHtml = p.expiry ? urgenceEscapeHtml(p.expiry) : '-';
+                return `
+                    <tr>
+                        <td>${urgenceEscapeHtml(p.name)}</td>
+                        <td><span class="urgence-cat-badge">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</span></td>
+                        <td>${p.quantity} ${urgenceEscapeHtml(p.unit)}</td>
+                        <td>${expiryHtml}</td>
+                        <td><span class="urgence-state ${stateClass}">${stateLabel}</span></td>
+                    </tr>`;
+            }).join('');
+    }
+
+    if (cabinetTbody) {
+        // Cabinet → Stocks : gestion complète (modifier / supprimer)
+        cabinetTbody.innerHTML = products.length === 0
+            ? '<tr><td colspan="7" class="urgence-empty">Aucun produit. Ajoutez-en avec le bouton « Ajouter un produit ».</td></tr>'
+            : products.map(p => {
+                const state = urgenceStockState(p);
+                const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'À commander' : 'OK');
+                const stateClass = state === 'rupture' ? 'danger' : (state === 'bas' ? 'warning' : 'success');
+                const expiryHtml = p.expiry ? urgenceEscapeHtml(p.expiry) : '-';
+                return `
+                    <tr>
+                        <td>${urgenceEscapeHtml(p.name)}</td>
+                        <td><span class="urgence-cat-badge">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</span></td>
+                        <td>${p.quantity} ${urgenceEscapeHtml(p.unit)}</td>
+                        <td>${p.minQuantity}</td>
+                        <td>${expiryHtml}</td>
+                        <td><span class="urgence-state ${stateClass}">${stateLabel}</span></td>
+                        <td class="urgence-actions">
+                            <button class="action-btn" onclick="urgenceEditProduct('${p.id}')" title="Modifier">✏️</button>
+                            <button class="action-btn" onclick="urgenceDeleteProduct('${p.id}')" title="Supprimer">🗑️</button>
+                        </td>
+                    </tr>`;
+            }).join('');
     }
 
     renderUrgenceAlerts();
@@ -149,10 +170,13 @@ function renderUrgenceAlerts() {
     }
     alertsEl.innerHTML = html;
 
+    const cabinetAlertsEl = document.getElementById('cabinetUrgenceStockAlerts');
+    if (cabinetAlertsEl && cabinetAlertsEl !== alertsEl) cabinetAlertsEl.innerHTML = html;
+
     const orderBtn = document.getElementById('urgenceCopyOrderBtn');
-    if (orderBtn) {
-        orderBtn.disabled = toOrder.length === 0;
-    }
+    if (orderBtn) orderBtn.disabled = toOrder.length === 0;
+    const orderBtnCabinet = document.getElementById('urgenceCopyOrderBtnCabinet');
+    if (orderBtnCabinet) orderBtnCabinet.disabled = toOrder.length === 0;
 }
 
 function urgenceCopyOrderList() {
@@ -536,6 +560,9 @@ function initUrgenceModule() {
     const copyBtn = document.getElementById('urgenceCopyOrderBtn');
     if (copyBtn) copyBtn.addEventListener('click', urgenceCopyOrderList);
 
+    const copyBtnCabinet = document.getElementById('urgenceCopyOrderBtnCabinet');
+    if (copyBtnCabinet) copyBtnCabinet.addEventListener('click', urgenceCopyOrderList);
+
     const savePointageBtn = document.getElementById('urgenceSavePointageBtn');
     if (savePointageBtn) savePointageBtn.addEventListener('click', urgenceSavePointage);
 
@@ -550,6 +577,13 @@ function initUrgenceModule() {
         speechSynthesis.getVoices();
         speechSynthesis.onvoiceschanged = () => {};
     }
+}
+
+function refreshUrgenceView() {
+    if (!urgenceData) loadUrgenceData();
+    renderUrgenceStocks();
+    renderUrgenceProtocols();
+    urgenceTTSStop();
 }
 
 function urgenceExportStocks() {
@@ -584,3 +618,4 @@ window.urgenceCloseProductModal = urgenceCloseProductModal;
 window.urgenceTTSPlay = urgenceTTSPlay;
 window.urgenceTTSStop = urgenceTTSStop;
 window.urgenceCopyOrderList = urgenceCopyOrderList;
+window.refreshUrgenceView = refreshUrgenceView;

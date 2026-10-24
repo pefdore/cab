@@ -8933,3 +8933,32 @@ html.no-anim *::after {
     .urgence-form-row { flex-direction: column; }
     .urgence-protocols-grid { grid-template-columns: 1fr; }
 }
+
+/* Page Salle d'urgence (nav principale) */
+.urgence-page-desc {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    margin: -8px 0 16px;
+}
+
+.urgence-call-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+.urgence-call-number {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.urgence-quick-card {
+    margin-bottom: 20px;
+}
+
+.urgence-alerts-quick {
+    margin-bottom: 12px;
+}
