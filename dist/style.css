@@ -8747,3 +8747,14 @@ html.no-anim *::after {
 .ehpad-card-content .entries-table tr.ehpad-group-header:hover {
     background: inherit;
 }
+
+/* Signature draw modal */
+#signatureDrawCanvas {
+    width: 100%;
+    height: 180px;
+    background: #ffffff;
+    border: 2px dashed var(--color-border, #d0d5dd);
+    border-radius: 8px;
+    cursor: crosshair;
+    display: block;
+}

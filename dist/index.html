@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-jficgg9z.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-OeZMYw8t.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -159,6 +159,26 @@ window.attemptLogin = function() {
                 </div>
                 <div class="modal-footer" style="justify-content: center;">
                     <button class="btn-primary" onclick="closeModal('success-modal')">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Draw Signature Modal -->
+        <div id="signature-draw-modal" class="modal-overlay" style="display: none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>Dessiner votre signature</h3>
+                    <button class="modal-close" onclick="closeModal('signature-draw-modal')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body" style="padding: 16px;">
+                    <canvas id="signatureDrawCanvas" width="600" height="220" style="touch-action: none;"></canvas>
+                    <p class="settings-hint">Dessinez avec la souris ou le doigt, puis enregistrez</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="signatureDrawClearBtn">Effacer</button>
+                    <button class="btn-primary" id="signatureDrawSaveBtn">Enregistrer</button>
                 </div>
             </div>
         </div>
@@ -1349,6 +1369,7 @@ window.attemptLogin = function() {
                             </div>
                             <input type="file" id="signatureInput" accept="image/*" style="display: none;">
                             <button id="uploadSignatureBtn" class="add-btn">Choisir une image</button>
+                            <button id="drawSignatureBtn" class="add-btn">Dessiner</button>
                             <button id="removeSignatureBtn" class="remove-btn" style="display: none;">Supprimer</button>
                         </div>
                         <p class="settings-hint">Signature redimensionnée automatiquement (500px max)</p>
@@ -2896,8 +2917,8 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610261600" defer></script>
-    <script src="secretariat.js?v=202610261300" defer></script>
+    <script src="app.v5.js?v=202610261700" defer></script>
+    <script src="secretariat.js?v=202610261700" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
@@ -3108,7 +3129,7 @@ window.attemptLogin = function() {
         setTimeout(function() {
           // The fallback is already set, but we can try to load the real script
           var script = document.createElement('script');
-          script.src = 'secretariat.js?v=202610261300';
+          script.src = 'secretariat.js?v=202610261700';
           script.onload = function() {
             console.log('[DEBUG] Secretariat script loaded');
             if (typeof window.showAddEmployeeModal === 'function' && window.showAddEmployeeModal.toString().indexOf('[FALLBACK]') > -1) {
