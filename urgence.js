@@ -473,10 +473,11 @@ function renderUrgenceProtocols() {
     if (!container) return;
 
     container.innerHTML = URGENCE_PROTOCOLS.map(proto => `
-        <div class="urgence-protocol-card" data-proto="${proto.id}">
-            <div class="urgence-protocol-header ${proto.color}">
+        <div class="urgence-protocol-card collapsed" data-proto="${proto.id}">
+            <div class="urgence-protocol-header ${proto.color}" onclick="urgenceToggleProtocol('${proto.id}')">
                 <span class="urgence-protocol-icon">${proto.icon}</span>
                 <h4>${urgenceEscapeHtml(proto.title)}</h4>
+                <span class="urgence-protocol-toggle" data-toggle="${proto.id}">▾</span>
             </div>
             <div class="urgence-protocol-body">
                 <p class="urgence-protocol-intro">${urgenceEscapeHtml(proto.intro)}</p>
@@ -496,6 +497,24 @@ function renderUrgenceProtocols() {
                 </div>
             </div>
         </div>`).join('');
+}
+
+function urgenceToggleProtocol(protoId) {
+    const card = document.querySelector(`.urgence-protocol-card[data-proto="${protoId}"]`);
+    if (!card) return;
+    const wasCollapsed = card.classList.contains('collapsed');
+    urgenceCollapseAllProtocols();
+    if (wasCollapsed) {
+        card.classList.remove('collapsed');
+        card.classList.add('open');
+    }
+}
+
+function urgenceCollapseAllProtocols() {
+    document.querySelectorAll('.urgence-protocol-card').forEach(c => {
+        c.classList.add('collapsed');
+        c.classList.remove('open');
+    });
 }
 
 // ---------- TTS (synthèse vocale) ----------
@@ -619,3 +638,4 @@ window.urgenceTTSPlay = urgenceTTSPlay;
 window.urgenceTTSStop = urgenceTTSStop;
 window.urgenceCopyOrderList = urgenceCopyOrderList;
 window.refreshUrgenceView = refreshUrgenceView;
+window.urgenceToggleProtocol = urgenceToggleProtocol;
