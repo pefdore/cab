@@ -670,11 +670,94 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
 
 // ---------- Suivi des doses d'adrénaline (ACR) ----------
 
+const URGENCE_ACR_STATE_KEY = 'urgence_acr_session_v1';
+
 let urgenceAdreState = {
     doses: [],       // { time: Date, context: 'asystolie' | 'choc3' }
     countdown: null, // setInterval
     countdownEnd: null
 };
+
+let urgenceMetroWasOn = false; // metronome actif avant la mise en veille
+
+function urgenceSaveAcrSession() {
+    try {
+        sessionStorage.setItem(URGENCE_ACR_STATE_KEY, JSON.stringify({
+            doses: urgenceAdreState.doses,
+            countdownEnd: urgenceAdreState.countdownEnd,
+            metroOn: !!urgenceMetroTimer
+        }));
+    } catch (e) {}
+}
+
+function urgenceLoadAcrSession() {
+    try {
+        const raw = sessionStorage.getItem(URGENCE_ACR_STATE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.doses) && data.doses.length > 0) {
+            urgenceAdreState.doses = data.doses;
+            urgenceAdreState.countdownEnd = data.countdownEnd || null;
+            if (urgenceAdreState.countdownEnd && urgenceAdreState.countdownEnd > Date.now()) {
+                urgenceStartAdreCountdown();
+            }
+        }
+    } catch (e) {}
+}
+
+// ---------- Wake Lock : empecher la veille pendant une rea ----------
+
+let urgenceWakeLock = null;
+
+async function urgenceRequestWakeLock() {
+    try {
+        if (!('wakeLock' in navigator) || urgenceWakeLock) return;
+        urgenceWakeLock = await navigator.wakeLock.request('screen');
+        urgenceWakeLock.addEventListener('release', () => { urgenceWakeLock = null; });
+    } catch (e) {}
+}
+
+function urgenceReleaseWakeLock() {
+    try {
+        if (urgenceWakeLock) {
+            urgenceWakeLock.release();
+            urgenceWakeLock = null;
+        }
+    } catch (e) {}
+}
+
+// ---------- Reprise auto apres mise en veille / changement d'onglet ----------
+
+function urgenceHandleVisibility() {
+    if (document.visibilityState === 'visible') {
+        // Retour sur l'ecran : reprendre ce qui tournait
+        if (urgenceAdreState.countdownEnd) {
+            if (urgenceAdreState.countdownEnd <= Date.now()) {
+                // Le compte a rebours a expire pendant la veille
+                if (urgenceAdreState.countdown) clearInterval(urgenceAdreState.countdown);
+                urgenceAdreState.countdown = null;
+                urgenceRenderAdrePanel();
+                urgenceSpeakAdre('4 minutes passées. Nouvelle dose d\u2019adrénaline possible.');
+            } else {
+                urgenceStartAdreCountdown();
+            }
+        }
+        if (urgenceMetroWasOn && !urgenceMetroTimer) {
+            urgenceStartMetronome();
+        }
+        urgenceRequestWakeLock();
+        urgenceRenderAdrePanel();
+    } else {
+        // Ecran eteint / onglet cache : sauvegarder l'etat avant le gel
+        urgenceMetroWasOn = !!urgenceMetroTimer;
+        urgenceSaveAcrSession();
+    }
+}
+
+document.addEventListener('visibilitychange', urgenceHandleVisibility);
+
+// Sauvegarde periodique (toutes les 5 s) : survit meme a un reload de page
+setInterval(urgenceSaveAcrSession, 5000);
 
 let urgenceTTSPrimed = false;
 function urgencePrimeTTS() {
@@ -773,31 +856,41 @@ function urgenceSpeakAdre(text) {
 function urgenceRecordAdreDose(context) {
     const now = Date.now();
     urgenceAdreState.doses.push({ time: now, context });
+    urgenceAdreState.countdownEnd = Date.now() + 4 * 60 * 1000;
+    urgenceAdreState.dueAnnounced = false;
     const nb = urgenceAdreState.doses.length;
-    urgenceStartAdreCountdown(nb);
+    urgenceStartAdreCountdown();
     urgenceRenderAdrePanel();
+    urgenceRequestWakeLock();
     const heure = new Date(now).toLocaleTimeString('fr-FR');
     urgenceSpeakAdre(`Dose ${nb} d'adrénaline enregistrée à ${heure}. Nouveau compte à rebours de 4 minutes.`);
 }
 
-function urgenceStartAdreCountdown(nb) {
+function urgenceStartAdreCountdown() {
     if (urgenceAdreState.countdown) clearInterval(urgenceAdreState.countdown);
-    urgenceAdreState.countdownEnd = Date.now() + 4 * 60 * 1000;
+    if (!urgenceAdreState.countdownEnd) {
+        urgenceAdreState.countdownEnd = Date.now() + 4 * 60 * 1000;
+    }
     urgenceAdreState.countdown = setInterval(() => {
         if (Date.now() >= urgenceAdreState.countdownEnd) {
             clearInterval(urgenceAdreState.countdown);
             urgenceAdreState.countdown = null;
+            urgenceAdreState.dueAnnounced = true;
             urgenceRenderAdrePanel();
             urgenceSpeakAdre('4 minutes passées. Nouvelle dose d\u2019adrénaline possible.');
         } else {
             urgenceRenderAdrePanel();
         }
     }, 1000);
+    urgenceSaveAcrSession();
 }
 
 function urgenceResetAdreState() {
     if (urgenceAdreState.countdown) clearInterval(urgenceAdreState.countdown);
     urgenceAdreState = { doses: [], countdown: null, countdownEnd: null };
+    urgenceMetroWasOn = false;
+    try { sessionStorage.removeItem(URGENCE_ACR_STATE_KEY); } catch (e) {}
+    urgenceReleaseWakeLock();
 }
 
 // ---------- Métronome de massage cardiaque (ACR, 110/min) ----------
@@ -843,6 +936,7 @@ function urgenceStartMetronome() {
         if (typeof showToast === 'function') showToast('Audio non disponible sur cet appareil', 'error');
         return;
     }
+    urgenceRequestWakeLock();
     // 110 compressions par minute (centre de la fourchette 100-120/min)
     const intervalMs = 60000 / 110;
     urgenceMetroBeep();
@@ -1018,9 +1112,11 @@ function initUrgenceModule() {
 }
 
 function refreshUrgenceView() {
-    urgenceResetAdreState();
-    urgenceStopMetronome();
     if (!urgenceData) loadUrgenceData();
+    // Restaurer une session ACR en cours (mise en veille, reload) sans l'ecraser
+    if (urgenceAdreState.doses.length === 0) {
+        urgenceLoadAcrSession();
+    }
     renderUrgenceStocks();
     renderUrgenceProtocols();
     urgenceTTSStop();
