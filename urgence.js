@@ -528,8 +528,41 @@ const URGENCE_PROTOCOLS = [
             { title: 'Surveillance', text: 'Constantes toutes les 5 min : TA, FC, FR, SpO2, conscience. Oxygène si SpO2 < 92 %. Jamais debout.' },
             { title: 'Transmettre', text: 'Heure de début des signes, heure de l’antibiotique, terrain (asplénie, vaccins), constantes → SAMU.' }
         ]
+    },
+    {
+        id: 'acr',
+        title: 'ACR — Arrêt CardioRespiratoire',
+        icon: '💔',
+        color: 'danger',
+        intro: 'Inconscience + absence de ventilation normale = RCP immédiate. Ne pas chercher le pouls plus de 10 secondes. Chaque minute sans massage divise la survie par deux.',
+        criteria: [
+            { t: 'Inconscience', d: 'Patient ne répond pas, ne réagit à aucune stimulation (parole, secousse des épaules).' },
+            { t: 'Absence de ventilation normale', d: 'Regarder la poitrine 10 secondes maximum : aucun mouvement respiratoire, ou gasps agoniques (respirations lentes, bruyantes, inefficaces = signe d’ACR, pas d’une respiration normale).' },
+            { t: 'Pas de pouls (si formé)', d: 'Pouls carotidien absent — mais ne pas perdre de temps : inconscience + pas de ventilation normale = débuter la RCP sans chercher le pouls si doute.' }
+        ],
+        differential: 'Ne pas confondre avec : syncope (réveil spontané en position allongée, pouls présent, ventilation normale), coma hypoglycémique ou opiacé (ventilation présente même lente et bruyante), malaise vagal (bradycardie, pâleur, récupération rapide). Le gasp agonique = ACR : ne pas le prendre pour une respiration.',
+        material: [
+            'Plan dur / sol',
+            'DAE (défibrillateur) — le chercher en même temps que la RCP',
+            'Masque à oxygène + ballon de réanimation (BAVU)',
+            'VVP ou voie intra-osseuse (trocart IO)',
+            'Adrénaline ampoules 1 mg/mL',
+            'Amiodarone 150 mg si disponible',
+            'Couverture / protection du sol'
+        ],
+        steps: [
+            { title: 'Sécuriser & alerter', text: 'Vérifier sécurité, secouer les épaules, crier. Si pas de réaction : appeler le 15 (ou faire appeler par un témoin) et envoyer chercher le DAE immédiatement.' },
+            { title: 'Vérifier la ventilation', text: 'Basculer la tête en arrière, élever le menton, regarder la poitrine MAXIMUM 10 secondes. Pas de ventilation normale = commencer le massage.' },
+            { title: 'Massage cardiaque', text: 'Au centre du thorax, talon de la main nues les deux mains superposées, bras tendus : comprimer VERTICALEMENT de 5 à 6 cm, 100 à 120 compressions par minute, laisser le thorax se réexpandre complètement entre chaque compression. Enfant : une main ou deux doigts selon la taille. Ne pas interrompre plus de 10 s.' },
+            { title: 'Insufflations 30:2', text: 'Si seule : 30 compressions puis 2 insufflations (1 s chacune) avec bascule tête + pincement du nez, ou masque du BAVU. Si plusieurs sauveteurs formés ou DAE posé : RCP en continu sans insufflations tant que le DAE analyse.' },
+            { title: 'DAE dès que disponible', text: 'Poitrine nue, électrodes comme indiqué sur les dessins, personne ne touche le patient pendant l’analyse. Si choc conseillé : choc puis reprise immédiate du massage. Si choc non conseillé : reprendre le massage immédiatement.' },
+            { title: 'Adrénaline IV/IO — dose selon le poids', text: 'ADULTE : 1 mg (1 mL de solution 1 mg/mL) en IV ou IO, toutes les 3 à 5 min, dès que la voie est posée, sans jamais interrompre le massage. ENFANT : 0,01 mg/kg IV/IO, maximum 1 mg (dose exacte dans le calculateur en haut de page).' },
+            { title: 'Amiodarone après 3e choc', text: 'ADULTE : amiodarone 300 mg diluée dans 20 mL de G5, IV/IO, après le 3e choc si FV persiste (150 mg pour le 4e choc). ENFANT : 5 mg/kg.' },
+            { title: 'Continuer jusqu’à', text: 'Reprise d’une ventilation normale ou d’un mouvement, épuisement du sauveteur, ou prise en charge par le SAMU. Changer de masseur toutes les 2 min si possible.' }
+        ]
     }
 ];
+
 
 function renderUrgenceProtocols() {
     const container = document.getElementById('urgenceProtocolsGrid');
@@ -544,6 +577,7 @@ function renderUrgenceProtocols() {
             </div>
             <div class="urgence-protocol-body">
                 <p class="urgence-protocol-intro">${urgenceEscapeHtml(proto.intro)}</p>
+                <div class="urgence-suggested" data-suggested="${proto.id}"></div>
 
                 <div class="urgence-protocol-section">
                     <h5 class="urgence-section-title">🔍 Critères diagnostiques</h5>
@@ -604,6 +638,30 @@ function urgenceCollapseAllProtocols() {
     });
 }
 
+
+// ---------- Doses suggérées par protocole selon le poids ----------
+
+function urgenceUpdateSuggestedDoses(w, isAdult) {
+    const fmt = n => (Math.round(n * 100) / 100).toString().replace('.', ',');
+    const adreIM = Math.min(0.5, 0.01 * w);
+    const adreIV = isAdult ? 1 : Math.min(1, 0.01 * w);
+    const cef = Math.min(2, 0.1 * w);
+    const amio = isAdult ? 300 : 5 * w;
+
+    const content = {
+        sca: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Aspirine <strong>300 mg</strong> à croquer · Trinitrine <strong>0,15 mg</strong> sublinguale (si PAS ≥ 100)`,
+        avc: `<strong>Aucun médicament à donner (${fmt(w)} kg)</strong> — pas d’aspirine ni d’antihypertenseur avant avis du 15. Glycémie capillaire obligatoire.`,
+        anaphylaxie: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Adrénaline IM : <strong>${fmt(adreIM)} mg = ${fmt(adreIM)} mL</strong> (sol. 1 mg/mL, cuisse)`,
+        purpura: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Ceftriaxone : <strong>${fmt(cef)} g = ${fmt(cef * 10)} mL</strong> (1 g/10 mL, IVL ou IM) · Remplissage si choc : <strong>${isAdult ? '500 mL' : fmt(w * 20) + ' mL'}</strong>`,
+        acr: `<strong>Doses suggérées (${fmt(w)} kg)</strong> — Adrénaline IV/IO : <strong>${fmt(adreIV)} mg = ${fmt(adreIV)} mL</strong> / 3–5 min · Amiodarone après 3e choc : <strong>${fmt(amio)} mg</strong>`
+    };
+
+    document.querySelectorAll('.urgence-suggested').forEach(el => {
+        const id = el.dataset.suggested;
+        if (id && content[id]) el.innerHTML = content[id];
+    });
+}
+
 // ---------- Calculateur de doses selon le poids ----------
 
 function urgenceComputeDoses() {
@@ -614,6 +672,7 @@ function urgenceComputeDoses() {
     const w = parseFloat(input.value);
     if (!w || w <= 0 || w > 250) {
         out.innerHTML = '<div class="urgence-alert info">Entrez un poids en kg pour obtenir les doses.</div>';
+        document.querySelectorAll('.urgence-suggested').forEach(el => { el.innerHTML = ''; });
         return;
     }
     const isAdult = w >= 30;
@@ -641,6 +700,7 @@ function urgenceComputeDoses() {
             <tr><td>Remplissage NaCl 0,9 % si choc</td><td><strong>${rempl} mL</strong></td><td>${Math.max(1, Math.round(rempl / 100))} poche(s) 100 mL</td><td>20 mL/kg, à répéter selon la TA</td></tr>`;
     }
 
+    urgenceUpdateSuggestedDoses(w, isAdult);
     out.innerHTML = `
         <div class="urgence-alert ${isAdult ? 'info' : 'warning'}">
             ${isAdult ? 'Poids adulte (≥ 30 kg)' : 'Poids pédiatrique (< 30 kg) : vérifier les doses de l’enfant avec le 15.'}
@@ -728,6 +788,7 @@ function initUrgenceModule() {
     const weightInput = document.getElementById('urgenceWeightInput');
     if (weightInput) weightInput.addEventListener('input', urgenceComputeDoses);
     urgenceComputeDoses();
+    document.getElementById('urgenceProtocolsGrid')?.addEventListener('change', () => urgenceComputeDoses());
 
     const exportBtn = document.getElementById('urgenceExportStocksBtn');
     if (exportBtn) exportBtn.addEventListener('click', urgenceExportStocks);
