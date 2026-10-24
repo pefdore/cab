@@ -8925,8 +8925,17 @@ html.no-anim *::after {
 
 .urgence-tts-controls {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 14px;
+}
+
+.urgence-tts-controls .action-btn {
+    flex: 1 1 45%;
+}
+
+.urgence-adre-panel {
+    flex-basis: 100%;
 }
 
 .urgence-modal-content { max-width: 520px; }
@@ -9123,7 +9132,7 @@ html.no-anim *::after {
     background: var(--color-bg-muted);
     border: 1px solid var(--color-border);
     border-radius: 10px;
-    width: 100%;
+    flex-basis: 100%;
 }
 
 .urgence-adre-hint {
