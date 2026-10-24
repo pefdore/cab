@@ -449,6 +449,9 @@ function applyCotationVisibility() {
             cabinetDash.style.display = 'block';
             cabinetDash.style.visibility = 'visible';
         }
+        if (typeof renderCabinetLifeDashboard === 'function') {
+            renderCabinetLifeDashboard();
+        }
     } else {
         const cabinetDash = document.getElementById('cabinet-dashboard');
         if (cabinetDash) {
@@ -1125,6 +1128,7 @@ function switchDashboardMode(mode) {
             cabinetDash.style.visibility = 'visible';
             console.log('[TOGGLE] cabinet-dashboard shown');
             loadCabinetData();
+            renderCabinetLifeDashboard();
         }
     }
 }
@@ -9032,3 +9036,263 @@ async function initRemplacements() {
     await loadContrats();
     await loadOffres();
 }
+// ===== DASHBOARD CABINET 360 : VIE DU CABINET =====
+
+function cabSet(id, text, color) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    if (color) el.style.color = color;
+}
+
+function cabFmtDate(d) {
+    if (!d) return '-';
+    const dt = new Date(d);
+    if (isNaN(dt)) return '-';
+    return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+}
+
+function cabEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function cabFetchProfile() {
+    if (!supabaseClient || !currentUser) return null;
+    try {
+        const { data } = await supabaseClient.from('profiles').select('cabinet_id').eq('id', currentUser.id).single();
+        return data || null;
+    } catch (e) { return null; }
+}
+
+async function cabLoadRh(alertes) {
+    if (!supabaseClient || !currentUser) return;
+    const profile = await cabFetchProfile();
+    const cabinetId = profile?.cabinet_id;
+
+    try {
+        const { data: emps } = await supabaseClient.from('employees').select('*').eq('user_id', currentUser.id);
+        const employees = emps || [];
+        const now = new Date();
+        const in30 = new Date(now.getTime() + 30 * 24 * 3600 * 1000);
+        const actifs = employees.filter(e => !e.end_date || new Date(e.end_date) >= now);
+        const expirant = actifs.filter(e => e.end_date && new Date(e.end_date) <= in30);
+        const masseSalariale = actifs.reduce((s, e) => s + (parseFloat(e.salary) || 0), 0);
+
+        cabSet('cabContratsActifs', String(actifs.length));
+        cabSet('cabContratsExpirant', String(expirant.length), expirant.length > 0 ? 'var(--color-warning)' : 'var(--color-text)');
+        cabSet('cabMasseSalariale', (masseSalariale).toFixed(0) + '€/mois');
+        expirant.forEach(e => alertes.push({ level: 'warn', text: `Contrat de ${cabEsc(e.firstname)} ${cabEsc(e.lastname)} expire le ${cabFmtDate(e.end_date)}` }));
+
+        const { data: lv } = await supabaseClient.from('leaves')
+            .select('*, employees(firstname, lastname)')
+            .eq('user_id', currentUser.id)
+            .gte('end_date', now.toISOString().split('T')[0])
+            .order('start_date', { ascending: true });
+        const leaves = lv || [];
+        const pending = leaves.filter(l => l.status === 'pending');
+        const upcoming = leaves.filter(l => l.status === 'approved').slice(0, 5);
+        cabSet('cabCongesAttente', String(pending.length), pending.length > 0 ? 'var(--color-warning)' : 'var(--color-text)');
+        pending.forEach(l => {
+            const emp = l.employees;
+            alertes.push({ level: 'warn', text: `Congé en attente : ${cabEsc(emp ? emp.firstname + ' ' + emp.lastname : 'employé')} (${cabFmtDate(l.start_date)} → ${cabFmtDate(l.end_date)})` });
+        });
+        const congesEl = document.getElementById('cabCongesList');
+        if (congesEl) {
+            const items = [...pending.slice(0, 5), ...upcoming];
+            congesEl.innerHTML = items.length === 0 ? '<p class="cab-empty">Aucun congé à venir</p>' : items.map(l => {
+                const emp = l.employees;
+                const name = emp ? `${emp.firstname} ${emp.lastname}` : 'Employé';
+                const badge = l.status === 'pending' ? '<span class="cab-badge warn">à valider</span>' : '<span class="cab-badge ok">approuvé</span>';
+                return `<div class="cab-mini-item"><span class="cab-mini-name">${cabEsc(name)}</span><span class="cab-mini-dates">${cabFmtDate(l.start_date)} → ${cabFmtDate(l.end_date)}</span>${badge}</div>`;
+            }).join('');
+        }
+
+        const { data: ast } = await supabaseClient.from('astreintes')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .gte('date', now.toISOString().split('T')[0])
+            .order('date', { ascending: true });
+        const astreintes = ast || [];
+        cabSet('cabAstreintesAVenir', String(astreintes.length));
+        const astEl = document.getElementById('cabAstreintesList');
+        if (astEl) {
+            astEl.innerHTML = astreintes.length === 0 ? '<p class="cab-empty">Aucune astreinte planifiée</p>' : astreintes.slice(0, 5).map(a =>
+                `<div class="cab-mini-item"><span class="cab-mini-name">${cabEsc(a.employee_name || a.type || 'Astreinte')}</span><span class="cab-mini-dates">${cabFmtDate(a.date)}</span></div>`
+            ).join('');
+        }
+
+        const days30ago = new Date(now.getTime() - 30 * 24 * 3600 * 1000).toISOString().split('T')[0];
+        const { data: calls } = await supabaseClient.from('standard_calls')
+            .select('date, time, type')
+            .eq('user_id', currentUser.id)
+            .gte('date', days30ago)
+            .order('date', { ascending: true });
+        const stdCalls = calls || [];
+        const total = stdCalls.length;
+        const answered = stdCalls.filter(c => c.type === 'answered').length;
+        const missed = total - answered;
+        const taux = total > 0 ? Math.round((answered / total) * 100) : 0;
+        cabSet('cabAppelsManques', String(missed), missed > 0 ? 'var(--color-danger)' : 'var(--color-text)');
+        cabSet('cabTauxReponse', total > 0 ? taux + '%' : '-');
+        if (total > 0 && taux < 80) alertes.push({ level: 'warn', text: `Taux de réponse du standard à ${taux}% sur 30 jours` });
+
+        const chartEl = document.getElementById('cabStandardChart');
+        if (chartEl) {
+            const parJour = {};
+            stdCalls.forEach(c => { parJour[c.date] = parJour[c.date] || { a: 0, m: 0 }; if (c.type === 'answered') parJour[c.date].a++; else parJour[c.date].m++; });
+            const jours = Object.keys(parJour).sort().slice(-30);
+            const maxV = Math.max(1, ...jours.map(d => Math.max(parJour[d].a, parJour[d].m)));
+            chartEl.innerHTML = jours.length === 0 ? '<p class="cab-empty">Aucun appel importé sur les 30 derniers jours</p>' : jours.map(d => {
+                const v = parJour[d];
+                const label = new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                return `<div class="bar-group" title="${label} : ${v.a} répondus, ${v.m} manqués"><div class="bar-wrapper"><div class="bar income" style="height:${(v.a / maxV) * 100}%"></div><div class="bar expense" style="height:${(v.m / maxV) * 100}%"></div></div><span class="bar-label">${label.split(' ')[0]}</span></div>`;
+            }).join('');
+        }
+    } catch (e) {
+        console.error('[CAB360] Erreur RH:', e);
+    }
+
+    try {
+        if (cabinetId && supabaseClient) {
+            const { count } = await supabaseClient.from('profiles').select('id', { count: 'exact', head: true }).eq('cabinet_id', cabinetId);
+            cabSet('cabAssociesCount', count != null ? String(count) : '-');
+        } else {
+            cabSet('cabAssociesCount', '1');
+        }
+    } catch (e) {
+        cabSet('cabAssociesCount', '-');
+    }
+}
+
+async function cabLoadRemplacements(alertes) {
+    if (!supabaseClient || !currentUser) return;
+    try {
+        const { data: offres } = await supabaseClient.from('offres_remplacement').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+        const allOffres = offres || [];
+        const today = new Date().toISOString().split('T')[0];
+        const actives = allOffres.filter(o => o.statut === 'active' && (!o.date_fin || o.date_fin >= today));
+        cabSet('cabOffresActives', String(actives.length), actives.length > 0 ? 'var(--color-warning)' : 'var(--color-text)');
+        actives.slice(0, 2).forEach(o => alertes.push({ level: 'info', text: `Offre de remplacement active : ${cabEsc(o.titre)} (${cabFmtDate(o.date_debut)})` }));
+
+        const { data: cands } = await supabaseClient.from('candidatures').select('*').order('created_at', { ascending: false });
+        const pending = (cands || []).filter(c => c.statut === 'en_attente');
+        cabSet('cabCandidaturesAttente', String(pending.length), pending.length > 0 ? 'var(--color-warning)' : 'var(--color-text)');
+        pending.slice(0, 3).forEach(() => alertes.push({ level: 'warn', text: `${pending.length} candidature(s) de remplacement en attente de réponse` }));
+
+        const { data: remps } = await supabaseClient.from('remplacants').select('*').eq('user_id', currentUser.id).eq('disponible', true);
+        cabSet('cabVivierRemplacants', String((remps || []).length));
+
+        const { data: hist } = await supabaseClient.from('historique_remplacements').select('*, remplacants(nom, prenom)').eq('user_id', currentUser.id).order('date_debut', { ascending: false }).limit(5);
+        const histEl = document.getElementById('cabRemplacementsList');
+        if (histEl) {
+            const items = hist || [];
+            histEl.innerHTML = items.length === 0 ? '<p class="cab-empty">Aucun remplacement enregistré</p>' : items.map(h => {
+                const r = h.remplacants;
+                return `<div class="cab-mini-item"><span class="cab-mini-name">${cabEsc(r ? r.prenom + ' ' + r.nom : 'Remplaçant')}</span><span class="cab-mini-dates">${cabFmtDate(h.date_debut)}${h.date_fin ? ' → ' + cabFmtDate(h.date_fin) : ''}</span>${h.montant_total ? `<span class="cab-badge ok">${h.montant_total.toFixed(0)}€</span>` : ''}</div>`;
+            }).join('');
+        }
+    } catch (e) {
+        console.error('[CAB360] Erreur remplacements:', e);
+    }
+}
+
+function cabLoadStocks(alertes) {
+    try {
+        let data = null;
+        try {
+            const raw = localStorage.getItem('urgence_room_data_v1');
+            if (raw) data = JSON.parse(raw);
+        } catch (e) { data = null; }
+        if (!data || !Array.isArray(data.products) || data.products.length === 0) {
+            cabSet('cabStocksSousSeuil', '0');
+            cabSet('cabStocksExpires', '0');
+            cabSet('cabDernierPointage', 'Jamais');
+            const el = document.getElementById('cabStocksAlerte');
+            if (el) el.innerHTML = '<p class="cab-empty">Aucun stock salle d\'urgence enregistré</p>';
+            return;
+        }
+        const today = new Date();
+        const sousSeuil = data.products.filter(p => p.quantity <= p.minQuantity);
+        const expires = data.products.filter(p => {
+            if (!p.expiry) return false;
+            const d = new Date(p.expiry);
+            return d <= new Date(today.getTime() + 30 * 24 * 3600 * 1000);
+        });
+
+        cabSet('cabStocksSousSeuil', String(sousSeuil.length), sousSeuil.length > 0 ? 'var(--color-danger)' : 'var(--color-text)');
+        cabSet('cabStocksExpires', String(expires.length), expires.length > 0 ? 'var(--color-danger)' : 'var(--color-text)');
+        cabSet('cabDernierPointage', data.lastPointage ? cabFmtDate(data.lastPointage) : 'Jamais',
+            (!data.lastPointage || new Date(data.lastPointage) < new Date(today.getTime() - 7 * 24 * 3600 * 1000)) ? 'var(--color-warning)' : 'var(--color-text)');
+
+        sousSeuil.slice(0, 3).forEach(p => alertes.push({ level: 'danger', text: `Stock sous le seuil : ${cabEsc(p.name)} (${p.quantity}/${p.minQuantity})` }));
+        expires.slice(0, 2).forEach(p => alertes.push({ level: 'danger', text: `Produit périmé ou proche : ${cabEsc(p.name)}` }));
+        if (!data.lastPointage) alertes.push({ level: 'warn', text: 'Aucun pointage des stocks effectué' });
+
+        const el = document.getElementById('cabStocksAlerte');
+        if (el) {
+            const items = [...sousSeuil, ...expires.filter(e => !sousSeuil.includes(e))].slice(0, 5);
+            el.innerHTML = items.length === 0 ? '<p class="cab-empty">Tous les stocks sont au niveau ✓</p>' : items.map(p =>
+                `<div class="cab-mini-item"><span class="cab-mini-name">${cabEsc(p.name)}</span><span class="cab-mini-dates">${p.quantity} ${cabEsc(p.unit || '')} / seuil ${p.minQuantity}</span>${p.expiry && new Date(p.expiry) < today ? '<span class="cab-badge danger">périmé</span>' : ''}</div>`
+            ).join('');
+        }
+    } catch (e) {
+        console.error('[CAB360] Erreur stocks:', e);
+    }
+}
+
+function cabRenderHealth(finAlertes, alertes) {
+    const all = [...finAlertes, ...alertes];
+    const danger = all.filter(a => a.level === 'danger').length;
+    const warn = all.filter(a => a.level === 'warn').length;
+
+    const dot = document.getElementById('cabHealthDot');
+    const title = document.getElementById('cabHealthTitle');
+    const sub = document.getElementById('cabHealthSub');
+    const kpis = document.getElementById('cabHealthKpis');
+
+    let status = 'ok';
+    if (danger > 0) status = 'danger'; else if (warn > 0) status = 'warn';
+    if (dot) dot.className = 'cab-health-dot ' + status;
+    if (title) {
+        title.textContent = danger > 0 ? 'Attention requise' : warn > 0 ? 'Quelques points à surveiller' : 'Cabinet en bonne santé';
+    }
+    if (sub) {
+        sub.textContent = danger > 0 ? `${danger} alerte(s) critique(s), ${warn} point(s) à surveiller`
+            : warn > 0 ? `${warn} point(s) à surveiller`
+            : 'Aucune alerte — trésorerie, équipe et stocks au vert';
+    }
+    if (kpis) {
+        kpis.innerHTML = `
+            <span class="cab-health-kpi"><strong>${danger}</strong> critiques</span>
+            <span class="cab-health-kpi"><strong>${warn}</strong> à surveiller</span>
+        `;
+    }
+
+    const list = document.getElementById('cabAlertesList');
+    if (list) {
+        if (all.length === 0) {
+            list.innerHTML = '<p class="cab-empty">Aucune alerte — rien à signaler 🎉</p>';
+        } else {
+            const order = { danger: 0, warn: 1, info: 2 };
+            all.sort((a, b) => (order[a.level] ?? 3) - (order[b.level] ?? 3));
+            list.innerHTML = all.slice(0, 12).map(a =>
+                `<div class="cab-alerte ${a.level}"><span class="cab-alerte-dot"></span><span>${a.text}</span></div>`
+            ).join('');
+        }
+    }
+    window._cab360Alertes = all;
+}
+
+async function renderCabinetLifeDashboard() {
+    const alertes = [];
+    cabLoadStocks(alertes);
+    await cabLoadRh(alertes);
+    await cabLoadRemplacements(alertes);
+    const finAlertes = (window._cabinetAlertes || []).map(t => {
+        const isDanger = /négative|critique/i.test(t);
+        return { level: isDanger ? 'danger' : 'warn', text: cabEsc(t) };
+    });
+    cabRenderHealth(finAlertes, alertes);
+}
+
+window.renderCabinetLifeDashboard = renderCabinetLifeDashboard;
