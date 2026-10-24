@@ -9374,7 +9374,7 @@ html.no-anim *::after {
     .cab-health { flex-direction: column; align-items: flex-start; }
     .cab-health-right { gap: 12px; }
     .cab-section { padding: 14px; }
-
+}
 
 /* Chercheur DAE */
 .urgence-dae-finder {
