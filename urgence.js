@@ -703,16 +703,8 @@ async function urgenceFetchDaeAround(lat, lon, radiusKm) {
         const resp = await fetch(`/api/dae?lat=${lat}&lon=${lon}&radius=${radius}`);
         if (resp.ok) data = await resp.json();
     } catch (e) { /* CORS ou proxy absent : on tente le direct */ }
-    if (!data) {
-        const query = `[out:json][timeout:25];
-(
-  node["emergency"="defibrillator"](around:${radius},${lat},${lon});
-);
-out body 60;`;
-        const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('Service de cartes momentan\u00E9ment indisponible');
-        data = await resp.json();
+    if (!data || !Array.isArray(data.elements)) {
+        throw new Error('Service de cartes momentanément indisponible, réessayez');
     }
     return (data.elements || []).filter(e => e.lat && e.lon).map(e => ({
         lat: e.lat,
@@ -751,7 +743,7 @@ async function urgenceFindDae() {
             if (daes.length > 0) break;
         }
     } catch (e) {
-        out.innerHTML = `<div class="urgence-alert danger">\u26A0\uFE0F ${e.message}.</div>`;
+        out.innerHTML = `<div class="urgence-alert danger">\u26A0\uFE0F ${e.message}. <button class="action-btn" style="margin-left:8px;" onclick="urgenceFindDae()">Réessayer</button></div>`;
         if (btn) btn.disabled = false;
         return;
     }
