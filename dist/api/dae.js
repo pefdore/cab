@@ -1,7 +1,14 @@
 // Proxy Overpass pour le chercheur de DAE (evite le blocage CORS cote navigateur)
+// Bascule automatique entre miroirs Overpass en cas d'indisponibilite
+const OVERPASS_MIRRORS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.private.coffee/api/interpreter'
+];
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     try {
         const { lat, lon, radius } = req.query;
         const la = parseFloat(lat);
@@ -12,17 +19,29 @@ export default async function handler(req, res) {
             return;
         }
         const query = `[out:json][timeout:25];(node["emergency"="defibrillator"](around:${r},${la},${lo}););out body 60;`;
-        const upstream = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'data=' + encodeURIComponent(query)
-        });
-        if (!upstream.ok) {
-            res.status(502).json({ error: 'Overpass indisponible' });
-            return;
+
+        let lastErr = null;
+        for (const base of OVERPASS_MIRRORS) {
+            try {
+                const upstream = await fetch(base, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'User-Agent': 'cotation-medecin/1.0 (medical emergency app)'
+                    },
+                    body: 'data=' + encodeURIComponent(query)
+                });
+                if (upstream.ok) {
+                    const data = await upstream.json();
+                    res.status(200).json(data);
+                    return;
+                }
+                lastErr = new Error(base + ' -> ' + upstream.status);
+            } catch (e) {
+                lastErr = e;
+            }
         }
-        const data = await upstream.json();
-        res.status(200).json(data);
+        res.status(502).json({ error: 'Overpass indisponible', detail: String(lastErr && lastErr.message || lastErr) });
     } catch (e) {
         res.status(502).json({ error: 'Erreur proxy DAE' });
     }
