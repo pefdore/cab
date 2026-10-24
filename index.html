@@ -584,185 +584,354 @@ window.attemptLogin = function() {
 
                 <!-- Cabinet Dashboard -->
                 <div id="cabinet-dashboard" style="display:none;">
-                    <div class="compta-summary">
-                        <div class="compta-card income">
-                            <span class="compta-label">Recettes année
-                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <span class="tooltip-text">Somme des apports des associés (virements reçus) enregistrés depuis le début de l'utilisation de l'application.</span></span>
-                            </span>
-                            <span class="compta-value" id="dash-cab-recettes">0€</span>
-                            <span class="compta-trend" id="recettesTrend"></span>
+                    <!-- En-tête santé du cabinet -->
+                    <div class="cab-health" id="cabHealth">
+                        <div class="cab-health-left">
+                            <span class="cab-health-dot" id="cabHealthDot"></span>
+                            <div>
+                                <h3 class="cab-health-title" id="cabHealthTitle">Santé du cabinet</h3>
+                                <p class="cab-health-sub" id="cabHealthSub">Chargement des indicateurs...</p>
+                            </div>
                         </div>
-                        <div class="compta-card expense">
-                            <span class="compta-label">Dépenses année
-                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <span class="tooltip-text">Somme de toutes les dépenses du cabinet (loyer, charges sociales, fournitures, logiciels...) classées par catégorie.</span></span>
-                            </span>
-                            <span class="compta-value" id="dash-cab-depenses">0€</span>
-                            <span class="compta-trend" id="depensesTrend"></span>
+                        <div class="cab-health-right" id="cabHealthKpis"></div>
+                    </div>
+
+                    <!-- SECTION FINANCIERE -->
+                    <div class="cab-section">
+                        <div class="cab-section-header">
+                            <h3>💰 Finances</h3>
+                            <span class="cab-section-hint">Recettes, charges et trésorerie — données partagées entre associés</span>
                         </div>
-                        <div class="compta-card balance">
-                            <span class="compta-label">Balance année
+                        <div class="compta-summary">
+                            <div class="compta-card income">
+                                <span class="compta-label">Recettes année
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Somme des apports des associés (virements reçus) enregistrés depuis le début de l'année en cours.</span></span>
+                                </span>
+                                <span class="compta-value" id="dash-cab-recettes">0€</span>
+                                <span class="compta-trend" id="recettesTrend"></span>
+                            </div>
+                            <div class="compta-card expense">
+                                <span class="compta-label">Dépenses année
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Somme de toutes les dépenses du cabinet (loyer, charges sociales, fournitures, logiciels...) classées par catégorie.</span></span>
+                                </span>
+                                <span class="compta-value" id="dash-cab-depenses">0€</span>
+                                <span class="compta-trend" id="depensesTrend"></span>
+                            </div>
+                            <div class="compta-card balance">
+                                <span class="compta-label">Balance année
+                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span class="tooltip-text">Différence entre les recettes et les dépenses. Positif = excédent (bénéfice), Négatif = déficit.</span></span>
+                                </span>
+                                <span class="compta-value" id="dash-cab-balance">0€</span>
+                                <span class="compta-trend" id="balanceTrend"></span>
+                            </div>
+                        </div>
+
+                        <div class="cabinet-stats-row">
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon green">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Recettes ce mois</span>
+                                    <span class="cabinet-stat-value" id="recettesThisMonth">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon red">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Dépenses ce mois</span>
+                                    <span class="cabinet-stat-value" id="depensesThisMonth">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon purple">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Taux de marge</span>
+                                    <span class="cabinet-stat-value" id="tauxMarge">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon teal">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Réserve trésorerie</span>
+                                    <span class="cabinet-stat-value" id="reserveTresorerie">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon orange">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Moy. mensuelle</span>
+                                    <span class="cabinet-stat-value" id="avgMonthlyDepenses">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon yellow">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Postes clés</span>
+                                    <span class="cabinet-stat-value" id="topPostes">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon blue">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">vs Année -1</span>
+                                    <span class="cabinet-stat-value" id="vsAnneePrecedente">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon pink">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Alertes</span>
+                                    <span class="cabinet-stat-value" id="alertesCount">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>Évolution mensuelle (12 derniers mois)
                                 <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <span class="tooltip-text">Différence entre les recettes et les dépenses. Positif = excédent (bénéfice), Négatif = déficit.</span></span>
-                            </span>
-                            <span class="compta-value" id="dash-cab-balance">0€</span>
-                            <span class="compta-trend" id="balanceTrend"></span>
+                                <span class="tooltip-text">Graphique en barres des 12 derniers mois de recettes et dépenses. Cliquez sur un mois pour voir les montants détaillés.</span></span>
+                            </h3>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-dot expense"></span>Dépenses</span>
+                                <span class="legend-item"><span class="legend-dot income"></span>Recettes</span>
+                            </div>
+                            <div class="bar-chart" id="evolutionChart"></div>
+                        </div>
+
+                        <div class="charts-row">
+                            <div class="chart-card small">
+                                <h3>Répartition dépenses</h3>
+                                <div class="donut-chart" id="depensesPieChart"></div>
+                                <div class="donut-legend" id="depensesPieLegend"></div>
+                            </div>
+                            <div class="chart-card small">
+                                <h3>Top catégories</h3>
+                                <div id="topCategories"></div>
+                            </div>
+                        </div>
+
+                        <div class="charts-row">
+                            <div class="chart-card small">
+                                <h3>5 dernières dépenses</h3>
+                                <div id="dashRecentDepenses" class="recent-list"></div>
+                            </div>
+                            <div class="chart-card small">
+                                <h3>5 dernières recettes</h3>
+                                <div id="dashRecentRecettes" class="recent-list"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="cabinet-stats-row">
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon green">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    <!-- SECTION GESTION / ORGANISATION -->
+                    <div class="cab-section">
+                        <div class="cab-section-header">
+                            <h3>👥 Gestion &amp; organisation</h3>
+                            <span class="cab-section-hint">Équipe, contrats, congés, standard téléphonique</span>
+                        </div>
+                        <div class="cabinet-stats-row" id="cabRhStatsRow">
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon blue">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Associés</span>
+                                    <span class="cabinet-stat-value" id="cabAssociesCount">-</span>
+                                </div>
                             </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Recettes ce mois
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Total des recettes du mois en cours (honoraires, télétransmission, actes outside PA).</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="recettesThisMonth">-</span>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon teal">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Contrats actifs</span>
+                                    <span class="cabinet-stat-value" id="cabContratsActifs">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon orange">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Expirent sous 30j</span>
+                                    <span class="cabinet-stat-value" id="cabContratsExpirant">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon purple">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Masse salariale</span>
+                                    <span class="cabinet-stat-value" id="cabMasseSalariale">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon yellow">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Congés en attente</span>
+                                    <span class="cabinet-stat-value" id="cabCongesAttente">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon pink">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 6v6l4 2"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Astreintes à venir</span>
+                                    <span class="cabinet-stat-value" id="cabAstreintesAVenir">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon red">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Appels manqués (30j)</span>
+                                    <span class="cabinet-stat-value" id="cabAppelsManques">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon green">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Taux de réponse</span>
+                                    <span class="cabinet-stat-value" id="cabTauxReponse">-</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon red">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+
+                        <div class="charts-row">
+                            <div class="chart-card small">
+                                <h3>Congés à venir</h3>
+                                <div id="cabCongesList" class="cab-mini-list"></div>
                             </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Dépenses ce mois
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Total des dépenses du mois en cours, toutes catégories confondues.</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="depensesThisMonth">-</span>
-                            </div>
-                        </div>
-                        
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon purple">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-                            </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Taux de marge
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Pourcentage de laSCM = (Apports - Charges) / Apports × 100. Permet de voir la part des apports restante après payment des charges.</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="tauxMarge">-</span>
+                            <div class="chart-card small">
+                                <h3>Astreintes à venir</h3>
+                                <div id="cabAstreintesList" class="cab-mini-list"></div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="cabinet-stats-row">
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon blue">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">vs Année -1
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Évolution de la balance par rapport à la même période de l'année précédente (N-1).</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="vsAnneePrecedente">-</span>
-                            </div>
-                        </div>
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon teal">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Réserve trésorerie
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Nombre de mois de fonctionnement couverts par la balance actuelle. Objectif: 3-6 mois de réserve.</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="reserveTresorerie">-</span>
-                            </div>
-                        </div>
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon orange">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
-                            </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Moy. mensuelle
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Moyenne mensuelle des charges sur l'année en cours. Permet de mieux anticiper les besoins de trésorerie.</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="avgMonthlyDepenses">-</span>
-                            </div>
-                        </div>
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon yellow">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-                            </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Postes clés
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">La catégorie de dépenses la plus importante en valeur absolue (premier poste de charge).</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="topPostes">-</span>
-                            </div>
-                        </div>
-                        <div class="cabinet-stat-card">
-                            <div class="cabinet-stat-icon pink">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            </div>
-                            <div class="cabinet-stat-content">
-                                <span class="cabinet-stat-label">Alertes
-                                    <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span class="tooltip-text">Nombre d'alertes: postes représentant >40% des dépenses, balance négative, trésorerie critique.</span></span>
-                                </span>
-                                <span class="cabinet-stat-value" id="alertesCount">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3>Évolution mensuelle (12 derniers mois)
-                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            <span class="tooltip-text">Graphique en barres显示过去12个月的收入和支出。点击任意月份可查看该月的详细金额。</span></span>
-                        </h3>
-                        <div class="chart-legend">
-                            <span class="legend-item"><span class="legend-dot expense"></span>Dépenses</span>
-                            <span class="legend-item"><span class="legend-dot income"></span>Recettes</span>
-                        </div>
-                        <div class="bar-chart" id="evolutionChart"></div>
-                    </div>
-                    
-                    <div class="charts-row">
-                        <div class="chart-card small">
-                            <h3>Répartition dépenses
+
+                        <div class="chart-card">
+                            <h3>Activité du standard (30 derniers jours)
                                 <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <span class="tooltip-text">Répartition des dépenses par catégorie sous forme de graphique en anneau. Cliquez sur une section pour voir le détail.</span></span>
+                                <span class="tooltip-text">Appels reçus et manqués jour par jour. Source : imports du standard (PDF/CSV).</span></span>
                             </h3>
-                            <div class="donut-chart" id="depensesPieChart"></div>
-                            <div class="donut-legend" id="depensesPieLegend"></div>
-                        </div>
-                        
-                        <div class="chart-card small">
-                            <h3>Top catégories
-                                <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <span class="tooltip-text">Les 5 premières catégories de dépenses triées par montant total, avec le pourcentage par rapport au total.</span></span>
-                            </h3>
-                            <div id="topCategories"></div>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-dot income"></span>Répondus</span>
+                                <span class="legend-item"><span class="legend-dot expense"></span>Manqués</span>
+                            </div>
+                            <div class="bar-chart" id="cabStandardChart"></div>
                         </div>
                     </div>
-                    
-                    <div class="recent-section">
-                        <h3>5 dernières dépenses
-                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            <span class="tooltip-text">Liste des 5 dernières dépenses enregistrées, triées par date (la plus récente en haut). Cliquez pour voir le détail.</span></span>
-                        </h3>
-                        <div id="dashRecentDepenses" class="recent-list"></div>
+
+                    <!-- SECTION ACTIVITE OPERATIONNELLE -->
+                    <div class="cab-section">
+                        <div class="cab-section-header">
+                            <h3>🩺 Activité opérationnelle</h3>
+                            <span class="cab-section-hint">Remplacements, stocks salle d'urgence</span>
+                        </div>
+                        <div class="cabinet-stats-row">
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon blue">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Offres de remplacement actives</span>
+                                    <span class="cabinet-stat-value" id="cabOffresActives">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon green">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Candidatures en attente</span>
+                                    <span class="cabinet-stat-value" id="cabCandidaturesAttente">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon teal">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Remplaçants dans le vivier</span>
+                                    <span class="cabinet-stat-value" id="cabVivierRemplacants">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon orange">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Stocks sous seuil</span>
+                                    <span class="cabinet-stat-value" id="cabStocksSousSeuil">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon red">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Produits périmés / proches</span>
+                                    <span class="cabinet-stat-value" id="cabStocksExpires">-</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon purple">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Dernier pointage stocks</span>
+                                    <span class="cabinet-stat-value" id="cabDernierPointage">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="charts-row">
+                            <div class="chart-card small">
+                                <h3>Produits à recommander</h3>
+                                <div id="cabStocksAlerte" class="cab-mini-list"></div>
+                            </div>
+                            <div class="chart-card small">
+                                <h3>Derniers remplacements</h3>
+                                <div id="cabRemplacementsList" class="cab-mini-list"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="recent-section">
-                        <h3>5 dernières recettes
-                            <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            <span class="tooltip-text">Liste des 5 dernières recettes enregistrées, triées par date (la plus récente en haut). Cliquez pour voir le détail.</span></span>
-                        </h3>
-                        <div id="dashRecentRecettes" class="recent-list"></div>
+
+                    <!-- FIL D'ALERTES CONSOLIDE -->
+                    <div class="cab-section">
+                        <div class="cab-section-header">
+                            <h3>🔔 Alertes &amp; actions</h3>
+                            <span class="cab-section-hint">Tout ce qui nécessite une décision des associés</span>
+                        </div>
+                        <div id="cabAlertesList" class="cab-alertes-list"></div>
                     </div>
-                    
-                    <!-- Analyse financiere -->
+
+                    <!-- ANALYSE IA -->
                     <div class="llm-analysis-section">
-                        <h3>Analyse financiere
+                        <h3>Analyse financière
                             <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                             <span class="tooltip-text">Analyse automatique basée sur vos données financières. Cliquez sur le bouton de rafraîchissement pour mettre à jour.</span></span>
                         </h3>
@@ -805,7 +974,7 @@ window.attemptLogin = function() {
                             </div>
                             <div class="llm-card" id="llm-recommandations">
                                 <div class="llm-card-header">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                                     <span>Recommandations</span>
                                 </div>
                                 <div class="llm-card-content" id="llm-recommandations-content">
