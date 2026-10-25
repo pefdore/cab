@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-CGWi3MbO.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-CpiGhy86.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1952,93 +1952,36 @@ window.attemptLogin = function() {
                 <!-- Réunions -->
                 <div id="cabinet-reunions" class="cabinet-tab-content">
                     <div id="reunionCabinetBanner"></div>
-                    <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="reunion">Réunion</button>
-                        <button class="sub-tab" data-subtab="odj">Ordre du jour</button>
-                        <button class="sub-tab" data-subtab="cr">Compte rendu</button>
-                    </div>
+                    <div class="sub-tabs" style="display:none;"></div>
 
-                    <div id="reunions-reunion" class="sub-tab-content active">
-                        <div class="module-card">
-                            <h3>Prochaine réunion de cabinet</h3>
-                            <p class="module-desc">Dans un cabinet, on se croise sans être jamais tous ensemble. Si la date est connue, fixez-la directement. Sinon, proposez plusieurs dates : chacun indique sa disponibilité, la date recueillant le plus de présences est pré-sélectionnée, puis validée.</p>
-                            <div id="reunionCurrentBox"></div>
-                            <button class="action-btn" id="reunionNextBtn" style="display:none;">Programmer la réunion suivante</button>
-                            <div id="reunionScheduleSection">
-                                <div class="form-group">
-                                    <label>Fixer directement la date (si elle est déjà connue)</label>
-                                    <div class="reunion-date-row">
-                                        <input type="date" id="reunionFixDate" class="form-input">
-                                        <input type="time" id="reunionFixTime" class="form-input">
-                                        <button class="action-btn" id="reunionFixBtn">Fixer la date</button>
-                                    </div>
+                    <div class="module-card">
+                        <h3>Réunions de cabinet</h3>
+                        <p class="module-desc">Dans un cabinet, on se croise sans être jamais tous ensemble. Les réunions programmées s'affichent ici ; ouvrez-en une pour gérer son ordre du jour et son compte rendu.</p>
+                        <div id="reunionsList"></div>
+                        <button class="action-btn primary" id="reunionNewDateBtn" style="margin-top:14px;">+ Nouveau processus de date</button>
+                        <div id="reunionScheduleSection" style="display:none;">
+                            <div class="odj-section-label" style="margin-top:18px;">Fixer directement une date (si elle est connue)</div>
+                            <div class="form-group">
+                                <div class="reunion-date-row">
+                                    <input type="date" id="reunionFixDate" class="form-input">
+                                    <input type="time" id="reunionFixTime" class="form-input">
+                                    <button class="action-btn" id="reunionFixBtn">Fixer la date</button>
                                 </div>
-                                <div class="odj-section-label" style="margin-top:18px;">Ou, si la date n'est pas connue, proposez plusieurs dates</div>
-                                <div class="form-group">
-                                    <div class="reunion-date-row">
-                                        <input type="date" id="reunionDateInput" class="form-input">
-                                        <input type="time" id="reunionTimeInput" class="form-input">
-                                        <button class="action-btn primary" id="reunionProposeBtn">Ajouter une date</button>
-                                    </div>
+                            </div>
+                            <div class="odj-section-label" style="margin-top:18px;">Ou proposer plusieurs dates</div>
+                            <div class="form-group">
+                                <div class="reunion-date-row">
+                                    <input type="date" id="reunionDateInput" class="form-input">
+                                    <input type="time" id="reunionTimeInput" class="form-input">
+                                    <button class="action-btn primary" id="reunionProposeBtn">Ajouter une date</button>
                                 </div>
-                                <div id="reunionProposalsList"></div>
-                                <div id="reunionValidateBox"></div>
                             </div>
-                        </div>
-
-                        <div class="module-card">
-                            <h3>Ajouter un sujet à l'ordre du jour</h3>
-                            <p class="module-desc">Chaque associé peut ajouter un ou plusieurs sujets avant la réunion : décrivez le problème posé et proposez une réponse. L'IA contextualisera chaque sujet avec les données du cabinet et donnera son avis.</p>
-                            <div class="form-group">
-                                <label>Intitulé du sujet</label>
-                                <input type="text" id="sujetTitleInput" class="form-input" placeholder="Ex : Répartition des créneaux de permanence du samedi">
-                            </div>
-                            <div class="form-group">
-                                <label>Problème posé</label>
-                                <textarea id="sujetProblemInput" class="form-input" rows="3" placeholder="Décrivez le problème constaté..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Proposition de réponse</label>
-                                <textarea id="sujetProposalInput" class="form-input" rows="3" placeholder="Votre proposition pour résoudre le problème..."></textarea>
-                            </div>
-                            <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                                <button class="action-btn" id="sujetAiBtn">Analyser avec IA (contexte cabinet)</button>
-                                <button class="action-btn primary" id="sujetSubmitBtn">Ajouter à l'ordre du jour</button>
-                            </div>
-                            <div id="sujetAiResult" class="result-container" style="display:none;"></div>
+                            <div id="reunionProposalsList"></div>
+                            <div id="reunionValidateBox"></div>
                         </div>
                     </div>
 
-                    <div id="reunions-odj" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Ordre du jour</h3>
-                            <p class="module-desc">L'ordre du jour est généré 24h avant la réunion, avec la contextualisation IA de chaque sujet. Tous les associés peuvent le lire et, le jour J, voter chaque intitulé depuis leur téléphone.</p>
-                            <div id="odjStatus"></div>
-                            <div id="odjVotesSummary"></div>
-                            <button class="action-btn" id="odjGenerateBtn">Générer l'ordre du jour maintenant</button>
-                            <div id="odjResult"></div>
-                        </div>
-                    </div>
-
-                    <div id="reunions-cr" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Compte rendu</h3>
-                            <p class="module-desc">Après la réunion, saisissez les notes brutes : l'IA met en forme le compte rendu.</p>
-                            <div class="form-group">
-                                <label>Sélectionner la réunion</label>
-                                <select id="reunionSelect" class="form-input">
-                                    <option value="">Choisir une réunion...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Notes de la réunion</label>
-                                <textarea id="crNotes" class="form-input" rows="5" placeholder="Saisissez les notes brutes de la réunion..."></textarea>
-                            </div>
-                            <button class="action-btn primary" id="crGenerateBtn">Générer le CR avec IA</button>
-                            <button class="action-btn" id="crDownloadBtn" style="display:none;">Télécharger le CR</button>
-                            <div id="crResult" class="result-container"></div>
-                        </div>
-                    </div>
+                    <div id="reunionDetailView" style="display:none;"></div>
                 </div>
 <!-- Stocks -->
                 <div id="cabinet-stocks" class="cabinet-tab-content">

@@ -9309,8 +9309,7 @@ window.renderCabinetLifeDashboard = renderCabinetLifeDashboard;
 
 // ============================================
 // RÉUNIONS DE CABINET
-// Fixer une date de réunion, ajouter des sujets à l'ordre du jour,
-// contextualisation IA, ODJ généré 24h avant, votes le jour J, compte rendu.
+// Réunions fixées et en attente de date, sujets, avis IA, ODJ, votes, compte rendu.
 // ============================================
 
 function reunionEsc(s) {
@@ -9324,6 +9323,10 @@ function reunionFmt(dateStr, timeStr) {
     if (timeStr) s += ' à ' + timeStr.replace(':', 'h');
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+let reunionInitialized = false;
+let reunionMyCabinet = null;
+let reunionCurrentId = null;
 
 async function reunionGetCabinetId() {
     if (!supabaseClient || !currentUser) return null;
@@ -9340,6 +9343,30 @@ async function reunionGetCabinetId() {
     }
 }
 
+async function reunionLoadMyCabinet() {
+    if (reunionMyCabinet) return reunionMyCabinet;
+    if (!supabaseClient || !currentUser) return null;
+    try {
+        const cabinetId = await reunionGetCabinetId();
+        if (!cabinetId) { reunionMyCabinet = { none: true }; return reunionMyCabinet; }
+        const { data: cab } = await supabaseClient
+            .from('cabinets')
+            .select('id, name, address')
+            .eq('id', cabinetId)
+            .maybeSingle();
+        reunionMyCabinet = cab || { none: true };
+    } catch (e) {
+        console.error('[REUNIONS] cabinet load error:', e);
+        reunionMyCabinet = { none: true };
+    }
+    return reunionMyCabinet;
+}
+
+function reunionCabinetLabel(cab) {
+    if (!cab || cab.none) return null;
+    return cab.name || cab.address || 'Cabinet';
+}
+
 async function reunionMembers(cabinetId) {
     if (!supabaseClient || !cabinetId) return [];
     try {
@@ -9354,44 +9381,81 @@ async function reunionMembers(cabinetId) {
     }
 }
 
-async function reunionGetFixed() {
-    if (!supabaseClient) return null;
+function reunionMembersById(members) {
+    const byId = {};
+    members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
+    return byId;
+}
+
+async function reunionLoadReunions() {
+    if (!supabaseClient) return [];
     const cabinetId = await reunionGetCabinetId();
-    if (!cabinetId) return null;
+    if (!cabinetId) return [];
+    const today = new Date().toISOString().slice(0, 10);
     try {
         const { data } = await supabaseClient
             .from('reunions')
             .select('*')
             .eq('cabinet_id', cabinetId)
-            .eq('statut', 'fixee')
-            .gte('date_reunion', new Date().toISOString().slice(0, 10))
-            .order('date_reunion', { ascending: true })
-            .limit(1);
-        return data && data.length ? data[0] : null;
+            .gte('date_reunion', today)
+            .order('date_reunion', { ascending: true });
+        if (data && data.length) {
+            const counts = await supabaseClient
+                .from('reunion_sujets')
+                .select('reunion_id');
+            const byReunion = {};
+            (counts.data || []).forEach(s => { byReunion[s.reunion_id] = (byReunion[s.reunion_id] || 0) + 1; });
+            data.forEach(r => { r._sujets_count = byReunion[r.id] || 0; });
+        }
+        return data || [];
     } catch (e) {
-        console.error('[REUNIONS] get fixed error:', e);
-        return null;
+        console.error('[REUNIONS] load reunions error:', e);
+        return [];
     }
 }
 
-async function reunionRenderBox() {
-    const box = document.getElementById('reunionCurrentBox');
-    if (!box) return;
-    const schedule = document.getElementById('reunionScheduleSection');
-    const nextBtn = document.getElementById('reunionNextBtn');
-    const r = await reunionGetFixed();
-    if (r) {
-        box.innerHTML = '<div class="reunion-current"><span>📅</span><span class="reunion-current-date">Réunion fixée : ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</span></div>';
-        if (schedule) schedule.style.display = 'none';
-        if (nextBtn) nextBtn.style.display = 'inline-flex';
-    } else {
-        box.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Fixez directement la date si elle est connue, ou proposez plusieurs dates ci-dessous.</div>';
-        if (schedule) schedule.style.display = 'block';
-        if (nextBtn) nextBtn.style.display = 'none';
+async function reunionLoadSujets(reunionId) {
+    if (!reunionId) return [];
+    const { data } = await supabaseClient
+        .from('reunion_sujets')
+        .select('*')
+        .eq('reunion_id', reunionId)
+        .order('created_at', { ascending: true });
+    return data || [];
+}
+
+async function reunionLoadSujetVotes(sujetIds) {
+    const votes = {};
+    if (!sujetIds.length) return votes;
+    try {
+        const { data } = await supabaseClient
+            .from('reunion_votes')
+            .select('*')
+            .in('sujet_id', sujetIds);
+        (data || []).forEach(v => {
+            votes[v.sujet_id] = votes[v.sujet_id] || [];
+            votes[v.sujet_id].push(v);
+        });
+    } catch (e) {
+        console.error('[REUNIONS] sujet votes error:', e);
     }
-    await reunionRenderProposals();
-    await reunionRefreshOdjStatus();
-    await reunionRenderOdj();
+    return votes;
+}
+
+async function reunionLoadProposals(cabinetId) {
+    if (!cabinetId) return [];
+    try {
+        const { data } = await supabaseClient
+            .from('reunion_date_proposals')
+            .select('*')
+            .eq('cabinet_id', cabinetId)
+            .gte('date_proposee', new Date().toISOString().slice(0, 10))
+            .order('date_proposee', { ascending: true });
+        return data || [];
+    } catch (e) {
+        console.error('[REUNIONS] proposals load error:', e);
+        return [];
+    }
 }
 
 async function reunionLoadDateVotes(proposalIds) {
@@ -9410,6 +9474,11 @@ async function reunionLoadDateVotes(proposalIds) {
         console.error('[REUNIONS] date votes load error:', e);
     }
     return votes;
+}
+
+function reunionIsToday(reunion) {
+    if (!reunion) return false;
+    return reunion.date_reunion === new Date().toISOString().slice(0, 10);
 }
 
 function reunionVoteScore(votesArr) {
@@ -9450,31 +9519,123 @@ function reunionDispHtml(dispArr, byId) {
     return html;
 }
 
-async function reunionDateVote(proposalId, vote) {
-    const cabinetId = await reunionGetCabinetId();
-    if (!cabinetId) return;
-    try {
-        const existing = await supabaseClient
-            .from('reunion_date_votes')
-            .select('id, vote')
-            .eq('proposal_id', proposalId)
-            .eq('user_id', currentUser.id)
-            .maybeSingle();
-        if (existing.data && existing.data.vote === vote) {
-            await supabaseClient.from('reunion_date_votes').delete().eq('id', existing.data.id);
-        } else if (existing.data) {
-            await supabaseClient.from('reunion_date_votes').update({ vote: vote }).eq('id', existing.data.id);
-        } else {
-            const { error } = await supabaseClient
-                .from('reunion_date_votes')
-                .insert({ proposal_id: proposalId, user_id: currentUser.id, vote: vote });
-            if (error) throw error;
+function reunionBestProposal(proposals, votes) {
+    let best = null;
+    proposals.forEach(p => {
+        const arr = votes[p.id] || [];
+        const dispo = arr.filter(v => v.vote === 1).length;
+        const voted = arr.length;
+        if (!best || dispo > best.dispo || (dispo === best.dispo && voted > best.voted)) {
+            best = { p: p, dispo: dispo, voted: voted };
         }
-        await reunionRenderProposals();
-    } catch (e) {
-        console.error('[REUNIONS] date vote error:', e);
-        alert('Erreur de vote : ' + (e.message || e));
+    });
+    return best;
+}
+
+async function reunionRenderCabinetBanner() {
+    const banner = document.getElementById('reunionCabinetBanner');
+    if (!banner) return;
+    const cab = await reunionLoadMyCabinet();
+    const label = reunionCabinetLabel(cab);
+    if (!label) {
+        banner.innerHTML = '<div class="odj-empty">⚠️ Aucun cabinet associé à votre profil : les réunions de cabinet ne sont pas disponibles. Associez votre compte à un cabinet (Paramètres > Profil > Mon cabinet).</div>';
+    } else {
+        banner.innerHTML = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong></div>';
     }
+}
+
+async function renderProfileCabinetBox() {
+    const box = document.getElementById('profileCabinetBox');
+    if (!box || !supabaseClient || !currentUser) return;
+    const cab = await reunionLoadMyCabinet();
+    const label = reunionCabinetLabel(cab);
+    if (!label) {
+        box.innerHTML = '<div class="odj-empty">Aucun cabinet associé. Les modules partagés du cabinet (réunions, ordres du jour, comptabilité) ne sont pas disponibles.</div>';
+    } else {
+        let html = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong>';
+        if (cab.address && cab.name) html += '<span class="sujet-author"> — ' + reunionEsc(cab.address) + '</span>';
+        html += '</div>';
+        const members = await reunionMembers(cab.id);
+        if (members.length) {
+            html += '<div class="odj-voters">Associés dans cet espace : ' + members.map(m => '<span class="odj-voter-chip">' + reunionEsc(m.first_name + ' ' + (m.last_name || '')) + '</span>').join('') + '</div>';
+        }
+        box.innerHTML = html;
+    }
+}
+window.renderProfileCabinetBox = renderProfileCabinetBox;
+
+// ---------- Vue liste des réunions ----------
+
+async function reunionRenderList() {
+    const listEl = document.getElementById('reunionsList');
+    const detailEl = document.getElementById('reunionDetailView');
+    if (!listEl) return;
+    const cabinetId = await reunionGetCabinetId();
+    if (!cabinetId) {
+        listEl.innerHTML = '<div class="odj-empty">Aucun cabinet associé à votre profil.</div>';
+        return;
+    }
+    const reunions = await reunionLoadReunions();
+    const proposals = await reunionLoadProposals(cabinetId);
+    const members = await reunionMembers(cabinetId);
+    const byId = reunionMembersById(members);
+    const dateVotes = await reunionLoadDateVotes(proposals.map(p => p.id));
+    const total = members.length || 1;
+
+    let html = '';
+
+    reunions.forEach(r => {
+        const isToday = reunionIsToday(r);
+        const sujetsCount = r._sujets_count;
+        html += '<div class="reunion-card fixed" data-reunion="' + r.id + '">'
+            + '<div class="reunion-card-date">📅 ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</div>'
+            + '<div class="odj-vote-count">'
+            + (r.odj_genere ? 'Ordre du jour généré' : 'Ordre du jour non généré')
+            + ' · ' + sujetsCount + ' sujet' + (sujetsCount > 1 ? 's' : '')
+            + (isToday ? ' · ⚠️ Aujourd’hui — votes ouverts' : '')
+            + '</div>'
+            + '<button class="action-btn primary reunion-open-btn" data-reunion="' + r.id + '">Ouvrir la réunion</button>'
+            + '</div>';
+    });
+
+    if (proposals.length) {
+        const iAnswered = proposals.every(p => (dateVotes[p.id] || []).some(v => v.user_id === currentUser.id));
+        const best = reunionBestProposal(proposals, dateVotes);
+        const allAnswered = proposals.every(p => (dateVotes[p.id] || []).length >= total);
+        html += '<div class="reunion-card pending">'
+            + '<div class="reunion-card-date">⏳ ' + proposals.length + ' réunion en attente de confirmation de date</div>'
+            + '<div class="odj-vote-count">'
+            + (iAnswered ? '✅ Vous avez donné votre avis sur les dates proposées' : '⚠️ Votre avis est en attente sur les dates proposées')
+            + (best ? ' · Pré-sélection : ' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + ' (' + best.dispo + '/' + total + ' dispo)' : '')
+            + (allAnswered ? ' · tout le monde a répondu' : '')
+            + '</div>'
+            + '<div class="odj-vote-bar">'
+            + '<button class="action-btn odj-vote-btn" data-goto-dates="1">Voir les dates</button>'
+            + '</div>'
+            + '</div>';
+    }
+
+    if (!reunions.length && !proposals.length) {
+        html = '<div class="odj-empty">Aucune réunion programmée. Lancez un nouveau processus de date ci-dessous.</div>';
+    }
+
+    listEl.innerHTML = html;
+    listEl.querySelectorAll('.reunion-open-btn').forEach(btn => {
+        btn.addEventListener('click', () => reunionOpenDetail(btn.dataset.reunion));
+    });
+    listEl.querySelectorAll('[data-goto-dates]').forEach(btn => {
+        btn.addEventListener('click', () => reunionToggleSchedule(true));
+    });
+}
+
+// ---------- Nouveau processus de date ----------
+
+function reunionToggleSchedule(show) {
+    const section = document.getElementById('reunionScheduleSection');
+    if (!section) return;
+    section.style.display = show ? 'block' : 'none';
+    const newBtn = document.getElementById('reunionNewDateBtn');
+    if (newBtn) newBtn.style.display = show ? 'none' : 'inline-flex';
 }
 
 async function reunionRenderProposals() {
@@ -9483,27 +9644,13 @@ async function reunionRenderProposals() {
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { list.innerHTML = ''; return; }
     try {
-        const { data } = await supabaseClient
-            .from('reunion_date_proposals')
-            .select('*')
-            .eq('cabinet_id', cabinetId)
-            .gte('date_proposee', new Date().toISOString().slice(0, 10))
-            .order('date_proposee', { ascending: true });
-        if (!data || !data.length) { list.innerHTML = ''; const vb = document.getElementById('reunionValidateBox'); if (vb) vb.innerHTML = ''; return; }
+        const data = await reunionLoadProposals(cabinetId);
+        if (!data.length) { list.innerHTML = ''; const vb = document.getElementById('reunionValidateBox'); if (vb) vb.innerHTML = ''; return; }
         const members = await reunionMembers(cabinetId);
-        const byId = {};
-        members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
+        const byId = reunionMembersById(members);
         const votes = await reunionLoadDateVotes(data.map(p => p.id));
         const total = members.length || 1;
-        let best = null;
-        data.forEach(p => {
-            const arr = votes[p.id] || [];
-            const dispo = arr.filter(v => v.vote === 1).length;
-            const voted = arr.length;
-            if (!best || dispo > best.dispo || (dispo === best.dispo && voted > best.voted)) {
-                best = { p: p, dispo: dispo, voted: voted };
-            }
-        });
+        const best = reunionBestProposal(data, votes);
         let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées — indiquez votre disponibilité sur chaque date</h4>';
         data.forEach(p => {
             const arr = votes[p.id] || [];
@@ -9537,31 +9684,47 @@ async function reunionRenderValidateBox(proposals, votes, members) {
     if (!box) return;
     if (!proposals || !proposals.length) { box.innerHTML = ''; return; }
     const total = members.length || 1;
-    let best = null;
-    proposals.forEach(p => {
-        const arr = votes[p.id] || [];
-        const dispo = arr.filter(v => v.vote === 1).length;
-        const voted = arr.length;
-        if (!best || dispo > best.dispo || (dispo === best.dispo && voted > best.voted)) {
-            best = { p: p, dispo: dispo, voted: voted };
-        }
-    });
-    const allVoted = proposals.every(p => (votes[p.id] || []).length >= total);
+    const best = reunionBestProposal(proposals, votes);
+    const allAnswered = proposals.every(p => (votes[p.id] || []).length >= total);
     box.innerHTML = '<div class="reunion-cabinet-banner" style="margin-top:14px;">'
-        + (allVoted ? 'Tout le monde a répondu. ' : '')
+        + (allAnswered ? 'Tout le monde a répondu. ' : '')
         + 'Date pré-sélectionnée : <strong>' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + '</strong> (' + best.dispo + '/' + total + ' disponibles)'
         + '</div>'
-        + '<button class="action-btn primary" id="reunionValidateBtn" data-id="' + best.p.id + '" style="margin-top:10px;">Valider cette date</button>';
-    box.querySelector('#reunionValidateBtn').addEventListener('click', () => reunionValidateDate(best.p));
+        + '<button class="action-btn primary" id="reunionValidateBtn" style="margin-top:10px;">Valider cette date</button>';
+    box.querySelector('#reunionValidateBtn').addEventListener('click', () => {
+        const dateEl = document.getElementById('reunionFixDate');
+        const timeEl = document.getElementById('reunionFixTime');
+        if (!dateEl) return;
+        dateEl.value = best.p.date_proposee;
+        if (timeEl) timeEl.value = best.p.heure_proposee || '18:00';
+        reunionFixDate();
+    });
 }
 
-async function reunionValidateDate(proposal) {
-    const dateEl = document.getElementById('reunionFixDate');
-    const timeEl = document.getElementById('reunionFixTime');
-    if (!dateEl) return;
-    dateEl.value = proposal.date_proposee;
-    if (timeEl) timeEl.value = proposal.heure_proposee || '18:00';
-    await reunionFixDate();
+async function reunionDateVote(proposalId, vote) {
+    try {
+        const existing = await supabaseClient
+            .from('reunion_date_votes')
+            .select('id, vote')
+            .eq('proposal_id', proposalId)
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
+        if (existing.data && existing.data.vote === vote) {
+            await supabaseClient.from('reunion_date_votes').delete().eq('id', existing.data.id);
+        } else if (existing.data) {
+            await supabaseClient.from('reunion_date_votes').update({ vote: vote }).eq('id', existing.data.id);
+        } else {
+            const { error } = await supabaseClient
+                .from('reunion_date_votes')
+                .insert({ proposal_id: proposalId, user_id: currentUser.id, vote: vote });
+            if (error) throw error;
+        }
+        await reunionRenderProposals();
+        await reunionRenderList();
+    } catch (e) {
+        console.error('[REUNIONS] date vote error:', e);
+        alert('Erreur de vote : ' + (e.message || e));
+    }
 }
 
 async function reunionProposeDate() {
@@ -9577,6 +9740,7 @@ async function reunionProposeDate() {
         if (error) throw error;
         document.getElementById('reunionDateInput').value = '';
         await reunionRenderProposals();
+        await reunionRenderList();
     } catch (e) {
         console.error('[REUNIONS] propose error:', e);
         alert('Erreur lors de la proposition : ' + (e.message || e));
@@ -9590,18 +9754,106 @@ async function reunionFixDate() {
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
     try {
-        await supabaseClient.from('reunions').update({ statut: 'annulee' }).eq('cabinet_id', cabinetId).eq('statut', 'fixee');
         const { error } = await supabaseClient
             .from('reunions')
             .insert({ cabinet_id: cabinetId, user_id: currentUser.id, date_reunion: date, heure_reunion: time, statut: 'fixee' });
         if (error) throw error;
-        await reunionRenderBox();
-        await reunionRefreshOdjStatus();
+        await reunionRenderProposals();
+        await reunionRenderList();
+        alert('Réunion fixée le ' + reunionFmt(date, time) + '.');
     } catch (e) {
         console.error('[REUNIONS] fix error:', e);
         alert('Erreur : ' + (e.message || e));
     }
 }
+
+// ---------- Vue détail d'une réunion (sujets, ODJ, votes, CR) ----------
+
+async function reunionOpenDetail(reunionId) {
+    reunionCurrentId = reunionId;
+    const detailEl = document.getElementById('reunionDetailView');
+    if (!detailEl) return;
+    detailEl.style.display = 'block';
+    detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    await reunionRenderDetail();
+}
+
+async function reunionCloseDetail() {
+    reunionCurrentId = null;
+    const detailEl = document.getElementById('reunionDetailView');
+    if (detailEl) detailEl.style.display = 'none';
+}
+
+async function reunionGetCurrent() {
+    if (!reunionCurrentId || !supabaseClient) return null;
+    const { data } = await supabaseClient
+        .from('reunions')
+        .select('*')
+        .eq('id', reunionCurrentId)
+        .maybeSingle();
+    return data || null;
+}
+
+async function reunionRenderDetail() {
+    const detailEl = document.getElementById('reunionDetailView');
+    if (!detailEl || !reunionCurrentId) return;
+    const r = await reunionGetCurrent();
+    if (!r) { detailEl.innerHTML = '<div class="odj-empty">Réunion introuvable.</div>'; return; }
+    const cabinetId = await reunionGetCabinetId();
+    const members = await reunionMembers(cabinetId);
+    const byId = reunionMembersById(members);
+    const sujets = await reunionLoadSujets(r.id);
+    const votes = await reunionLoadSujetVotes(sujets.map(s => s.id));
+    const canVote = reunionIsToday(r);
+
+    let html = '<div class="module-card">'
+        + '<div class="reunion-detail-header">'
+        + '<h3>Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</h3>'
+        + '<button class="action-btn" id="reunionDetailCloseBtn">Fermer</button>'
+        + '</div>';
+
+    html += '<h4 style="margin-top:14px;">Ajouter un sujet à l’ordre du jour</h4>'
+        + '<div class="form-group"><label>Intitulé du sujet</label>'
+        + '<input type="text" id="sujetTitleInput" class="form-input" placeholder="Ex : Répartition des créneaux de permanence du samedi"></div>'
+        + '<div class="form-group"><label>Problème posé</label>'
+        + '<textarea id="sujetProblemInput" class="form-input" rows="3" placeholder="Décrivez le problème constaté..."></textarea></div>'
+        + '<div class="form-group"><label>Proposition de réponse</label>'
+        + '<textarea id="sujetProposalInput" class="form-input" rows="3" placeholder="Votre proposition pour résoudre le problème..."></textarea></div>'
+        + '<div style="display:flex; gap:12px; flex-wrap:wrap;">'
+        + '<button class="action-btn" id="sujetAiBtn">Analyser avec IA (contexte cabinet)</button>'
+        + '<button class="action-btn primary" id="sujetSubmitBtn">Ajouter à l’ordre du jour</button>'
+        + '</div>'
+        + '<div id="sujetAiResult" class="result-container" style="display:none;"></div>';
+
+    html += '<div id="odjStatus"></div>'
+        + '<button class="action-btn" id="odjGenerateBtn">Générer l’ordre du jour avec IA</button>'
+        + '<div id="odjResult"></div>';
+
+    html += '<div id="crBox" style="margin-top:18px;">'
+        + '<h4>Compte rendu</h4>'
+        + '<div class="form-group"><label>Notes de la réunion</label>'
+        + '<textarea id="crNotes" class="form-input" rows="4" placeholder="Saisissez les notes brutes pendant ou après la réunion..."></textarea></div>'
+        + '<button class="action-btn primary" id="crGenerateBtn">Générer le CR avec IA</button>'
+        + '<button class="action-btn" id="crDownloadBtn" style="display:none;">Télécharger le CR</button>'
+        + '<div id="crResult" class="result-container"></div>'
+        + '</div>';
+
+    html += '</div>';
+    detailEl.innerHTML = html;
+
+    detailEl.querySelector('#reunionDetailCloseBtn').addEventListener('click', reunionCloseDetail);
+    detailEl.querySelector('#sujetAiBtn').addEventListener('click', sujetAnalyzeWithAI);
+    detailEl.querySelector('#sujetSubmitBtn').addEventListener('click', sujetSubmit);
+    detailEl.querySelector('#odjGenerateBtn').addEventListener('click', generateODJ);
+    detailEl.querySelector('#crGenerateBtn').addEventListener('click', generateCR);
+    const crDl = detailEl.querySelector('#crDownloadBtn');
+    if (crDl) crDl.addEventListener('click', downloadCR);
+
+    await reunionRefreshOdjStatus();
+    await reunionRenderOdj();
+}
+
+// ---------- Sujets et avis IA ----------
 
 async function sujetAnalyzeWithAI() {
     const title = document.getElementById('sujetTitleInput')?.value.trim();
@@ -9616,16 +9868,16 @@ async function sujetAnalyzeWithAI() {
         const cabinetId = await reunionGetCabinetId();
         if (cabinetId && supabaseClient) {
             const members = await reunionMembers(cabinetId);
-            const depts = [];
+            const ops = [];
             try {
                 const { data: d } = await supabaseClient.from('cabinet_depenses').select('categorie, montant, date').eq('user_id', currentUser.id).order('date', { ascending: false }).limit(30);
-                if (d) depts.push(...d);
+                if (d) ops.push(...d);
             } catch (e) {}
             try {
-                const { data: r } = await supabaseClient.from('cabinet_recettes').select('categorie, montant, date').eq('user_id', currentUser.id).order('date', { ascending: false }).limit(30);
-                if (r) depts.push(...r);
+                const { data: rec } = await supabaseClient.from('cabinet_recettes').select('categorie, montant, date').eq('user_id', currentUser.id).order('date', { ascending: false }).limit(30);
+                if (rec) ops.push(...rec);
             } catch (e) {}
-            context = '\n\nDonnées du cabinet :\n- Associés : ' + (members.map(m => m.first_name + ' ' + (m.last_name || '')).join(', ') || 'inconnus') + '\n- ' + depts.length + ' dernières opérations comptables : ' + depts.map(o => (o.categorie || '?') + ' ' + (o.montant || '') + '€ (' + (o.date || '') + ')').join('; ');
+            context = '\n\nDonnées du cabinet :\n- Associés : ' + (members.map(m => m.first_name + ' ' + (m.last_name || '')).join(', ') || 'inconnus') + '\n- ' + ops.length + ' dernières opérations comptables : ' + ops.map(o => (o.categorie || '?') + ' ' + (o.montant || '') + '€ (' + (o.date || '') + ')').join('; ');
         }
     } catch (e) {
         console.error('[REUNIONS] context error:', e);
@@ -9645,13 +9897,12 @@ async function sujetSubmit() {
     const proposal = document.getElementById('sujetProposalInput')?.value.trim();
     const ai = document.getElementById('sujetAiResult')?.innerText.trim() || '';
     if (!title) { alert('Donnez un intitulé au sujet.'); return; }
-    const reunion = await reunionGetFixed();
-    if (!reunion) { alert('Fixez d’abord la date de la réunion dans l’onglet Réunion.'); return; }
+    if (!reunionCurrentId) { alert('Ouvrez une réunion fixée.'); return; }
     try {
         const { error } = await supabaseClient
             .from('reunion_sujets')
             .insert({
-                reunion_id: reunion.id,
+                reunion_id: reunionCurrentId,
                 user_id: currentUser.id,
                 titre: title,
                 probleme: problem,
@@ -9664,6 +9915,7 @@ async function sujetSubmit() {
         document.getElementById('sujetProposalInput').value = '';
         document.getElementById('sujetAiResult').style.display = 'none';
         await reunionRenderOdj();
+        await reunionRenderList();
         alert('Sujet ajouté à l’ordre du jour.');
     } catch (e) {
         console.error('[REUNIONS] submit sujet error:', e);
@@ -9671,68 +9923,84 @@ async function sujetSubmit() {
     }
 }
 
-function reunionIsToday(reunion) {
-    if (!reunion) return false;
-    const today = new Date().toISOString().slice(0, 10);
-    return reunion.date_reunion === today;
-}
-
-function reunionIsWithin24h(reunion) {
-    if (!reunion) return false;
-    const d = new Date(reunion.date_reunion + 'T' + (reunion.heure_reunion || '00:00'));
-    const diff = d.getTime() - Date.now();
-    return diff <= 24 * 3600 * 1000 && diff > -24 * 3600 * 1000;
-}
+// ---------- ODJ ----------
 
 async function reunionRefreshOdjStatus() {
     const st = document.getElementById('odjStatus');
-    if (st) {
-        const r = await reunionGetFixed();
-        if (!r) {
-            st.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Fixez d’abord une date dans l’onglet Réunion.</div>';
-        } else if (r.odj_genere) {
-            st.innerHTML = '<div class="odj-empty">Ordre du jour généré — ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. Tous les associés peuvent le lire' + (reunionIsToday(r) ? ' et voter chaque intitulé aujourd’hui.' : '.') + '</div>';
-            await reunionRenderVotesSummary();
-        } else if (reunionIsWithin24h(r)) {
-            st.innerHTML = '<div class="odj-empty">La réunion est dans moins de 24h — l’ordre du jour n’est pas encore généré. Utilisez le bouton ci-dessous ou il sera généré automatiquement.</div>';
-        } else {
-            st.innerHTML = '<div class="odj-empty">Réunion fixée le ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. L’ordre du jour sera généré 24h avant. Vous pouvez l’anticiper avec le bouton ci-dessous.</div>';
-        }
+    if (!st) return;
+    const r = await reunionGetCurrent();
+    if (!r) { st.innerHTML = ''; return; }
+    const cabinetId = await reunionGetCabinetId();
+    const members = await reunionMembers(cabinetId);
+    const sujets = await reunionLoadSujets(r.id);
+    const votes = await reunionLoadSujetVotes(sujets.map(s => s.id));
+    const canVote = reunionIsToday(r);
+    let best = null;
+    sujets.forEach(s => {
+        const sc = reunionVoteScore(votes[s.id] || []);
+        if (!best || sc.score > best.score) best = { s: s, sc: sc };
+    });
+    let html = '';
+    if (r.odj_genere) {
+        html += '<div class="odj-empty">Ordre du jour généré' + (canVote ? ' — votes ouverts aujourd’hui.' : '.') + '</div>';
+    } else if (sujets.length) {
+        html += '<div class="odj-empty">' + sujets.length + ' sujet' + (sujets.length > 1 ? 's' : '') + ' soumis. Générez l’ordre du jour pour que tous les associés puissent le lire.</div>';
+    } else {
+        html += '<div class="odj-empty">Aucun sujet soumis pour cette réunion.</div>';
     }
-}
-
-async function reunionLoadSujets(reunion) {
-    if (!reunion) return [];
-    const { data } = await supabaseClient
-        .from('reunion_sujets')
-        .select('*')
-        .eq('reunion_id', reunion.id)
-        .order('created_at', { ascending: true });
-    return data || [];
-}
-
-async function reunionLoadVotes(sujetIds) {
-    const votes = {};
-    if (!sujetIds.length) return votes;
-    try {
-        const { data } = await supabaseClient
-            .from('reunion_votes')
-            .select('*')
-            .in('sujet_id', sujetIds);
-        (data || []).forEach(v => {
-            votes[v.sujet_id] = votes[v.sujet_id] || [];
-            votes[v.sujet_id].push(v);
+    if (sujets.length && votes) {
+        html += '<div class="reunion-cabinet-banner" style="margin-top:8px;"><strong>Résultats des votes</strong>';
+        sujets.forEach((s, i) => {
+            const sc = reunionVoteScore(votes[s.id] || []);
+            html += '<div class="odj-vote-count">' + (i + 1) + '. ' + reunionEsc(s.titre) + ' — ' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>';
         });
-    } catch (e) {
-        console.error('[REUNIONS] votes error:', e);
+        html += '</div>';
     }
-    return votes;
+    st.innerHTML = html;
+}
+
+async function reunionRenderOdj() {
+    const container = document.getElementById('odjResult');
+    if (!container || !reunionCurrentId) return;
+    const r = await reunionGetCurrent();
+    if (!r) { container.innerHTML = ''; return; }
+    const sujets = await reunionLoadSujets(r.id);
+    if (!sujets.length) { container.innerHTML = '<div class="odj-empty">Aucun sujet soumis pour cette réunion.</div>'; return; }
+    const cabinetId = await reunionGetCabinetId();
+    const members = await reunionMembers(cabinetId);
+    const byId = reunionMembersById(members);
+    const votes = await reunionLoadSujetVotes(sujets.map(s => s.id));
+    const canVote = reunionIsToday(r);
+    container.innerHTML = sujets.map((s, i) => {
+        const arr = votes[s.id] || [];
+        const mine = arr.find(v => v.user_id === currentUser.id);
+        let html = '<div class="odj-item">'
+            + '<div class="sujet-title">' + (i + 1) + '. ' + reunionEsc(s.titre) + '</div>'
+            + '<div class="odj-author">Proposé par ' + reunionEsc(byId[s.user_id] || 'un associé') + '</div>';
+        if (s.probleme) html += '<div class="odj-section-label">Problème posé</div><div class="odj-section-text">' + reunionEsc(s.probleme) + '</div>';
+        if (s.proposition) html += '<div class="odj-section-label">Proposition</div><div class="odj-section-text">' + reunionEsc(s.proposition) + '</div>';
+        if (s.analyse_ia) html += '<div class="odj-section-label">Avis de l’IA (contexte cabinet)</div><div class="odj-section-text">' + reunionEsc(s.analyse_ia) + '</div>';
+        html += '<div class="odj-vote-bar">'
+            + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 1 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="1"' + (canVote ? '' : ' disabled') + '>👍 Pour</button>'
+            + '<button class="action-btn odj-vote-btn no ' + (mine && mine.vote === -1 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="-1"' + (canVote ? '' : ' disabled') + '>👎 Contre</button>'
+            + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 0 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="0"' + (canVote ? '' : ' disabled') + '>✋ Abstention</button>'
+            + '</div>';
+        const sc = reunionVoteScore(arr);
+        html += '<div class="odj-vote-count">' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>';
+        html += reunionVotersHtml(arr, byId);
+        html += '</div>';
+        return html;
+    }).join('');
+    container.querySelectorAll('.odj-vote-btn').forEach(btn => {
+        btn.addEventListener('click', () => reunionVote(btn.dataset.vote, parseInt(btn.dataset.val, 10)));
+    });
+    await reunionRefreshOdjStatus();
 }
 
 async function reunionVote(sujetId, vote) {
-    const reunion = await reunionGetFixed();
-    if (!reunion) return;
-    if (!reunionIsToday(reunion)) { alert('Le vote est ouvert le jour de la réunion.'); return; }
+    if (!reunionCurrentId) return;
+    const r = await reunionGetCurrent();
+    if (!r || !reunionIsToday(r)) { alert('Le vote est ouvert le jour de la réunion.'); return; }
     try {
         const existing = await supabaseClient
             .from('reunion_votes')
@@ -9757,75 +10025,9 @@ async function reunionVote(sujetId, vote) {
     }
 }
 
-async function reunionRenderVotesSummary() {
-    const box = document.getElementById('odjVotesSummary');
-    if (!box) return;
-    const reunion = await reunionGetFixed();
-    if (!reunion) { box.innerHTML = ''; return; }
-    const sujets = await reunionLoadSujets(reunion);
-    if (!sujets.length) { box.innerHTML = ''; return; }
-    const cabinetId = await reunionGetCabinetId();
-    const members = await reunionMembers(cabinetId);
-    const byId = {};
-    members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
-    const votes = await reunionLoadVotes(sujets.map(s => s.id));
-    let html = '';
-    sujets.forEach((s, i) => {
-        const sc = reunionVoteScore(votes[s.id] || []);
-        html += '<div class="odj-vote-count">' + (i + 1) + '. ' + reunionEsc(s.titre) + ' — ' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>';
-    });
-    box.innerHTML = '<h4 style="margin-top:16px;">Résultats des votes</h4>' + html;
-}
-
-async function reunionRenderOdj() {
-    const container = document.getElementById('odjResult');
-    if (!container) return;
-    const reunion = await reunionGetFixed();
-    if (!reunion) {
-        container.innerHTML = '<div class="odj-empty">Aucune réunion fixée.</div>';
-        return;
-    }
-    const sujets = await reunionLoadSujets(reunion);
-    if (!sujets.length) {
-        container.innerHTML = '<div class="odj-empty">Aucun sujet soumis pour cette réunion. Ajoutez des sujets depuis l’onglet Réunion.</div>';
-        return;
-    }
-    const cabinetId = await reunionGetCabinetId();
-    const members = await reunionMembers(cabinetId);
-    const byId = {};
-    members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
-    const votes = await reunionLoadVotes(sujets.map(s => s.id));
-    const canVote = reunionIsToday(reunion);
-    container.innerHTML = sujets.map((s, i) => {
-        const arr = votes[s.id] || [];
-        const sc = reunionVoteScore(arr);
-        const mine = arr.find(v => v.user_id === currentUser.id);
-        let html = '<div class="odj-item">'
-            + '<div class="sujet-title">' + (i + 1) + '. ' + reunionEsc(s.titre) + '</div>'
-            + '<div class="odj-author">Proposé par ' + reunionEsc(byId[s.user_id] || 'un associé') + '</div>';
-        if (s.probleme) html += '<div class="odj-section-label">Problème posé</div><div class="odj-section-text">' + reunionEsc(s.probleme) + '</div>';
-        if (s.proposition) html += '<div class="odj-section-label">Proposition</div><div class="odj-section-text">' + reunionEsc(s.proposition) + '</div>';
-        if (s.analyse_ia) html += '<div class="odj-section-label">Avis de l’IA (contexte cabinet)</div><div class="odj-section-text">' + reunionEsc(s.analyse_ia) + '</div>';
-        html += '<div class="odj-vote-bar">'
-            + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 1 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="1"' + (canVote ? '' : ' disabled') + '>👍 Pour</button>'
-            + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === -1 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="-1"' + (canVote ? '' : ' disabled') + '>👎 Contre</button>'
-            + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 0 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="0"' + (canVote ? '' : ' disabled') + '>✋ Abstention</button>'
-            + '</div>'
-            + '<div class="odj-vote-count">' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>'
-            + reunionVotersHtml(arr, byId);
-        html += '</div>';
-        return html;
-    }).join('');
-    container.querySelectorAll('.odj-vote-btn').forEach(btn => {
-        btn.addEventListener('click', () => reunionVote(btn.dataset.vote, parseInt(btn.dataset.val, 10)));
-    });
-    await reunionRenderVotesSummary();
-}
-
 async function generateODJ() {
-    const reunion = await reunionGetFixed();
-    if (!reunion) { alert('Fixez d’abord une réunion.'); return; }
-    const sujets = await reunionLoadSujets(reunion);
+    if (!reunionCurrentId) { alert('Ouvrez une réunion fixée.'); return; }
+    const sujets = await reunionLoadSujets(reunionCurrentId);
     if (!sujets.length) { alert('Aucun sujet soumis pour cette réunion.'); return; }
     let summary = '';
     try {
@@ -9839,10 +10041,11 @@ async function generateODJ() {
         const { error } = await supabaseClient
             .from('reunions')
             .update({ odj_genere: true, odj_contenu: summary })
-            .eq('id', reunion.id);
+            .eq('id', reunionCurrentId);
         if (error) throw error;
         await reunionRefreshOdjStatus();
         await reunionRenderOdj();
+        await reunionRenderList();
         alert('Ordre du jour généré. Il est visible par tous les associés.');
     } catch (e) {
         console.error('[REUNIONS] ODJ save error:', e);
@@ -9850,45 +10053,27 @@ async function generateODJ() {
     }
 }
 
-async function reunionRefreshSelect() {
-    const sel = document.getElementById('reunionSelect');
-    if (!sel || !supabaseClient) return;
-    const cabinetId = await reunionGetCabinetId();
-    if (!cabinetId) return;
-    try {
-        const { data } = await supabaseClient
-            .from('reunions')
-            .select('*')
-            .eq('cabinet_id', cabinetId)
-            .order('date_reunion', { ascending: false })
-            .limit(20);
-        const prev = sel.value;
-        sel.innerHTML = '<option value="">Choisir une réunion...</option>' + (data || []).map(r => '<option value="' + r.id + '">' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</option>').join('');
-        if (prev) sel.value = prev;
-    } catch (e) {
-        console.error('[REUNIONS] select error:', e);
-    }
-}
+// ---------- Compte rendu ----------
 
 let reunionLastCR = null;
 
 async function generateCR() {
-    const sel = document.getElementById('reunionSelect');
     const notes = document.getElementById('crNotes')?.value.trim();
-    if (!sel || !sel.value) { alert('Choisissez une réunion.'); return; }
     if (!notes) { alert('Saisissez les notes de la réunion.'); return; }
+    if (!reunionCurrentId) { alert('Ouvrez une réunion.'); return; }
     const out = document.getElementById('crResult');
     out.innerHTML = 'Génération du compte rendu...';
     let odj = '';
     try {
-        const { data: r } = await supabaseClient.from('reunions').select('odj_contenu, date_reunion').eq('id', sel.value).single();
+        const r = await reunionGetCurrent();
         odj = r?.odj_contenu || '';
     } catch (e) {}
     try {
         const prompt = 'Rédige le compte rendu d’une réunion de cabinet médical.\nOrdre du jour :\n' + (odj || '(non disponible)') + '\n\nNotes brutes prises pendant la réunion :\n' + notes + '\n\nStructure : décisions prises par sujet, actions à mener, responsables et échéances.';
         const cr = await window.callLLM(prompt, 'generate_cr');
         reunionLastCR = cr;
-        document.getElementById('crDownloadBtn').style.display = 'inline-flex';
+        const dl = document.getElementById('crDownloadBtn');
+        if (dl) dl.style.display = 'inline-flex';
         out.innerHTML = '<h4>Compte rendu</h4><div style="white-space:pre-wrap;">' + reunionEsc(cr) + '</div>';
     } catch (e) {
         out.innerHTML = 'Erreur IA : ' + reunionEsc(e.message || e);
@@ -9905,97 +10090,22 @@ function downloadCR() {
     URL.revokeObjectURL(a.href);
 }
 
-let reunionInitialized = false;
-let reunionMyCabinet = null;
-
-async function reunionLoadMyCabinet() {
-    if (reunionMyCabinet) return reunionMyCabinet;
-    if (!supabaseClient || !currentUser) return null;
-    try {
-        const { data: profile } = await supabaseClient
-            .from('profiles')
-            .select('cabinet_id')
-            .eq('id', currentUser.id)
-            .single();
-        if (!profile?.cabinet_id) { reunionMyCabinet = { none: true }; return reunionMyCabinet; }
-        const { data: cab } = await supabaseClient
-            .from('cabinets')
-            .select('id, name, address')
-            .eq('id', profile.cabinet_id)
-            .maybeSingle();
-        reunionMyCabinet = cab || { none: true };
-    } catch (e) {
-        console.error('[REUNIONS] cabinet load error:', e);
-        reunionMyCabinet = { none: true };
-    }
-    return reunionMyCabinet;
-}
-
-function reunionCabinetLabel(cab) {
-    if (!cab || cab.none) return null;
-    return cab.name || cab.address || 'Cabinet';
-}
-
-async function reunionRenderCabinetBanner() {
-    const banner = document.getElementById('reunionCabinetBanner');
-    if (!banner) return;
-    const cab = await reunionLoadMyCabinet();
-    const label = reunionCabinetLabel(cab);
-    if (!label) {
-        banner.innerHTML = '<div class="odj-empty">⚠️ Aucun cabinet associé à votre profil : les réunion de cabinet ne sont pas disponibles. Associez votre compte à un cabinet (Paramètres > Profil > Mon cabinet).</div>';
-    } else {
-        banner.innerHTML = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong></div>';
-    }
-}
-
-async function renderProfileCabinetBox() {
-    const box = document.getElementById('profileCabinetBox');
-    if (!box || !supabaseClient || !currentUser) return;
-    const cab = await reunionLoadMyCabinet();
-    const label = reunionCabinetLabel(cab);
-    if (!label) {
-        box.innerHTML = '<div class="odj-empty">Aucun cabinet associé. Les modules partagés du cabinet (réunions, ordres du jour, comptabilité) ne sont pas disponibles.</div>';
-    } else {
-        let html = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong>';
-        if (cab.address && cab.name) html += '<span class="sujet-author"> — ' + reunionEsc(cab.address) + '</span>';
-        html += '</div>';
-        const members = await reunionMembers(cab.id);
-        if (members.length) {
-            html += '<div class="odj-voters">Associés dans cet espace : ' + members.map(m => '<span class="odj-voter-chip">' + reunionEsc(m.first_name + ' ' + (m.last_name || '')) + '</span>').join('') + '</div>';
-        }
-        box.innerHTML = html;
-    }
-}
-window.renderProfileCabinetBox = renderProfileCabinetBox;
+// ---------- Init ----------
 
 async function reunionInit() {
     if (!supabaseClient || !currentUser) return;
     await reunionRenderCabinetBanner();
-    await reunionRenderBox();
-    await reunionRefreshOdjStatus();
-    await reunionRenderOdj();
-    await reunionRefreshSelect();
+    await reunionRenderList();
+    await reunionRenderProposals();
+    reunionToggleSchedule(false);
 
     const proposeBtn = document.getElementById('reunionProposeBtn');
     if (proposeBtn) proposeBtn.addEventListener('click', reunionProposeDate);
     const fixBtn = document.getElementById('reunionFixBtn');
     if (fixBtn) fixBtn.addEventListener('click', reunionFixDate);
-    const nextBtn2 = document.getElementById('reunionNextBtn');
-    if (nextBtn2) nextBtn2.addEventListener('click', () => {
-        const schedule = document.getElementById('reunionScheduleSection');
-        if (schedule) schedule.style.display = 'block';
-        nextBtn2.style.display = 'none';
-    });
-    const aiBtn = document.getElementById('sujetAiBtn');
-    if (aiBtn) aiBtn.addEventListener('click', sujetAnalyzeWithAI);
-    const submitBtn = document.getElementById('sujetSubmitBtn');
-    if (submitBtn) submitBtn.addEventListener('click', sujetSubmit);
-    const odjBtn = document.getElementById('odjGenerateBtn');
-    if (odjBtn) odjBtn.addEventListener('click', generateODJ);
-    const crBtn = document.getElementById('crGenerateBtn');
-    if (crBtn) crBtn.addEventListener('click', generateCR);
-    const crDl = document.getElementById('crDownloadBtn');
-    if (crDl) crDl.addEventListener('click', downloadCR);
+    const newBtn = document.getElementById('reunionNewDateBtn');
+    if (newBtn) newBtn.addEventListener('click', () => reunionToggleSchedule(true));
 }
 
 window.reunionInit = reunionInit;
+
