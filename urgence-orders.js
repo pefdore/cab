@@ -219,7 +219,7 @@ function urgenceRenderOrders() {
         const pending = urgenceData.orders.filter(o => o.status === 'pending');
         pendingEl.innerHTML = pending.length === 0
             ? '<p class="urgence-empty">Aucune commande en attente. Générez-en une depuis le pointage ou le bouton « Créer la commande à passer ».</p>'
-            : pending.map(o => urgenceOrderCardHtml(o)).join('');
+            : pending.map(o => urgenceOrderEditCardHtml(o)).join('');
     }
 
     const histEl = document.getElementById('urgenceOrdersHistory');
@@ -229,6 +229,114 @@ function urgenceRenderOrders() {
             ? '<p class="urgence-empty">Aucun historique pour l\'instant.</p>'
             : others.map(o => urgenceOrderCardHtml(o)).join('');
     }
+
+    if (pendingEl) urgenceBindOrderEditEvents(pendingEl);
+}
+
+function urgenceOrderEditCardHtml(o) {
+    const dateStr = new Date(o.createdAt).toLocaleDateString('fr-FR');
+    const rows = o.items.map((i, idx) => `
+        <div class="urgence-order-edit-row" data-idx="${idx}">
+            <div class="urgence-order-edit-name">
+                <strong>${urgenceEscapeHtml(i.name)}</strong>
+                <span class="urgence-pointage-sub">${urgenceEscapeHtml(urgenceCategoryLabel((urgenceData.products.find(p => p.id === i.productId) || {}).category))}</span>
+            </div>
+            <div class="urgence-order-edit-fields">
+                <label>Qté
+                    <input type="number" min="1" class="form-input urgence-order-qty" data-idx="${idx}" value="${i.qty}">
+                </label>
+                <label>Coût TTC / ${urgenceEscapeHtml(i.unit)}
+                    <input type="number" min="0" step="0.01" class="form-input urgence-order-price" data-idx="${idx}" value="${i.unitPrice || ''}" placeholder="€">
+                </label>
+                <span class="urgence-order-line-total" data-linetotal="${idx}">${i.unitPrice ? urgenceFmtEur(i.qty * i.unitPrice) : '—'}</span>
+                <button class="action-btn" onclick="urgenceOrderRemoveItem('${o.id}', ${idx})" title="Retirer de la commande">🗑️</button>
+            </div>
+        </div>`).join('');
+
+    const notInOrder = urgenceData.products.filter(p => !o.items.some(i => i.productId === p.id));
+    const addSelect = notInOrder.length > 0
+        ? `<select class="form-input urgence-order-add-select" data-order="${o.id}">
+               <option value="">+ Ajouter une référence…</option>
+               ${notInOrder.map(p => `<option value="${p.id}">${urgenceEscapeHtml(p.name)}</option>`).join('')}
+           </select>`
+        : '';
+
+    return `
+        <div class="urgence-order-card" data-order="${o.id}">
+            <div class="urgence-order-head">
+                <strong>Commande du ${dateStr} — en préparation</strong>
+                <span class="urgence-state warning">À passer / en attente</span>
+            </div>
+            <div class="urgence-order-edit-list">${rows}</div>
+            <div class="urgence-order-add-row">
+                ${addSelect}
+            </div>
+            <div class="urgence-order-foot">
+                <span>Total TTC estimé : <strong class="urgence-order-total" data-ordertotal="${o.id}">${urgenceFmtEur(urgenceOrderEstimatedTotal(o))}</strong></span>
+                <span class="urgence-order-actions">
+                    <button class="action-btn" onclick="urgenceCopyOrder('${o.id}')">Copier</button>
+                    <button class="action-btn primary" onclick="urgenceReceiveOrder('${o.id}')">Réceptionner</button>
+                    <button class="action-btn" onclick="urgenceCancelOrder('${o.id}')">Annuler</button>
+                </span>
+            </div>
+        </div>`;
+}
+
+function urgenceBindOrderEditEvents(container) {
+    container.querySelectorAll('.urgence-order-edit-row').forEach(row => {
+        const orderId = row.closest('.urgence-order-card')?.dataset.order;
+        const idx = row.dataset.idx;
+        const qtyInput = row.querySelector('.urgence-order-qty');
+        const priceInput = row.querySelector('.urgence-order-price');
+        const lineTotal = row.querySelector('[data-linetotal]');
+
+        const update = () => {
+            const order = urgenceData.orders.find(o => o.id === orderId);
+            if (!order || !order.items[idx]) return;
+            const qty = parseInt(qtyInput.value, 10);
+            const price = parseFloat(priceInput.value);
+            if (!isNaN(qty) && qty > 0) order.items[idx].qty = qty;
+            order.items[idx].unitPrice = isNaN(price) ? 0 : price;
+            lineTotal.textContent = order.items[idx].unitPrice ? urgenceFmtEur(order.items[idx].qty * order.items[idx].unitPrice) : '—';
+            const totalEl = container.querySelector(`[data-ordertotal="${orderId}"]`);
+            if (totalEl) totalEl.textContent = urgenceFmtEur(urgenceOrderEstimatedTotal(order));
+            saveUrgenceData();
+        };
+        qtyInput.addEventListener('input', update);
+        priceInput.addEventListener('input', update);
+    });
+
+    container.querySelectorAll('.urgence-order-add-select').forEach(sel => {
+        sel.addEventListener('change', () => {
+            if (sel.value) urgenceOrderAddItem(sel.dataset.order, sel.value);
+        });
+    });
+}
+
+function urgenceOrderAddItem(orderId, productId) {
+    const order = urgenceData.orders.find(o => o.id === orderId);
+    const product = urgenceData.products.find(p => p.id === productId);
+    if (!order || !product || order.status !== 'pending') return;
+    order.items.push({
+        productId,
+        name: product.name,
+        unit: product.unit,
+        qty: 1,
+        unitPrice: urgenceProductUnitPrice(product)
+    });
+    saveUrgenceData();
+    urgenceRenderOrders();
+    if (typeof showToast === 'function') showToast(`« ${product.name} » ajouté à la commande`);
+}
+
+function urgenceOrderRemoveItem(orderId, idx) {
+    const order = urgenceData.orders.find(o => o.id === orderId);
+    if (!order || order.status !== 'pending' || !order.items[idx]) return;
+    const name = order.items[idx].name;
+    order.items.splice(idx, 1);
+    saveUrgenceData();
+    urgenceRenderOrders();
+    if (typeof showToast === 'function') showToast(`« ${name} » retiré de la commande`);
 }
 
 function urgenceOrderCardHtml(o) {
@@ -366,3 +474,5 @@ window.urgenceCancelOrder = urgenceCancelOrder;
 window.urgenceCopyOrder = urgenceCopyOrder;
 window.urgenceRenderOrders = urgenceRenderOrders;
 window.urgenceRenderCosts = urgenceRenderCosts;
+window.urgenceOrderAddItem = urgenceOrderAddItem;
+window.urgenceOrderRemoveItem = urgenceOrderRemoveItem;
