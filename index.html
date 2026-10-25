@@ -1943,18 +1943,18 @@ window.attemptLogin = function() {
                     </div>
                 </div>
 
-                <!-- R\u00e9unions -->
+                <!-- Réunions -->
                 <div id="cabinet-reunions" class="cabinet-tab-content">
                     <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="reunion">R\u00e9union</button>
+                        <button class="sub-tab active" data-subtab="reunion">Réunion</button>
                         <button class="sub-tab" data-subtab="odj">Ordre du jour</button>
                         <button class="sub-tab" data-subtab="cr">Compte rendu</button>
                     </div>
 
                     <div id="reunions-reunion" class="sub-tab-content active">
                         <div class="module-card">
-                            <h3>Prochaine r\u00e9union de cabinet</h3>
-                            <p class="module-desc">Dans un cabinet, on se croise sans \u00eatre jamais tous ensemble. Fixez ici une date o\u00f9 tous les associ\u00e9s pourront \u00e9changer sur les d\u00e9cisions du cabinet.</p>
+                            <h3>Prochaine réunion de cabinet</h3>
+                            <p class="module-desc">Dans un cabinet, on se croise sans être jamais tous ensemble. Fixez ici une date où tous les associés pourront échanger sur les décisions du cabinet.</p>
                             <div id="reunionCurrentBox"></div>
                             <div class="form-group">
                                 <label>Proposer une date</label>
@@ -1966,7 +1966,7 @@ window.attemptLogin = function() {
                             </div>
                             <div id="reunionProposalsList"></div>
                             <div class="form-group" style="margin-top: 16px;">
-                                <label>Fixer la r\u00e9union (date et heure d\u00e9finitives)</label>
+                                <label>Fixer la réunion (date et heure définitives)</label>
                                 <div class="reunion-date-row">
                                     <input type="date" id="reunionFixDate" class="form-input">
                                     <input type="time" id="reunionFixTime" class="form-input">
@@ -1976,23 +1976,23 @@ window.attemptLogin = function() {
                         </div>
 
                         <div class="module-card">
-                            <h3>Ajouter un sujet \u00e0 l'ordre du jour</h3>
-                            <p class="module-desc">Chaque associ\u00e9 peut ajouter un ou plusieurs sujets avant la r\u00e9union : d\u00e9crivez le probl\u00e8me pos\u00e9 et proposez une r\u00e9ponse. L'IA contextualisera chaque sujet avec les donn\u00e9es du cabinet et donnera son avis.</p>
+                            <h3>Ajouter un sujet à l'ordre du jour</h3>
+                            <p class="module-desc">Chaque associé peut ajouter un ou plusieurs sujets avant la réunion : décrivez le problème posé et proposez une réponse. L'IA contextualisera chaque sujet avec les données du cabinet et donnera son avis.</p>
                             <div class="form-group">
-                                <label>Intitul\u00e9 du sujet</label>
-                                <input type="text" id="sujetTitleInput" class="form-input" placeholder="Ex : R\u00e9partition des cr\u00e9neaux de permanence du samedi">
+                                <label>Intitulé du sujet</label>
+                                <input type="text" id="sujetTitleInput" class="form-input" placeholder="Ex : Répartition des créneaux de permanence du samedi">
                             </div>
                             <div class="form-group">
-                                <label>Probl\u00e8me pos\u00e9</label>
-                                <textarea id="sujetProblemInput" class="form-input" rows="3" placeholder="D\u00e9crivez le probl\u00e8me constat\u00e9..."></textarea>
+                                <label>Problème posé</label>
+                                <textarea id="sujetProblemInput" class="form-input" rows="3" placeholder="Décrivez le problème constaté..."></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Proposition de r\u00e9ponse</label>
-                                <textarea id="sujetProposalInput" class="form-input" rows="3" placeholder="Votre proposition pour r\u00e9soudre le probl\u00e8me..."></textarea>
+                                <label>Proposition de réponse</label>
+                                <textarea id="sujetProposalInput" class="form-input" rows="3" placeholder="Votre proposition pour résoudre le problème..."></textarea>
                             </div>
                             <div style="display:flex; gap:12px; flex-wrap:wrap;">
                                 <button class="action-btn" id="sujetAiBtn">Analyser avec IA (contexte cabinet)</button>
-                                <button class="action-btn primary" id="sujetSubmitBtn">Ajouter \u00e0 l'ordre du jour</button>
+                                <button class="action-btn primary" id="sujetSubmitBtn">Ajouter à l'ordre du jour</button>
                             </div>
                             <div id="sujetAiResult" class="result-container" style="display:none;"></div>
                         </div>
@@ -2001,9 +2001,9 @@ window.attemptLogin = function() {
                     <div id="reunions-odj" class="sub-tab-content">
                         <div class="module-card">
                             <h3>Ordre du jour</h3>
-                            <p class="module-desc">L'ordre du jour est g\u00e9n\u00e9r\u00e9 24h avant la r\u00e9union, avec la contextualisation IA de chaque sujet. Tous les associ\u00e9s peuvent le lire et, le jour J, voter chaque intitul\u00e9 depuis leur t\u00e9l\u00e9phone.</p>
+                            <p class="module-desc">L'ordre du jour est généré 24h avant la réunion, avec la contextualisation IA de chaque sujet. Tous les associés peuvent le lire et, le jour J, voter chaque intitulé depuis leur téléphone.</p>
                             <div id="odjStatus"></div>
-                            <button class="action-btn" id="odjGenerateBtn">G\u00e9n\u00e9rer l'ordre du jour maintenant</button>
+                            <button class="action-btn" id="odjGenerateBtn">Générer l'ordre du jour maintenant</button>
                             <div id="odjResult"></div>
                         </div>
                     </div>
@@ -2011,19 +2011,19 @@ window.attemptLogin = function() {
                     <div id="reunions-cr" class="sub-tab-content">
                         <div class="module-card">
                             <h3>Compte rendu</h3>
-                            <p class="module-desc">Apr\u00e8s la r\u00e9union, saisissez les notes brutes : l'IA met en forme le compte rendu.</p>
+                            <p class="module-desc">Après la réunion, saisissez les notes brutes : l'IA met en forme le compte rendu.</p>
                             <div class="form-group">
-                                <label>S\u00e9lectionner la r\u00e9union</label>
+                                <label>Sélectionner la réunion</label>
                                 <select id="reunionSelect" class="form-input">
-                                    <option value="">Choisir une r\u00e9union...</option>
+                                    <option value="">Choisir une réunion...</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Notes de la r\u00e9union</label>
-                                <textarea id="crNotes" class="form-input" rows="5" placeholder="Saisissez les notes brutes de la r\u00e9union..."></textarea>
+                                <label>Notes de la réunion</label>
+                                <textarea id="crNotes" class="form-input" rows="5" placeholder="Saisissez les notes brutes de la réunion..."></textarea>
                             </div>
-                            <button class="action-btn primary" id="crGenerateBtn">G\u00e9n\u00e9rer le CR avec IA</button>
-                            <button class="action-btn" id="crDownloadBtn" style="display:none;">T\u00e9l\u00e9charger le CR</button>
+                            <button class="action-btn primary" id="crGenerateBtn">Générer le CR avec IA</button>
+                            <button class="action-btn" id="crDownloadBtn" style="display:none;">Télécharger le CR</button>
                             <div id="crResult" class="result-container"></div>
                         </div>
                     </div>

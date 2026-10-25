@@ -9474,7 +9474,7 @@ async function sujetAnalyzeWithAI() {
     try {
         const prompt = 'Sujet soumis pour la réunion de cabinet :\nIntitulé : ' + title + '\nProblème posé : ' + (problem || '(non précisé)') + '\nProposition de réponse : ' + (proposal || '(aucune)') + context + '\n\nContextualise ce sujet avec les données du cabinet, analyse la proposition et donne ton avis en 3 parties courtes : CONTEXTE, ANALYSE, AVIS ET RECOMMANDATION.';
         const res = await window.callLLM(prompt, 'draft_sujet');
-        out.innerHTML = '<h4>Avis de l\u2019IA</h4><div style="white-space:pre-wrap;">' + reunionEsc(res) + '</div>';
+        out.innerHTML = '<h4>Avis de l’IA</h4><div style="white-space:pre-wrap;">' + reunionEsc(res) + '</div>';
     } catch (e) {
         out.innerHTML = 'Erreur IA : ' + reunionEsc(e.message || e);
     }
@@ -9487,7 +9487,7 @@ async function sujetSubmit() {
     const ai = document.getElementById('sujetAiResult')?.innerText.trim() || '';
     if (!title) { alert('Donnez un intitulé au sujet.'); return; }
     const reunion = await reunionGetFixed();
-    if (!reunion) { alert('Fixez d\u2019abord la date de la réunion dans l\u2019onglet Réunion.'); return; }
+    if (!reunion) { alert('Fixez d’abord la date de la réunion dans l’onglet Réunion.'); return; }
     try {
         const { error } = await supabaseClient
             .from('reunion_sujets')
@@ -9505,7 +9505,7 @@ async function sujetSubmit() {
         document.getElementById('sujetProposalInput').value = '';
         document.getElementById('sujetAiResult').style.display = 'none';
         await reunionRenderOdj();
-        alert('Sujet ajouté à l\u2019ordre du jour.');
+        alert('Sujet ajouté à l’ordre du jour.');
     } catch (e) {
         console.error('[REUNIONS] submit sujet error:', e);
         alert('Erreur : ' + (e.message || e));
@@ -9530,13 +9530,13 @@ async function reunionRefreshOdjStatus() {
     if (st) {
         const r = await reunionGetFixed();
         if (!r) {
-            st.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Fixez d\u2019abord une date dans l\u2019onglet Réunion.</div>';
+            st.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Fixez d’abord une date dans l’onglet Réunion.</div>';
         } else if (r.odj_genere) {
-            st.innerHTML = '<div class="odj-empty">Ordre du jour généré — ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. Tous les associés peuvent le lire' + (reunionIsToday(r) ? ' et voter chaque intitulé aujourd\u2019hui.' : '.') + '</div>';
+            st.innerHTML = '<div class="odj-empty">Ordre du jour généré — ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. Tous les associés peuvent le lire' + (reunionIsToday(r) ? ' et voter chaque intitulé aujourd’hui.' : '.') + '</div>';
         } else if (reunionIsWithin24h(r)) {
-            st.innerHTML = '<div class="odj-empty">La réunion est dans moins de 24h — l\u2019ordre du jour n\u2019est pas encore généré. Utilisez le bouton ci-dessous ou il sera généré automatiquement.</div>';
+            st.innerHTML = '<div class="odj-empty">La réunion est dans moins de 24h — l’ordre du jour n’est pas encore généré. Utilisez le bouton ci-dessous ou il sera généré automatiquement.</div>';
         } else {
-            st.innerHTML = '<div class="odj-empty">Réunion fixée le ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. L\u2019ordre du jour sera généré 24h avant. Vous pouvez l\u2019anticiper avec le bouton ci-dessous.</div>';
+            st.innerHTML = '<div class="odj-empty">Réunion fixée le ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. L’ordre du jour sera généré 24h avant. Vous pouvez l’anticiper avec le bouton ci-dessous.</div>';
         }
     }
 }
@@ -9606,7 +9606,7 @@ async function reunionRenderOdj() {
     }
     const sujets = await reunionLoadSujets(reunion);
     if (!sujets.length) {
-        container.innerHTML = '<div class="odj-empty">Aucun sujet soumis pour cette réunion. Ajoutez des sujets depuis l\u2019onglet Réunion.</div>';
+        container.innerHTML = '<div class="odj-empty">Aucun sujet soumis pour cette réunion. Ajoutez des sujets depuis l’onglet Réunion.</div>';
         return;
     }
     const cabinetId = await reunionGetCabinetId();
@@ -9620,9 +9620,9 @@ async function reunionRenderOdj() {
         let html = '<div class="odj-item">'
             + '<div class="sujet-title">' + (i + 1) + '. ' + reunionEsc(s.titre) + '</div>'
             + '<div class="odj-author">Proposé par ' + reunionEsc(byId[s.user_id] || 'un associé') + '</div>';
-        if (s.probleme) html += '<div class="odj-section-label">Probl\u00e8me pos\u00e9</div><div class="odj-section-text">' + reunionEsc(s.probleme) + '</div>';
+        if (s.probleme) html += '<div class="odj-section-label">Problème posé</div><div class="odj-section-text">' + reunionEsc(s.probleme) + '</div>';
         if (s.proposition) html += '<div class="odj-section-label">Proposition</div><div class="odj-section-text">' + reunionEsc(s.proposition) + '</div>';
-        if (s.analyse_ia) html += '<div class="odj-section-label">Avis de l\u2019IA (contexte cabinet)</div><div class="odj-section-text">' + reunionEsc(s.analyse_ia) + '</div>';
+        if (s.analyse_ia) html += '<div class="odj-section-label">Avis de l’IA (contexte cabinet)</div><div class="odj-section-text">' + reunionEsc(s.analyse_ia) + '</div>';
         html += '<div class="odj-vote-bar"><button class="action-btn odj-vote-btn ' + (v.mine ? 'voted' : '') + '" data-vote="' + s.id + '"' + (canVote ? '' : ' disabled') + '>👍 Voter</button><span class="odj-vote-count">' + v.count + ' vote' + (v.count > 1 ? 's' : '') + '</span></div>';
         html += '</div>';
         return html;
@@ -9634,12 +9634,12 @@ async function reunionRenderOdj() {
 
 async function generateODJ() {
     const reunion = await reunionGetFixed();
-    if (!reunion) { alert('Fixez d\u2019abord une réunion.'); return; }
+    if (!reunion) { alert('Fixez d’abord une réunion.'); return; }
     const sujets = await reunionLoadSujets(reunion);
     if (!sujets.length) { alert('Aucun sujet soumis pour cette réunion.'); return; }
     let summary = '';
     try {
-        const prompt = 'Tu prépares l\u2019ordre du jour d\u2019une réunion de cabinet médical. Sujets soumis :\n' + sujets.map((s, i) => (i + 1) + ') ' + s.titre + '\nProblème : ' + (s.probleme || '') + '\nProposition : ' + (s.proposition || '') + '\nAvis IA : ' + (s.analyse_ia || '')).join('\n\n') + '\n\nRédige un ordre du jour structuré et concis pour cette réunion.';
+        const prompt = 'Tu prépares l’ordre du jour d’une réunion de cabinet médical. Sujets soumis :\n' + sujets.map((s, i) => (i + 1) + ') ' + s.titre + '\nProblème : ' + (s.probleme || '') + '\nProposition : ' + (s.proposition || '') + '\nAvis IA : ' + (s.analyse_ia || '')).join('\n\n') + '\n\nRédige un ordre du jour structuré et concis pour cette réunion.';
         summary = await window.callLLM(prompt, 'generate_odj');
     } catch (e) {
         console.error('[REUNIONS] ODJ IA error:', e);
@@ -9695,7 +9695,7 @@ async function generateCR() {
         odj = r?.odj_contenu || '';
     } catch (e) {}
     try {
-        const prompt = 'Rédige le compte rendu d\u2019une réunion de cabinet médical.\nOrdre du jour :\n' + (odj || '(non disponible)') + '\n\nNotes brutes prises pendant la réunion :\n' + notes + '\n\nStructure : décisions prises par sujet, actions à mener, responsables et échéances.';
+        const prompt = 'Rédige le compte rendu d’une réunion de cabinet médical.\nOrdre du jour :\n' + (odj || '(non disponible)') + '\n\nNotes brutes prises pendant la réunion :\n' + notes + '\n\nStructure : décisions prises par sujet, actions à mener, responsables et échéances.';
         const cr = await window.callLLM(prompt, 'generate_cr');
         reunionLastCR = cr;
         document.getElementById('crDownloadBtn').style.display = 'inline-flex';
