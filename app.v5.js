@@ -4278,6 +4278,11 @@ async function loadProfileData() {
     const role = (currentProfile && currentProfile.role) || '';
 
     document.querySelectorAll('#profileLastname').forEach(el => { el.value = lastname; });
+    try {
+        if (window.renderProfileCabinetBox) await window.renderProfileCabinetBox();
+    } catch (e) {
+        console.error('[PROFILE] cabinet box error:', e);
+    }
     document.querySelectorAll('#profileFirstname').forEach(el => { el.value = firstname; });
     document.querySelectorAll('#profileEmail').forEach(el => { el.value = currentUser.email || ''; el.readOnly = true; });
     document.querySelectorAll('#profileRole').forEach(el => { el.value = role || 'medecin_installe'; });
@@ -9381,6 +9386,76 @@ async function reunionRenderBox() {
     await reunionRenderProposals();
 }
 
+async function reunionLoadDateVotes(proposalIds) {
+    const votes = {};
+    if (!proposalIds.length) return votes;
+    try {
+        const { data } = await supabaseClient
+            .from('reunion_date_votes')
+            .select('*')
+            .in('proposal_id', proposalIds);
+        (data || []).forEach(v => {
+            votes[v.proposal_id] = votes[v.proposal_id] || [];
+            votes[v.proposal_id].push(v);
+        });
+    } catch (e) {
+        console.error('[REUNIONS] date votes load error:', e);
+    }
+    return votes;
+}
+
+function reunionVoteScore(votesArr) {
+    let pour = 0, contre = 0, abstention = 0;
+    (votesArr || []).forEach(v => {
+        if (v.vote === 1) pour++;
+        else if (v.vote === -1) contre++;
+        else abstention++;
+    });
+    return { pour: pour, contre: contre, abstention: abstention, score: pour - contre };
+}
+
+function reunionVotersHtml(votesArr, byId) {
+    const names = { '1': [], '-1': [], '0': [] };
+    (votesArr || []).forEach(v => {
+        const n = byId[v.user_id] || 'un associé';
+        if (v.vote === 1) names['1'].push(n);
+        else if (v.vote === -1) names['-1'].push(n);
+        else names['0'].push(n);
+    });
+    let html = '';
+    if (names['1'].length) html += '<div class="odj-voters">Pour : ' + names['1'].map(reunionEsc).map(n => '<span class="odj-voter-chip ok">' + n + '</span>').join('') + '</div>';
+    if (names['-1'].length) html += '<div class="odj-voters">Contre : ' + names['-1'].map(reunionEsc).map(n => '<span class="odj-voter-chip no">' + n + '</span>').join('') + '</div>';
+    if (names['0'].length) html += '<div class="odj-voters">Abstention : ' + names['0'].map(reunionEsc).map(n => '<span class="odj-voter-chip">' + n + '</span>').join('') + '</div>';
+    return html;
+}
+
+async function reunionDateVote(proposalId, vote) {
+    const cabinetId = await reunionGetCabinetId();
+    if (!cabinetId) return;
+    try {
+        const existing = await supabaseClient
+            .from('reunion_date_votes')
+            .select('id, vote')
+            .eq('proposal_id', proposalId)
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
+        if (existing.data && existing.data.vote === vote) {
+            await supabaseClient.from('reunion_date_votes').delete().eq('id', existing.data.id);
+        } else if (existing.data) {
+            await supabaseClient.from('reunion_date_votes').update({ vote: vote }).eq('id', existing.data.id);
+        } else {
+            const { error } = await supabaseClient
+                .from('reunion_date_votes')
+                .insert({ proposal_id: proposalId, user_id: currentUser.id, vote: vote });
+            if (error) throw error;
+        }
+        await reunionRenderProposals();
+    } catch (e) {
+        console.error('[REUNIONS] date vote error:', e);
+        alert('Erreur de vote : ' + (e.message || e));
+    }
+}
+
 async function reunionRenderProposals() {
     const list = document.getElementById('reunionProposalsList');
     if (!list) return;
@@ -9397,9 +9472,28 @@ async function reunionRenderProposals() {
         const members = await reunionMembers(cabinetId);
         const byId = {};
         members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
-        list.innerHTML = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées</h4>' + data.map(p => {
-            return '<div class="reunion-proposal"><span class="reunion-proposal-date">' + reunionEsc(reunionFmt(p.date_proposee, p.heure_proposee)) + '</span><span class="sujet-author">par ' + reunionEsc(byId[p.user_id] || 'un associé') + '</span></div>';
-        }).join('') + '</div>';
+        const votes = await reunionLoadDateVotes(data.map(p => p.id));
+        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées — votez pour trouver la date la plus adaptée</h4>';
+        data.forEach(p => {
+            const arr = votes[p.id] || [];
+            const sc = reunionVoteScore(arr);
+            const mine = arr.find(v => v.user_id === currentUser.id);
+            html += '<div class="reunion-proposal">'
+                + '<div class="reunion-proposal-date">' + reunionEsc(reunionFmt(p.date_proposee, p.heure_proposee)) + ' <span class="sujet-author">par ' + reunionEsc(byId[p.user_id] || 'un associé') + '</span></div>'
+                + '<div class="odj-vote-bar">'
+                + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 1 ? 'voted' : '') + '" data-vote="' + p.id + '" data-val="1">👍 Pour</button>'
+                + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === -1 ? 'voted' : '') + '" data-vote="' + p.id + '" data-val="-1">👎 Contre</button>'
+                + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 0 ? 'voted' : '') + '" data-vote="' + p.id + '" data-val="0">✋ Abstention</button>'
+                + '</div>'
+                + '<div class="odj-vote-count">' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>'
+                + reunionVotersHtml(arr, byId)
+                + '</div>';
+        });
+        html += '</div>';
+        list.innerHTML = html;
+        list.querySelectorAll('.odj-vote-btn').forEach(btn => {
+            btn.addEventListener('click', () => reunionDateVote(btn.dataset.vote, parseInt(btn.dataset.val, 10)));
+        });
     } catch (e) {
         console.error('[REUNIONS] render proposals error:', e);
     }
@@ -9533,6 +9627,7 @@ async function reunionRefreshOdjStatus() {
             st.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Fixez d’abord une date dans l’onglet Réunion.</div>';
         } else if (r.odj_genere) {
             st.innerHTML = '<div class="odj-empty">Ordre du jour généré — ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. Tous les associés peuvent le lire' + (reunionIsToday(r) ? ' et voter chaque intitulé aujourd’hui.' : '.') + '</div>';
+            await reunionRenderVotesSummary();
         } else if (reunionIsWithin24h(r)) {
             st.innerHTML = '<div class="odj-empty">La réunion est dans moins de 24h — l’ordre du jour n’est pas encore généré. Utilisez le bouton ci-dessous ou il sera généré automatiquement.</div>';
         } else {
@@ -9560,9 +9655,8 @@ async function reunionLoadVotes(sujetIds) {
             .select('*')
             .in('sujet_id', sujetIds);
         (data || []).forEach(v => {
-            votes[v.sujet_id] = votes[v.sujet_id] || { count: 0, mine: false };
-            votes[v.sujet_id].count += v.vote || 0;
-            if (v.user_id === currentUser.id) votes[v.sujet_id].mine = true;
+            votes[v.sujet_id] = votes[v.sujet_id] || [];
+            votes[v.sujet_id].push(v);
         });
     } catch (e) {
         console.error('[REUNIONS] votes error:', e);
@@ -9570,23 +9664,25 @@ async function reunionLoadVotes(sujetIds) {
     return votes;
 }
 
-async function reunionVote(sujetId) {
+async function reunionVote(sujetId, vote) {
     const reunion = await reunionGetFixed();
     if (!reunion) return;
     if (!reunionIsToday(reunion)) { alert('Le vote est ouvert le jour de la réunion.'); return; }
-    const existing = await supabaseClient
-        .from('reunion_votes')
-        .select('id')
-        .eq('sujet_id', sujetId)
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
     try {
-        if (existing.data) {
+        const existing = await supabaseClient
+            .from('reunion_votes')
+            .select('id, vote')
+            .eq('sujet_id', sujetId)
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
+        if (existing.data && existing.data.vote === vote) {
             await supabaseClient.from('reunion_votes').delete().eq('id', existing.data.id);
+        } else if (existing.data) {
+            await supabaseClient.from('reunion_votes').update({ vote: vote }).eq('id', existing.data.id);
         } else {
             const { error } = await supabaseClient
                 .from('reunion_votes')
-                .insert({ sujet_id: sujetId, user_id: currentUser.id, vote: 1 });
+                .insert({ sujet_id: sujetId, user_id: currentUser.id, vote: vote });
             if (error) throw error;
         }
         await reunionRenderOdj();
@@ -9594,6 +9690,26 @@ async function reunionVote(sujetId) {
         console.error('[REUNIONS] vote error:', e);
         alert('Erreur de vote : ' + (e.message || e));
     }
+}
+
+async function reunionRenderVotesSummary() {
+    const box = document.getElementById('odjVotesSummary');
+    if (!box) return;
+    const reunion = await reunionGetFixed();
+    if (!reunion) { box.innerHTML = ''; return; }
+    const sujets = await reunionLoadSujets(reunion);
+    if (!sujets.length) { box.innerHTML = ''; return; }
+    const cabinetId = await reunionGetCabinetId();
+    const members = await reunionMembers(cabinetId);
+    const byId = {};
+    members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
+    const votes = await reunionLoadVotes(sujets.map(s => s.id));
+    let html = '';
+    sujets.forEach((s, i) => {
+        const sc = reunionVoteScore(votes[s.id] || []);
+        html += '<div class="odj-vote-count">' + (i + 1) + '. ' + reunionEsc(s.titre) + ' — ' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>';
+    });
+    box.innerHTML = '<h4 style="margin-top:16px;">Résultats des votes</h4>' + html;
 }
 
 async function reunionRenderOdj() {
@@ -9616,20 +9732,29 @@ async function reunionRenderOdj() {
     const votes = await reunionLoadVotes(sujets.map(s => s.id));
     const canVote = reunionIsToday(reunion);
     container.innerHTML = sujets.map((s, i) => {
-        const v = votes[s.id] || { count: 0, mine: false };
+        const arr = votes[s.id] || [];
+        const sc = reunionVoteScore(arr);
+        const mine = arr.find(v => v.user_id === currentUser.id);
         let html = '<div class="odj-item">'
             + '<div class="sujet-title">' + (i + 1) + '. ' + reunionEsc(s.titre) + '</div>'
             + '<div class="odj-author">Proposé par ' + reunionEsc(byId[s.user_id] || 'un associé') + '</div>';
         if (s.probleme) html += '<div class="odj-section-label">Problème posé</div><div class="odj-section-text">' + reunionEsc(s.probleme) + '</div>';
         if (s.proposition) html += '<div class="odj-section-label">Proposition</div><div class="odj-section-text">' + reunionEsc(s.proposition) + '</div>';
         if (s.analyse_ia) html += '<div class="odj-section-label">Avis de l’IA (contexte cabinet)</div><div class="odj-section-text">' + reunionEsc(s.analyse_ia) + '</div>';
-        html += '<div class="odj-vote-bar"><button class="action-btn odj-vote-btn ' + (v.mine ? 'voted' : '') + '" data-vote="' + s.id + '"' + (canVote ? '' : ' disabled') + '>👍 Voter</button><span class="odj-vote-count">' + v.count + ' vote' + (v.count > 1 ? 's' : '') + '</span></div>';
+        html += '<div class="odj-vote-bar">'
+            + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 1 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="1"' + (canVote ? '' : ' disabled') + '>👍 Pour</button>'
+            + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === -1 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="-1"' + (canVote ? '' : ' disabled') + '>👎 Contre</button>'
+            + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 0 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="0"' + (canVote ? '' : ' disabled') + '>✋ Abstention</button>'
+            + '</div>'
+            + '<div class="odj-vote-count">' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>'
+            + reunionVotersHtml(arr, byId);
         html += '</div>';
         return html;
     }).join('');
     container.querySelectorAll('.odj-vote-btn').forEach(btn => {
-        btn.addEventListener('click', () => reunionVote(btn.dataset.vote));
+        btn.addEventListener('click', () => reunionVote(btn.dataset.vote, parseInt(btn.dataset.val, 10)));
     });
+    await reunionRenderVotesSummary();
 }
 
 async function generateODJ() {
@@ -9716,17 +9841,71 @@ function downloadCR() {
 }
 
 let reunionInitialized = false;
+let reunionMyCabinet = null;
+
+async function reunionLoadMyCabinet() {
+    if (reunionMyCabinet) return reunionMyCabinet;
+    if (!supabaseClient || !currentUser) return null;
+    try {
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('cabinet_id')
+            .eq('id', currentUser.id)
+            .single();
+        if (!profile?.cabinet_id) { reunionMyCabinet = { none: true }; return reunionMyCabinet; }
+        const { data: cab } = await supabaseClient
+            .from('cabinets')
+            .select('id, name, address')
+            .eq('id', profile.cabinet_id)
+            .maybeSingle();
+        reunionMyCabinet = cab || { none: true };
+    } catch (e) {
+        console.error('[REUNIONS] cabinet load error:', e);
+        reunionMyCabinet = { none: true };
+    }
+    return reunionMyCabinet;
+}
+
+function reunionCabinetLabel(cab) {
+    if (!cab || cab.none) return null;
+    return cab.name || cab.address || 'Cabinet';
+}
+
+async function reunionRenderCabinetBanner() {
+    const banner = document.getElementById('reunionCabinetBanner');
+    if (!banner) return;
+    const cab = await reunionLoadMyCabinet();
+    const label = reunionCabinetLabel(cab);
+    if (!label) {
+        banner.innerHTML = '<div class="odj-empty">⚠️ Aucun cabinet associé à votre profil : les réunion de cabinet ne sont pas disponibles. Associez votre compte à un cabinet (Paramètres > Profil > Mon cabinet).</div>';
+    } else {
+        banner.innerHTML = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong></div>';
+    }
+}
+
+async function renderProfileCabinetBox() {
+    const box = document.getElementById('profileCabinetBox');
+    if (!box || !supabaseClient || !currentUser) return;
+    const cab = await reunionLoadMyCabinet();
+    const label = reunionCabinetLabel(cab);
+    if (!label) {
+        box.innerHTML = '<div class="odj-empty">Aucun cabinet associé. Les modules partagés du cabinet (réunions, ordres du jour, comptabilité) ne sont pas disponibles.</div>';
+    } else {
+        let html = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong>';
+        if (cab.address && cab.name) html += '<span class="sujet-author"> — ' + reunionEsc(cab.address) + '</span>';
+        html += '</div>';
+        const members = await reunionMembers(cab.id);
+        if (members.length) {
+            html += '<div class="odj-voters">Associés dans cet espace : ' + members.map(m => '<span class="odj-voter-chip">' + reunionEsc(m.first_name + ' ' + (m.last_name || '')) + '</span>').join('') + '</div>';
+        }
+        box.innerHTML = html;
+    }
+}
+window.renderProfileCabinetBox = renderProfileCabinetBox;
 
 async function reunionInit() {
     if (!supabaseClient || !currentUser) return;
-    if (reunionInitialized) {
-        await reunionRenderBox();
-        await reunionRefreshOdjStatus();
-        await reunionRenderOdj();
-        await reunionRefreshSelect();
-        return;
-    }
-    reunionInitialized = true;
+    await reunionRenderCabinetBanner();
     await reunionRenderBox();
     await reunionRefreshOdjStatus();
     await reunionRenderOdj();

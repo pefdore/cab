@@ -126,3 +126,42 @@ CREATE POLICY "Members manage own votes" ON reunion_votes
 DROP POLICY IF EXISTS "Members delete own votes" ON reunion_votes;
 CREATE POLICY "Members delete own votes" ON reunion_votes
     FOR DELETE USING (auth.uid() = user_id);
+
+-- Migration v2 : votes sur les dates proposées + votes signés sur les sujets
+
+-- Votes des associés sur les dates proposées (1 = pour, -1 = contre, 0 = abstention)
+CREATE TABLE IF NOT EXISTS reunion_date_votes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    proposal_id UUID REFERENCES reunion_date_proposals(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id),
+    vote INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (proposal_id, user_id)
+);
+
+ALTER TABLE reunion_date_votes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Cabinet members view date votes" ON reunion_date_votes;
+DROP POLICY IF EXISTS "Members manage own date votes" ON reunion_date_votes;
+
+CREATE POLICY "Cabinet members view date votes" ON reunion_date_votes
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM reunion_date_proposals p
+            WHERE p.id = proposal_id AND reunion_same_cabinet(p.cabinet_id)
+        )
+    );
+
+CREATE POLICY "Members manage own date votes" ON reunion_date_votes
+    FOR INSERT WITH CHECK (
+        auth.uid() = user_id AND EXISTS (
+            SELECT 1 FROM reunion_date_proposals p
+            WHERE p.id = proposal_id AND reunion_same_cabinet(p.cabinet_id)
+        )
+    );
+
+CREATE POLICY "Members update own date votes" ON reunion_date_votes
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Members delete own date votes" ON reunion_date_votes
+    FOR DELETE USING (auth.uid() = user_id);
