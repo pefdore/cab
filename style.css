@@ -9729,3 +9729,14 @@ html.no-anim *::after {
 .urgence-collapsible .module-header-row h3 {
     margin: 0;
 }
+
+/* Contrôles visibles même replié (bouton DAE, champ poids) */
+.urgence-collapsible .urgence-dae-row,
+.urgence-collapsible .urgence-weight-row {
+    padding: 0 16px 12px;
+    margin-bottom: 0;
+}
+
+.urgence-collapsible .urgence-weight-row {
+    padding-top: 4px;
+}
