@@ -668,6 +668,24 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
 
 
 
+
+function urgenceToggleCard(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    card.classList.toggle('collapsed');
+    card.classList.toggle('open');
+}
+
+function urgenceOpenCard(cardId) {
+    const card = document.getElementById(cardId);
+    if (card && card.classList.contains('collapsed')) {
+        card.classList.remove('collapsed');
+        card.classList.add('open');
+    }
+}
+
+window.urgenceToggleCard = urgenceToggleCard;
+
 // ---------- Chercheur de DAE (base GeoDAE officielle via proxy /api/dae) ----------
 
 function urgenceHaversineKm(lat1, lon1, lat2, lon2) {
@@ -741,6 +759,7 @@ async function urgenceFindDae() {
     const out = document.getElementById('urgenceDaeResults');
     const btn = document.getElementById('urgenceDaeBtn');
     if (!out) return;
+    urgenceOpenCard('daeCard');
     out.innerHTML = '<div class="urgence-alert info">\u23F3 Localisation et recherche des DAE...</div>';
     if (btn) btn.disabled = true;
 
@@ -761,6 +780,7 @@ async function urgenceFindDaeByAddress() {
     const input = document.getElementById('urgenceDaeAddress');
     const out = document.getElementById('urgenceDaeResults');
     if (!out) return;
+    urgenceOpenCard('daeCard');
     const address = (input && input.value || '').trim();
     if (!address) {
         out.innerHTML = urgenceDaeManualUI('Entrez une adresse, une ville ou un code postal.');
@@ -778,6 +798,7 @@ async function urgenceFindDaeByAddress() {
 async function urgenceFindDaeCabinet() {
     const out = document.getElementById('urgenceDaeResults');
     if (!out) return;
+    urgenceOpenCard('daeCard');
     out.innerHTML = '<div class="urgence-alert info">\u23F3 Recherche de l\u2019adresse du cabinet...</div>';
     try {
         if (!window.supabaseClient || !window.currentUser) {
@@ -1511,6 +1532,8 @@ function initUrgenceModule() {
 
     const weightInput = document.getElementById('urgenceWeightInput');
     if (weightInput) weightInput.addEventListener('input', urgenceComputeDoses);
+    if (weightInput) weightInput.addEventListener('input', urgenceComputeDoses);
+        weightInput.addEventListener('focus', () => urgenceOpenCard('doseCard'));
     urgenceComputeDoses();
     document.getElementById('urgenceProtocolsGrid')?.addEventListener('change', () => urgenceComputeDoses());
 

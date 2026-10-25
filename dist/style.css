@@ -9686,3 +9686,46 @@ html.no-anim *::after {
 .dae-row-share:hover {
     border-color: var(--color-primary);
 }
+
+/* ===== Cartes pliables (DAE, calculateur) ===== */
+.urgence-collapsible .urgence-collapse-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    padding: 14px 16px;
+    border-radius: 12px;
+}
+
+.urgence-collapsible .urgence-collapse-header:hover {
+    background: var(--color-bg-muted);
+}
+
+.urgence-collapse-header .module-header-row {
+    flex: 1;
+    min-width: 0;
+}
+
+.urgence-collapse-arrow {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.urgence-collapsible.open .urgence-collapse-arrow {
+    transform: rotate(180deg);
+}
+
+.urgence-collapsible .urgence-collapse-body {
+    padding: 0 16px 16px;
+}
+
+.urgence-collapsible.collapsed .urgence-collapse-body {
+    display: none;
+}
+
+.urgence-collapsible .module-header-row h3 {
+    margin: 0;
+}
