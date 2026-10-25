@@ -1961,24 +1961,28 @@ window.attemptLogin = function() {
                     <div id="reunions-reunion" class="sub-tab-content active">
                         <div class="module-card">
                             <h3>Prochaine réunion de cabinet</h3>
-                            <p class="module-desc">Dans un cabinet, on se croise sans être jamais tous ensemble. Chaque associé propose des dates, tout le monde vote pour ou contre, puis la date la plus adaptée est fixée.</p>
+                            <p class="module-desc">Dans un cabinet, on se croise sans être jamais tous ensemble. Si la date est connue, fixez-la directement. Sinon, proposez plusieurs dates : chacun indique sa disponibilité, la date recueillant le plus de présences est pré-sélectionnée, puis validée.</p>
                             <div id="reunionCurrentBox"></div>
-                            <div class="form-group">
-                                <label>Proposer une ou plusieurs dates</label>
-                                <div class="reunion-date-row">
-                                    <input type="date" id="reunionDateInput" class="form-input">
-                                    <input type="time" id="reunionTimeInput" class="form-input">
-                                    <button class="action-btn primary" id="reunionProposeBtn">Ajouter</button>
+                            <button class="action-btn" id="reunionNextBtn" style="display:none;">Programmer la réunion suivante</button>
+                            <div id="reunionScheduleSection">
+                                <div class="form-group">
+                                    <label>Fixer directement la date (si elle est déjà connue)</label>
+                                    <div class="reunion-date-row">
+                                        <input type="date" id="reunionFixDate" class="form-input">
+                                        <input type="time" id="reunionFixTime" class="form-input">
+                                        <button class="action-btn" id="reunionFixBtn">Fixer la date</button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div id="reunionProposalsList"></div>
-                            <div class="form-group" style="margin-top: 16px;">
-                                <label>Fixer la réunion (date et heure définitives)</label>
-                                <div class="reunion-date-row">
-                                    <input type="date" id="reunionFixDate" class="form-input">
-                                    <input type="time" id="reunionFixTime" class="form-input">
-                                    <button class="action-btn" id="reunionFixBtn">Fixer la date</button>
+                                <div class="odj-section-label" style="margin-top:18px;">Ou, si la date n'est pas connue, proposez plusieurs dates</div>
+                                <div class="form-group">
+                                    <div class="reunion-date-row">
+                                        <input type="date" id="reunionDateInput" class="form-input">
+                                        <input type="time" id="reunionTimeInput" class="form-input">
+                                        <button class="action-btn primary" id="reunionProposeBtn">Ajouter une date</button>
+                                    </div>
                                 </div>
+                                <div id="reunionProposalsList"></div>
+                                <div id="reunionValidateBox"></div>
                             </div>
                         </div>
 

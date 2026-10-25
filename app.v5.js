@@ -9377,13 +9377,21 @@ async function reunionGetFixed() {
 async function reunionRenderBox() {
     const box = document.getElementById('reunionCurrentBox');
     if (!box) return;
+    const schedule = document.getElementById('reunionScheduleSection');
+    const nextBtn = document.getElementById('reunionNextBtn');
     const r = await reunionGetFixed();
-    if (!r) {
-        box.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Proposez des dates ci-dessous puis fixez la date définitive.</div>';
+    if (r) {
+        box.innerHTML = '<div class="reunion-current"><span>📅</span><span class="reunion-current-date">Réunion fixée : ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</span></div>';
+        if (schedule) schedule.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'inline-flex';
     } else {
-        box.innerHTML = '<div class="reunion-current"><span>📅</span><span class="reunion-current-date">' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</span></div>';
+        box.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Fixez directement la date si elle est connue, ou proposez plusieurs dates ci-dessous.</div>';
+        if (schedule) schedule.style.display = 'block';
+        if (nextBtn) nextBtn.style.display = 'none';
     }
     await reunionRenderProposals();
+    await reunionRefreshOdjStatus();
+    await reunionRenderOdj();
 }
 
 async function reunionLoadDateVotes(proposalIds) {
@@ -9429,6 +9437,19 @@ function reunionVotersHtml(votesArr, byId) {
     return html;
 }
 
+function reunionDispHtml(dispArr, byId) {
+    const dispo = [], absent = [];
+    (dispArr || []).forEach(v => {
+        const n = byId[v.user_id] || 'un associé';
+        if (v.vote === 1) dispo.push(n);
+        else absent.push(n);
+    });
+    let html = '';
+    if (dispo.length) html += '<div class="odj-voters">Disponibles : ' + dispo.map(reunionEsc).map(n => '<span class="odj-voter-chip ok">' + n + '</span>').join('') + '</div>';
+    if (absent.length) html += '<div class="odj-voters">Non disponibles : ' + absent.map(reunionEsc).map(n => '<span class="odj-voter-chip no">' + n + '</span>').join('') + '</div>';
+    return html;
+}
+
 async function reunionDateVote(proposalId, vote) {
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) return;
@@ -9468,25 +9489,36 @@ async function reunionRenderProposals() {
             .eq('cabinet_id', cabinetId)
             .gte('date_proposee', new Date().toISOString().slice(0, 10))
             .order('date_proposee', { ascending: true });
-        if (!data || !data.length) { list.innerHTML = ''; return; }
+        if (!data || !data.length) { list.innerHTML = ''; const vb = document.getElementById('reunionValidateBox'); if (vb) vb.innerHTML = ''; return; }
         const members = await reunionMembers(cabinetId);
         const byId = {};
         members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
         const votes = await reunionLoadDateVotes(data.map(p => p.id));
-        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées — votez pour trouver la date la plus adaptée</h4>';
+        const total = members.length || 1;
+        let best = null;
         data.forEach(p => {
             const arr = votes[p.id] || [];
-            const sc = reunionVoteScore(arr);
+            const dispo = arr.filter(v => v.vote === 1).length;
+            const voted = arr.length;
+            if (!best || dispo > best.dispo || (dispo === best.dispo && voted > best.voted)) {
+                best = { p: p, dispo: dispo, voted: voted };
+            }
+        });
+        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées — indiquez votre disponibilité sur chaque date</h4>';
+        data.forEach(p => {
+            const arr = votes[p.id] || [];
+            const dispo = arr.filter(v => v.vote === 1).length;
+            const voted = arr.length;
             const mine = arr.find(v => v.user_id === currentUser.id);
-            html += '<div class="reunion-proposal">'
-                + '<div class="reunion-proposal-date">' + reunionEsc(reunionFmt(p.date_proposee, p.heure_proposee)) + ' <span class="sujet-author">par ' + reunionEsc(byId[p.user_id] || 'un associé') + '</span></div>'
+            const isBest = best && best.p.id === p.id;
+            html += '<div class="reunion-proposal' + (isBest ? ' best' : '') + '">'
+                + '<div class="reunion-proposal-date">' + (isBest ? '⭐ ' : '') + reunionEsc(reunionFmt(p.date_proposee, p.heure_proposee)) + ' <span class="sujet-author">par ' + reunionEsc(byId[p.user_id] || 'un associé') + '</span></div>'
                 + '<div class="odj-vote-bar">'
-                + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 1 ? 'voted' : '') + '" data-vote="' + p.id + '" data-val="1">👍 Pour</button>'
-                + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === -1 ? 'voted' : '') + '" data-vote="' + p.id + '" data-val="-1">👎 Contre</button>'
-                + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 0 ? 'voted' : '') + '" data-vote="' + p.id + '" data-val="0">✋ Abstention</button>'
+                + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 1 ? 'voted' : '') + '" data-vote="' + p.id + '" data-val="1">✅ Disponible</button>'
+                + '<button class="action-btn odj-vote-btn no ' + (mine && mine.vote === -1 ? 'voted' : '') + '" data-vote="' + p.id + '" data-val="-1">❌ Pas dispo</button>'
                 + '</div>'
-                + '<div class="odj-vote-count">' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>'
-                + reunionVotersHtml(arr, byId)
+                + '<div class="odj-vote-count">' + dispo + '/' + total + ' disponibles · ' + voted + '/' + total + ' ont répondu</div>'
+                + reunionDispHtml(arr, byId)
                 + '</div>';
         });
         html += '</div>';
@@ -9494,9 +9526,42 @@ async function reunionRenderProposals() {
         list.querySelectorAll('.odj-vote-btn').forEach(btn => {
             btn.addEventListener('click', () => reunionDateVote(btn.dataset.vote, parseInt(btn.dataset.val, 10)));
         });
+        await reunionRenderValidateBox(data, votes, members);
     } catch (e) {
         console.error('[REUNIONS] render proposals error:', e);
     }
+}
+
+async function reunionRenderValidateBox(proposals, votes, members) {
+    const box = document.getElementById('reunionValidateBox');
+    if (!box) return;
+    if (!proposals || !proposals.length) { box.innerHTML = ''; return; }
+    const total = members.length || 1;
+    let best = null;
+    proposals.forEach(p => {
+        const arr = votes[p.id] || [];
+        const dispo = arr.filter(v => v.vote === 1).length;
+        const voted = arr.length;
+        if (!best || dispo > best.dispo || (dispo === best.dispo && voted > best.voted)) {
+            best = { p: p, dispo: dispo, voted: voted };
+        }
+    });
+    const allVoted = proposals.every(p => (votes[p.id] || []).length >= total);
+    box.innerHTML = '<div class="reunion-cabinet-banner" style="margin-top:14px;">'
+        + (allVoted ? 'Tout le monde a répondu. ' : '')
+        + 'Date pré-sélectionnée : <strong>' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + '</strong> (' + best.dispo + '/' + total + ' disponibles)'
+        + '</div>'
+        + '<button class="action-btn primary" id="reunionValidateBtn" data-id="' + best.p.id + '" style="margin-top:10px;">Valider cette date</button>';
+    box.querySelector('#reunionValidateBtn').addEventListener('click', () => reunionValidateDate(best.p));
+}
+
+async function reunionValidateDate(proposal) {
+    const dateEl = document.getElementById('reunionFixDate');
+    const timeEl = document.getElementById('reunionFixTime');
+    if (!dateEl) return;
+    dateEl.value = proposal.date_proposee;
+    if (timeEl) timeEl.value = proposal.heure_proposee || '18:00';
+    await reunionFixDate();
 }
 
 async function reunionProposeDate() {
@@ -9915,6 +9980,12 @@ async function reunionInit() {
     if (proposeBtn) proposeBtn.addEventListener('click', reunionProposeDate);
     const fixBtn = document.getElementById('reunionFixBtn');
     if (fixBtn) fixBtn.addEventListener('click', reunionFixDate);
+    const nextBtn2 = document.getElementById('reunionNextBtn');
+    if (nextBtn2) nextBtn2.addEventListener('click', () => {
+        const schedule = document.getElementById('reunionScheduleSection');
+        if (schedule) schedule.style.display = 'block';
+        nextBtn2.style.display = 'none';
+    });
     const aiBtn = document.getElementById('sujetAiBtn');
     if (aiBtn) aiBtn.addEventListener('click', sujetAnalyzeWithAI);
     const submitBtn = document.getElementById('sujetSubmitBtn');
