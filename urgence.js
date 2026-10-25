@@ -854,10 +854,13 @@ async function urgenceDaeSearchAndRender(loc) {
                 ${hero.state && hero.state !== 'En fonctionnement' ? `<span class="dae-tag warn">⚠\uFE0F ${urgenceEscapeHtml(hero.state)}</span>` : ''}
             </div>
             ${hero.accessComplt ? `<div class="dae-access-detail">${urgenceEscapeHtml(hero.accessComplt)}</div>` : ''}
-            <a class="dae-nav-btn" target="_blank" rel="noopener"
-               href="https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${hero.lat},${hero.lon}&travelmode=walking">
-               🧭 Y ALLER — ${fmtDist(hero.dist)} \u00E0 pied
-            </a>
+            <div class="dae-hero-actions">
+         <a class="dae-nav-btn" target="_blank" rel="noopener"
+            href="https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${hero.lat},${hero.lon}&travelmode=walking">
+            🧭 Y ALLER — ${fmtDist(hero.dist)} \u00E0 pied
+         </a>
+                <button class="dae-share-btn" data-share="${encodeURIComponent(JSON.stringify(hero))}">📤 SMS</button>
+            </div>
         </div>`;
 
     const othersHtml = others.length > 0 ? `
@@ -873,6 +876,7 @@ async function urgenceDaeSearchAndRender(loc) {
                 </div>
                 <div class="dae-row-right">
                     <div class="dae-row-dist">${fmtDist(d.dist)}</div>
+                    <button class="dae-row-share" data-share="${encodeURIComponent(JSON.stringify(d))}">📤</button>
                     <a class="dae-row-nav" target="_blank" rel="noopener"
                        href="https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${d.lat},${d.lon}&travelmode=walking">🧭</a>
                 </div>
@@ -889,6 +893,33 @@ async function urgenceDaeSearchAndRender(loc) {
         <div class="dae-source">Source : base nationale G\u00E9o\u2019DAE \u2014 Minist\u00E8re de la Sant\u00E9</div>`;
     if (btn) btn.disabled = false;
 }
+
+
+function urgenceDaeBuildSms(d) {
+    const addr = [d.addr, d.city].filter(Boolean).join(', ');
+    const mapsLink = 'https://www.google.com/maps/dir/?api=1&destination=' + d.lat + ',' + d.lon + '&travelmode=walking';
+    let txt = 'DAE - ' + (d.name || 'defibrillateur');
+    if (addr) txt += ' - ' + addr;
+    if (d.accessComplt) txt += ' (' + d.accessComplt + ')';
+    txt += '. Y aller et le rapporter AU PLUS VITE : ' + mapsLink;
+    return txt;
+}
+
+function urgenceDaeShare(d) {
+    const txt = urgenceDaeBuildSms(d);
+    const a = document.createElement('a');
+    a.href = 'sms:?&body=' + encodeURIComponent(txt);
+    a.click();
+}
+
+window.urgenceDaeShare = urgenceDaeShare;
+
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-share]');
+    if (btn) {
+        try { urgenceDaeShare(JSON.parse(decodeURIComponent(btn.dataset.share))); } catch (err) {}
+    }
+});
 
 function urgenceDaeShowManual() {
     const out = document.getElementById('urgenceDaeResults');
