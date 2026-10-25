@@ -209,7 +209,11 @@ function urgenceShowProductModal(product) {
     modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-card urgence-modal-content">
-            <div class="modal-header"><h3>${isEdit ? 'Modifier le produit' : 'Ajouter un produit'}</h3></div>
+            <div class="modal-header">
+                <h3>${isEdit ? 'Modifier le produit' : 'Ajouter un produit'}</h3>
+                <button type="button" class="modal-close" onclick="urgenceCloseProductModal()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-body">
             <div class="form-group">
                 <label>Nom du produit *</label>
                 <input type="text" id="urgenceProductName" class="form-input" value="${product ? urgenceEscapeHtml(product.name) : ''}" placeholder="Ex : Adrénaline 1 mg/mL">
@@ -236,13 +240,28 @@ function urgenceShowProductModal(product) {
                 <label>Date de péremption (facultatif)</label>
                 <input type="date" id="urgenceProductExpiry" class="form-input" value="${product && product.expiry ? product.expiry : ''}">
             </div>
-            <div class="modal-footer urgence-modal-actions">
+            </div>
+            <div class="modal-footer">
                 <button class="action-btn" onclick="urgenceCloseProductModal()">Annuler</button>
                 <button class="action-btn primary" onclick="urgenceSaveProduct(${isEdit ? `'${product.id}'` : 'null'})">${isEdit ? 'Enregistrer' : 'Ajouter'}</button>
             </div>
         </div>`;
     document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) urgenceCloseProductModal();
+    });
+    setTimeout(() => document.getElementById('urgenceProductName')?.focus(), 50);
 }
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const m = document.getElementById('urgenceProductModal');
+        if (m) {
+            urgenceCloseProductModal();
+            e.stopImmediatePropagation();
+        }
+    }
+});
 
 function urgenceCloseProductModal() {
     document.getElementById('urgenceProductModal')?.remove();
