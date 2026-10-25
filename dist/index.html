@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-w7VkWVXp.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-BPvm1AYZ.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1008,10 +1008,10 @@ window.attemptLogin = function() {
                         </div>
                         <span class="urgence-collapse-arrow">▾</span>
                     </div>
+                    <div class="urgence-dae-row">
+                        <button class="action-btn primary" id="urgenceDaeBtn" onclick="urgenceFindDae()">📍 DAE le plus proche</button>
+                    </div>
                     <div class="urgence-collapse-body">
-                        <div class="urgence-dae-row">
-                            <button class="action-btn primary" id="urgenceDaeBtn" onclick="urgenceFindDae()">📍 DAE le plus proche</button>
-                        </div>
                         <div id="urgenceDaeResults"></div>
                     </div>
                 </div>
@@ -1026,12 +1026,12 @@ window.attemptLogin = function() {
                         </div>
                         <span class="urgence-collapse-arrow">▾</span>
                     </div>
+                    <div class="urgence-weight-row">
+                        <label for="urgenceWeightInput">Poids</label>
+                        <input type="number" id="urgenceWeightInput" class="form-input" min="1" max="250" step="0.5" placeholder="kg">
+                        <span class="urgence-weight-unit">kg</span>
+                    </div>
                     <div class="urgence-collapse-body">
-                        <div class="urgence-weight-row">
-                            <label for="urgenceWeightInput">Poids du patient</label>
-                            <input type="number" id="urgenceWeightInput" class="form-input" min="1" max="250" step="0.5" placeholder="kg">
-                            <span class="urgence-weight-unit">kg</span>
-                        </div>
                         <div id="urgenceDoseResults"></div>
                     </div>
                 </div>
