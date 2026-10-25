@@ -4727,6 +4727,11 @@ async function loadCabinetData() {
         console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
         renderAddDepensesRecettes();
+        try {
+            await window.reunionInit();
+        } catch (e) {
+            console.error('[LOAD] reunionInit error:', e);
+        }
     } else {
         console.log('[LOAD] Cannot load - missing auth or client');
     }
@@ -9296,3 +9301,451 @@ async function renderCabinetLifeDashboard() {
 }
 
 window.renderCabinetLifeDashboard = renderCabinetLifeDashboard;
+
+// ============================================
+// RÉUNIONS DE CABINET
+// Fixer une date de réunion, ajouter des sujets à l'ordre du jour,
+// contextualisation IA, ODJ généré 24h avant, votes le jour J, compte rendu.
+// ============================================
+
+function reunionEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function reunionFmt(dateStr, timeStr) {
+    const d = new Date(dateStr + 'T' + (timeStr || '00:00'));
+    const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    let s = d.toLocaleDateString('fr-FR', opts);
+    if (timeStr) s += ' à ' + timeStr.replace(':', 'h');
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+async function reunionGetCabinetId() {
+    if (!supabaseClient || !currentUser) return null;
+    try {
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('cabinet_id')
+            .eq('id', currentUser.id)
+            .single();
+        return profile?.cabinet_id || null;
+    } catch (e) {
+        console.error('[REUNIONS] cabinet_id error:', e);
+        return null;
+    }
+}
+
+async function reunionMembers(cabinetId) {
+    if (!supabaseClient || !cabinetId) return [];
+    try {
+        const { data } = await supabaseClient
+            .from('profiles')
+            .select('id, first_name, last_name')
+            .eq('cabinet_id', cabinetId);
+        return data || [];
+    } catch (e) {
+        console.error('[REUNIONS] members error:', e);
+        return [];
+    }
+}
+
+async function reunionGetFixed() {
+    if (!supabaseClient) return null;
+    const cabinetId = await reunionGetCabinetId();
+    if (!cabinetId) return null;
+    try {
+        const { data } = await supabaseClient
+            .from('reunions')
+            .select('*')
+            .eq('cabinet_id', cabinetId)
+            .eq('statut', 'fixee')
+            .gte('date_reunion', new Date().toISOString().slice(0, 10))
+            .order('date_reunion', { ascending: true })
+            .limit(1);
+        return data && data.length ? data[0] : null;
+    } catch (e) {
+        console.error('[REUNIONS] get fixed error:', e);
+        return null;
+    }
+}
+
+async function reunionRenderBox() {
+    const box = document.getElementById('reunionCurrentBox');
+    if (!box) return;
+    const r = await reunionGetFixed();
+    if (!r) {
+        box.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Proposez des dates ci-dessous puis fixez la date définitive.</div>';
+    } else {
+        box.innerHTML = '<div class="reunion-current"><span>📅</span><span class="reunion-current-date">' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</span></div>';
+    }
+    await reunionRenderProposals();
+}
+
+async function reunionRenderProposals() {
+    const list = document.getElementById('reunionProposalsList');
+    if (!list) return;
+    const cabinetId = await reunionGetCabinetId();
+    if (!cabinetId) { list.innerHTML = ''; return; }
+    try {
+        const { data } = await supabaseClient
+            .from('reunion_date_proposals')
+            .select('*')
+            .eq('cabinet_id', cabinetId)
+            .gte('date_proposee', new Date().toISOString().slice(0, 10))
+            .order('date_proposee', { ascending: true });
+        if (!data || !data.length) { list.innerHTML = ''; return; }
+        const members = await reunionMembers(cabinetId);
+        const byId = {};
+        members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
+        list.innerHTML = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées</h4>' + data.map(p => {
+            return '<div class="reunion-proposal"><span class="reunion-proposal-date">' + reunionEsc(reunionFmt(p.date_proposee, p.heure_proposee)) + '</span><span class="sujet-author">par ' + reunionEsc(byId[p.user_id] || 'un associé') + '</span></div>';
+        }).join('') + '</div>';
+    } catch (e) {
+        console.error('[REUNIONS] render proposals error:', e);
+    }
+}
+
+async function reunionProposeDate() {
+    const date = document.getElementById('reunionDateInput')?.value;
+    const time = document.getElementById('reunionTimeInput')?.value || '18:00';
+    if (!date) { alert('Choisissez une date.'); return; }
+    const cabinetId = await reunionGetCabinetId();
+    if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
+    try {
+        const { error } = await supabaseClient
+            .from('reunion_date_proposals')
+            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, date_proposee: date, heure_proposee: time });
+        if (error) throw error;
+        document.getElementById('reunionDateInput').value = '';
+        await reunionRenderProposals();
+    } catch (e) {
+        console.error('[REUNIONS] propose error:', e);
+        alert('Erreur lors de la proposition : ' + (e.message || e));
+    }
+}
+
+async function reunionFixDate() {
+    const date = document.getElementById('reunionFixDate')?.value;
+    const time = document.getElementById('reunionFixTime')?.value || '18:00';
+    if (!date) { alert('Choisissez une date à fixer.'); return; }
+    const cabinetId = await reunionGetCabinetId();
+    if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
+    try {
+        await supabaseClient.from('reunions').update({ statut: 'annulee' }).eq('cabinet_id', cabinetId).eq('statut', 'fixee');
+        const { error } = await supabaseClient
+            .from('reunions')
+            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, date_reunion: date, heure_reunion: time, statut: 'fixee' });
+        if (error) throw error;
+        await reunionRenderBox();
+        await reunionRefreshOdjStatus();
+    } catch (e) {
+        console.error('[REUNIONS] fix error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
+}
+
+async function sujetAnalyzeWithAI() {
+    const title = document.getElementById('sujetTitleInput')?.value.trim();
+    const problem = document.getElementById('sujetProblemInput')?.value.trim();
+    const proposal = document.getElementById('sujetProposalInput')?.value.trim();
+    if (!title) { alert('Donnez un intitulé au sujet.'); return; }
+    const out = document.getElementById('sujetAiResult');
+    out.style.display = 'block';
+    out.innerHTML = 'Analyse IA en cours (contextualisation avec les données du cabinet)...';
+    let context = '';
+    try {
+        const cabinetId = await reunionGetCabinetId();
+        if (cabinetId && supabaseClient) {
+            const members = await reunionMembers(cabinetId);
+            const depts = [];
+            try {
+                const { data: d } = await supabaseClient.from('cabinet_depenses').select('categorie, montant, date').eq('user_id', currentUser.id).order('date', { ascending: false }).limit(30);
+                if (d) depts.push(...d);
+            } catch (e) {}
+            try {
+                const { data: r } = await supabaseClient.from('cabinet_recettes').select('categorie, montant, date').eq('user_id', currentUser.id).order('date', { ascending: false }).limit(30);
+                if (r) depts.push(...r);
+            } catch (e) {}
+            context = '\n\nDonnées du cabinet :\n- Associés : ' + (members.map(m => m.first_name + ' ' + (m.last_name || '')).join(', ') || 'inconnus') + '\n- ' + depts.length + ' dernières opérations comptables : ' + depts.map(o => (o.categorie || '?') + ' ' + (o.montant || '') + '€ (' + (o.date || '') + ')').join('; ');
+        }
+    } catch (e) {
+        console.error('[REUNIONS] context error:', e);
+    }
+    try {
+        const prompt = 'Sujet soumis pour la réunion de cabinet :\nIntitulé : ' + title + '\nProblème posé : ' + (problem || '(non précisé)') + '\nProposition de réponse : ' + (proposal || '(aucune)') + context + '\n\nContextualise ce sujet avec les données du cabinet, analyse la proposition et donne ton avis en 3 parties courtes : CONTEXTE, ANALYSE, AVIS ET RECOMMANDATION.';
+        const res = await window.callLLM(prompt, 'draft_sujet');
+        out.innerHTML = '<h4>Avis de l\u2019IA</h4><div style="white-space:pre-wrap;">' + reunionEsc(res) + '</div>';
+    } catch (e) {
+        out.innerHTML = 'Erreur IA : ' + reunionEsc(e.message || e);
+    }
+}
+
+async function sujetSubmit() {
+    const title = document.getElementById('sujetTitleInput')?.value.trim();
+    const problem = document.getElementById('sujetProblemInput')?.value.trim();
+    const proposal = document.getElementById('sujetProposalInput')?.value.trim();
+    const ai = document.getElementById('sujetAiResult')?.innerText.trim() || '';
+    if (!title) { alert('Donnez un intitulé au sujet.'); return; }
+    const reunion = await reunionGetFixed();
+    if (!reunion) { alert('Fixez d\u2019abord la date de la réunion dans l\u2019onglet Réunion.'); return; }
+    try {
+        const { error } = await supabaseClient
+            .from('reunion_sujets')
+            .insert({
+                reunion_id: reunion.id,
+                user_id: currentUser.id,
+                titre: title,
+                probleme: problem,
+                proposition: proposal,
+                analyse_ia: ai
+            });
+        if (error) throw error;
+        document.getElementById('sujetTitleInput').value = '';
+        document.getElementById('sujetProblemInput').value = '';
+        document.getElementById('sujetProposalInput').value = '';
+        document.getElementById('sujetAiResult').style.display = 'none';
+        await reunionRenderOdj();
+        alert('Sujet ajouté à l\u2019ordre du jour.');
+    } catch (e) {
+        console.error('[REUNIONS] submit sujet error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
+}
+
+function reunionIsToday(reunion) {
+    if (!reunion) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return reunion.date_reunion === today;
+}
+
+function reunionIsWithin24h(reunion) {
+    if (!reunion) return false;
+    const d = new Date(reunion.date_reunion + 'T' + (reunion.heure_reunion || '00:00'));
+    const diff = d.getTime() - Date.now();
+    return diff <= 24 * 3600 * 1000 && diff > -24 * 3600 * 1000;
+}
+
+async function reunionRefreshOdjStatus() {
+    const st = document.getElementById('odjStatus');
+    if (st) {
+        const r = await reunionGetFixed();
+        if (!r) {
+            st.innerHTML = '<div class="odj-empty">Aucune réunion fixée. Fixez d\u2019abord une date dans l\u2019onglet Réunion.</div>';
+        } else if (r.odj_genere) {
+            st.innerHTML = '<div class="odj-empty">Ordre du jour généré — ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. Tous les associés peuvent le lire' + (reunionIsToday(r) ? ' et voter chaque intitulé aujourd\u2019hui.' : '.') + '</div>';
+        } else if (reunionIsWithin24h(r)) {
+            st.innerHTML = '<div class="odj-empty">La réunion est dans moins de 24h — l\u2019ordre du jour n\u2019est pas encore généré. Utilisez le bouton ci-dessous ou il sera généré automatiquement.</div>';
+        } else {
+            st.innerHTML = '<div class="odj-empty">Réunion fixée le ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '. L\u2019ordre du jour sera généré 24h avant. Vous pouvez l\u2019anticiper avec le bouton ci-dessous.</div>';
+        }
+    }
+}
+
+async function reunionLoadSujets(reunion) {
+    if (!reunion) return [];
+    const { data } = await supabaseClient
+        .from('reunion_sujets')
+        .select('*')
+        .eq('reunion_id', reunion.id)
+        .order('created_at', { ascending: true });
+    return data || [];
+}
+
+async function reunionLoadVotes(sujetIds) {
+    const votes = {};
+    if (!sujetIds.length) return votes;
+    try {
+        const { data } = await supabaseClient
+            .from('reunion_votes')
+            .select('*')
+            .in('sujet_id', sujetIds);
+        (data || []).forEach(v => {
+            votes[v.sujet_id] = votes[v.sujet_id] || { count: 0, mine: false };
+            votes[v.sujet_id].count += v.vote || 0;
+            if (v.user_id === currentUser.id) votes[v.sujet_id].mine = true;
+        });
+    } catch (e) {
+        console.error('[REUNIONS] votes error:', e);
+    }
+    return votes;
+}
+
+async function reunionVote(sujetId) {
+    const reunion = await reunionGetFixed();
+    if (!reunion) return;
+    if (!reunionIsToday(reunion)) { alert('Le vote est ouvert le jour de la réunion.'); return; }
+    const existing = await supabaseClient
+        .from('reunion_votes')
+        .select('id')
+        .eq('sujet_id', sujetId)
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+    try {
+        if (existing.data) {
+            await supabaseClient.from('reunion_votes').delete().eq('id', existing.data.id);
+        } else {
+            const { error } = await supabaseClient
+                .from('reunion_votes')
+                .insert({ sujet_id: sujetId, user_id: currentUser.id, vote: 1 });
+            if (error) throw error;
+        }
+        await reunionRenderOdj();
+    } catch (e) {
+        console.error('[REUNIONS] vote error:', e);
+        alert('Erreur de vote : ' + (e.message || e));
+    }
+}
+
+async function reunionRenderOdj() {
+    const container = document.getElementById('odjResult');
+    if (!container) return;
+    const reunion = await reunionGetFixed();
+    if (!reunion) {
+        container.innerHTML = '<div class="odj-empty">Aucune réunion fixée.</div>';
+        return;
+    }
+    const sujets = await reunionLoadSujets(reunion);
+    if (!sujets.length) {
+        container.innerHTML = '<div class="odj-empty">Aucun sujet soumis pour cette réunion. Ajoutez des sujets depuis l\u2019onglet Réunion.</div>';
+        return;
+    }
+    const cabinetId = await reunionGetCabinetId();
+    const members = await reunionMembers(cabinetId);
+    const byId = {};
+    members.forEach(m => { byId[m.id] = m.first_name + ' ' + (m.last_name || ''); });
+    const votes = await reunionLoadVotes(sujets.map(s => s.id));
+    const canVote = reunionIsToday(reunion);
+    container.innerHTML = sujets.map((s, i) => {
+        const v = votes[s.id] || { count: 0, mine: false };
+        let html = '<div class="odj-item">'
+            + '<div class="sujet-title">' + (i + 1) + '. ' + reunionEsc(s.titre) + '</div>'
+            + '<div class="odj-author">Proposé par ' + reunionEsc(byId[s.user_id] || 'un associé') + '</div>';
+        if (s.probleme) html += '<div class="odj-section-label">Probl\u00e8me pos\u00e9</div><div class="odj-section-text">' + reunionEsc(s.probleme) + '</div>';
+        if (s.proposition) html += '<div class="odj-section-label">Proposition</div><div class="odj-section-text">' + reunionEsc(s.proposition) + '</div>';
+        if (s.analyse_ia) html += '<div class="odj-section-label">Avis de l\u2019IA (contexte cabinet)</div><div class="odj-section-text">' + reunionEsc(s.analyse_ia) + '</div>';
+        html += '<div class="odj-vote-bar"><button class="action-btn odj-vote-btn ' + (v.mine ? 'voted' : '') + '" data-vote="' + s.id + '"' + (canVote ? '' : ' disabled') + '>👍 Voter</button><span class="odj-vote-count">' + v.count + ' vote' + (v.count > 1 ? 's' : '') + '</span></div>';
+        html += '</div>';
+        return html;
+    }).join('');
+    container.querySelectorAll('.odj-vote-btn').forEach(btn => {
+        btn.addEventListener('click', () => reunionVote(btn.dataset.vote));
+    });
+}
+
+async function generateODJ() {
+    const reunion = await reunionGetFixed();
+    if (!reunion) { alert('Fixez d\u2019abord une réunion.'); return; }
+    const sujets = await reunionLoadSujets(reunion);
+    if (!sujets.length) { alert('Aucun sujet soumis pour cette réunion.'); return; }
+    let summary = '';
+    try {
+        const prompt = 'Tu prépares l\u2019ordre du jour d\u2019une réunion de cabinet médical. Sujets soumis :\n' + sujets.map((s, i) => (i + 1) + ') ' + s.titre + '\nProblème : ' + (s.probleme || '') + '\nProposition : ' + (s.proposition || '') + '\nAvis IA : ' + (s.analyse_ia || '')).join('\n\n') + '\n\nRédige un ordre du jour structuré et concis pour cette réunion.';
+        summary = await window.callLLM(prompt, 'generate_odj');
+    } catch (e) {
+        console.error('[REUNIONS] ODJ IA error:', e);
+        summary = '';
+    }
+    try {
+        const { error } = await supabaseClient
+            .from('reunions')
+            .update({ odj_genere: true, odj_contenu: summary })
+            .eq('id', reunion.id);
+        if (error) throw error;
+        await reunionRefreshOdjStatus();
+        await reunionRenderOdj();
+        alert('Ordre du jour généré. Il est visible par tous les associés.');
+    } catch (e) {
+        console.error('[REUNIONS] ODJ save error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
+}
+
+async function reunionRefreshSelect() {
+    const sel = document.getElementById('reunionSelect');
+    if (!sel || !supabaseClient) return;
+    const cabinetId = await reunionGetCabinetId();
+    if (!cabinetId) return;
+    try {
+        const { data } = await supabaseClient
+            .from('reunions')
+            .select('*')
+            .eq('cabinet_id', cabinetId)
+            .order('date_reunion', { ascending: false })
+            .limit(20);
+        const prev = sel.value;
+        sel.innerHTML = '<option value="">Choisir une réunion...</option>' + (data || []).map(r => '<option value="' + r.id + '">' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</option>').join('');
+        if (prev) sel.value = prev;
+    } catch (e) {
+        console.error('[REUNIONS] select error:', e);
+    }
+}
+
+let reunionLastCR = null;
+
+async function generateCR() {
+    const sel = document.getElementById('reunionSelect');
+    const notes = document.getElementById('crNotes')?.value.trim();
+    if (!sel || !sel.value) { alert('Choisissez une réunion.'); return; }
+    if (!notes) { alert('Saisissez les notes de la réunion.'); return; }
+    const out = document.getElementById('crResult');
+    out.innerHTML = 'Génération du compte rendu...';
+    let odj = '';
+    try {
+        const { data: r } = await supabaseClient.from('reunions').select('odj_contenu, date_reunion').eq('id', sel.value).single();
+        odj = r?.odj_contenu || '';
+    } catch (e) {}
+    try {
+        const prompt = 'Rédige le compte rendu d\u2019une réunion de cabinet médical.\nOrdre du jour :\n' + (odj || '(non disponible)') + '\n\nNotes brutes prises pendant la réunion :\n' + notes + '\n\nStructure : décisions prises par sujet, actions à mener, responsables et échéances.';
+        const cr = await window.callLLM(prompt, 'generate_cr');
+        reunionLastCR = cr;
+        document.getElementById('crDownloadBtn').style.display = 'inline-flex';
+        out.innerHTML = '<h4>Compte rendu</h4><div style="white-space:pre-wrap;">' + reunionEsc(cr) + '</div>';
+    } catch (e) {
+        out.innerHTML = 'Erreur IA : ' + reunionEsc(e.message || e);
+    }
+}
+
+function downloadCR() {
+    if (!reunionLastCR) return;
+    const blob = new Blob([reunionLastCR], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'compte-rendu-reunion.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+let reunionInitialized = false;
+
+async function reunionInit() {
+    if (!supabaseClient || !currentUser) return;
+    if (reunionInitialized) {
+        await reunionRenderBox();
+        await reunionRefreshOdjStatus();
+        await reunionRenderOdj();
+        await reunionRefreshSelect();
+        return;
+    }
+    reunionInitialized = true;
+    await reunionRenderBox();
+    await reunionRefreshOdjStatus();
+    await reunionRenderOdj();
+    await reunionRefreshSelect();
+
+    const proposeBtn = document.getElementById('reunionProposeBtn');
+    if (proposeBtn) proposeBtn.addEventListener('click', reunionProposeDate);
+    const fixBtn = document.getElementById('reunionFixBtn');
+    if (fixBtn) fixBtn.addEventListener('click', reunionFixDate);
+    const aiBtn = document.getElementById('sujetAiBtn');
+    if (aiBtn) aiBtn.addEventListener('click', sujetAnalyzeWithAI);
+    const submitBtn = document.getElementById('sujetSubmitBtn');
+    if (submitBtn) submitBtn.addEventListener('click', sujetSubmit);
+    const odjBtn = document.getElementById('odjGenerateBtn');
+    if (odjBtn) odjBtn.addEventListener('click', generateODJ);
+    const crBtn = document.getElementById('crGenerateBtn');
+    if (crBtn) crBtn.addEventListener('click', generateCR);
+    const crDl = document.getElementById('crDownloadBtn');
+    if (crDl) crDl.addEventListener('click', downloadCR);
+}
+
+window.reunionInit = reunionInit;
