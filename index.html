@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-BSOrknmG.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-CsFa0JgJ.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1232,6 +1232,12 @@ window.attemptLogin = function() {
                     </div>
                     
                     <div class="settings-section">
+                        <h3>Mon cabinet</h3>
+                        <div class="settings-desc">Espace de travail actuel pour les modules partagés du cabinet (réunions, ordres du jour, comptabilité, stocks).</div>
+                        <div id="profileCabinetBox"></div>
+                    </div>
+                    
+                    <div class="settings-section">
                         <h3>Changer le mot de passe</h3>
                         <div class="password-form">
                             <div class="form-group">
@@ -1945,6 +1951,7 @@ window.attemptLogin = function() {
 
                 <!-- Réunions -->
                 <div id="cabinet-reunions" class="cabinet-tab-content">
+                    <div id="reunionCabinetBanner"></div>
                     <div class="sub-tabs">
                         <button class="sub-tab active" data-subtab="reunion">Réunion</button>
                         <button class="sub-tab" data-subtab="odj">Ordre du jour</button>
@@ -1954,14 +1961,14 @@ window.attemptLogin = function() {
                     <div id="reunions-reunion" class="sub-tab-content active">
                         <div class="module-card">
                             <h3>Prochaine réunion de cabinet</h3>
-                            <p class="module-desc">Dans un cabinet, on se croise sans être jamais tous ensemble. Fixez ici une date où tous les associés pourront échanger sur les décisions du cabinet.</p>
+                            <p class="module-desc">Dans un cabinet, on se croise sans être jamais tous ensemble. Chaque associé propose des dates, tout le monde vote pour ou contre, puis la date la plus adaptée est fixée.</p>
                             <div id="reunionCurrentBox"></div>
                             <div class="form-group">
-                                <label>Proposer une date</label>
+                                <label>Proposer une ou plusieurs dates</label>
                                 <div class="reunion-date-row">
                                     <input type="date" id="reunionDateInput" class="form-input">
                                     <input type="time" id="reunionTimeInput" class="form-input">
-                                    <button class="action-btn primary" id="reunionProposeBtn">Proposer</button>
+                                    <button class="action-btn primary" id="reunionProposeBtn">Ajouter</button>
                                 </div>
                             </div>
                             <div id="reunionProposalsList"></div>
@@ -2003,6 +2010,7 @@ window.attemptLogin = function() {
                             <h3>Ordre du jour</h3>
                             <p class="module-desc">L'ordre du jour est généré 24h avant la réunion, avec la contextualisation IA de chaque sujet. Tous les associés peuvent le lire et, le jour J, voter chaque intitulé depuis leur téléphone.</p>
                             <div id="odjStatus"></div>
+                            <div id="odjVotesSummary"></div>
                             <button class="action-btn" id="odjGenerateBtn">Générer l'ordre du jour maintenant</button>
                             <div id="odjResult"></div>
                         </div>
