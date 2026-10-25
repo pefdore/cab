@@ -2045,6 +2045,8 @@ window.attemptLogin = function() {
                     <div class="sub-tabs">
                         <button class="sub-tab active" data-subtab="urgence-stock">Gestion des stocks</button>
                         <button class="sub-tab" data-subtab="urgence-pointage">Pointage hebdomadaire</button>
+                        <button class="sub-tab" data-subtab="urgence-orders">Commandes & réception</button>
+                        <button class="sub-tab" data-subtab="urgence-costs">Coûts & budget</button>
                     </div>
 
                     <div id="urgence-stock" class="sub-tab-content active">
@@ -2072,6 +2074,7 @@ window.attemptLogin = function() {
                                             <th>Quantité</th>
                                             <th>Seuil</th>
                                             <th>Péremption</th>
+                                            <th>Coût TTC / unité</th>
                                             <th>État</th>
                                             <th></th>
                                         </tr>
@@ -2082,6 +2085,7 @@ window.attemptLogin = function() {
                             <div class="inventory-alerts" id="cabinetUrgenceStockAlerts"></div>
                             <div style="margin-top: 12px;">
                                 <button class="action-btn" id="urgenceCopyOrderBtnCabinet" disabled>Copier la liste à commander</button>
+                                <button class="action-btn primary" id="urgenceCreateOrderBtn">Créer la commande à passer</button>
                             </div>
                         </div>
                     </div>
@@ -2094,7 +2098,30 @@ window.attemptLogin = function() {
                             <div id="urgencePointageList"></div>
                             <div style="margin-top: 16px;">
                                 <button class="action-btn primary" id="urgenceSavePointageBtn">Enregistrer le pointage</button>
+                                <button class="action-btn" id="urgenceCreateOrderBtn2">Générer la commande à passer</button>
                             </div>
+                        </div>
+                    </div>
+
+                    <div id="urgence-orders" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Commandes & réception</h3>
+                            <p class="module-desc">Générez la commande depuis le pointage, envoyez-la au fournisseur, puis réceptionnez : le stock disponible est mis à jour automatiquement.</p>
+                            <div style="margin-bottom: 16px;">
+                                <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">Créer la commande à passer</button>
+                            </div>
+                            <h4>Commandes en attente</h4>
+                            <div id="urgenceOrdersPending"></div>
+                            <h4 style="margin-top: 20px;">Historique</h4>
+                            <div id="urgenceOrdersHistory"></div>
+                        </div>
+                    </div>
+
+                    <div id="urgence-costs" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Coûts & budget — Fournitures salle d'urgence</h3>
+                            <p class="module-desc">Visualisez ce qui coûte le plus cher pour prendre des décisions de cabinet : par produit et par catégorie.</p>
+                            <div id="urgenceCostsPanel"></div>
                         </div>
                     </div>
                 </div>
@@ -2869,6 +2896,7 @@ window.attemptLogin = function() {
     <script src="app.v5.js?v=202611023000" defer></script>
     <script src="secretariat.js?v=202611023000" defer></script>
     <script src="urgence.js?v=202611023000" defer></script>
+    <script src="urgence-orders.js?v=202611023000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {

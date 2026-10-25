@@ -106,18 +106,20 @@ function renderUrgenceStocks() {
     if (tbody) {
         // Page Salle d'urgence : lecture seule, vue rapide de ce qui est disponible
         tbody.innerHTML = products.length === 0
-            ? '<tr><td colspan="5" class="urgence-empty">Aucun produit enregistré. Ajoutez-le depuis Cabinet → Stocks.</td></tr>'
+            ? '<tr><td colspan="6" class="urgence-empty">Aucun produit enregistré. Ajoutez-le depuis Cabinet → Stocks.</td></tr>'
             : products.map(p => {
                 const state = urgenceStockState(p);
                 const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'Stock bas' : 'OK');
                 const stateClass = state === 'rupture' ? 'danger' : (state === 'bas' ? 'warning' : 'success');
                 const expiryHtml = p.expiry ? urgenceEscapeHtml(p.expiry) : '-';
+                const priceHtml = p.unitPrice ? Number(p.unitPrice).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '—';
                 return `
                     <tr>
                         <td>${urgenceEscapeHtml(p.name)}</td>
                         <td><span class="urgence-cat-badge">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</span></td>
                         <td>${p.quantity} ${urgenceEscapeHtml(p.unit)}</td>
                         <td>${expiryHtml}</td>
+                        <td>${priceHtml ? Number(priceHtml).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '—'}</td>
                         <td><span class="urgence-state ${stateClass}">${stateLabel}</span></td>
                     </tr>`;
             }).join('');
@@ -126,12 +128,13 @@ function renderUrgenceStocks() {
     if (cabinetTbody) {
         // Cabinet → Stocks : gestion complète (modifier / supprimer)
         cabinetTbody.innerHTML = products.length === 0
-            ? '<tr><td colspan="7" class="urgence-empty">Aucun produit. Ajoutez-en avec le bouton « Ajouter un produit ».</td></tr>'
+            ? '<tr><td colspan="8" class="urgence-empty">Aucun produit. Ajoutez-en avec le bouton « Ajouter un produit ».</td></tr>'
             : products.map(p => {
                 const state = urgenceStockState(p);
                 const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'À commander' : 'OK');
                 const stateClass = state === 'rupture' ? 'danger' : (state === 'bas' ? 'warning' : 'success');
                 const expiryHtml = p.expiry ? urgenceEscapeHtml(p.expiry) : '-';
+                const priceHtml = p.unitPrice ? Number(p.unitPrice).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '—';
                 return `
                     <tr>
                         <td>${urgenceEscapeHtml(p.name)}</td>
@@ -139,6 +142,7 @@ function renderUrgenceStocks() {
                         <td>${p.quantity} ${urgenceEscapeHtml(p.unit)}</td>
                         <td>${p.minQuantity}</td>
                         <td>${expiryHtml}</td>
+                        <td>${priceHtml}</td>
                         <td><span class="urgence-state ${stateClass}">${stateLabel}</span></td>
                         <td class="urgence-actions">
                             <button class="action-btn" onclick="urgenceEditProduct('${p.id}')" title="Modifier">✏️</button>
@@ -240,6 +244,10 @@ function urgenceShowProductModal(product) {
                 <label>Date de péremption (facultatif)</label>
                 <input type="date" id="urgenceProductExpiry" class="form-input" value="${product && product.expiry ? product.expiry : ''}">
             </div>
+            <div class="form-group">
+                <label>Coût TTC par ${urgenceEscapeHtml(product ? product.unit : 'unité')} (€, facultatif)</label>
+                <input type="number" min="0" step="0.01" id="urgenceProductPrice" class="form-input" value="${product && product.unitPrice ? product.unitPrice : ''}" placeholder="Ex : 4.50">
+            </div>
             </div>
             <div class="modal-footer">
                 <button class="action-btn" onclick="urgenceCloseProductModal()">Annuler</button>
@@ -275,6 +283,8 @@ function urgenceSaveProduct(productId) {
     const min = parseInt(document.getElementById('urgenceProductMin')?.value, 10) || 0;
     const expiryRaw = document.getElementById('urgenceProductExpiry')?.value;
     const expiry = expiryRaw || null;
+    const priceRaw = document.getElementById('urgenceProductPrice')?.value;
+    const unitPrice = priceRaw !== '' && priceRaw !== undefined && priceRaw !== null ? (parseFloat(priceRaw) || 0) : null;
 
     if (!name) {
         if (typeof showToast === 'function') showToast('Le nom du produit est obligatoire', 'error');
@@ -286,12 +296,14 @@ function urgenceSaveProduct(productId) {
         if (p) {
             p.name = name; p.category = category; p.unit = unit;
             p.quantity = qty; p.minQuantity = min; p.expiry = expiry;
+            if (unitPrice !== null) p.unitPrice = unitPrice;
         }
     } else {
         urgenceData.products.push({
             id: 'p' + Date.now(),
             name, category, unit,
-            quantity: qty, minQuantity: min, expiry
+            quantity: qty, minQuantity: min, expiry,
+            unitPrice: unitPrice !== null ? unitPrice : undefined
         });
     }
 

@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-BPvm1AYZ.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-CGWi3MbO.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1232,6 +1232,12 @@ window.attemptLogin = function() {
                     </div>
                     
                     <div class="settings-section">
+                        <h3>Mon cabinet</h3>
+                        <div class="settings-desc">Espace de travail actuel pour les modules partagés du cabinet (réunions, ordres du jour, comptabilité, stocks).</div>
+                        <div id="profileCabinetBox"></div>
+                    </div>
+                    
+                    <div class="settings-section">
                         <h3>Changer le mot de passe</h3>
                         <div class="password-form">
                             <div class="form-group">
@@ -1945,58 +1951,79 @@ window.attemptLogin = function() {
 
                 <!-- Réunions -->
                 <div id="cabinet-reunions" class="cabinet-tab-content">
+                    <div id="reunionCabinetBanner"></div>
                     <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="odj">Ordre du jour</button>
-                        <button class="sub-tab" data-subtab="sujets">Sujets</button>
+                        <button class="sub-tab active" data-subtab="reunion">Réunion</button>
+                        <button class="sub-tab" data-subtab="odj">Ordre du jour</button>
                         <button class="sub-tab" data-subtab="cr">Compte rendu</button>
                     </div>
-                    
-                    <div id="reunions-odj" class="sub-tab-content active">
+
+                    <div id="reunions-reunion" class="sub-tab-content active">
                         <div class="module-card">
-                            <h3>Générateur d'Ordre du Jour</h3>
-                            <p class="module-desc">Générez automatiquement l'ordre du jour de vos réunions de cabinet</p>
+                            <h3>Prochaine réunion de cabinet</h3>
+                            <p class="module-desc">Dans un cabinet, on se croise sans être jamais tous ensemble. Si la date est connue, fixez-la directement. Sinon, proposez plusieurs dates : chacun indique sa disponibilité, la date recueillant le plus de présences est pré-sélectionnée, puis validée.</p>
+                            <div id="reunionCurrentBox"></div>
+                            <button class="action-btn" id="reunionNextBtn" style="display:none;">Programmer la réunion suivante</button>
+                            <div id="reunionScheduleSection">
+                                <div class="form-group">
+                                    <label>Fixer directement la date (si elle est déjà connue)</label>
+                                    <div class="reunion-date-row">
+                                        <input type="date" id="reunionFixDate" class="form-input">
+                                        <input type="time" id="reunionFixTime" class="form-input">
+                                        <button class="action-btn" id="reunionFixBtn">Fixer la date</button>
+                                    </div>
+                                </div>
+                                <div class="odj-section-label" style="margin-top:18px;">Ou, si la date n'est pas connue, proposez plusieurs dates</div>
+                                <div class="form-group">
+                                    <div class="reunion-date-row">
+                                        <input type="date" id="reunionDateInput" class="form-input">
+                                        <input type="time" id="reunionTimeInput" class="form-input">
+                                        <button class="action-btn primary" id="reunionProposeBtn">Ajouter une date</button>
+                                    </div>
+                                </div>
+                                <div id="reunionProposalsList"></div>
+                                <div id="reunionValidateBox"></div>
+                            </div>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>Ajouter un sujet à l'ordre du jour</h3>
+                            <p class="module-desc">Chaque associé peut ajouter un ou plusieurs sujets avant la réunion : décrivez le problème posé et proposez une réponse. L'IA contextualisera chaque sujet avec les données du cabinet et donnera son avis.</p>
                             <div class="form-group">
-                                <label>Date de la réunion</label>
-                                <input type="date" id="reunionDate" class="form-input">
+                                <label>Intitulé du sujet</label>
+                                <input type="text" id="sujetTitleInput" class="form-input" placeholder="Ex : Répartition des créneaux de permanence du samedi">
                             </div>
                             <div class="form-group">
-                                <label>Type de réunion</label>
-                                <select id="reunionType" class="form-input">
-                                    <option value="hebdo">Hebdomadaire</option>
-                                    <option value="mensuelle">Mensuelle</option>
-                                    <option value="extra">Extraordinaire</option>
-                                </select>
+                                <label>Problème posé</label>
+                                <textarea id="sujetProblemInput" class="form-input" rows="3" placeholder="Décrivez le problème constaté..."></textarea>
                             </div>
-                            <button class="action-btn primary" onclick="generateODJ()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-                                Générer avec IA
-                            </button>
-                            <div id="odjResult" class="result-container"></div>
+                            <div class="form-group">
+                                <label>Proposition de réponse</label>
+                                <textarea id="sujetProposalInput" class="form-input" rows="3" placeholder="Votre proposition pour résoudre le problème..."></textarea>
+                            </div>
+                            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                                <button class="action-btn" id="sujetAiBtn">Analyser avec IA (contexte cabinet)</button>
+                                <button class="action-btn primary" id="sujetSubmitBtn">Ajouter à l'ordre du jour</button>
+                            </div>
+                            <div id="sujetAiResult" class="result-container" style="display:none;"></div>
                         </div>
                     </div>
-                    
-                    <div id="reunions-sujets" class="sub-tab-content">
+
+                    <div id="reunions-odj" class="sub-tab-content">
                         <div class="module-card">
-                            <h3>Propositions de Sujets</h3>
-                            <p class="module-desc">Chaque associé peut proposer un sujet pour la prochaine réunion</p>
-                            <div class="form-group">
-                                <label>Votre sujet</label>
-                                <textarea id="sujetText" class="form-input" rows="3" placeholder="Décrivez le sujet que vous souhaitez soumettre..."></textarea>
-                            </div>
-                            <button class="action-btn" onclick="draftSujet()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-                                Affiner avec IA
-                            </button>
-                            <button class="action-btn primary" onclick="submitSujet()">Soumettre le sujet</button>
-                            <div id="sujetDraft" class="result-container"></div>
-                            <div id="sujetsList" class="sujets-list"></div>
+                            <h3>Ordre du jour</h3>
+                            <p class="module-desc">L'ordre du jour est généré 24h avant la réunion, avec la contextualisation IA de chaque sujet. Tous les associés peuvent le lire et, le jour J, voter chaque intitulé depuis leur téléphone.</p>
+                            <div id="odjStatus"></div>
+                            <div id="odjVotesSummary"></div>
+                            <button class="action-btn" id="odjGenerateBtn">Générer l'ordre du jour maintenant</button>
+                            <div id="odjResult"></div>
                         </div>
                     </div>
-                    
+
                     <div id="reunions-cr" class="sub-tab-content">
                         <div class="module-card">
-                            <h3>Générateur de Compte Rendu</h3>
-                            <p class="module-desc">Générez automatiquement le compte rendu après la réunion</p>
+                            <h3>Compte rendu</h3>
+                            <p class="module-desc">Après la réunion, saisissez les notes brutes : l'IA met en forme le compte rendu.</p>
                             <div class="form-group">
                                 <label>Sélectionner la réunion</label>
                                 <select id="reunionSelect" class="form-input">
@@ -2007,21 +2034,19 @@ window.attemptLogin = function() {
                                 <label>Notes de la réunion</label>
                                 <textarea id="crNotes" class="form-input" rows="5" placeholder="Saisissez les notes brutes de la réunion..."></textarea>
                             </div>
-                            <button class="action-btn primary" onclick="generateCR()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-                                Générer le CR avec IA
-                            </button>
-                            <button class="action-btn" onclick="downloadCR()">Télécharger PDF</button>
+                            <button class="action-btn primary" id="crGenerateBtn">Générer le CR avec IA</button>
+                            <button class="action-btn" id="crDownloadBtn" style="display:none;">Télécharger le CR</button>
                             <div id="crResult" class="result-container"></div>
                         </div>
                     </div>
                 </div>
-                
 <!-- Stocks -->
                 <div id="cabinet-stocks" class="cabinet-tab-content">
                     <div class="sub-tabs">
                         <button class="sub-tab active" data-subtab="urgence-stock">Gestion des stocks</button>
                         <button class="sub-tab" data-subtab="urgence-pointage">Pointage hebdomadaire</button>
+                        <button class="sub-tab" data-subtab="urgence-orders">Commandes & réception</button>
+                        <button class="sub-tab" data-subtab="urgence-costs">Coûts & budget</button>
                     </div>
 
                     <div id="urgence-stock" class="sub-tab-content active">
@@ -2049,6 +2074,7 @@ window.attemptLogin = function() {
                                             <th>Quantité</th>
                                             <th>Seuil</th>
                                             <th>Péremption</th>
+                                            <th>Coût TTC / unité</th>
                                             <th>État</th>
                                             <th></th>
                                         </tr>
@@ -2059,6 +2085,7 @@ window.attemptLogin = function() {
                             <div class="inventory-alerts" id="cabinetUrgenceStockAlerts"></div>
                             <div style="margin-top: 12px;">
                                 <button class="action-btn" id="urgenceCopyOrderBtnCabinet" disabled>Copier la liste à commander</button>
+                                <button class="action-btn primary" id="urgenceCreateOrderBtn">Créer la commande à passer</button>
                             </div>
                         </div>
                     </div>
@@ -2071,7 +2098,30 @@ window.attemptLogin = function() {
                             <div id="urgencePointageList"></div>
                             <div style="margin-top: 16px;">
                                 <button class="action-btn primary" id="urgenceSavePointageBtn">Enregistrer le pointage</button>
+                                <button class="action-btn" id="urgenceCreateOrderBtn2">Générer la commande à passer</button>
                             </div>
+                        </div>
+                    </div>
+
+                    <div id="urgence-orders" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Commandes & réception</h3>
+                            <p class="module-desc">Générez la commande depuis le pointage, envoyez-la au fournisseur, puis réceptionnez : le stock disponible est mis à jour automatiquement.</p>
+                            <div style="margin-bottom: 16px;">
+                                <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">Créer la commande à passer</button>
+                            </div>
+                            <h4>Commandes en attente</h4>
+                            <div id="urgenceOrdersPending"></div>
+                            <h4 style="margin-top: 20px;">Historique</h4>
+                            <div id="urgenceOrdersHistory"></div>
+                        </div>
+                    </div>
+
+                    <div id="urgence-costs" class="sub-tab-content">
+                        <div class="module-card">
+                            <h3>Coûts & budget — Fournitures salle d'urgence</h3>
+                            <p class="module-desc">Visualisez ce qui coûte le plus cher pour prendre des décisions de cabinet : par produit et par catégorie.</p>
+                            <div id="urgenceCostsPanel"></div>
                         </div>
                     </div>
                 </div>
@@ -2846,6 +2896,7 @@ window.attemptLogin = function() {
     <script src="app.v5.js?v=202611023000" defer></script>
     <script src="secretariat.js?v=202611023000" defer></script>
     <script src="urgence.js?v=202611023000" defer></script>
+    <script src="urgence-orders.js?v=202611023000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {

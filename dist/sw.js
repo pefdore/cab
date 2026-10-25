@@ -5,6 +5,7 @@ const ASSETS = [
   '/app.v5.js?v=202611023000',
   '/secretariat.js?v=202611023000',
   '/urgence.js?v=202611023000',
+  '/urgence-orders.js?v=202611023000',
   '/style.css?v=202611023000',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'

@@ -9740,3 +9740,257 @@ html.no-anim *::after {
 .urgence-collapsible .urgence-weight-row {
     padding-top: 4px;
 }
+
+/* Réunions de cabinet */
+.reunion-date-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.reunion-date-row .form-input {
+    flex: 1;
+    min-width: 140px;
+}
+.reunion-current {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-muted);
+}
+.reunion-current-date {
+    font-weight: 600;
+    font-size: 1rem;
+}
+.reunion-proposals {
+    margin-top: 16px;
+}
+.reunion-proposal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg);
+    margin-bottom: 8px;
+}
+.reunion-proposal .reunion-proposal-date {
+    font-weight: 600;
+}
+.reunion-proposal .sujet-author {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+.odj-item {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+}
+.odj-item .sujet-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.odj-item .odj-author {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+}
+.odj-item .odj-section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-primary);
+    margin: 10px 0 4px;
+}
+.odj-item .odj-section-text {
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+.odj-vote-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+}
+.odj-vote-count {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+.odj-vote-btn.voted {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+.odj-empty {
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--color-bg-muted);
+    border: 1px dashed var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+
+/* Réunions : bannière cabinet et votants */
+.reunion-cabinet-banner {
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-primary);
+    background: var(--color-bg-muted);
+    font-size: 0.9rem;
+}
+.odj-voters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+.odj-voter-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--color-bg-muted);
+    border: 1px solid var(--color-border);
+    font-size: 0.75rem;
+}
+.odj-voter-chip.ok {
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+.odj-voter-chip.no {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+.odj-vote-btn.no {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+.odj-vote-btn.no.voted {
+    background: var(--color-error);
+    color: white;
+}
+
+/* Réunions : date pré-sélectionnée */
+.reunion-proposal.best {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* ============================================
+   MODULE SALLE D'URGENCE — Commandes & Coûts
+   ============================================ */
+
+.urgence-order-card {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: var(--color-bg);
+}
+
+.urgence-order-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.urgence-order-items {
+    margin: 10px 0;
+    padding-left: 20px;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.urgence-order-items li { margin: 3px 0; }
+
+.urgence-order-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+}
+
+.urgence-order-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.urgence-receive-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.urgence-receive-name { display: flex; flex-direction: column; gap: 2px; }
+
+.urgence-cost-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.urgence-cost-stat {
+    background: var(--color-bg-muted);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.urgence-cost-value { font-size: 1.25rem; font-weight: 700; }
+.urgence-cost-label { font-size: 0.75rem; color: var(--color-text-secondary); }
+
+.urgence-cost-bar-th, .urgence-cost-bar-td { min-width: 120px; }
+.urgence-cost-bar {
+    height: 10px;
+    border-radius: 5px;
+    background: var(--color-primary);
+}
+.urgence-cost-bar.primary { background: var(--color-primary); }
+
+.urgence-cost-cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.urgence-cost-cat {
+    display: grid;
+    grid-template-columns: 180px 1fr 90px;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+}
+
+.urgence-cost-cat-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.urgence-cost-cat-track { background: var(--color-bg-muted); border-radius: 5px; height: 10px; overflow: hidden; }
+.urgence-cost-cat-val { text-align: right; font-weight: 600; }
+
+@media (max-width: 768px) {
+    .urgence-cost-cat { grid-template-columns: 1fr; gap: 2px; }
+    .urgence-cost-cat-val { text-align: left; }
+    .urgence-order-head, .urgence-order-foot, .urgence-receive-row { flex-direction: column; align-items: stretch; }
+}
