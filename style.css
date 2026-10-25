@@ -9993,6 +9993,8 @@ html.no-anim *::after {
     .urgence-cost-cat { grid-template-columns: 1fr; gap: 2px; }
     .urgence-cost-cat-val { text-align: left; }
     .urgence-order-head, .urgence-order-foot, .urgence-receive-row { flex-direction: column; align-items: stretch; }
+}
+
 /* Réunions : cartes de la liste */
 .reunion-card {
     display: flex;
