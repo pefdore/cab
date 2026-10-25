@@ -174,16 +174,49 @@ function loadRemplacablesMedecins(cabinetList) {
 }
 
 // ============================================
-// VALIDATION DES DEMANDES D'ACCES PAR UN ASSOCIE
+// NOTIFICATION + VALIDATION DES DEMANDES D'ACCES PAR UN ASSOCIE
+// Badge "1" sur l'onglet Parametres, panneau detaille dans les
+// parametres, et guard anti double-validation.
 // ============================================
+
+var _pendingRequests = [];
+
+function formatRequestDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+        ' \u00e0 ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Met a jour le badge compteur sur l'onglet Parametres (desktop + mobile)
+function updateJoinRequestsBadge(count) {
+    document.querySelectorAll('.nav-item[data-view="settings"], .mobile-nav-item[data-view="settings"]').forEach(function(item) {
+        var badge = item.querySelector('.join-requests-badge');
+        
+        if (!count || count <= 0) {
+            if (badge) badge.remove();
+            return;
+        }
+        
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'join-requests-badge';
+            item.appendChild(badge);
+        }
+        badge.textContent = count > 9 ? '9+' : String(count);
+    });
+}
 
 // Charge les demandes en attente pour le cabinet du medecin associe connecte
 async function loadPendingJoinRequests() {
-    var container = document.getElementById('pending-join-requests');
-    if (!container) return;
-
     if (getUserRole() !== 'medecin_associe' || !window.currentProfile?.cabinet_id) {
-        container.style.display = 'none';
+        updateJoinRequestsBadge(0);
+        var container = document.getElementById('pending-join-requests');
+        if (container) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+        }
         return;
     }
 
@@ -195,23 +228,37 @@ async function loadPendingJoinRequests() {
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
 
-        if (error || !requests || requests.length === 0) {
+        if (error) {
+            console.error('[JOIN] Erreur chargement demandes:', error);
+            return;
+        }
+
+        _pendingRequests = requests || [];
+        updateJoinRequestsBadge(_pendingRequests.length);
+
+        var container = document.getElementById('pending-join-requests');
+        if (!container) return;
+
+        if (_pendingRequests.length === 0) {
             container.style.display = 'none';
             container.innerHTML = '';
             return;
         }
 
-        var html = '<h3 class="join-requests-title">Demandes d\'accès au cabinet</h3>';
-        requests.forEach(function(r) {
+        var html = '<h3 class="join-requests-title">Demandes d\'acc\u00e8s au cabinet</h3>';
+        _pendingRequests.forEach(function(r) {
             var roleLabel = ROLE_LABELS[r.role] || r.role;
+            var roleIntro = (r.role === 'medecin_remplacant') ? 'un rempla\u00e7ant' : ((r.role === 'secretaire') ? 'une secr\u00e9taire' : 'un associ\u00e9');
             html +=
                 '<div class="join-request-item" data-request-id="' + r.id + '">' +
                     '<div class="join-request-info">' +
                         '<div class="join-request-name">' + (r.first_name || '') + ' ' + (r.last_name || '') + '</div>' +
-                        '<div class="join-request-meta">' + (r.email || '') + ' · ' + roleLabel + '</div>' +
+                        '<div class="join-request-meta">' + (r.email || '') + '</div>' +
+                        '<div class="join-request-meta">Demande : ' + roleIntro + ' (' + roleLabel + ')</div>' +
+                        '<div class="join-request-meta">Re\u00e7ue le ' + formatRequestDate(r.created_at) + '</div>' +
                     '</div>' +
                     '<div class="join-request-actions">' +
-                        '<button type="button" class="btn-primary" onclick="decideJoinRequest(\'' + r.id + '\', \'approved\')">Accepter</button>' +
+                        '<button type="button" class="btn-primary" onclick="decideJoinRequest(\'' + r.id + '\', \'approved\')">Valider</button>' +
                         '<button type="button" class="btn-secondary" onclick="decideJoinRequest(\'' + r.id + '\', \'rejected\')">Refuser</button>' +
                     '</div>' +
                 '</div>';
@@ -224,7 +271,10 @@ async function loadPendingJoinRequests() {
     }
 }
 
-// Le medecin associe accepte ou refuse une demande
+// Le medecin associe accepte ou refuse une demande.
+// Guard anti double-validation : la mise a jour de la demande n'a lieu
+// que si elle est encore 'pending' ; si un autre associe a deja valide,
+// la demande est introuvable et on le signale sans rien refaire.
 window.decideJoinRequest = async function(requestId, decision) {
     if (!supabaseClient || !currentUser) return;
 
@@ -237,6 +287,13 @@ window.decideJoinRequest = async function(requestId, decision) {
 
         if (reqError || !request) {
             showToast('Demande introuvable', 'error');
+            loadPendingJoinRequests();
+            return;
+        }
+
+        if (request.status !== 'pending') {
+            showToast('Cette demande a d\u00e9j\u00e0 \u00e9t\u00e9 trait\u00e9e par un autre associ\u00e9', 'info');
+            loadPendingJoinRequests();
             return;
         }
 
@@ -266,16 +323,29 @@ window.decideJoinRequest = async function(requestId, decision) {
             }
         }
 
-        const { error: updateError } = await supabaseClient
+        // Mise a jour atomique : uniquement si encore pending
+        const { data: updated, error: updateError } = await supabaseClient
             .from('cabinet_join_requests')
             .update({ status: decision, decided_by: currentUser.id, decided_at: new Date().toISOString() })
-            .eq('id', requestId);
+            .eq('id', requestId)
+            .eq('status', 'pending')
+            .select();
 
         if (updateError) {
-            console.error('[JOIN] Erreur mise à jour demande:', updateError);
+            console.error('[JOIN] Erreur mise \u00e0 jour demande:', updateError);
+            showToast('Erreur lors de la mise \u00e0 jour de la demande', 'error');
+            return;
         }
 
-        showToast(decision === 'approved' ? 'Demande acceptée' : 'Demande refusée', decision === 'approved' ? 'success' : 'info');
+        if (!updated || updated.length === 0) {
+            // Un autre associe a valide/refuse entre-temps
+            showToast('Cette demande a d\u00e9j\u00e0 \u00e9t\u00e9 trait\u00e9e par un autre associ\u00e9', 'info');
+        } else {
+            showToast(decision === 'approved'
+                ? (request.first_name || '') + ' ' + (request.last_name || '') + ' a rejoint l\'espace du cabinet'
+                : 'Demande refus\u00e9e', decision === 'approved' ? 'success' : 'info');
+        }
+
         loadPendingJoinRequests();
     } catch (e) {
         console.error('[JOIN] Exception:', e);
@@ -338,6 +408,13 @@ var _rolesProfileObserver = setInterval(function() {
         applyRemplacantCotationBanner();
         loadPendingJoinRequests();
         clearInterval(_rolesProfileObserver);
+        
+        // Notification : verifier les demandes entrantes toutes les 30 s
+        setInterval(function() {
+            if (window.currentProfile && window.currentProfile.cabinet_id) {
+                loadPendingJoinRequests();
+            }
+        }, 30000);
     }
 }, 300);
 

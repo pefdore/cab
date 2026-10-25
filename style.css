@@ -9456,3 +9456,24 @@ html.no-anim *::after {
     gap: 8px;
     flex-shrink: 0;
 }
+
+/* Badge notifications demandes d'acces (roles.js) */
+.nav-item, .mobile-nav-item { position: relative; }
+.join-requests-badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: none;
+}
