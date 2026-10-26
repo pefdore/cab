@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-DBFYFBHM.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-D9zRCoVR.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -632,8 +632,17 @@ window.attemptLogin = function() {
                         <div class="cab-health-right" id="cabHealthKpis"></div>
                     </div>
 
+                    <!-- Navigation par onglets -->
+                    <div class="cab-nav" id="cabNav">
+                        <button class="cab-nav-btn active" data-cab-tab="finances" onclick="switchCabTab('finances')">💰 Finances</button>
+                        <button class="cab-nav-btn" data-cab-tab="rh" onclick="switchCabTab('rh')">👥 Équipe</button>
+                        <button class="cab-nav-btn" data-cab-tab="ops" onclick="switchCabTab('ops')">🩺 Activité</button>
+                        <button class="cab-nav-btn" data-cab-tab="alertes" onclick="switchCabTab('alertes')">🔔 Alertes <span class="cab-nav-count" id="cabNavAlertCount" style="display:none;"></span></button>
+                        <button class="cab-nav-btn" data-cab-tab="ia" onclick="switchCabTab('ia')">✨ Analyse</button>
+                    </div>
+
                     <!-- SECTION FINANCIERE -->
-                    <div class="cab-section">
+                    <div class="cab-section" data-cab-panel="finances">
                         <div class="cab-section-header">
                             <h3>💰 Finances</h3>
                             <span class="cab-section-hint">Recettes, charges et trésorerie — données partagées entre associés</span>
@@ -673,6 +682,7 @@ window.attemptLogin = function() {
                                 <div class="cabinet-stat-content">
                                     <span class="cabinet-stat-label">Recettes ce mois</span>
                                     <span class="cabinet-stat-value" id="recettesThisMonth">-</span>
+                                    <span class="cabinet-stat-trend" id="recettesThisMonthTrend"></span>
                                 </div>
                             </div>
                             <div class="cabinet-stat-card">
@@ -682,6 +692,7 @@ window.attemptLogin = function() {
                                 <div class="cabinet-stat-content">
                                     <span class="cabinet-stat-label">Dépenses ce mois</span>
                                     <span class="cabinet-stat-value" id="depensesThisMonth">-</span>
+                                    <span class="cabinet-stat-trend" id="depensesThisMonthTrend"></span>
                                 </div>
                             </div>
                             <div class="cabinet-stat-card">
@@ -691,6 +702,7 @@ window.attemptLogin = function() {
                                 <div class="cabinet-stat-content">
                                     <span class="cabinet-stat-label">Taux de marge</span>
                                     <span class="cabinet-stat-value" id="tauxMarge">-</span>
+                                    <span class="cabinet-stat-trend" id="tauxMargeTrend"></span>
                                 </div>
                             </div>
                             <div class="cabinet-stat-card">
@@ -700,6 +712,7 @@ window.attemptLogin = function() {
                                 <div class="cabinet-stat-content">
                                     <span class="cabinet-stat-label">Réserve trésorerie</span>
                                     <span class="cabinet-stat-value" id="reserveTresorerie">-</span>
+                                    <span class="cabinet-stat-trend" id="reserveTresorerieTrend"></span>
                                 </div>
                             </div>
                             <div class="cabinet-stat-card">
@@ -707,26 +720,29 @@ window.attemptLogin = function() {
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
                                 </div>
                                 <div class="cabinet-stat-content">
-                                    <span class="cabinet-stat-label">Moy. mensuelle</span>
+                                    <span class="cabinet-stat-label">Moy. mensuelle dépenses</span>
                                     <span class="cabinet-stat-value" id="avgMonthlyDepenses">-</span>
-                                </div>
-                            </div>
-                            <div class="cabinet-stat-card">
-                                <div class="cabinet-stat-icon yellow">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-                                </div>
-                                <div class="cabinet-stat-content">
-                                    <span class="cabinet-stat-label">Postes clés</span>
-                                    <span class="cabinet-stat-value" id="topPostes">-</span>
+                                    <span class="cabinet-stat-trend" id="avgMonthlyDepensesTrend"></span>
                                 </div>
                             </div>
                             <div class="cabinet-stat-card">
                                 <div class="cabinet-stat-icon blue">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                                 </div>
                                 <div class="cabinet-stat-content">
-                                    <span class="cabinet-stat-label">vs Année -1</span>
+                                    <span class="cabinet-stat-label">Postes clés</span>
+                                    <span class="cabinet-stat-value" id="topPostes">-</span>
+                                    <span class="cabinet-stat-trend">Charges récurrentes</span>
+                                </div>
+                            </div>
+                            <div class="cabinet-stat-card">
+                                <div class="cabinet-stat-icon indigo">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 20 12 4"/><polyline points="6 10 12 4 18 10"/></svg>
+                                </div>
+                                <div class="cabinet-stat-content">
+                                    <span class="cabinet-stat-label">Dépenses vs N-1</span>
                                     <span class="cabinet-stat-value" id="vsAnneePrecedente">-</span>
+                                    <span class="cabinet-stat-trend" id="vsAnneePrecedenteTrend"></span>
                                 </div>
                             </div>
                             <div class="cabinet-stat-card">
@@ -736,6 +752,7 @@ window.attemptLogin = function() {
                                 <div class="cabinet-stat-content">
                                     <span class="cabinet-stat-label">Alertes</span>
                                     <span class="cabinet-stat-value" id="alertesCount">-</span>
+                                    <span class="cabinet-stat-trend">Toutes dimensions</span>
                                 </div>
                             </div>
                         </div>
@@ -777,7 +794,7 @@ window.attemptLogin = function() {
                     </div>
 
                     <!-- SECTION GESTION / ORGANISATION -->
-                    <div class="cab-section">
+                    <div class="cab-section" data-cab-panel="rh">
                         <div class="cab-section-header">
                             <h3>👥 Gestion &amp; organisation</h3>
                             <span class="cab-section-hint">Équipe, contrats, congés, standard téléphonique</span>
@@ -882,7 +899,7 @@ window.attemptLogin = function() {
                     </div>
 
                     <!-- SECTION ACTIVITE OPERATIONNELLE -->
-                    <div class="cab-section">
+                    <div class="cab-section" data-cab-panel="ops">
                         <div class="cab-section-header">
                             <h3>🩺 Activité opérationnelle</h3>
                             <span class="cab-section-hint">Remplacements, stocks salle d'urgence</span>
@@ -957,7 +974,7 @@ window.attemptLogin = function() {
                     </div>
 
                     <!-- FIL D'ALERTES CONSOLIDE -->
-                    <div class="cab-section">
+                    <div class="cab-section" data-cab-panel="alertes">
                         <div class="cab-section-header">
                             <h3>🔔 Alertes &amp; actions</h3>
                             <span class="cab-section-hint">Tout ce qui nécessite une décision des associés</span>
@@ -966,7 +983,7 @@ window.attemptLogin = function() {
                     </div>
 
                     <!-- ANALYSE IA -->
-                    <div class="llm-analysis-section">
+                    <div class="llm-analysis-section" data-cab-panel="ia">
                         <h3>Analyse financière
                             <span class="cabinet-tooltip" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                             <span class="tooltip-text">Analyse automatique basée sur vos données financières. Cliquez sur le bouton de rafraîchissement pour mettre à jour.</span></span>

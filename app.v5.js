@@ -5242,6 +5242,14 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     updateTrend('depensesTrend', thisMonthDepenses, prevMonthDepenses);
     updateTrend('balanceTrend', thisMonthRecettes - thisMonthDepenses, prevMonthRecettes - prevMonthDepenses);
     
+    window._cabTrendData = {
+        recPrev: prevMonthRecettes || null,
+        depPrev: prevMonthDepenses || null,
+        margePrev: (prevMonthRecettes - prevMonthDepenses) > 0 ? ((prevMonthRecettes - prevMonthDepenses) / prevMonthRecettes * 100) : null,
+        reserveMonths: avgMonthlyDepenses > 0 ? Math.floor(ytdBalance / avgMonthlyDepenses) : null
+    };
+    if (typeof cabRenderMonthTrends === 'function') cabRenderMonthTrends();
+    
     // Moyennes (legacy elements - check if exist)
     const nbDepenses = cabinetDepenses.length;
     const avgDepenses = nbDepenses > 0 ? totalDepenses / nbDepenses : 0;
@@ -9637,6 +9645,20 @@ function cabLoadStocks(alertes) {
     }
 }
 
+function cabSetTrend(id, current, previous, invert) {
+    const el = document.getElementById(id);
+    if (!el || current == null || !isFinite(current)) return;
+    if (previous == null || !isFinite(previous) || previous === 0) { el.textContent = ''; return; }
+    const pct = ((current - previous) / Math.abs(previous)) * 100;
+    if (!isFinite(pct)) { el.textContent = ''; return; }
+    const sign = pct >= 0 ? '+' : '';
+    const good = invert ? pct < 0 : pct > 0;
+    const cls = Math.abs(pct) < 0.5 ? 'neutral' : (good ? 'up' : 'down');
+    const arrow = pct >= 0 ? '▲' : '▼';
+    el.textContent = `${arrow} ${sign}${pct.toFixed(1)}% vs mois précédent`;
+    el.className = 'cabinet-stat-trend ' + cls;
+}
+
 function cabRenderHealth(finAlertes, alertes) {
     const all = [...finAlertes, ...alertes];
     const danger = all.filter(a => a.level === 'danger').length;
@@ -9659,11 +9681,27 @@ function cabRenderHealth(finAlertes, alertes) {
             : 'Aucune alerte — trésorerie, équipe et stocks au vert';
     }
     if (kpis) {
-        kpis.innerHTML = `
-            <span class="cab-health-kpi"><strong>${danger}</strong> critiques</span>
-            <span class="cab-health-kpi"><strong>${warn}</strong> à surveiller</span>
-        `;
+        const fmt = (id) => { const v = parseFloat((document.getElementById(id)?.textContent || '').replace(/[^\d,.-]/g, '').replace(',', '.')); return isNaN(v) ? null : v; };
+        const parts = [];
+        const marge = fmt('tauxMarge');
+        if (marge != null) parts.push(`<span class="cab-health-kpi"><strong>${Math.round(marge)}%</strong> marge</span>`);
+        const resp = document.getElementById('cabTauxReponse')?.textContent;
+        if (resp && resp !== '-') parts.push(`<span class="cab-health-kpi"><strong>${cabEsc(resp)}</strong> standard</span>`);
+        const stocks = document.getElementById('cabStocksSousSeuil')?.textContent;
+        if (stocks && stocks !== '-') parts.push(`<span class="cab-health-kpi"><strong>${cabEsc(stocks)}</strong> stock(s) bas</span>`);
+        parts.push(`<span class="cab-health-kpi ${danger > 0 ? 'is-danger' : warn > 0 ? 'is-warn' : 'is-ok'}"><strong>${danger}</strong> critiques</span>`);
+        parts.push(`<span class="cab-health-kpi ${warn > 0 ? 'is-warn' : 'is-ok'}"><strong>${warn}</strong> à surveiller</span>`);
+        kpis.innerHTML = parts.join('');
     }
+
+    const badge = document.getElementById('cabNavAlertCount');
+    if (badge) {
+        const total = danger + warn;
+        badge.textContent = String(total);
+        badge.style.display = total > 0 ? 'inline-flex' : 'none';
+        badge.className = 'cab-nav-count' + (danger > 0 ? ' danger' : '');
+    }
+    cabSet('alertesCount', String(all.length), danger > 0 ? 'var(--color-danger)' : warn > 0 ? 'var(--color-warning)' : 'var(--color-success)');
 
     const list = document.getElementById('cabAlertesList');
     if (list) {
@@ -9680,6 +9718,58 @@ function cabRenderHealth(finAlertes, alertes) {
     window._cab360Alertes = all;
 }
 
+function switchCabTab(tab) {
+    document.querySelectorAll('.cab-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.cabTab === tab));
+    document.querySelectorAll('#cabinet-dashboard [data-cab-panel]').forEach(p => {
+        p.style.display = p.dataset.cabPanel === tab ? '' : 'none';
+    });
+    try { localStorage.setItem('cab_tab', tab); } catch (e) {}
+}
+window.switchCabTab = switchCabTab;
+
+function cabInitTab() {
+    let tab;
+    try { tab = localStorage.getItem('cab_tab'); } catch (e) {}
+    const valid = ['finances', 'rh', 'ops', 'alertes', 'ia'];
+    if (!valid.includes(tab)) tab = 'finances';
+    switchCabTab(tab);
+}
+
+function cabRenderMonthTrends() {
+    const num = (s) => {
+        if (!s) return null;
+        const v = parseFloat(String(s).replace(/[^\d,.-]/g, '').replace(',', '.'));
+        return isNaN(v) ? null : v;
+    };
+    const rec = num(document.getElementById('recettesThisMonth')?.textContent);
+    const dep = num(document.getElementById('depensesThisMonth')?.textContent);
+    const marge = num(document.getElementById('tauxMarge')?.textContent);
+    const reserve = num(document.getElementById('reserveTresorerie')?.textContent);
+    const avgDep = num(document.getElementById('avgMonthlyDepenses')?.textContent);
+    const vsN1 = num(document.getElementById('vsAnneePrecedente')?.textContent);
+
+    const buckets = window._cabTrendData || {};
+    cabSetTrend('recettesThisMonthTrend', rec, buckets.recPrev, false);
+    cabSetTrend('depensesThisMonthTrend', dep, buckets.depPrev, true);
+    cabSetTrend('tauxMargeTrend', marge, buckets.margePrev, false);
+    const reserveEl = document.getElementById('reserveTresorerieTrend');
+    if (reserveEl && reserve != null) {
+        reserveEl.textContent = buckets.reserveMonths != null ? buckets.reserveMonths + ' mois de charges' : '';
+        reserveEl.className = 'cabinet-stat-trend';
+    }
+    const avgEl = document.getElementById('avgMonthlyDepensesTrend');
+    if (avgEl && avgDep != null) {
+        avgEl.textContent = 'Moyenne sur 12 mois';
+        avgEl.className = 'cabinet-stat-trend';
+    }
+    const vsEl = document.getElementById('vsAnneePrecedenteTrend');
+    if (vsEl && vsN1 != null) {
+        const good = vsN1 < 0;
+        vsEl.textContent = `${vsN1 >= 0 ? '▲' : '▼'} ${Math.abs(vsN1).toFixed(1)}% vs année précédente`;
+        vsEl.className = 'cabinet-stat-trend ' + (Math.abs(vsN1) < 0.5 ? 'neutral' : (good ? 'up' : 'down'));
+    }
+}
+
 async function renderCabinetLifeDashboard() {
     const alertes = [];
     cabLoadStocks(alertes);
@@ -9690,6 +9780,8 @@ async function renderCabinetLifeDashboard() {
         return { level: isDanger ? 'danger' : 'warn', text: cabEsc(t) };
     });
     cabRenderHealth(finAlertes, alertes);
+    cabRenderMonthTrends();
+    cabInitTab();
 }
 
 window.renderCabinetLifeDashboard = renderCabinetLifeDashboard;
