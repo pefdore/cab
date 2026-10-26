@@ -7563,6 +7563,15 @@ async function extractTextFromPDF(file) {
         await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
         
         const textContent = await page.getTextContent();
+        const linesOfPage = pageText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const itemRects = [];
+        let lineNo = 0;
+        for (const it of textContent.items) {
+            if (!it.str || !it.str.trim() || !it.transform) continue;
+            if (it.hasEOL) lineNo++;
+            const tx = page.getViewport({ scale: 1 }).convertToViewportPoint(it.transform[4], it.transform[5]);
+            itemRects.push({ str: it.str, x: tx[0], y: tx[1], w: (it.width || 0), h: (it.height || 10), _line: lineNo });
+        }
         const pageText = textContent.items
             .map(item => (item.str || '') + (item.hasEOL ? '\n' : ' '))
             .join('')
@@ -7574,7 +7583,7 @@ async function extractTextFromPDF(file) {
         if (pageText.length >= 20) {
             console.log('[RELEVÉ] Page', pageNum, ': couche texte native lue (' + pageText.length + ' caractères)');
             fullText += '\n<<<PAGE ' + pageNum + '>>>\n' + pageText + '\n';
-            window.relevePageThumbs.push({ page: pageNum, thumb: thumbDataUrl, text: pageText });
+            window.relevePageThumbs.push({ page: pageNum, thumb: thumbDataUrl, text: pageText, itemRects, pageHeight: page.getViewport({ scale: 1 }).height, pageWidth: page.getViewport({ scale: 1 }).width });
             continue;
         }
         
@@ -7600,7 +7609,7 @@ async function extractTextFromPDF(file) {
         );
         
         fullText += '\n<<<PAGE ' + pageNum + '>>>\n' + result.data.text + '\n';
-        window.relevePageThumbs.push({ page: pageNum, thumb: thumbDataUrl, text: result.data.text });
+        window.relevePageThumbs.push({ page: pageNum, thumb: thumbDataUrl, text: result.data.text, itemRects: [], pageHeight: page.getViewport({ scale: 1 }).height, pageWidth: page.getViewport({ scale: 1 }).width });
     }
     
     console.log('[RELEVÉ] Extraction completed, total text length:', fullText.length);
@@ -7736,11 +7745,32 @@ function fluxDetectCategory(description, isDepense) {
     return isDepense ? 'services' : 'honoraires';
 }
 
+
+function t_lineItemsForColumn(pageData, lineIdx) {
+    if (!pageData || !pageData.itemRects) return [];
+    return pageData.itemRects.filter(it => it._line === lineIdx);
+}
+
+function t_detectColumnSides(pageData) {
+    if (!pageData || !pageData.itemRects) return null;
+    if (pageData._columnSides) return pageData._columnSides;
+    let creditX = null, debitX = null;
+    for (const it of pageData.itemRects) {
+        const low = (it.str || '').toLowerCase();
+        if (/crédit|credit/.test(low) && !/carte/.test(low) && creditX === null) creditX = it.x;
+        if (/débit|debit/.test(low) && !/prélèvement/.test(low) && debitX === null) debitX = it.x;
+    }
+    pageData._columnSides = { creditX, debitX };
+    return pageData._columnSides;
+}
+
 function parseRelevéLocalement(text) {
     const lines = (text || '').split(/\r?\n/);
     const transactions = [];
     let currentYear = new Date().getFullYear();
     let sawFirstDate = false;
+    let currentPage = 1;
+    let currentLineIdx = 0;
 
     const HEADER_PATTERNS = [
         /\bIBAN\b/i, /\bRIB\b/i, /\bBIC\?\b/i, /\bSWIFT\b/i,
@@ -7809,9 +7839,43 @@ function parseRelevéLocalement(text) {
         const amountMatches = lineWoDates.match(/\d[\d\s\u00a0]{0,8}[,.]\d{2}\s*-?|\d[\d\s\u00a0]{2,9}(?=\s*-?\s*$)/g);
         if (!amountMatches || amountMatches.length === 0) continue;
 
-        const amounts = amountMatches.map(cleanAmount).filter(n => n !== null && Math.abs(n) >= 0.01 && Math.abs(n) < 10000000);
+        let amounts = amountMatches.map(cleanAmount).filter(n => n !== null && Math.abs(n) >= 0.01 && Math.abs(n) < 10000000);
         if (amounts.length === 0) continue;
-        const amount = amounts.sort((a, b) => Math.abs(b) - Math.abs(a))[0];
+
+        let amount;
+        const pageThumbs = window.relevePageThumbs || [];
+        const pageData = pageThumbs.find(p => p.page === currentPage);
+        if (amounts.length >= 2 && pageData && pageData.itemRects && pageData.itemRects.length && t_lineItemsForColumn) {
+            const items = t_lineItemsForColumn(pageData, currentLineIdx);
+            const moneyItems = items.filter(it => /\d/.test(it.str));
+            if (moneyItems.length >= 2) {
+                const xs = moneyItems.map(it => it.x);
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+                const mid = (minX + maxX) / 2;
+                const rightmost = moneyItems.reduce((a, b) => b.x > a.x ? b : a);
+                const leftmost = moneyItems.reduce((a, b) => b.x < a.x ? b : a);
+                const pageW = pageData.pageWidth || 600;
+                if (rightmost.x - leftmost.x > pageW * 0.18) {
+                    let picked = cleanAmount(rightmost.str);
+                    if (picked !== null) {
+                        const sides = t_detectColumnSides(pageData);
+                        if (sides && sides.creditX !== null && sides.debitX !== null) {
+                            const mid = (sides.creditX + sides.debitX) / 2;
+                            if (Math.abs(rightmost.x - sides.creditX) < Math.abs(rightmost.x - sides.debitX)) {
+                                picked = Math.abs(picked);
+                            } else {
+                                picked = -Math.abs(picked);
+                            }
+                        }
+                        amount = picked;
+                    }
+                    if (amount === undefined || amount === null) amount = amounts.sort((a, b) => Math.abs(b) - Math.abs(a))[0];
+                }
+            }
+        }
+        if (amount === undefined || amount === null) {
+            amount = amounts.sort((a, b) => Math.abs(b) - Math.abs(a))[0];
+        }
 
         const description = lineWoDates
             .replace(/\d[\d\s\u00a0]{0,8}[,.]\d{2}\s*-?/g, ' ')
@@ -7832,7 +7896,9 @@ function parseRelevéLocalement(text) {
             description,
             amount: isDepense ? -Math.abs(amount) : Math.abs(amount),
             type: isDepense ? 'd\u00e9pense' : 'recette',
-            category
+            category,
+            _page: currentPage,
+            _line: currentLineIdx
         });
     }
 
@@ -7906,6 +7972,9 @@ function renderTransactionsList() {
                             <div id="trans-autocomplete-${index}" class="autocomplete-dropdown"></div>
                         </div>
                     </div>
+                    <button class="btn-icon" onclick="showTransactionOnPdf(${index})" title="Voir la ligne sur le PDF" style="color: var(--color-primary);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
                 </div>
                 <div class="transaction-row">
                     <div class="transaction-field">
@@ -10562,3 +10631,47 @@ async function reunionInit() {
 
 window.reunionInit = reunionInit;
 
+
+function showTransactionOnPdf(index) {
+    const t = pendingTransactions[index];
+    if (!t) return;
+    const thumbs = window.relevePageThumbs || [];
+    if (!thumbs.length) {
+        alert('Aperçu PDF non disponible pour cet import (photo ou PDF non textuel).');
+        return;
+    }
+    let pageIdx = 0;
+    if (t._page != null) {
+        const i = thumbs.findIndex(p => p.page === t._page);
+        if (i >= 0) pageIdx = i;
+    }
+    const pageData = thumbs[pageIdx];
+    let line = t._line != null ? t._line : null;
+
+    if (pageData && pageData.itemRects && pageData.itemRects.length) {
+        const dateKey = (t.date || '').slice(5);
+        const amountKey = Math.abs(t.amount).toFixed(2);
+        let best = null;
+        const byLine = {};
+        pageData.itemRects.forEach(it => {
+            if (!byLine[it._line]) byLine[it._line] = [];
+            byLine[it._line].push(it);
+        });
+        for (const [ln, items] of Object.entries(byLine)) {
+            const joined = items.map(i => i.str).join(' ').toLowerCase();
+            const hasAmount = joined.replace(/[\s\u00a0]/g, '').includes(amountKey.replace('.', ','));
+            const hasDate = dateKey && (joined.includes(dateKey.replace('-', '/')) || joined.includes(dateKey));
+            if (hasAmount && hasDate) {
+                best = parseInt(ln, 10);
+                break;
+            }
+            if (hasAmount && best === null) best = parseInt(ln, 10);
+        }
+        if (best !== null) line = best;
+    }
+
+    if (typeof openRelevePageViewer === 'function') {
+        openRelevePageViewer(pageIdx, line);
+    }
+}
+window.showTransactionOnPdf = showTransactionOnPdf;

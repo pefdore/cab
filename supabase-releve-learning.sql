@@ -63,3 +63,7 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Rapprochement dépenses fournisseurs <-> commandes de stock
+ALTER TABLE cabinet_depenses
+    ADD COLUMN IF NOT EXISTS order_ids TEXT[] DEFAULT NULL;
