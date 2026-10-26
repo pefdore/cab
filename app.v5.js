@@ -7546,6 +7546,8 @@ async function extractTextFromPDF(file) {
         cMapPacked: true
     });
     const pdf = await loadingTask.promise;
+    window._releveCurrentPdf = pdf;
+    _releveHiResCache = {};
     console.log('[RELEVÉ] PDF loaded, pages:', pdf.numPages);
     
     let fullText = '';
@@ -10725,24 +10727,52 @@ function releveCropLineDataUrl(t, maxWidth) {
         const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 16);
         if (x1 - x0 < 10 || y1 - y0 < 4) { resolve(null); return; }
 
-        const img = new Image();
-        img.onload = () => {
+        getHiResPage(pageIdx, pageData).then(hires => {
+            if (!hires) { resolve(null); return; }
+            const img = hires.img;
             const sx = (x0 / pageData.pageWidth) * img.naturalWidth;
             const sy = (y0 / pageData.pageHeight) * img.naturalHeight;
             const sw = ((x1 - x0) / pageData.pageWidth) * img.naturalWidth;
             const sh = ((y1 - y0) / pageData.pageHeight) * img.naturalHeight;
-            const scale = Math.min(2.5, Math.max(1, (maxWidth || 480) / sw));
+            const scale = Math.min(4, Math.max(1, (maxWidth || 480) / sw));
             const canvas = document.createElement('canvas');
             canvas.width = Math.max(1, Math.round(sw * scale));
             canvas.height = Math.max(1, Math.round(sh * scale));
             const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
             resolve(canvas.toDataURL('image/png'));
-        };
-        img.onerror = () => resolve(null);
-        img.src = pageData.thumb;
+        }).catch(() => resolve(null));
     });
 }
+
+let _releveHiResCache = {};
+async function getHiResPage(pageIdx, pageData) {
+    if (_releveHiResCache[pageIdx]) return _releveHiResCache[pageIdx];
+    try {
+        const pdfjsLib = window.pdfjsLib;
+        if (!pdfjsLib || !window._releveCurrentPdf) return null;
+        const page = await window._releveCurrentPdf.getPage(pageData.page);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+        const dataUrl = canvas.toDataURL('image/png');
+        const result = await new Promise(res => {
+            const img = new Image();
+            img.onload = () => res({ img, dataUrl });
+            img.src = dataUrl;
+        });
+        _releveHiResCache[pageIdx] = result;
+        return result;
+    } catch (e) {
+        console.error('[RELEVÉ] getHiResPage:', e);
+        return null;
+    }
+}
+window.getHiResPage = getHiResPage;
 
 async function attachTransactionPreview(index) {
     const t = pendingTransactions[index];

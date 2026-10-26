@@ -3446,6 +3446,11 @@ window.attemptLogin = function() {
         const v = window._releveViewer;
         const img = document.getElementById('relevePageViewerImg');
         img.src = thumbs[index].thumb;
+        if (typeof getHiResPage === 'function') {
+            getHiResPage(index, thumbs[index]).then(hires => {
+                if (hires && window._releveViewer.index === index) img.src = hires.dataUrl;
+            }).catch(() => {});
+        }
         img.onload = () => { releveViewerApply(highlightLine); };
         document.getElementById('relevePageViewerLabel').textContent = 'Page ' + thumbs[index].page + ' / ' + thumbs.length;
         document.getElementById('relevePageViewer').style.display = 'flex';
