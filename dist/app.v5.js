@@ -7606,9 +7606,18 @@ async function getAPIKeyForUpload() {
 
 async function analyzeRelevéWithAI(text) {
     const apiKey = await getAPIKeyForUpload();
-    if (!apiKey) {
-        throw new Error('Clé API non configurée. Veuillez configurer votre clé API dans les paramètres.');
+    if (apiKey) {
+        try {
+            return await analyzeRelevéWithGroq(text, apiKey);
+        } catch (e) {
+            console.error('[RELEVÉ] IA indisponible, bascule sur le parseur local:', e);
+        }
     }
+    console.log('[RELEVÉ] Analyse locale (sans IA)');
+    return parseRelevéLocalement(text);
+}
+
+async function analyzeRelevéWithGroq(text, apiKey) {
     
     const prompt = `Analyse ce relevé bancaire et extrais chaque transaction. Pour chaque ligne, retourne un objet JSON avec:
 - date: la date de l'opération (format YYYY-MM-DD)
@@ -7652,6 +7661,100 @@ Retourne UNIQUEMENT un tableau JSON valide sans texte supplémentaire.`;
         console.error('[RELEVÉ] Parse error:', e);
         return [];
     }
+}
+
+const RELEVE_KEYWORDS = {
+    'masse_salariale': ['salaire', 'paie', 'bulletin', 'prime', 'net a payer', 'femme de menage'],
+    'urssaf': ['urssaf', 'social', 'retraite', 'prevoyance', 'mutuelle', 'carsat'],
+    'logiciel': ['axisante', 'cgm', 'aximessage', 'vidal', 'teletransmission', 'keldoc', 'doctolib', 'licence', 'logiciel'],
+    'services': ['semaphors', 'bnp', 'lease', 'leascom', 'acor', 'orange', 'sfr', 'free', 'compta', 'seche', 'scpa', 'opco', 'keyyo', 'apicem', 'onet', 'pst', 'hc-lex', 'loyer', 'assurance', 'abonnement'],
+    'charges': ['edf', 'engie', 'electricite', 'eau', 'gaz', 'cfe', 'dgfip', 'impot', 'taxe', 'fonciere'],
+    'consommables': ['azote', 'drap', 'papier', 'savon', 'sha', 'masque', 'cartouche', 'pharmacie', 'cadhoc', 'cafe', 'fourniture'],
+    'materiel': ['lecteur', 'imprimante', 'ordinateur', 'materiel', 'ecran'],
+    'reception': ['cadeau', 'repas', 'reception'],
+    'participation_associe': ['participation', 'apport', 'virement associe'],
+    'remboursements': ['remboursement', 'cpam', 'assurance', 'mutuelle'],
+    'honoraires': ['honoraire', 'consultation', 'visite', 'carte', 'cb', 'cheque', 'virement recu'],
+};
+
+function fluxDetectCategory(description, isDepense) {
+    const lower = (description || '').toLowerCase();
+    for (const [key, words] of Object.entries(RELEVE_KEYWORDS)) {
+        if (words.some(w => lower.includes(w))) return key;
+    }
+    return isDepense ? 'services' : 'honoraires';
+}
+
+function parseRelevéLocalement(text) {
+    const lines = (text || '').split(/\r?\n/);
+    const transactions = [];
+    let currentYear = new Date().getFullYear();
+
+    const cleanAmount = (raw) => {
+        let s = raw.replace(/[\s\u00a0]/g, '').replace(/[€EUR]/gi, '');
+        const isDebit = /-$/.test(s);
+        s = s.replace(/-/g, '');
+        s = s.replace(/\.(?=\d{1,2}$)/, '#').replace(/,/g, '.').replace(/#/g, '.');
+        s = s.replace(/\.(?=\d{3}\b)/g, '');
+        const n = parseFloat(s);
+        if (isNaN(n)) return null;
+        return isDebit ? -Math.abs(n) : n;
+    };
+
+    for (const rawLine of lines) {
+        const line = (rawLine || '').trim();
+        if (!line) continue;
+
+        const dateFr = line.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/);
+        const dateIso = line.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+        let dateStr = null;
+        if (dateIso) {
+            dateStr = dateIso[0];
+            currentYear = parseInt(dateIso[1], 10);
+        } else if (dateFr) {
+            let y = dateFr[3];
+            if (y.length === 2) y = '20' + y;
+            dateStr = `${y}-${String(parseInt(dateFr[2], 10)).padStart(2, '0')}-${String(parseInt(dateFr[1], 10)).padStart(2, '0')}`;
+            currentYear = parseInt(y, 10);
+        }
+
+        if (/^(SOLDE|TOTAL|REPORT|ANCIEN|NOUVEAU|RELEVE|R\u00c9LE|DATE|LIBELL)/i.test(line)) continue;
+
+        const lineWoDates = line
+            .replace(/\b\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b/g, ' ')
+            .replace(/\b20\d{2}-\d{2}-\d{2}\b/g, ' ');
+
+        const amountMatches = lineWoDates.match(/\d[\d\s\u00a0]{0,8}[,.]\d{2}\s*-?|\d[\d\s\u00a0]{2,9}(?=\s*-?\s*$)/g);
+        if (!amountMatches || amountMatches.length === 0) continue;
+
+        const amounts = amountMatches.map(cleanAmount).filter(n => n !== null && Math.abs(n) >= 0.01 && Math.abs(n) < 10000000);
+        if (amounts.length === 0) continue;
+        const amount = amounts.sort((a, b) => Math.abs(b) - Math.abs(a))[0];
+
+        const description = lineWoDates
+            .replace(/\d[\d\s\u00a0]{0,8}[,.]\d{2}\s*-?/g, ' ')
+            .replace(/\b\d{4,}\b/g, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .replace(/\|/g, ' ')
+            .replace(/^[-\s]+|[-\s]+$/g, '')
+            .trim();
+
+        if (!description || description.length < 3) continue;
+
+        const isDepense = amount < 0;
+        const category = fluxDetectCategory(description, isDepense);
+
+        transactions.push({
+            date: dateStr || new Date().toISOString().split('T')[0],
+            description,
+            amount: isDepense ? -Math.abs(amount) : Math.abs(amount),
+            type: isDepense ? 'd\u00e9pense' : 'recette',
+            category
+        });
+    }
+
+    console.log('[RELEV\u00c9] Parseur local:', transactions.length, 'transactions');
+    return transactions;
 }
 
 function renderTransactionsList() {
