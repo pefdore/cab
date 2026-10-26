@@ -7563,7 +7563,12 @@ async function extractTextFromPDF(file) {
         await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
         
         const textContent = await page.getTextContent();
-        const linesOfPage = pageText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const pageText = textContent.items
+            .map(item => (item.str || '') + (item.hasEOL ? '\n' : ' '))
+            .join('')
+            .replace(/[ \t]+/g, ' ')
+            .trim();
+        
         const itemRects = [];
         let lineNo = 0;
         for (const it of textContent.items) {
@@ -7572,11 +7577,6 @@ async function extractTextFromPDF(file) {
             const tx = page.getViewport({ scale: 1 }).convertToViewportPoint(it.transform[4], it.transform[5]);
             itemRects.push({ str: it.str, x: tx[0], y: tx[1], w: (it.width || 0), h: (it.height || 10), _line: lineNo });
         }
-        const pageText = textContent.items
-            .map(item => (item.str || '') + (item.hasEOL ? '\n' : ' '))
-            .join('')
-            .replace(/[ \t]+/g, ' ')
-            .trim();
         
         let thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.7);
         
