@@ -7518,6 +7518,22 @@ async function extractTextFromPDF(file) {
         console.log('[RELEVÉ] Processing page', pageNum, 'of', pdf.numPages);
         
         const page = await pdf.getPage(pageNum);
+        
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+            .map(item => (item.str || '') + (item.hasEOL ? '\n' : ' '))
+            .join('')
+            .replace(/[ \t]+/g, ' ')
+            .trim();
+        
+        if (pageText.length >= 20) {
+            console.log('[RELEVÉ] Page', pageNum, ': couche texte native lue (' + pageText.length + ' caractères)');
+            fullText += pageText + '\n';
+            continue;
+        }
+        
+        console.log('[RELEVÉ] Page', pageNum, ': pas de couche texte, OCR fallback');
+        
         const viewport = page.getViewport({ scale: 2.0 });
         
         const canvas = document.createElement('canvas');
@@ -7540,7 +7556,7 @@ async function extractTextFromPDF(file) {
         fullText += result.data.text + '\n';
     }
     
-    console.log('[RELEVÉ] OCR completed, total text length:', fullText.length);
+    console.log('[RELEVÉ] Extraction completed, total text length:', fullText.length);
     return fullText;
 }
 
