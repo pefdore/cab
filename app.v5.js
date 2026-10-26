@@ -4616,6 +4616,7 @@ function switchView(viewName) {
 
     const pageTitles = {
         'dashboard': 'Dashboard',
+        'flux': 'Flux',
         'urgence': 'Salle d’urgence',
         'history': 'Documents',
         'cabinet': 'Cabinet',
@@ -4684,6 +4685,11 @@ function switchView(viewName) {
         }
     } else if (viewName === 'cabinet') {
         loadCabinetData();
+    } else if (viewName === 'flux') {
+        switchView('cabinet');
+        setTimeout(() => {
+            document.querySelector('.cabinet-tab[data-tab="stocks"]')?.click();
+        }, 100);
     } else if (viewName === 'urgence') {
         if (typeof refreshUrgenceView === 'function') refreshUrgenceView();
     }
