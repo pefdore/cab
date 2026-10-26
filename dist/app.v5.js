@@ -4752,6 +4752,7 @@ async function loadCabinetData() {
         renderComptaSummary();
         renderAddDepensesRecettes();
         if (typeof renderFluxView === 'function') renderFluxView();
+        if (typeof renderReminders === 'function') renderReminders();
         try {
             await window.reunionInit();
         } catch (e) {
@@ -7498,8 +7499,22 @@ async function handleRelevéUpload(event) {
                 out.category = learned.category;
                 out.learned = true;
             }
+            if (findExistingDuplicate(out)) {
+                out.duplicate = true;
+            }
             return out;
         });
+        const dupCount = pendingTransactions.filter(t => t.duplicate).length;
+        window._releveDupCount = dupCount;
+        if (dupCount > 0 && dupCount >= pendingTransactions.length * 0.6) {
+            if (!confirm(`⚠️ Ce relevé semble déjà avoir été importé : ${dupCount} transaction(s) sur ${pendingTransactions.length} existent déjà en base (même date, même montant, même libellé).\n\nOK pour continuer quand même (vous devrez décocher/supprimer les doublons), Annuler pour stopper.`)) {
+                if (uploadBody) uploadBody.style.display = 'block';
+                if (loadingZoneModal) loadingZoneModal.style.display = 'none';
+                if (loadingZone) loadingZone.style.display = 'none';
+                pendingTransactions = [];
+                return;
+            }
+        }
         
         renderTransactionsList();
         updatePendingCount();
@@ -7964,7 +7979,8 @@ function renderTransactionsList() {
         ` : '';
         
         return `
-            <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''}">
+            <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.duplicate ? 'border-left: 3px solid #ef4444;' : ''}">
+                ${t.duplicate ? '<div style="font-size:0.72rem; color:#ef4444; font-weight:600; margin-bottom:4px;">⚠️ Probable doublon — déjà en base (même date, montant, libellé)</div>' : ''}
                 ${suggestionHtml}
                 <div class="transaction-row">
                     <div class="transaction-field">
@@ -10764,6 +10780,39 @@ async function reunionInit() {
 
 window.reunionInit = reunionInit;
 
+
+
+// ===== Détection de doublons (relevé déjà importé) =====
+function normalizeDescCompare(str) {
+    return String(str || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\b\d{2,}\b/g, ' ')
+        .replace(/[^a-z ]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function findExistingDuplicate(t) {
+    const isDepense = t.type === 'dépense' || t.amount < 0;
+    const pool = isDepense ? cabinetDepenses : cabinetRecettes;
+    const normDesc = normalizeDescCompare(t.description);
+    const amount = Math.abs(t.amount);
+    for (const e of pool) {
+        if (Math.abs((Number(e.amount) || 0) - amount) > 0.005) continue;
+        const sameDate = (e.date || '').slice(0, 10) === (t.date || '').slice(0, 10);
+        if (!sameDate) continue;
+        if (normDesc.length >= 4 && normalizeDescCompare(e.description) === normDesc) return e;
+        if (normDesc.length < 4) return e;
+    }
+    return null;
+}
+
+function countMonthDuplicates(transactions) {
+    let dup = 0;
+    transactions.forEach(t => { if (findExistingDuplicate(t)) dup++; });
+    return dup;
+}
 
 function showTransactionOnPdf(index) {
     const t = pendingTransactions[index];

@@ -403,11 +403,12 @@ window.attemptLogin = function() {
                     </svg>
                     Dashboard
                 </a>
-                <a href="#" class="nav-item" data-view="flux">
+                <a href="#" class="nav-item" data-view="flux" style="position:relative;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
                     </svg>
                     Flux
+                    <span id="fluxNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#ef4444; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
                 </a>
                 <a href="#" class="nav-item" data-view="history">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1113,8 +1114,12 @@ window.attemptLogin = function() {
 
                 <!-- Saisie d'une dépense -->
                 <div class="module-card">
-                    <h3>Enregistrer un mouvement</h3>
-                    <div class="depense-recette-toggle">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+                        <h3 style="margin:0;">Saisie manuelle</h3>
+                        <button class="action-btn primary" onclick="toggleFluxManualForm()">＋ Ajouter une ligne</button>
+                    </div>
+                    <div id="flux-manual-form" style="display:none; margin-top:12px;">
+                    <div class="depense-recette-toggle" style="margin-top:12px;">
                         <button class="switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')">Dépense</button>
                         <button class="switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')">Entrée / recette</button>
                     </div>
@@ -1147,9 +1152,13 @@ window.attemptLogin = function() {
                             <button class="action-btn primary" id="add-saveRecetteBtn" onclick="saveRecette()">Enregistrer la recette</button>
                         </div>
                     </div>
+                    </div>
                     <p class="module-desc" style="margin-top:8px;">Vous pouvez aussi importer un relevé de compte : les écritures détectées seront proposées ici, formatées par catégorie, à valider une par une.</p>
                     <button class="action-btn" onclick="document.getElementById('releve-upload-modal').style.display='flex'">Importer un relevé de compte</button>
                 </div>
+
+                <!-- Rappels relevés -->
+                <div id="flux-reminders"></div>
 
                 <!-- Rapprochement commandes -->
                 <div id="flux-recon-pending"></div>
@@ -3017,7 +3026,7 @@ window.attemptLogin = function() {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
                 </svg>
-                <span>Flux</span>
+                <span style="position:relative;">Flux<span id="fluxNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#ef4444; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
             <a href="#" class="mobile-nav-item" data-view="history">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3081,6 +3090,7 @@ window.attemptLogin = function() {
     <script src="urgence.js?v=202611023000" defer></script>
     <script src="flux.js?v=202611023000" defer></script>
     <script src="reconciliation.js?v=202611023000" defer></script>
+    <script src="reminders.js?v=202611023000" defer></script>
     <script src="urgence-orders.js?v=202611023000" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3477,6 +3487,21 @@ window.attemptLogin = function() {
         if (analysisModal) analysisModal.style.display = 'none';
         const viewer = document.getElementById('relevePageViewer');
         if (viewer) viewer.style.display = 'none';
+      };
+
+
+      window.toggleFluxManualForm = function() {
+        const f = document.getElementById('flux-manual-form');
+        if (!f) return;
+        const open = f.style.display === 'none';
+        f.style.display = open ? 'block' : 'none';
+        const btn = event && event.target && event.target.closest('button');
+        if (btn) btn.textContent = open ? 'Masquer le formulaire' : '＋ Ajouter une ligne';
+        if (open && typeof fluxInitCategorySelects === 'function') fluxInitCategorySelects();
+        if (open) {
+            const d = document.getElementById('add-depenseDate');
+            if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+        }
       };
 
       window.renderReleveThumbs = function() {

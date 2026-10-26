@@ -169,6 +169,7 @@ function renderFluxView() {
     }
 
     if (typeof renderReconPending === 'function') renderReconPending();
+    if (typeof renderReminders === 'function') renderReminders();
 
     // Synthèse des 6 derniers mois
     const monthsEl = document.getElementById('flux-months-summary');
