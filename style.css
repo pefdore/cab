@@ -4486,14 +4486,8 @@ h2 {
     
     /* Cabinet tabs mobile */
     .cabinet-tabs {
-        gap: 4px;
+        gap: 6px;
         margin-bottom: 16px;
-        padding: 4px;
-        background: var(--color-bg-muted);
-        border-radius: 12px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
     }
     
     .cabinet-tabs::-webkit-scrollbar {
@@ -4501,12 +4495,14 @@ h2 {
     }
     
     .cabinet-tab {
-        flex: 1;
-        min-width: 70px;
-        padding: 8px 10px;
-        font-size: 0.7rem;
-        border-radius: 999px;
-        white-space: nowrap;
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        gap: 6px;
+    }
+    
+    .cabinet-tab svg {
+        width: 14px;
+        height: 14px;
     }
     
     .cabinet-page-header {
@@ -4516,6 +4512,7 @@ h2 {
     .cabinet-page-icon {
         width: 38px;
         height: 38px;
+        border-radius: 10px;
     }
     
     .cabinet-page-title p {
@@ -5014,6 +5011,7 @@ h2 {
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0;
 }
 
 .cabinet-page-title h2 {
@@ -5040,10 +5038,9 @@ h2 {
 
 .cabinet-tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 12px;
+    margin-bottom: 24px;
 }
 
 .cabinet-tab {
@@ -5051,15 +5048,16 @@ h2 {
     align-items: center;
     gap: 8px;
     padding: 10px 18px;
-    background: none;
-    border: none;
-    font-size: 14px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--color-text-secondary);
     cursor: pointer;
     border-radius: 999px;
     transition: all 0.2s;
     font-family: inherit;
+    white-space: nowrap;
 }
 
 .cabinet-tab svg {
@@ -5070,11 +5068,13 @@ h2 {
 
 .cabinet-tab:hover {
     background: var(--color-bg-muted);
+    border-color: var(--color-text-secondary);
     color: var(--color-text);
 }
 
 .cabinet-tab.active {
     background: var(--color-primary);
+    border-color: var(--color-primary);
     color: white;
 }
 
@@ -5901,10 +5901,9 @@ h2 {
 /* Cabinet Modules */
 .sub-tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 8px;
+    margin-bottom: 24px;
 }
 
 .sub-tab {
@@ -5912,14 +5911,15 @@ h2 {
     align-items: center;
     gap: 7px;
     padding: 8px 14px;
-    border: none;
-    background: transparent;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
     color: var(--color-text-secondary);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     border-radius: 999px;
     transition: all 0.2s;
+    white-space: nowrap;
 }
 
 .sub-tab svg {
@@ -6213,22 +6213,14 @@ h2 {
 /* Replacement Module Tabs */
 .replacement-sub-tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 8px;
-    overflow-x: auto;
-}
-
-.replacement-sub-tabs .sub-tab {
-    background: transparent;
-    border: none;
-    border-radius: 999px;
-    white-space: nowrap;
+    margin-bottom: 24px;
 }
 
 .replacement-sub-tabs .sub-tab.active {
     background: var(--color-primary);
+    border-color: var(--color-primary);
     color: white;
 }
 
@@ -6974,13 +6966,12 @@ h2 {
 
 @media (max-width: 768px) {
     .sub-tabs {
-        overflow-x: auto;
-        flex-wrap: nowrap;
+        gap: 6px;
+        margin-bottom: 16px;
     }
     
     .sub-tab {
-        white-space: nowrap;
-        padding: 8px 12px;
+        padding: 7px 12px;
         font-size: 0.8125rem;
     }
     
