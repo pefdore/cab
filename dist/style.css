@@ -9363,50 +9363,162 @@ html.no-anim *::after {
 }
 /* ===== DASHBOARD CABINET 360 — VIE DU CABINET ===== */
 
-.cab-health {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
+.cab-health-wrap {
+    position: relative;
+    overflow: hidden;
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
-    border-radius: 16px;
-    padding: 18px 22px;
-    margin-bottom: 16px;
-    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+    border-radius: 18px;
+    padding: 22px 24px;
+    margin-bottom: 14px;
+    transition: border-color var(--transition-base);
 }
 
-.cab-health-left { display: flex; align-items: center; gap: 14px; }
-.cab-health-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; background: var(--color-text-tertiary); }
-.cab-health-dot.ok { background: var(--color-success); box-shadow: 0 0 0 4px var(--color-success-bg); }
-.cab-health-dot.warn { background: var(--color-warning, #f59e0b); box-shadow: 0 0 0 4px #fef3c7; }
-.cab-health-dot.danger { background: var(--color-danger); box-shadow: 0 0 0 4px var(--color-danger-bg); }
-.cab-health-title { font-size: 1.0625rem; font-weight: 700; color: var(--color-text); margin: 0; letter-spacing: -0.01em; }
-.cab-health-sub { font-size: 0.8125rem; color: var(--color-text-secondary); margin: 2px 0 0; }
-.cab-health-right { display: flex; gap: 18px; flex-wrap: wrap; }
-.cab-health-kpi { font-size: 0.75rem; color: var(--color-text-secondary); display: inline-flex; align-items: baseline; white-space: nowrap; }
-.cab-health-kpi strong { font-size: 1.0625rem; color: var(--color-text); margin-right: 4px; letter-spacing: -0.01em; }
-.cab-health-kpi.is-ok strong { color: var(--color-success); }
-.cab-health-kpi.is-warn strong { color: var(--color-warning); }
-.cab-health-kpi.is-danger strong { color: var(--color-danger); }
+.cab-health-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--color-text-tertiary);
+    transition: background var(--transition-base);
+}
 
+.cab-health-wrap[data-status="ok"]::before { background: var(--color-success); }
+.cab-health-wrap[data-status="warn"]::before { background: var(--color-warning); }
+.cab-health-wrap[data-status="danger"]::before { background: var(--color-danger); }
+
+.cab-health-wrap::after {
+    content: "";
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    opacity: 0.06;
+    pointer-events: none;
+}
+
+.cab-health-wrap[data-status="ok"]::after { background: radial-gradient(circle, var(--color-success) 0%, transparent 70%); }
+.cab-health-wrap[data-status="warn"]::after { background: radial-gradient(circle, var(--color-warning) 0%, transparent 70%); }
+.cab-health-wrap[data-status="danger"]::after { background: radial-gradient(circle, var(--color-danger) 0%, transparent 70%); }
+
+.cab-health-main { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.cab-health-status { display: flex; align-items: center; gap: 14px; }
+
+.cab-health-pulse {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    background: var(--color-bg-subtle);
+}
+
+.cab-health-pulse::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-text-tertiary);
+}
+
+.cab-health-wrap[data-status="ok"] .cab-health-pulse::after { background: var(--color-success); }
+.cab-health-wrap[data-status="warn"] .cab-health-pulse::after { background: var(--color-warning); }
+.cab-health-wrap[data-status="danger"] .cab-health-pulse::after { background: var(--color-danger); animation: cabPulse 1.6s ease-in-out infinite; }
+
+@keyframes cabPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
+    50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+.cab-health-overline { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-tertiary); margin: 0 0 2px; }
+.cab-health-title { font-size: 1.375rem; font-weight: 700; color: var(--color-text); margin: 0; letter-spacing: -0.02em; line-height: 1.2; }
+.cab-health-sub { font-size: 0.875rem; color: var(--color-text-secondary); margin: 3px 0 0; }
+
+/* ---- Tuiles de domaines ---- */
+.cab-domains {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.cab-tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.cab-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.cab-tile:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+.cab-tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+}
+
+.cab-tile-icon svg { width: 20px; height: 20px; }
+.cab-tile-icon.finances { background: linear-gradient(135deg, #10b981, #34d399); }
+.cab-tile-icon.equipe { background: linear-gradient(135deg, #6366f1, #818cf8); }
+.cab-tile-icon.activite { background: linear-gradient(135deg, #0d9488, #2dd4bf); }
+.cab-tile-icon.alertes { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+.cab-tile-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.cab-tile-name { font-size: 0.875rem; font-weight: 700; color: var(--color-text); letter-spacing: -0.01em; }
+.cab-tile-kpi { font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 1px; }
+
+.cab-tile-pill {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.cab-tile-pill.ok { background: var(--color-success-bg); color: var(--color-success); }
+.cab-tile-pill.warn { background: var(--color-warning-bg); color: var(--color-warning); }
+.cab-tile-pill.danger { background: var(--color-danger-bg); color: var(--color-danger); }
+
+.cab-tile[data-status="danger"] { border-color: var(--color-danger-border); }
+.cab-tile[data-status="warn"] { border-color: var(--color-warning-border); }
+
+/* ---- Navigation par onglets ---- */
 .cab-nav {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     overflow-x: auto;
     padding: 5px;
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
     border-radius: 14px;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
     scrollbar-width: thin;
 }
 
 .cab-nav-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     padding: 9px 14px;
     border-radius: 10px;
     border: none;
@@ -9419,12 +9531,13 @@ html.no-anim *::after {
     transition: background var(--transition-base), color var(--transition-base);
 }
 
+.cab-nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
 .cab-nav-btn:hover { background: var(--color-bg-subtle); color: var(--color-text); }
 
 .cab-nav-btn.active {
     background: var(--color-primary-subtle);
     color: var(--color-primary);
-    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.25);
 }
 
 .cab-nav-count {
@@ -9444,6 +9557,7 @@ html.no-anim *::after {
 
 .cab-nav-count.danger { background: var(--color-danger-bg); color: var(--color-danger); }
 
+/* ---- Sections ---- */
 .cab-section {
     background: var(--color-bg-subtle);
     border: 1px solid var(--color-border);
@@ -9549,7 +9663,7 @@ html.no-anim *::after {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 12px;
+    padding: 11px 14px;
     border-radius: 10px;
     font-size: 0.875rem;
     background: var(--color-bg-elevated);
@@ -9562,23 +9676,51 @@ html.no-anim *::after {
 .cab-alerte.warn { border-color: #fcd34d; background: #fffbeb; }
 .cab-alerte.warn .cab-alerte-dot { background: #f59e0b; }
 .cab-alerte.info .cab-alerte-dot { background: var(--color-primary); }
+.cab-alerte-text { flex: 1; min-width: 0; }
+.cab-alerte-dom {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+.cab-alerte-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 36px 16px;
+    text-align: center;
+    color: var(--color-success);
+}
+.cab-alerte-empty strong { font-size: 0.9375rem; color: var(--color-text); }
+.cab-alerte-empty span { font-size: 0.8125rem; color: var(--color-text-secondary); }
 
 .cab-health-kpi.is-danger strong { color: var(--color-danger); }
 
+[data-theme="dark"] .cab-alerte.warn { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.4); }
+[data-theme="dark"] .cab-tile:hover { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
+
+@media (max-width: 1024px) {
+    .cab-domains { grid-template-columns: repeat(2, 1fr); }
+}
+
 @media (max-width: 768px) {
+    .cab-health-wrap { padding: 16px; }
+    .cab-health-title { font-size: 1.125rem; }
+    .cab-domains { gap: 10px; }
+    .cab-tile { padding: 12px; }
     #cabinet-dashboard .cabinet-stat-card { padding: 12px; gap: 10px; }
     #cabinet-dashboard .cabinet-stat-icon { width: 38px; height: 38px; }
     #cabinet-dashboard .cabinet-stat-value { font-size: 1.0625rem; }
     .cab-nav-btn { padding: 8px 12px; font-size: 0.75rem; }
-    .cab-health-right { gap: 10px 14px; }
+    .cab-section { padding: 14px; }
 }
 
-[data-theme="dark"] .cab-alerte.warn { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.4); }
-[data-theme="dark"] .cab-health-dot.warn { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2); }
-
-@media (max-width: 768px) {
-    .cab-health { flex-direction: column; align-items: flex-start; padding: 14px 16px; }
-    .cab-section { padding: 14px; }
+@media (max-width: 480px) {
+    .cab-domains { grid-template-columns: 1fr; }
 }
 
 /* Chercheur DAE */

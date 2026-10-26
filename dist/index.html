@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-D9zRCoVR.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-CPpfHZSO.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -621,31 +621,79 @@ window.attemptLogin = function() {
                 <!-- Cabinet Dashboard -->
                 <div id="cabinet-dashboard" style="display:none;">
                     <!-- En-tête santé du cabinet -->
-                    <div class="cab-health" id="cabHealth">
-                        <div class="cab-health-left">
-                            <span class="cab-health-dot" id="cabHealthDot"></span>
-                            <div>
-                                <h3 class="cab-health-title" id="cabHealthTitle">Santé du cabinet</h3>
-                                <p class="cab-health-sub" id="cabHealthSub">Chargement des indicateurs...</p>
+                    <div class="cab-health-wrap" id="cabHealth" data-status="ok">
+                        <div class="cab-health-main">
+                            <div class="cab-health-status">
+                                <span class="cab-health-pulse" id="cabHealthDot"></span>
+                                <div>
+                                    <p class="cab-health-overline">Vue d'ensemble du cabinet</p>
+                                    <h3 class="cab-health-title" id="cabHealthTitle">Chargement…</h3>
+                                    <p class="cab-health-sub" id="cabHealthSub">Analyse des indicateurs en cours</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="cab-health-right" id="cabHealthKpis"></div>
+                    </div>
+
+                    <!-- Synthèse par domaine — cliquable -->
+                    <div class="cab-domains">
+                        <button class="cab-tile" data-cab-domain="finances" data-status="ok" onclick="switchCabTab('finances')">
+                            <span class="cab-tile-icon finances"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                            <span class="cab-tile-body">
+                                <span class="cab-tile-name">Finances</span>
+                                <span class="cab-tile-kpi">Recettes, charges, trésorerie</span>
+                            </span>
+                            <span class="cab-tile-pill ok">RAS</span>
+                        </button>
+                        <button class="cab-tile" data-cab-domain="equipe" data-status="ok" onclick="switchCabTab('rh')">
+                            <span class="cab-tile-icon equipe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                            <span class="cab-tile-body">
+                                <span class="cab-tile-name">Équipe</span>
+                                <span class="cab-tile-kpi">Contrats, congés, standard</span>
+                            </span>
+                            <span class="cab-tile-pill ok">RAS</span>
+                        </button>
+                        <button class="cab-tile" data-cab-domain="activite" data-status="ok" onclick="switchCabTab('ops')">
+                            <span class="cab-tile-icon activite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+                            <span class="cab-tile-body">
+                                <span class="cab-tile-name">Activité</span>
+                                <span class="cab-tile-kpi">Remplacements, stocks</span>
+                            </span>
+                            <span class="cab-tile-pill ok">RAS</span>
+                        </button>
+                        <button class="cab-tile" data-cab-domain="alertes" onclick="switchCabTab('alertes')">
+                            <span class="cab-tile-icon alertes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+                            <span class="cab-tile-body">
+                                <span class="cab-tile-name">Alertes</span>
+                                <span class="cab-tile-kpi">Ce qui demande une action</span>
+                            </span>
+                            <span class="cab-tile-pill" id="cabTileAlertCount" style="display:none;">0</span>
+                        </button>
                     </div>
 
                     <!-- Navigation par onglets -->
                     <div class="cab-nav" id="cabNav">
-                        <button class="cab-nav-btn active" data-cab-tab="finances" onclick="switchCabTab('finances')">💰 Finances</button>
-                        <button class="cab-nav-btn" data-cab-tab="rh" onclick="switchCabTab('rh')">👥 Équipe</button>
-                        <button class="cab-nav-btn" data-cab-tab="ops" onclick="switchCabTab('ops')">🩺 Activité</button>
-                        <button class="cab-nav-btn" data-cab-tab="alertes" onclick="switchCabTab('alertes')">🔔 Alertes <span class="cab-nav-count" id="cabNavAlertCount" style="display:none;"></span></button>
-                        <button class="cab-nav-btn" data-cab-tab="ia" onclick="switchCabTab('ia')">✨ Analyse</button>
+                        <button class="cab-nav-btn active" data-cab-tab="finances" onclick="switchCabTab('finances')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Finances
+                        </button>
+                        <button class="cab-nav-btn" data-cab-tab="rh" onclick="switchCabTab('rh')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Équipe
+                        </button>
+                        <button class="cab-nav-btn" data-cab-tab="ops" onclick="switchCabTab('ops')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Activité
+                        </button>
+                        <button class="cab-nav-btn" data-cab-tab="alertes" onclick="switchCabTab('alertes')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Alertes <span class="cab-nav-count" id="cabNavAlertCount" style="display:none;"></span>
+                        </button>
+                        <button class="cab-nav-btn" data-cab-tab="ia" onclick="switchCabTab('ia')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg>Analyse
+                        </button>
                     </div>
 
                     <!-- SECTION FINANCIERE -->
                     <div class="cab-section" data-cab-panel="finances">
                         <div class="cab-section-header">
-                            <h3>💰 Finances</h3>
-                            <span class="cab-section-hint">Recettes, charges et trésorerie — données partagées entre associés</span>
+                            <h3>Finances</h3>
+                            <span class="cab-section-hint">Ce qui entre, ce qui sort, et ce qu'il reste — pour toute l'année en cours</span>
                         </div>
                         <div class="compta-summary">
                             <div class="compta-card income">
@@ -796,8 +844,8 @@ window.attemptLogin = function() {
                     <!-- SECTION GESTION / ORGANISATION -->
                     <div class="cab-section" data-cab-panel="rh">
                         <div class="cab-section-header">
-                            <h3>👥 Gestion &amp; organisation</h3>
-                            <span class="cab-section-hint">Équipe, contrats, congés, standard téléphonique</span>
+                            <h3>Équipe &amp; organisation</h3>
+                            <span class="cab-section-hint">Contrats, congés, astreintes et activité du standard téléphonique</span>
                         </div>
                         <div class="cabinet-stats-row" id="cabRhStatsRow">
                             <div class="cabinet-stat-card">
@@ -901,8 +949,8 @@ window.attemptLogin = function() {
                     <!-- SECTION ACTIVITE OPERATIONNELLE -->
                     <div class="cab-section" data-cab-panel="ops">
                         <div class="cab-section-header">
-                            <h3>🩺 Activité opérationnelle</h3>
-                            <span class="cab-section-hint">Remplacements, stocks salle d'urgence</span>
+                            <h3>Activité opérationnelle</h3>
+                            <span class="cab-section-hint">Offres de remplacement, candidatures et stocks de la salle d'urgence</span>
                         </div>
                         <div class="cabinet-stats-row">
                             <div class="cabinet-stat-card">
@@ -976,8 +1024,8 @@ window.attemptLogin = function() {
                     <!-- FIL D'ALERTES CONSOLIDE -->
                     <div class="cab-section" data-cab-panel="alertes">
                         <div class="cab-section-header">
-                            <h3>🔔 Alertes &amp; actions</h3>
-                            <span class="cab-section-hint">Tout ce qui nécessite une décision des associés</span>
+                            <h3>Alertes &amp; actions</h3>
+                            <span class="cab-section-hint">Tout ce qui demande une décision, trié par priorité</span>
                         </div>
                         <div id="cabAlertesList" class="cab-alertes-list"></div>
                     </div>

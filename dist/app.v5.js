@@ -9486,7 +9486,7 @@ async function cabLoadRh(alertes) {
         cabSet('cabContratsActifs', String(actifs.length));
         cabSet('cabContratsExpirant', String(expirant.length), expirant.length > 0 ? 'var(--color-warning)' : 'var(--color-text)');
         cabSet('cabMasseSalariale', (masseSalariale).toFixed(0) + '€/mois');
-        expirant.forEach(e => alertes.push({ level: 'warn', text: `Contrat de ${cabEsc(e.firstname)} ${cabEsc(e.lastname)} expire le ${cabFmtDate(e.end_date)}` }));
+        expirant.forEach(e => alertes.push({ level: 'warn', domain: 'equipe', text: `Contrat de ${cabEsc(e.firstname)} ${cabEsc(e.lastname)} expire le ${cabFmtDate(e.end_date)}` }));
 
         const { data: lv } = await supabaseClient.from('leaves')
             .select('*, employees(firstname, lastname)')
@@ -9499,7 +9499,7 @@ async function cabLoadRh(alertes) {
         cabSet('cabCongesAttente', String(pending.length), pending.length > 0 ? 'var(--color-warning)' : 'var(--color-text)');
         pending.forEach(l => {
             const emp = l.employees;
-            alertes.push({ level: 'warn', text: `Congé en attente : ${cabEsc(emp ? emp.firstname + ' ' + emp.lastname : 'employé')} (${cabFmtDate(l.start_date)} → ${cabFmtDate(l.end_date)})` });
+            alertes.push({ level: 'warn', domain: 'equipe', text: `Congé en attente : ${cabEsc(emp ? emp.firstname + ' ' + emp.lastname : 'employé')} (${cabFmtDate(l.start_date)} → ${cabFmtDate(l.end_date)})` });
         });
         const congesEl = document.getElementById('cabCongesList');
         if (congesEl) {
@@ -9539,7 +9539,7 @@ async function cabLoadRh(alertes) {
         const taux = total > 0 ? Math.round((answered / total) * 100) : 0;
         cabSet('cabAppelsManques', String(missed), missed > 0 ? 'var(--color-danger)' : 'var(--color-text)');
         cabSet('cabTauxReponse', total > 0 ? taux + '%' : '-');
-        if (total > 0 && taux < 80) alertes.push({ level: 'warn', text: `Taux de réponse du standard à ${taux}% sur 30 jours` });
+        if (total > 0 && taux < 80) alertes.push({ level: 'warn', domain: 'equipe', text: `Taux de réponse du standard à ${taux}% sur 30 jours` });
 
         const chartEl = document.getElementById('cabStandardChart');
         if (chartEl) {
@@ -9577,12 +9577,12 @@ async function cabLoadRemplacements(alertes) {
         const today = new Date().toISOString().split('T')[0];
         const actives = allOffres.filter(o => o.statut === 'active' && (!o.date_fin || o.date_fin >= today));
         cabSet('cabOffresActives', String(actives.length), actives.length > 0 ? 'var(--color-warning)' : 'var(--color-text)');
-        actives.slice(0, 2).forEach(o => alertes.push({ level: 'info', text: `Offre de remplacement active : ${cabEsc(o.titre)} (${cabFmtDate(o.date_debut)})` }));
+        actives.slice(0, 2).forEach(o => alertes.push({ level: 'info', domain: 'activite', text: `Offre de remplacement active : ${cabEsc(o.titre)} (${cabFmtDate(o.date_debut)})` }));
 
         const { data: cands } = await supabaseClient.from('candidatures').select('*').order('created_at', { ascending: false });
         const pending = (cands || []).filter(c => c.statut === 'en_attente');
         cabSet('cabCandidaturesAttente', String(pending.length), pending.length > 0 ? 'var(--color-warning)' : 'var(--color-text)');
-        pending.slice(0, 3).forEach(() => alertes.push({ level: 'warn', text: `${pending.length} candidature(s) de remplacement en attente de réponse` }));
+        if (pending.length > 0) alertes.push({ level: 'warn', domain: 'activite', text: `${pending.length} candidature(s) de remplacement en attente de réponse` });
 
         const { data: remps } = await supabaseClient.from('remplacants').select('*').eq('user_id', currentUser.id).eq('disponible', true);
         cabSet('cabVivierRemplacants', String((remps || []).length));
@@ -9629,9 +9629,9 @@ function cabLoadStocks(alertes) {
         cabSet('cabDernierPointage', data.lastPointage ? cabFmtDate(data.lastPointage) : 'Jamais',
             (!data.lastPointage || new Date(data.lastPointage) < new Date(today.getTime() - 7 * 24 * 3600 * 1000)) ? 'var(--color-warning)' : 'var(--color-text)');
 
-        sousSeuil.slice(0, 3).forEach(p => alertes.push({ level: 'danger', text: `Stock sous le seuil : ${cabEsc(p.name)} (${p.quantity}/${p.minQuantity})` }));
-        expires.slice(0, 2).forEach(p => alertes.push({ level: 'danger', text: `Produit périmé ou proche : ${cabEsc(p.name)}` }));
-        if (!data.lastPointage) alertes.push({ level: 'warn', text: 'Aucun pointage des stocks effectué' });
+        sousSeuil.slice(0, 3).forEach(p => alertes.push({ level: 'danger', domain: 'activite', text: `Stock sous le seuil : ${cabEsc(p.name)} (${p.quantity}/${p.minQuantity})` }));
+        expires.slice(0, 2).forEach(p => alertes.push({ level: 'danger', domain: 'activite', text: `Produit périmé ou proche : ${cabEsc(p.name)}` }));
+        if (!data.lastPointage) alertes.push({ level: 'warn', domain: 'activite', text: 'Aucun pointage des stocks effectué' });
 
         const el = document.getElementById('cabStocksAlerte');
         if (el) {
@@ -9659,6 +9659,38 @@ function cabSetTrend(id, current, previous, invert) {
     el.className = 'cabinet-stat-trend ' + cls;
 }
 
+function cabDomainTile(domain, all) {
+    const dom = all.filter(a => (a.domain || 'finances') === domain);
+    const danger = dom.filter(a => a.level === 'danger').length;
+    const warn = dom.filter(a => a.level === 'warn').length;
+    const status = danger > 0 ? 'danger' : warn > 0 ? 'warn' : 'ok';
+    const tile = document.querySelector(`.cab-tile[data-cab-domain="${domain}"]`);
+    if (!tile) return;
+    tile.dataset.status = status;
+    const pill = tile.querySelector('.cab-tile-pill');
+    if (pill) {
+        const total = dom.length;
+        pill.textContent = total === 0 ? 'RAS' : `${total} point${total > 1 ? 's' : ''}`;
+        pill.className = 'cab-tile-pill ' + status;
+    }
+    const kpi = tile.querySelector('.cab-tile-kpi');
+    if (kpi) {
+        if (domain === 'finances') {
+            const marge = document.getElementById('tauxMarge')?.textContent || '-';
+            kpi.textContent = `Marge ${marge}`;
+        } else if (domain === 'equipe') {
+            const resp = document.getElementById('cabTauxReponse')?.textContent;
+            const contrats = document.getElementById('cabContratsExpirant')?.textContent;
+            const ex = parseInt(contrats) || 0;
+            kpi.textContent = ex > 0 ? `${ex} contrat${ex > 1 ? 's' : ''} à renouveler` : ((resp && resp !== '-') ? `Standard ${resp}` : 'Standard —');
+        } else if (domain === 'activite') {
+            const stocks = document.getElementById('cabStocksSousSeuil')?.textContent;
+            const ex = parseInt(stocks) || 0;
+            kpi.textContent = ex > 0 ? `${ex} stock${ex > 1 ? 's' : ''} à recommander` : 'Stocks au niveau';
+        }
+    }
+}
+
 function cabRenderHealth(finAlertes, alertes) {
     const all = [...finAlertes, ...alertes];
     const danger = all.filter(a => a.level === 'danger').length;
@@ -9667,31 +9699,27 @@ function cabRenderHealth(finAlertes, alertes) {
     const dot = document.getElementById('cabHealthDot');
     const title = document.getElementById('cabHealthTitle');
     const sub = document.getElementById('cabHealthSub');
-    const kpis = document.getElementById('cabHealthKpis');
 
     let status = 'ok';
     if (danger > 0) status = 'danger'; else if (warn > 0) status = 'warn';
     if (dot) dot.className = 'cab-health-dot ' + status;
     if (title) {
-        title.textContent = danger > 0 ? 'Attention requise' : warn > 0 ? 'Quelques points à surveiller' : 'Cabinet en bonne santé';
+        title.textContent = danger > 0 ? 'Action requise' : warn > 0 ? 'À surveiller' : 'Tout va bien';
     }
     if (sub) {
-        sub.textContent = danger > 0 ? `${danger} alerte(s) critique(s), ${warn} point(s) à surveiller`
-            : warn > 0 ? `${warn} point(s) à surveiller`
-            : 'Aucune alerte — trésorerie, équipe et stocks au vert';
+        sub.textContent = danger > 0 ? `${danger} point${danger > 1 ? 's' : ''} critique${danger > 1 ? 's' : ''} et ${warn} à surveiller — consultez le fil des alertes`
+            : warn > 0 ? `${warn} point${warn > 1 ? 's' : ''} à surveiller`
+            : 'Aucune alerte : finances, équipe et activité au vert';
     }
-    if (kpis) {
-        const fmt = (id) => { const v = parseFloat((document.getElementById(id)?.textContent || '').replace(/[^\d,.-]/g, '').replace(',', '.')); return isNaN(v) ? null : v; };
-        const parts = [];
-        const marge = fmt('tauxMarge');
-        if (marge != null) parts.push(`<span class="cab-health-kpi"><strong>${Math.round(marge)}%</strong> marge</span>`);
-        const resp = document.getElementById('cabTauxReponse')?.textContent;
-        if (resp && resp !== '-') parts.push(`<span class="cab-health-kpi"><strong>${cabEsc(resp)}</strong> standard</span>`);
-        const stocks = document.getElementById('cabStocksSousSeuil')?.textContent;
-        if (stocks && stocks !== '-') parts.push(`<span class="cab-health-kpi"><strong>${cabEsc(stocks)}</strong> stock(s) bas</span>`);
-        parts.push(`<span class="cab-health-kpi ${danger > 0 ? 'is-danger' : warn > 0 ? 'is-warn' : 'is-ok'}"><strong>${danger}</strong> critiques</span>`);
-        parts.push(`<span class="cab-health-kpi ${warn > 0 ? 'is-warn' : 'is-ok'}"><strong>${warn}</strong> à surveiller</span>`);
-        kpis.innerHTML = parts.join('');
+    const wrap = document.querySelector('.cab-health-wrap');
+    if (wrap) wrap.dataset.status = status;
+
+    const tileBadge = document.getElementById('cabTileAlertCount');
+    if (tileBadge) {
+        const total = danger + warn;
+        tileBadge.textContent = String(total);
+        tileBadge.style.display = total > 0 ? 'inline-flex' : 'none';
+        tileBadge.className = 'cab-tile-pill ' + (danger > 0 ? 'danger' : 'warn');
     }
 
     const badge = document.getElementById('cabNavAlertCount');
@@ -9706,16 +9734,19 @@ function cabRenderHealth(finAlertes, alertes) {
     const list = document.getElementById('cabAlertesList');
     if (list) {
         if (all.length === 0) {
-            list.innerHTML = '<p class="cab-empty">Aucune alerte — rien à signaler 🎉</p>';
+            list.innerHTML = '<div class="cab-alerte-empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>Aucune alerte</strong><span>Tout est sous contrôle, rien à signaler.</span></div>';
         } else {
             const order = { danger: 0, warn: 1, info: 2 };
             all.sort((a, b) => (order[a.level] ?? 3) - (order[b.level] ?? 3));
+            const domLabel = { finances: 'Finances', equipe: 'Équipe', activite: 'Activité' };
             list.innerHTML = all.slice(0, 12).map(a =>
-                `<div class="cab-alerte ${a.level}"><span class="cab-alerte-dot"></span><span>${a.text}</span></div>`
+                `<div class="cab-alerte ${a.level}"><span class="cab-alerte-dot"></span><span class="cab-alerte-text">${a.text}</span><span class="cab-alerte-dom">${domLabel[a.domain || 'finances'] || ''}</span></div>`
             ).join('');
         }
     }
     window._cab360Alertes = all;
+
+    ['finances', 'equipe', 'activite'].forEach(d => cabDomainTile(d, all));
 }
 
 function switchCabTab(tab) {
@@ -9777,7 +9808,7 @@ async function renderCabinetLifeDashboard() {
     await cabLoadRemplacements(alertes);
     const finAlertes = (window._cabinetAlertes || []).map(t => {
         const isDanger = /négative|critique/i.test(t);
-        return { level: isDanger ? 'danger' : 'warn', text: cabEsc(t) };
+        return { level: isDanger ? 'danger' : 'warn', domain: 'finances', text: cabEsc(t) };
     });
     cabRenderHealth(finAlertes, alertes);
     cabRenderMonthTrends();
