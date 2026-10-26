@@ -7802,7 +7802,9 @@ function parseRelevéLocalement(text) {
     for (const rawLine of lines) {
         const line = (rawLine || '').trim();
         if (!line) continue;
-        if (/^<<<PAGE\s+\d+>>>$/.test(line)) continue;
+        currentLineIdx++;
+        const pageMark = line.match(/^<<<PAGE\s+(\d+)>>>$/);
+        if (pageMark) { currentPage = parseInt(pageMark[1], 10); currentLineIdx = 0; continue; }
 
         const dateFr = line.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/);
         const dateShort = line.match(/\b(\d{1,2})[/.-](\d{1,2})\b(?![/.-]\d)/);
@@ -10705,17 +10707,32 @@ function releveCropLineDataUrl(t, maxWidth) {
             if (!byLine[it._line]) byLine[it._line] = [];
             byLine[it._line].push(it);
         });
-        if (line == null || !byLine[line]) {
+        const normAmount = (str) => String(str).replace(/[\s\u00a0]/g, '').replace(',', '.');
+        const amountVariants = [normAmount(amountKey), amountKey.replace('.', ','), normAmount(amountKey).replace(/\.(?=\d{3})/g, ''), amountKey.replace('.', ',').replace(/\B(?=(\d{3})(?!\d))/g, ' ')];
+        const dParts = (t.date || '').split('-');
+        const dateVariants = [];
+        if (dParts.length === 3) {
+            dateVariants.push(dParts[2] + '/' + dParts[1], dParts[1] + '/' + dParts[2], dParts[2] + '-' + dParts[1], t.date);
+        }
+
+        {
             let best = null;
+            let bestScore = 0;
             for (const [ln, items] of Object.entries(byLine)) {
                 const joined = items.map(i => i.str).join(' ').toLowerCase();
                 const flat = joined.replace(/[\s\u00a0]/g, '');
-                const hasAmount = flat.includes(amountKey.replace('.', ',')) || flat.includes(amountKey);
-                const hasDate = dateKey && (joined.includes(dateKey.replace('-', '/')) || joined.includes(dateKey));
-                if (hasAmount && hasDate) { best = parseInt(ln, 10); break; }
-                if (hasAmount && best === null) best = parseInt(ln, 10);
+                const hasAmount = amountVariants.some(v => v && flat.includes(v.toLowerCase()));
+                const hasDate = dateVariants.some(v => v && joined.includes(v.toLowerCase()));
+                const hasDesc = t.description && t.description.length > 6 && joined.includes(t.description.toLowerCase().split(' ').filter(w => w.length > 3)[0] || '\u0000');
+                let score = 0;
+                if (hasAmount) score += 2;
+                if (hasDate) score += 2;
+                if (hasDesc) score += 1;
+                if (score > bestScore) { bestScore = score; best = parseInt(ln, 10); }
+                if (hasAmount && hasDate && hasDesc) break;
             }
-            line = best;
+            if (bestScore < 2) best = null;
+            if (best !== null) line = best;
         }
         if (line == null || !byLine[line]) { resolve(null); return; }
 
