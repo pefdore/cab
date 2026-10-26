@@ -4686,10 +4686,9 @@ function switchView(viewName) {
     } else if (viewName === 'cabinet') {
         loadCabinetData();
     } else if (viewName === 'flux') {
-        switchView('cabinet');
-        setTimeout(() => {
-            document.querySelector('.cabinet-tab[data-tab="stocks"]')?.click();
-        }, 100);
+        loadCabinetData().then(() => {
+            if (typeof renderFluxView === 'function') renderFluxView();
+        });
     } else if (viewName === 'urgence') {
         if (typeof refreshUrgenceView === 'function') refreshUrgenceView();
     }
@@ -4738,6 +4737,7 @@ async function loadCabinetData() {
         console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
         renderAddDepensesRecettes();
+        if (typeof renderFluxView === 'function') renderFluxView();
         try {
             await window.reunionInit();
         } catch (e) {
