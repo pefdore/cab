@@ -165,3 +165,23 @@ CREATE POLICY "Members update own date votes" ON reunion_date_votes
 
 CREATE POLICY "Members delete own date votes" ON reunion_date_votes
     FOR DELETE USING (auth.uid() = user_id);
+
+-- Migration v3 : édition des sujets par tout associé, suppression par le créateur uniquement
+
+DROP POLICY IF EXISTS "Members update own sujets" ON reunion_sujets;
+DROP POLICY IF EXISTS "Members delete own sujets" ON reunion_sujets;
+
+-- Tout membre du cabinet peut modifier un sujet (updated_by facultatif pour tracer)
+ALTER TABLE reunion_sujets ADD COLUMN IF NOT EXISTS updated_by UUID REFERENCES auth.users(id);
+
+CREATE POLICY "Cabinet members update sujets" ON reunion_sujets
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM reunions r
+            WHERE r.id = reunion_id AND reunion_same_cabinet(r.cabinet_id)
+        )
+    );
+
+-- Seul le créateur du sujet peut le supprimer
+CREATE POLICY "Creator deletes own sujet" ON reunion_sujets
+    FOR DELETE USING (auth.uid() = user_id);
