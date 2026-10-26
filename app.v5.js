@@ -9374,12 +9374,18 @@ function reunionCabinetLabel(cab) {
     return cab.name || cab.address || 'Cabinet';
 }
 
+function reunionRoleLabel(role) {
+    if (role === 'medecin_remplacant') return 'Médecin remplaçant';
+    if (role === 'secretaire') return 'Secrétaire';
+    return role;
+}
+
 async function reunionMembers(cabinetId) {
     if (!supabaseClient || !cabinetId) return [];
     try {
         const { data } = await supabaseClient
             .from('profiles')
-            .select('id, first_name, last_name')
+            .select('id, first_name, last_name, role')
             .eq('cabinet_id', cabinetId);
         return data || [];
     } catch (e) {
@@ -9559,12 +9565,18 @@ async function renderProfileCabinetBox() {
     if (!label) {
         box.innerHTML = '<div class="odj-empty">Aucun cabinet associé. Les modules partagés du cabinet (réunions, ordres du jour, comptabilité) ne sont pas disponibles.</div>';
     } else {
-        let html = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong>';
-        if (cab.address && cab.name) html += '<span class="sujet-author"> — ' + reunionEsc(cab.address) + '</span>';
-        html += '</div>';
+        let html = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong></div>';
+        if (cab.address) {
+            html += '<div class="odj-voters">Adresse : ' + reunionEsc(cab.address) + '</div>';
+        }
         const members = await reunionMembers(cab.id);
-        if (members.length) {
-            html += '<div class="odj-voters">Associés dans cet espace : ' + members.map(m => '<span class="odj-voter-chip">' + reunionEsc(m.first_name + ' ' + (m.last_name || '')) + '</span>').join('') + '</div>';
+        const associes = members.filter(m => m.role === 'medecin_installe');
+        const salaries = members.filter(m => m.role !== 'medecin_installe');
+        if (associes.length) {
+            html += '<div class="odj-voters">Médecins associés : ' + associes.map(m => '<span class="odj-voter-chip">' + reunionEsc(m.first_name + ' ' + (m.last_name || '')) + '</span>').join('') + '</div>';
+        }
+        if (salaries.length) {
+            html += '<div class="odj-voters">Salariés affiliés : ' + salaries.map(m => '<span class="odj-voter-chip">' + reunionEsc((m.first_name + ' ' + (m.last_name || '')).trim()) + (m.role ? ' <span class="sujet-author">(' + reunionEsc(reunionRoleLabel(m.role)) + ')</span>' : '') + '</span>').join('') + '</div>';
         }
         box.innerHTML = html;
     }
