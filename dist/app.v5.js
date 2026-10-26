@@ -10050,6 +10050,12 @@ async function reunionRenderOdj() {
         if (s.probleme) html += '<div class="odj-section-label">Problème posé</div><div class="odj-section-text">' + reunionEsc(s.probleme) + '</div>';
         if (s.proposition) html += '<div class="odj-section-label">Proposition</div><div class="odj-section-text">' + reunionEsc(s.proposition) + '</div>';
         if (s.analyse_ia) html += '<div class="odj-section-label">Avis de l’IA (contexte cabinet)</div><div class="odj-section-text">' + reunionEsc(s.analyse_ia) + '</div>';
+        const isMine = s.user_id === currentUser.id;
+        html += '<div class="odj-vote-bar">'
+            + '<button class="action-btn" data-edit="' + s.id + '">✏️ Modifier</button>'
+            + (isMine ? '<button class="action-btn odj-delete-btn" data-delete="' + s.id + '">🗑️ Supprimer</button>' : '')
+            + '</div>';
+        html += '<div class="odj-edit-box" id="odj-edit-' + s.id + '" style="display:none;"></div>';
         html += '<div class="odj-vote-bar">'
             + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 1 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="1"' + (canVote ? '' : ' disabled') + '>👍 Pour</button>'
             + '<button class="action-btn odj-vote-btn no ' + (mine && mine.vote === -1 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="-1"' + (canVote ? '' : ' disabled') + '>👎 Contre</button>'
@@ -10064,7 +10070,70 @@ async function reunionRenderOdj() {
     container.querySelectorAll('.odj-vote-btn').forEach(btn => {
         btn.addEventListener('click', () => reunionVote(btn.dataset.vote, parseInt(btn.dataset.val, 10)));
     });
+    container.querySelectorAll('[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => reunionToggleEditSujet(btn.dataset.edit));
+    });
+    container.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', () => reunionDeleteSujet(btn.dataset.delete));
+    });
     await reunionRefreshOdjStatus();
+}
+
+async function reunionToggleEditSujet(sujetId) {
+    const box = document.getElementById('odj-edit-' + sujetId);
+    if (!box) return;
+    if (box.style.display !== 'none') { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const { data: s } = await supabaseClient
+        .from('reunion_sujets')
+        .select('*')
+        .eq('id', sujetId)
+        .maybeSingle();
+    if (!s) { alert('Sujet introuvable.'); return; }
+    box.innerHTML = '<div class="form-group"><label>Intitulé</label>'
+        + '<input type="text" class="form-input" id="edit-titre-' + sujetId + '" value="' + reunionEsc(s.titre).replace(/"/g, '&quot;') + '"></div>'
+        + '<div class="form-group"><label>Problème posé</label>'
+        + '<textarea class="form-input" id="edit-probleme-' + sujetId + '" rows="3">' + reunionEsc(s.probleme || '') + '</textarea></div>'
+        + '<div class="form-group"><label>Proposition</label>'
+        + '<textarea class="form-input" id="edit-proposition-' + sujetId + '" rows="3">' + reunionEsc(s.proposition || '') + '</textarea></div>'
+        + '<button class="action-btn primary" data-save="' + sujetId + '">Enregistrer</button>'
+        + '<button class="action-btn" data-cancel="' + sujetId + '">Annuler</button>';
+    box.style.display = 'block';
+    box.querySelector('[data-save]').addEventListener('click', () => reunionSaveSujet(sujetId));
+    box.querySelector('[data-cancel]').addEventListener('click', () => reunionToggleEditSujet(sujetId));
+}
+
+async function reunionSaveSujet(sujetId) {
+    const titre = document.getElementById('edit-titre-' + sujetId)?.value.trim();
+    const probleme = document.getElementById('edit-probleme-' + sujetId)?.value.trim();
+    const proposition = document.getElementById('edit-proposition-' + sujetId)?.value.trim();
+    if (!titre) { alert('L’intitulé ne peut pas être vide.'); return; }
+    try {
+        const { error } = await supabaseClient
+            .from('reunion_sujets')
+            .update({ titre: titre, probleme: probleme, proposition: proposition })
+            .eq('id', sujetId);
+        if (error) throw error;
+        await reunionRenderOdj();
+    } catch (e) {
+        console.error('[REUNIONS] save sujet error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
+}
+
+async function reunionDeleteSujet(sujetId) {
+    if (!confirm('Supprimer ce sujet de l’ordre du jour ?')) return;
+    try {
+        const { error } = await supabaseClient
+            .from('reunion_sujets')
+            .delete()
+            .eq('id', sujetId);
+        if (error) throw error;
+        await reunionRenderOdj();
+        await reunionRenderList();
+    } catch (e) {
+        console.error('[REUNIONS] delete sujet error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
 }
 
 async function reunionVote(sujetId, vote) {
