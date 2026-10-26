@@ -10194,3 +10194,30 @@ html.no-anim *::after {
     padding: 6px 10px;
     margin-top: 8px;
 }
+
+/* ===== Vue Flux ===== */
+.flux-day { margin-bottom: 14px; }
+.flux-day-header {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+    color: var(--color-text-secondary);
+    padding: 6px 0 4px;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    margin-bottom: 4px;
+}
+.flux-cat-row, .flux-month-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+.flux-cat-row:last-child, .flux-month-row:last-child { border-bottom: none; }
+.flux-cat-amounts { display: flex; gap: 12px; font-size: 0.85rem; white-space: nowrap; }
+.flux-month-row { cursor: pointer; }
+.flux-month-row:hover { background: var(--color-bg-secondary, #f3f4f6); }
+.flux-month-row.current { background: var(--color-bg-secondary, #f3f4f6); font-weight: 600; }
+.flux-month-label { text-transform: capitalize; }
+.depense-recette-toggle { display: flex; gap: 8px; }

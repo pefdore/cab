@@ -4486,8 +4486,8 @@ h2 {
     
     /* Cabinet tabs mobile */
     .cabinet-tabs {
-        gap: 5px;
-        margin-bottom: 14px;
+        gap: 6px;
+        margin-bottom: 16px;
     }
     
     .cabinet-tabs::-webkit-scrollbar {
@@ -4495,14 +4495,14 @@ h2 {
     }
     
     .cabinet-tab {
-        padding: 8px 11px;
+        padding: 8px 12px;
         font-size: 0.75rem;
-        gap: 5px;
+        gap: 6px;
     }
     
     .cabinet-tab svg {
-        width: 13px;
-        height: 13px;
+        width: 14px;
+        height: 14px;
     }
     
     .cabinet-page-header {
@@ -5038,28 +5038,19 @@ h2 {
 
 .cabinet-tabs {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 6px;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-}
-
-.cabinet-tabs::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
 }
 
 .cabinet-tab {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 9px 16px;
+    gap: 8px;
+    padding: 10px 18px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--color-text-secondary);
     cursor: pointer;
@@ -5067,7 +5058,6 @@ h2 {
     transition: all 0.2s;
     font-family: inherit;
     white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .cabinet-tab svg {
@@ -5911,35 +5901,25 @@ h2 {
 /* Cabinet Modules */
 .sub-tabs {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 6px;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-}
-
-.sub-tabs::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
 }
 
 .sub-tab {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 7px 13px;
+    gap: 7px;
+    padding: 8px 14px;
     border: 1px solid var(--color-border);
     background: var(--color-bg);
     color: var(--color-text-secondary);
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     border-radius: 999px;
     transition: all 0.2s;
     white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .sub-tab svg {
@@ -6233,17 +6213,9 @@ h2 {
 /* Replacement Module Tabs */
 .replacement-sub-tabs {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 6px;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-}
-
-.replacement-sub-tabs::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
 }
 
 .replacement-sub-tabs .sub-tab.active {
@@ -6994,19 +6966,13 @@ h2 {
 
 @media (max-width: 768px) {
     .sub-tabs {
-        gap: 5px;
-        margin-bottom: 14px;
+        gap: 6px;
+        margin-bottom: 16px;
     }
     
     .sub-tab {
-        padding: 7px 11px;
-        font-size: 0.75rem;
-        gap: 5px;
-    }
-    
-    .sub-tab svg {
-        width: 12px;
-        height: 12px;
+        padding: 7px 12px;
+        font-size: 0.8125rem;
     }
     
     .planning-grid {
@@ -10148,49 +10114,29 @@ html.no-anim *::after {
     .urgence-order-edit-fields { justify-content: flex-end; flex-wrap: wrap; }
 }
 
-/* Stocks : ref + categorie en sous-ligne, table compacte sans scroll horizontal */
-.urgence-product-cell {
+/* ===== Vue Flux ===== */
+.flux-day { margin-bottom: 14px; }
+.flux-day-header {
     font-weight: 600;
-    line-height: 1.3;
-}
-
-.urgence-product-cat {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
+    text-transform: capitalize;
     color: var(--color-text-secondary);
-    line-height: 1.2;
-    margin-top: 1px;
+    padding: 6px 0 4px;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    margin-bottom: 4px;
 }
-
-.urgence-stock-table th,
-.urgence-stock-table td {
-    padding: 8px 10px;
-    white-space: nowrap;
-}
-
-.urgence-stock-table td:first-child {
-    min-width: 180px;
-    max-width: 320px;
-}
-
-.urgence-stock-table .urgence-product-cell {
-    white-space: normal;
-}
-
-/* Réception : case « Arrivé » + notes de réception */
-.urgence-receive-check {
+.flux-cat-row, .flux-month-row {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
 }
-
-.urgence-reception-note {
-    font-size: 0.75rem;
-    color: var(--color-text-secondary);
-    background: var(--color-bg-muted);
-    border-radius: 6px;
-    padding: 6px 10px;
-    margin-top: 8px;
-}
+.flux-cat-row:last-child, .flux-month-row:last-child { border-bottom: none; }
+.flux-cat-amounts { display: flex; gap: 12px; font-size: 0.85rem; white-space: nowrap; }
+.flux-month-row { cursor: pointer; }
+.flux-month-row:hover { background: var(--color-bg-secondary, #f3f4f6); }
+.flux-month-row.current { background: var(--color-bg-secondary, #f3f4f6); font-weight: 600; }
+.flux-month-label { text-transform: capitalize; }
+.depense-recette-toggle { display: flex; gap: 8px; }

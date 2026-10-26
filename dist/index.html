@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-mfBHU953.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-1FBJVWtf.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -995,6 +995,93 @@ window.attemptLogin = function() {
                 </div>
             </section>
 
+            <!-- Flux View -->
+            <section id="view-flux" class="view">
+                <h2>Flux</h2>
+                <p class="urgence-page-desc">Flux des entrées et des dépenses du cabinet, jour par jour et mois par mois, classés par catégorie. Le dashboard s'alimente automatiquement de ces données.</p>
+
+                <!-- Totaux du mois -->
+                <div class="compta-summary">
+                    <div class="compta-card income">
+                        <span class="compta-label">Entrées du mois</span>
+                        <span class="compta-value" id="flux-total-recettes">0€</span>
+                    </div>
+                    <div class="compta-card expense">
+                        <span class="compta-label">Dépenses du mois</span>
+                        <span class="compta-value" id="flux-total-depenses">0€</span>
+                    </div>
+                    <div class="compta-card balance">
+                        <span class="compta-label">Solde du mois</span>
+                        <span class="compta-value" id="flux-total-balance">0€</span>
+                    </div>
+                </div>
+
+                <!-- Saisie d'une dépense -->
+                <div class="module-card">
+                    <h3>Enregistrer un mouvement</h3>
+                    <div class="depense-recette-toggle">
+                        <button class="switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')">Dépense</button>
+                        <button class="switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')">Entrée / recette</button>
+                    </div>
+                    <div id="add-depense-form" style="margin-top: 12px;">
+                        <div class="inventory-filters" style="position:relative;">
+                            <select id="add-depenseCategory" class="form-input">
+                                <option value="">Catégorie…</option>
+                            </select>
+                            <select id="add-depenseSousCategorie" class="form-input">
+                                <option value="">Sous-catégorie…</option>
+                            </select>
+                            <input type="date" id="add-depenseDate" class="form-input">
+                            <input type="text" id="add-depenseDescription" class="form-input" placeholder="Description" autocomplete="off">
+                            <div id="add-depense-autocomplete" class="autocomplete-dropdown" style="display:none;"></div>
+                            <input type="number" step="0.01" id="add-depenseAmount" class="form-input" placeholder="Montant (€)">
+                            <button class="action-btn primary" id="add-saveDepenseBtn" onclick="saveDepense()">Enregistrer la dépense</button>
+                        </div>
+                    </div>
+                    <div id="add-recette-form" style="display:none; margin-top: 12px;">
+                        <div class="inventory-filters">
+                            <select id="add-recetteCategory" class="form-input">
+                                <option value="">Catégorie…</option>
+                            </select>
+                            <select id="add-recetteSousCategorie" class="form-input">
+                                <option value="">Sous-catégorie…</option>
+                            </select>
+                            <input type="date" id="add-recetteDate" class="form-input">
+                            <input type="text" id="add-recetteDescription" class="form-input" placeholder="Description">
+                            <input type="number" step="0.01" id="add-recetteAmount" class="form-input" placeholder="Montant (€)">
+                            <button class="action-btn primary" id="add-saveRecetteBtn" onclick="saveRecette()">Enregistrer la recette</button>
+                        </div>
+                    </div>
+                    <p class="module-desc" style="margin-top:8px;">Vous pouvez aussi importer un relevé de compte : les écritures détectées seront proposées ici, formatées par catégorie, à valider une par une.</p>
+                    <button class="action-btn" onclick="document.getElementById('releve-upload-modal').style.display='flex'">Importer un relevé de compte</button>
+                </div>
+
+                <!-- Jour par jour -->
+                <div class="module-card">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                        <h3>Jour par jour</h3>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button class="action-btn" onclick="fluxChangeMonth(-1)">←</button>
+                            <strong id="fluxCurrentMonth"></strong>
+                            <button class="action-btn" onclick="fluxChangeMonth(1)">→</button>
+                        </div>
+                    </div>
+                    <div id="flux-daily-list"></div>
+                </div>
+
+                <!-- Récap par catégorie -->
+                <div class="module-card">
+                    <h3>Par catégorie — <span id="fluxCatMonthLabel"></span></h3>
+                    <div id="flux-category-summary"></div>
+                </div>
+
+                <!-- Mois par mois -->
+                <div class="module-card">
+                    <h3>Mois par mois (6 derniers mois)</h3>
+                    <div id="flux-months-summary"></div>
+                </div>
+            </section>
+
   <!-- Salle d'urgence View -->
             <section id="view-urgence" class="view">
                 <h2>Salle d'urgence</h2>
@@ -1057,11 +1144,12 @@ window.attemptLogin = function() {
                         <button class="action-btn" onclick="switchView('cabinet'); setTimeout(function(){ document.querySelector('.cabinet-tab[data-tab=\'stocks\']')?.click(); }, 100);">Gérer les stocks</button>
                     </div>
                     <div class="urgence-alerts-quick" id="urgenceStockAlerts"></div>
-                    <div class="inventory-table urgence-stock-table">
+                    <div class="inventory-table">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Produit</th>
+                                    <th>Catégorie</th>
                                     <th>Disponible</th>
                                     <th>Péremption</th>
                                     <th>État</th>
@@ -2056,11 +2144,12 @@ window.attemptLogin = function() {
                                 <button class="action-btn primary" id="urgenceAddProductBtn">Ajouter un produit</button>
                                 <button class="action-btn" id="urgenceExportStocksBtn">Exporter CSV</button>
                             </div>
-                            <div class="inventory-table urgence-stock-table">
+                            <div class="inventory-table">
                                 <table>
                                     <thead>
                                         <tr>
                                             <th>Produit</th>
+                                            <th>Catégorie</th>
                                             <th>Quantité</th>
                                             <th>Seuil</th>
                                             <th>Péremption</th>
@@ -2100,10 +2189,8 @@ window.attemptLogin = function() {
                             <div style="margin-bottom: 16px;">
                                 <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">Créer la commande à passer</button>
                             </div>
-                            <h4>Commandes en préparation (à passer)</h4>
+                            <h4>Commandes en attente</h4>
                             <div id="urgenceOrdersPending"></div>
-                            <h4 style="margin-top: 20px;">Commandées — en attente de livraison</h4>
-                            <div id="urgenceOrdersOrdered"></div>
                             <h4 style="margin-top: 20px;">Historique</h4>
                             <div id="urgenceOrdersHistory"></div>
                         </div>
@@ -2894,6 +2981,7 @@ window.attemptLogin = function() {
     <script src="app.v5.js?v=202611023000" defer></script>
     <script src="secretariat.js?v=202611023000" defer></script>
     <script src="urgence.js?v=202611023000" defer></script>
+    <script src="flux.js?v=202611023000" defer></script>
     <script src="urgence-orders.js?v=202611023000" defer></script>
     <script>
       // Toggle form function for mobile
