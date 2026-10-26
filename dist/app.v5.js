@@ -10829,13 +10829,7 @@ function releveCropLineDataUrl(t, maxWidth) {
         if (line == null || !byLine[line]) { resolve(null); return; }
 
         const items = byLine[line];
-        let xs = items.map(i => i.x), ys = items.map(i => i.y);
-
-        if (Math.max(...ys) - Math.min(...ys) > 20) {
-            const anchor = items.reduce((a, b) => Math.abs(b.y - (Math.min(...ys) + Math.max(...ys)) / 2) < Math.abs(a.y - (Math.min(...ys) + Math.max(...ys)) / 2) ? b : a);
-            const near = items.filter(i => Math.abs(i.y - anchor.y) < 22);
-            xs = near.map(i => i.x); ys = near.map(i => i.y);
-        }
+        const xs = items.map(i => i.x), ys = items.map(i => i.y);
 
         const yMid = (Math.min(...ys) + Math.max(...ys)) / 2;
         const lineH = 22;
@@ -10847,19 +10841,13 @@ function releveCropLineDataUrl(t, maxWidth) {
         const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 26);
 
         const rowW = (Math.max(...rowX1s) - Math.min(...rowXs));
-        if (rowW > pageData.pageWidth * 0.92) { resolve(null); return; }
+        if (rowW > pageData.pageWidth * 0.97) { resolve(null); return; }
 
-        let x0, x1;
-        if (rowW > pageData.pageWidth * 0.7) {
-            x0 = Math.max(0, Math.min(...xs) - 25);
-            x1 = Math.min(pageData.pageWidth, Math.max(...(items.map(i => i.x + (i.w || 0)))) + 30);
-        } else {
-            x0 = Math.max(0, Math.min(...rowXs) - 25);
-            x1 = Math.min(pageData.pageWidth, Math.max(...rowX1s) + 30);
-        }
+        const x0 = Math.max(0, Math.min(...rowXs) - 25);
+        const x1 = Math.min(pageData.pageWidth, Math.max(...rowX1s) + 30);
 
         if (x1 - x0 < 40 || y1 - y0 < 6) { resolve(null); return; }
-        if ((y1 - y0) > pageData.pageHeight * 0.06) { resolve(null); return; }
+        if ((y1 - y0) > pageData.pageHeight * 0.2) { resolve(null); return; }
 
         getHiResPage(pageIdx, pageData).then(hires => {
             if (!hires) { resolve(null); return; }
