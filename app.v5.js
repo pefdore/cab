@@ -10740,19 +10740,19 @@ function releveCropLineDataUrl(t, maxWidth) {
         const xs = items.map(i => i.x), ys = items.map(i => i.y);
 
         const yMid = (Math.min(...ys) + Math.max(...ys)) / 2;
-        const lineH = 14;
+        const lineH = 22;
         const sameRow = pageData.itemRects.filter(it => Math.abs(it.y - yMid) < lineH);
         const rowXs = sameRow.map(i => i.x);
         const rowX1s = sameRow.map(i => i.x + (i.w || 0));
 
-        const y0 = Math.max(0, Math.min(...ys) - 8);
-        const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 18);
+        const y0 = Math.max(0, Math.min(...ys) - 14);
+        const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 26);
 
         const rowW = (Math.max(...rowX1s) - Math.min(...rowXs));
         if (rowW > pageData.pageWidth * 0.95) { resolve(null); return; }
 
-        const x0 = Math.max(0, Math.min(...rowXs) - 8);
-        const x1 = Math.min(pageData.pageWidth, Math.max(...rowX1s) + 12);
+        const x0 = Math.max(0, Math.min(...rowXs) - 25);
+        const x1 = Math.min(pageData.pageWidth, Math.max(...rowX1s) + 30);
 
         if (x1 - x0 < 40 || y1 - y0 < 6) { resolve(null); return; }
 
@@ -10814,13 +10814,10 @@ async function attachTransactionPreview(index) {
         return;
     }
     holder.innerHTML = `
-        <div style="margin-top:4px; border:1px solid var(--color-border); border-radius:6px; overflow:hidden; background:white; position:relative;">
+        <div style="margin-top:4px; border:1px solid var(--color-border); border-radius:6px; overflow:hidden; background:white; cursor:zoom-in;" onclick="showTransactionOnPdf(${index})" title="Agrandir la page du PDF">
             <img src="${url}" alt="Zone du relevé" style="display:block; width:100%; height:auto;">
-            <button class="btn-icon" style="position:absolute; top:4px; right:4px; background:rgba(255,255,255,0.9);" onclick="showTransactionOnPdf(${index})" title="Agrandir la page du PDF">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-            </button>
         </div>
-        <div style="font-size:0.68rem; color:var(--color-text-secondary); margin-top:2px;">Extrait du PDF — page ${t._page || 1}</div>`;
+        <div style="font-size:0.68rem; color:var(--color-text-secondary); margin-top:2px;">Extrait du PDF — page ${t._page || 1} · cliquez pour agrandir</div>`;
 }
 window.attachTransactionPreview = attachTransactionPreview;
 window.releveCropLineDataUrl = releveCropLineDataUrl;
