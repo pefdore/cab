@@ -10738,11 +10738,23 @@ function releveCropLineDataUrl(t, maxWidth) {
 
         const items = byLine[line];
         const xs = items.map(i => i.x), ys = items.map(i => i.y);
-        const x0 = Math.max(0, Math.min(...xs) - 10);
-        const x1 = Math.min(pageData.pageWidth, Math.max(...xs) + Math.max(...items.map(i => i.w)) + 10);
-        const y0 = Math.max(0, Math.min(...ys) - 6);
-        const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 16);
-        if (x1 - x0 < 10 || y1 - y0 < 4) { resolve(null); return; }
+
+        const yMid = (Math.min(...ys) + Math.max(...ys)) / 2;
+        const lineH = 14;
+        const sameRow = pageData.itemRects.filter(it => Math.abs(it.y - yMid) < lineH);
+        const rowXs = sameRow.map(i => i.x);
+        const rowX1s = sameRow.map(i => i.x + (i.w || 0));
+
+        const y0 = Math.max(0, Math.min(...ys) - 8);
+        const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 18);
+
+        const rowW = (Math.max(...rowX1s) - Math.min(...rowXs));
+        if (rowW > pageData.pageWidth * 0.95) { resolve(null); return; }
+
+        const x0 = Math.max(0, Math.min(...rowXs) - 8);
+        const x1 = Math.min(pageData.pageWidth, Math.max(...rowX1s) + 12);
+
+        if (x1 - x0 < 40 || y1 - y0 < 6) { resolve(null); return; }
 
         getHiResPage(pageIdx, pageData).then(hires => {
             if (!hires) { resolve(null); return; }
@@ -10751,7 +10763,7 @@ function releveCropLineDataUrl(t, maxWidth) {
             const sy = (y0 / pageData.pageHeight) * img.naturalHeight;
             const sw = ((x1 - x0) / pageData.pageWidth) * img.naturalWidth;
             const sh = ((y1 - y0) / pageData.pageHeight) * img.naturalHeight;
-            const scale = Math.min(4, Math.max(1, (maxWidth || 480) / sw));
+            const scale = Math.min(6, Math.max(2, (maxWidth || 480) / sw));
             const canvas = document.createElement('canvas');
             canvas.width = Math.max(1, Math.round(sw * scale));
             canvas.height = Math.max(1, Math.round(sh * scale));
