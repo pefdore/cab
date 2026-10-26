@@ -8003,12 +8003,18 @@ function renderTransactionsList() {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
                 </div>
+                <div class="trans-pdf-preview"></div>
             </div>
         `;
     }).join('');
     
     if (container) container.innerHTML = html;
     if (containerModal) containerModal.innerHTML = html;
+    if (typeof attachTransactionPreview === 'function') {
+        pendingTransactions.forEach((t, i) => {
+            if (!t.confirmed) attachTransactionPreview(i);
+        });
+    }
 }
 
 function handleTransactionAutocomplete(index, value) {
@@ -10675,3 +10681,87 @@ function showTransactionOnPdf(index) {
     }
 }
 window.showTransactionOnPdf = showTransactionOnPdf;
+
+// Capture la zone du PDF (ligne d'une transaction) sous forme de dataURL recadre
+function releveCropLineDataUrl(t, maxWidth) {
+    return new Promise((resolve) => {
+        const thumbs = window.relevePageThumbs || [];
+        if (!thumbs.length || !t) { resolve(null); return; }
+        let pageIdx = 0;
+        if (t._page != null) {
+            const i = thumbs.findIndex(p => p.page === t._page);
+            if (i >= 0) pageIdx = i;
+        }
+        const pageData = thumbs[pageIdx];
+        if (!pageData || !pageData.itemRects || !pageData.itemRects.length) { resolve(null); return; }
+
+        let line = t._line != null ? t._line : null;
+        const dateKey = (t.date || '').slice(5);
+        const amountKey = Math.abs(t.amount).toFixed(2);
+        const byLine = {};
+        pageData.itemRects.forEach(it => {
+            if (!byLine[it._line]) byLine[it._line] = [];
+            byLine[it._line].push(it);
+        });
+        if (line == null || !byLine[line]) {
+            let best = null;
+            for (const [ln, items] of Object.entries(byLine)) {
+                const joined = items.map(i => i.str).join(' ').toLowerCase();
+                const flat = joined.replace(/[\s\u00a0]/g, '');
+                const hasAmount = flat.includes(amountKey.replace('.', ',')) || flat.includes(amountKey);
+                const hasDate = dateKey && (joined.includes(dateKey.replace('-', '/')) || joined.includes(dateKey));
+                if (hasAmount && hasDate) { best = parseInt(ln, 10); break; }
+                if (hasAmount && best === null) best = parseInt(ln, 10);
+            }
+            line = best;
+        }
+        if (line == null || !byLine[line]) { resolve(null); return; }
+
+        const items = byLine[line];
+        const xs = items.map(i => i.x), ys = items.map(i => i.y);
+        const x0 = Math.max(0, Math.min(...xs) - 10);
+        const x1 = Math.min(pageData.pageWidth, Math.max(...xs) + Math.max(...items.map(i => i.w)) + 10);
+        const y0 = Math.max(0, Math.min(...ys) - 6);
+        const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 16);
+        if (x1 - x0 < 10 || y1 - y0 < 4) { resolve(null); return; }
+
+        const img = new Image();
+        img.onload = () => {
+            const sx = (x0 / pageData.pageWidth) * img.naturalWidth;
+            const sy = (y0 / pageData.pageHeight) * img.naturalHeight;
+            const sw = ((x1 - x0) / pageData.pageWidth) * img.naturalWidth;
+            const sh = ((y1 - y0) / pageData.pageHeight) * img.naturalHeight;
+            const scale = Math.min(2.5, Math.max(1, (maxWidth || 480) / sw));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(sw * scale));
+            canvas.height = Math.max(1, Math.round(sh * scale));
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = pageData.thumb;
+    });
+}
+
+async function attachTransactionPreview(index) {
+    const t = pendingTransactions[index];
+    const holder = document.querySelector(`.transaction-item[data-index="${index}"] .trans-pdf-preview`);
+    if (!holder || !t) return;
+    holder.innerHTML = '<span style="font-size:0.7rem;color:var(--color-text-secondary);">…</span>';
+    const url = await releveCropLineDataUrl(t, holder.clientWidth || 480);
+    if (!url) {
+        holder.innerHTML = '';
+        return;
+    }
+    holder.innerHTML = `
+        <div style="margin-top:4px; border:1px solid var(--color-border); border-radius:6px; overflow:hidden; background:white; position:relative;">
+            <img src="${url}" alt="Zone du relevé" style="display:block; width:100%; height:auto;">
+            <button class="btn-icon" style="position:absolute; top:4px; right:4px; background:rgba(255,255,255,0.9);" onclick="showTransactionOnPdf(${index})" title="Agrandir la page du PDF">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+        </div>
+        <div style="font-size:0.68rem; color:var(--color-text-secondary); margin-top:2px;">Extrait du PDF — page ${t._page || 1}</div>`;
+}
+window.attachTransactionPreview = attachTransactionPreview;
+window.releveCropLineDataUrl = releveCropLineDataUrl;
