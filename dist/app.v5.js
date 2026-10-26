@@ -1044,42 +1044,56 @@ const COTATIONS = {
 const CABINET_CATEGORIES = {
     'masse_salariale': {
         label: 'Masse salariale',
-        sous: ['Nadine salaire net', 'Nadine prime net', 'Cécilia salaire net', 'Cécilia prime net', 'Anne Cécile salaire net', 'Anne Cécile prime net', 'Femme de ménage 1 net', 'Femme de ménage 2 net']
+        sous: ['Secrétaire(s) salaire net', 'Secrétaire(s) prime net', 'Femme de ménage salaire net', 'ASV/ADA salaire net', 'Indemnités kilométriques', 'Tickets restaurant', 'Primes exceptionnelles']
     },
     'urssaf': {
         label: 'URSSAF',
-        sous: ['URSSAF']
+        sous: ['Cotisations URSSAF', 'Cotisations retraite', 'Prévoyance', 'Mutuelle salariés', 'Formation professionnelle', 'Taxe sur les salaires', 'Médecine du travail', 'Cogérance']
     },
     'logiciel': {
-        label: 'Logiciel',
-        sous: ['Axisanté', 'CGM', 'AxiMessage', 'Vidal', 'Télétransmission', 'KelDoc', 'DOCTOLIB']
+        label: 'Logiciels & Télétransmission',
+        sous: ['Axisanté', 'CGM', 'AxiMessage', 'Vidal', 'Télétransmission', 'KelDoc', 'DOCTOLIB', 'Logiciel de gestion', 'Hébergement cloud', 'Signature électronique', 'Sauvegarde de données', 'Maintenance informatique']
     },
     'services': {
-        label: 'Services',
-        sous: ['Semaphors', 'BNP Lease Group', 'Leascom', 'Acor', 'Orange', 'Compta\'Com', 'Séché healthcare', 'BNP', 'SCPA', 'OPCO EP', 'SCP ODY', 'KEYYO', 'APICEM', 'ONET sécurité', 'PST 35', 'HC-LEX']
+        label: 'Services & Abonnements',
+        sous: ['Téléphonie mobile', 'Téléphonie fixe', 'Internet FAI', 'Séché healthcare', 'Destruction DASRI', 'Comptable', 'Expert-comptable', 'Avocat', 'Gestion déchets', 'Sécurité/onet', 'Nettoyage blouses/serviettes', 'Affranchissement/La Poste', 'Banque frais', 'Leasing location']
     },
     'charges': {
-        label: 'Charges',
-        sous: ['Electricité', 'Eau', 'ASSURANCE MMA', 'DGFIP', 'CFE']
+        label: 'Loyers, énergie & taxes',
+        sous: ['Loyer', 'Charges de copropriété', 'Electricité', 'Gaz', 'Eau', 'Assurance multirisque', 'Assurance RC pro', 'CFE', 'Taxe foncière', 'Taxe d\'enlèvement ordures', 'DGFIP']
     },
     'consommables': {
-        label: 'Consommables',
-        sous: ['Azote', 'Draps d\'examens', 'Papiers mains', 'Savons', 'SHA', 'Masques', 'Papiers pour impressions', 'Cartouches d\'encre', 'Fournitures diverses', 'Papier ECG', 'Pharmacie', 'CADHOC', 'Café']
+        label: 'Consommables médicaux',
+        sous: ['Gants', 'Masques', 'Compresses', 'Sutures', 'Désinfection', 'Azote', 'Drap d\'examen', 'SHA gel hydroalcoolique', 'Sérum physiologique', 'Pharmacie petit matériel', 'Test rapide diagnostic (TROD)', 'Vaccins', 'Matériel injection/perfusion', 'Consommable ECG', 'Couches protection table']
+    },
+    'fournitures': {
+        label: 'Fournitures bureau',
+        sous: ['Papier impression', 'Ramettes', 'Cartouches encre', 'Stylos/bureautique', 'Enveloppes', 'Fournitures diverses', 'Petit matériel de bureau', 'Café/accueil patients']
     },
     'materiel': {
-        label: 'Matériel',
-        sous: ['Lecteurs CV', 'Imprimante', 'Ordinateur']
+        label: 'Matériel & Équipement',
+        sous: ['Lecteur carte vitale', 'Ordinateur', 'Écran', 'Imprimante', 'Électrocardiographe', 'Tensiomètre', 'Otoscope/Ophtalmoscope', 'Mobilier médical', 'Dermatographe', 'Matériel de soins']
+    },
+    'communication': {
+        label: 'Communication',
+        sous: ['Site web cabinet', 'Plaquette/Flyers', 'Enseigne', 'Référencement', 'Formation congrès', 'Adhésion syndicat/UMESP', 'Abonnement revues médicales']
     },
     'reception': {
-        label: 'Réception/Représentation',
-        sous: ['Cadeaux', 'Repas']
+        label: 'Réception & Représentation',
+        sous: ['Repas professionnels', 'Cadeaux patients/associés', 'Réunion équipe', 'Événement cabinet']
+    },
+    'remboursement_credit': {
+        label: 'Crédits & Emprunts',
+        sous: ['Remboursement emprunt principal', 'Intérêts emprunt', 'Assurance emprunteur', 'Découvert bancaire']
     }
 };
 
 const RECETTE_CATEGORIES = {
-    'honoraires': { label: 'Honoraires', sous: ['Consultations', 'Visites', 'Actes techniques'] },
-    'remboursements': { label: 'Remboursements', sous: ['Assurance', 'CPAM', 'Mutuelle'] },
-    'autres': { label: 'Autres recettes', sous: ['Subventions', 'Dons', 'Autres'] }
+    'honoraires': { label: 'Honoraires', sous: ['Consultations', 'Visites', 'Actes techniques', 'Vaccination', 'Téléconsultation', 'Honoraires tiers payant'] },
+    'participation_associe': { label: 'Participation associé', sous: ['Apport associé', 'Quote-part exercise', 'Transfert de gestion'] },
+    'remboursements': { label: 'Remboursements', sous: ['CPAM/Ameli', 'Mutuelles', 'Assurance', 'Aides URSSAF', 'Crédit d\'impôt', 'Subvention', 'Indemnité CPAM/mask'] },
+    'produits_financiers': { label: 'Produits financiers', sous: ['Intérêts bancaires', 'Placement', 'Escompte'] },
+    'autres': { label: 'Autres recettes', sous: ['Location salle', 'Vente matériel', 'Dons', 'Recettes diverses'] }
 };
 
 const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
@@ -7430,6 +7444,10 @@ async function handleRelevéUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
+    window.relevePageThumbs = [];
+    const thumbsEl = document.getElementById('releveThumbs');
+    if (thumbsEl) thumbsEl.innerHTML = '';
+    
     const loadingZoneModal = document.getElementById('releveLoadingModal');
     const analysisZoneModal = document.getElementById('releveAnalysisModal');
     const uploadBody = document.getElementById('releveUploadBody');
@@ -7459,10 +7477,28 @@ async function handleRelevéUpload(event) {
         const transactions = await analyzeRelevéWithAI(text);
         console.log('[RELEVÉ] Found transactions:', transactions.length);
         
-        pendingTransactions = transactions.map(t => ({...t, confirmed: false}));
+        try {
+            await loadReleveLearning();
+        } catch (e) {}
+        
+        pendingTransactions = transactions.map(t => {
+            const isDepense = t.type === 'dépense' || t.amount < 0;
+            const learned = bestLearnedCategory(t.description, isDepense);
+            const out = { ...t, confirmed: false };
+            if (learned && out.category !== learned.category) {
+                console.log('[RELEVÉ] Apprentissage appliqué:', t.description, '->', learned.category);
+                out.category = learned.category;
+                out.learned = true;
+            }
+            return out;
+        });
         
         renderTransactionsList();
         updatePendingCount();
+        if (typeof renderReleveThumbs === 'function') renderReleveThumbs();
+        const thumbs = window.relevePageThumbs || [];
+        const previewBlock = document.getElementById('relevePreviewBlock');
+        if (previewBlock) previewBlock.style.display = thumbs.length ? 'block' : 'none';
         
         if (loadingZoneModal) loadingZoneModal.style.display = 'none';
         if (analysisZoneModal) analysisZoneModal.style.display = 'block';
@@ -7519,6 +7555,13 @@ async function extractTextFromPDF(file) {
         
         const page = await pdf.getPage(pageNum);
         
+        const thumbViewport = page.getViewport({ scale: 0.35 });
+        const thumbCanvas = document.createElement('canvas');
+        const thumbCtx = thumbCanvas.getContext('2d');
+        thumbCanvas.height = thumbViewport.height;
+        thumbCanvas.width = thumbViewport.width;
+        await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
+        
         const textContent = await page.getTextContent();
         const pageText = textContent.items
             .map(item => (item.str || '') + (item.hasEOL ? '\n' : ' '))
@@ -7526,9 +7569,12 @@ async function extractTextFromPDF(file) {
             .replace(/[ \t]+/g, ' ')
             .trim();
         
+        let thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.7);
+        
         if (pageText.length >= 20) {
             console.log('[RELEVÉ] Page', pageNum, ': couche texte native lue (' + pageText.length + ' caractères)');
-            fullText += pageText + '\n';
+            fullText += '\n<<<PAGE ' + pageNum + '>>>\n' + pageText + '\n';
+            window.relevePageThumbs.push({ page: pageNum, thumb: thumbDataUrl, text: pageText });
             continue;
         }
         
@@ -7553,7 +7599,8 @@ async function extractTextFromPDF(file) {
             }
         );
         
-        fullText += result.data.text + '\n';
+        fullText += '\n<<<PAGE ' + pageNum + '>>>\n' + result.data.text + '\n';
+        window.relevePageThumbs.push({ page: pageNum, thumb: thumbDataUrl, text: result.data.text });
     }
     
     console.log('[RELEVÉ] Extraction completed, total text length:', fullText.length);
@@ -7664,17 +7711,21 @@ Retourne UNIQUEMENT un tableau JSON valide sans texte supplémentaire.`;
 }
 
 const RELEVE_KEYWORDS = {
-    'masse_salariale': ['salaire', 'paie', 'bulletin', 'prime', 'net a payer', 'femme de menage'],
-    'urssaf': ['urssaf', 'social', 'retraite', 'prevoyance', 'mutuelle', 'carsat'],
-    'logiciel': ['axisante', 'cgm', 'aximessage', 'vidal', 'teletransmission', 'keldoc', 'doctolib', 'licence', 'logiciel'],
-    'services': ['semaphors', 'bnp', 'lease', 'leascom', 'acor', 'orange', 'sfr', 'free', 'compta', 'seche', 'scpa', 'opco', 'keyyo', 'apicem', 'onet', 'pst', 'hc-lex', 'loyer', 'assurance', 'abonnement'],
-    'charges': ['edf', 'engie', 'electricite', 'eau', 'gaz', 'cfe', 'dgfip', 'impot', 'taxe', 'fonciere'],
-    'consommables': ['azote', 'drap', 'papier', 'savon', 'sha', 'masque', 'cartouche', 'pharmacie', 'cadhoc', 'cafe', 'fourniture'],
-    'materiel': ['lecteur', 'imprimante', 'ordinateur', 'materiel', 'ecran'],
-    'reception': ['cadeau', 'repas', 'reception'],
-    'participation_associe': ['participation', 'apport', 'virement associe'],
-    'remboursements': ['remboursement', 'cpam', 'assurance', 'mutuelle'],
-    'honoraires': ['honoraire', 'consultation', 'visite', 'carte', 'cb', 'cheque', 'virement recu'],
+    'masse_salariale': ['salaire', 'paie', 'bulletin', 'prime', 'net a payer', 'femme de menage', 'asv', 'ada', 'indemnite kilometrique', 'ticket restaurant'],
+    'urssaf': ['urssaf', 'carsat', 'prevoyance', 'cogeration', 'taxe sur les salaires', 'medecine du travail', 'formation prof'],
+    'logiciel': ['axisante', 'cgm', 'aximessage', 'vidal', 'teletransmission', 'keldoc', 'doctolib', 'licence', 'logiciel', 'cloud', 'hebergement', 'sauvegarde', 'maintenance info', 'signature elec'],
+    'services': ['semaphors', 'lease', 'leascom', 'acor', 'orange', 'sfr', 'free', 'compta', 'seche', 'scpa', 'opco', 'keyyo', 'apicem', 'onet', 'pst', 'hc-lex', 'abonnement', 'poste', 'la poste', 'frais bancaires', 'banque', 'location', 'destruction', 'dasri', 'blouse', 'avocat'],
+    'charges': ['loyer', 'edf', 'engie', 'electricite', 'eau', 'gaz', 'cfe', 'dgfip', 'impot', 'taxe', 'fonciere', 'assurance mma', 'multirisque', 'rc pro', 'copropriete', 'ordures'],
+    'consommables': ['azote', 'drap', 'gant', 'masque', 'compresse', 'suture', 'desinfection', 'sha', 'gel hydro', 'serum', 'pharmacie', 'trod', 'vaccin', 'perfusion', 'injection', 'ecg', 'consommable'],
+    'fournitures': ['papier', 'ramette', 'cartouche', 'encre', 'stylo', 'bureautique', 'enveloppe', 'fourniture', 'cafe'],
+    'materiel': ['lecteur', 'carte vitale', 'imprimante', 'ordinateur', 'ecran', 'electrocardio', 'tensiom', 'otoscope', 'mobilier medical'],
+    'communication': ['site web', 'flyer', 'plaquette', 'enseigne', 'syndicat', 'umesp', 'congres', 'revue', 'abonnement revue'],
+    'reception': ['cadeau', 'repas', 'reception', 'reunion'],
+    'remboursement_credit': ['emprunt', 'credit', 'interet', 'assurance emprunteur', 'decouvert'],
+    'participation_associe': ['participation', 'apport', 'virement associe', 'quote-part', 'quote part'],
+    'remboursements': ['remboursement', 'cpam', 'amelie', 'mutuelle', 'credit d\'impot', 'subvention', 'aide'],
+    'produits_financiers': ['interet bancaire', 'placement', 'escompte'],
+    'honoraires': ['honoraire', 'consultation', 'visite', 'teleconsultation', 'virement recu', 'cb', 'carte', 'cheque'],
 };
 
 function fluxDetectCategory(description, isDepense) {
@@ -7689,9 +7740,24 @@ function parseRelevéLocalement(text) {
     const lines = (text || '').split(/\r?\n/);
     const transactions = [];
     let currentYear = new Date().getFullYear();
+    let sawFirstDate = false;
+
+    const HEADER_PATTERNS = [
+        /\bIBAN\b/i, /\bRIB\b/i, /\bBIC\?\b/i, /\bSWIFT\b/i,
+        /\bN\u00b0\s*(DE\s*)?COMPTE\b/i, /\bNUM\u00c9RO\s*DE\s*COMPTE\b/i, /\bCODE\s*BANQUE\b/i, /\bCODE\s*GUICHET\b/i, /\bCL\u00c9\s*RIP\b/i,
+        /\bRELEV\u00c9\s*(DE\s*COMPTE|BANCAIRE|D'IDENTIT\u00c9|BANCAIRE)\b/i, /\bR\u00c9LEV\u00c9\b/i,
+        /\bSOCI\u00c9T\u00c9\s*G\u00c9N\u00c9RALE\b/i, /\bBNP\s*PARIBAS\b/i, /\bCR\u00c9DIT\s*(AGRICOLE|LYONNAIS|MUTUEL|DU\s*NORD)\b/i,
+        /\bCAISSE\s*D'\u00c9PARGNE\b/i, /\bBANQUE\s*POPULAIRE\b/i, /\bLA\s*BANQUE\s*POSTALE\b/i, /\bCIC\b/i, /\bAXA\s*BANQUE\b/i, /\bHELLO\s*BANK\b/i, /\bFORTIS\b/i, /\bING\b/i,
+        /\bPAGE\s*\d+\s*(\/\s*\d+)?\b/i, /^<<<PAGE\s+\d+>>>$/,
+        /\bDU\s*\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\s*AU\s*\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b/i,
+        /\bANCIEN\s*SOLDE\b/i, /\bSOLDE\s*(PR\u00c9C\u00c9DENT|EN\s*D\u00c9BUT|INITIAL)\b/i, /\bNOUVEAU\s*SOLDE\b/i, /\bSOLDE\s*CR\u00c9DITEUR\b/i,
+        /\bTOTAL\s*(DES\s*)?(D\u00c9BITS|CR\u00c9DITS|CR\u00c9DITEUR|D\u00c9BITEUR|G\u00c9N\u00c9RAL)\b/i,
+        /\bDATE\s*(DE\s*VALEUR|D'OP\u00c9RATION)?\s*LIBELL\u00c9\b/i, /\bLIBELL\u00c9\s*MONTANT\b/i, /\bD\u00c9BIT\s*CR\u00c9DIT\b/i, /\bCR\u00c9DIT\s*D\u00c9BIT\b/i,
+        /\bDEVISE\s*:?\s*EUR\b/i, /\bSOLDE\s*EN\s*EUROS?\b/i, /\bTAEG\b/i, /\bAGENCE\b/i, /\bCODE\s*MONETIQUE\b/i, /\bCARTE\s*\d{4}\s*\*\*\*\*\b/
+    ];
 
     const cleanAmount = (raw) => {
-        let s = raw.replace(/[\s\u00a0]/g, '').replace(/[€EUR]/gi, '');
+        let s = raw.replace(/[\s\u00a0]/g, '').replace(/[\u20acEUR]/gi, '');
         const isDebit = /-$/.test(s);
         s = s.replace(/-/g, '');
         s = s.replace(/\.(?=\d{1,2}$)/, '#').replace(/,/g, '.').replace(/#/g, '.');
@@ -7704,8 +7770,10 @@ function parseRelevéLocalement(text) {
     for (const rawLine of lines) {
         const line = (rawLine || '').trim();
         if (!line) continue;
+        if (/^<<<PAGE\s+\d+>>>$/.test(line)) continue;
 
         const dateFr = line.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/);
+        const dateShort = line.match(/\b(\d{1,2})[/.-](\d{1,2})\b(?![/.-]\d)/);
         const dateIso = line.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
         let dateStr = null;
         if (dateIso) {
@@ -7716,13 +7784,27 @@ function parseRelevéLocalement(text) {
             if (y.length === 2) y = '20' + y;
             dateStr = `${y}-${String(parseInt(dateFr[2], 10)).padStart(2, '0')}-${String(parseInt(dateFr[1], 10)).padStart(2, '0')}`;
             currentYear = parseInt(y, 10);
+        } else if (dateShort && parseInt(dateShort[1], 10) <= 31 && parseInt(dateShort[2], 10) >= 1 && parseInt(dateShort[2], 10) <= 12) {
+            dateStr = `${currentYear}-${String(parseInt(dateShort[2], 10)).padStart(2, '0')}-${String(parseInt(dateShort[1], 10)).padStart(2, '0')}`;
         }
 
-        if (/^(SOLDE|TOTAL|REPORT|ANCIEN|NOUVEAU|RELEVE|R\u00c9LE|DATE|LIBELL)/i.test(line)) continue;
+        if (HEADER_PATTERNS.some(rx => rx.test(line))) {
+            console.log('[RELEV\u00c9] Ligne en-t\u00eate ignor\u00e9e:', line.substring(0, 80));
+            continue;
+        }
+
+        if (!dateStr && !sawFirstDate) {
+            if (/\d/.test(line) && line.length < 6) continue;
+            console.log('[RELEV\u00c9] Avant premi\u00e8re ligne dat\u00e9e, ignor\u00e9:', line.substring(0, 80));
+            continue;
+        }
+
+        if (dateStr) sawFirstDate = true;
 
         const lineWoDates = line
             .replace(/\b\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b/g, ' ')
-            .replace(/\b20\d{2}-\d{2}-\d{2}\b/g, ' ');
+            .replace(/\b20\d{2}-\d{2}-\d{2}\b/g, ' ')
+            .replace(/\b\d{1,2}[/.-]\d{1,2}\b(?![/.-]\d)/g, ' ');
 
         const amountMatches = lineWoDates.match(/\d[\d\s\u00a0]{0,8}[,.]\d{2}\s*-?|\d[\d\s\u00a0]{2,9}(?=\s*-?\s*$)/g);
         if (!amountMatches || amountMatches.length === 0) continue;
@@ -7736,16 +7818,17 @@ function parseRelevéLocalement(text) {
             .replace(/\b\d{4,}\b/g, ' ')
             .replace(/\s{2,}/g, ' ')
             .replace(/\|/g, ' ')
-            .replace(/^[-\s]+|[-\s]+$/g, '')
+            .replace(/^[\-\s]+|[\-\s]+$/g, '')
             .trim();
 
         if (!description || description.length < 3) continue;
+        if (!dateStr) continue;
 
         const isDepense = amount < 0;
         const category = fluxDetectCategory(description, isDepense);
 
         transactions.push({
-            date: dateStr || new Date().toISOString().split('T')[0],
+            date: dateStr,
             description,
             amount: isDepense ? -Math.abs(amount) : Math.abs(amount),
             type: isDepense ? 'd\u00e9pense' : 'recette',
@@ -7764,18 +7847,23 @@ function renderTransactionsList() {
     
     const depenseCategories = [
         { value: 'masse_salariale', label: 'Masse salariale' },
-        { value: 'urssaf', label: 'URSSAF' },
-        { value: 'logiciel', label: 'Logiciel' },
-        { value: 'services', label: 'Services' },
-        { value: 'charges', label: 'Charges' },
-        { value: 'consommables', label: 'Consommables' },
-        { value: 'materiel', label: 'Matériel' },
-        { value: 'reception', label: 'Réception' }
+        { value: 'urssaf', label: 'URSSAF & cotisations' },
+        { value: 'logiciel', label: 'Logiciels & télétransmission' },
+        { value: 'services', label: 'Services & abonnements' },
+        { value: 'charges', label: 'Loyers, énergie & taxes' },
+        { value: 'consommables', label: 'Consommables médicaux' },
+        { value: 'fournitures', label: 'Fournitures bureau' },
+        { value: 'materiel', label: 'Matériel & équipement' },
+        { value: 'communication', label: 'Communication & formation' },
+        { value: 'reception', label: 'Réception & représentation' },
+        { value: 'remboursement_credit', label: 'Crédits & emprunts' }
     ];
     
     const recetteCategories = [
+        { value: 'honoraires', label: 'Honoraires' },
         { value: 'participation_associe', label: 'Participation associé' },
         { value: 'remboursements', label: 'Remboursements' },
+        { value: 'produits_financiers', label: 'Produits financiers' },
         { value: 'autres', label: 'Autres recettes' }
     ];
     
@@ -8061,6 +8149,97 @@ function removeTransaction(index) {
     renderTransactionsList();
 }
 
+// ===== Auto-apprentissage des catégorisations (partagé entre cabinets) =====
+
+function normalizeReleveLibelle(str) {
+    return String(str || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/\b\d{2,}\b/g, ' ')
+        .replace(/\b(DU|LE|LA|DE|DES|A|AU|ET|POUR|PAR|SUR|CHEZ|N°|N)\b/g, ' ')
+        .replace(/[^A-Z ]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+let releveLearningCache = null;
+let releveLearningLoadedAt = 0;
+
+async function loadReleveLearning(force) {
+    if (!supabaseClient) return [];
+    const now = Date.now();
+    if (!force && releveLearningCache && now - releveLearningLoadedAt < 5 * 60 * 1000) return releveLearningCache;
+    try {
+        const { data, error } = await supabaseClient
+            .from('releve_learning')
+            .select('libelle_norm, category, is_depense, weight');
+        if (error) throw error;
+        releveLearningCache = data || [];
+        releveLearningLoadedAt = now;
+    } catch (e) {
+        console.error('[RELEVÉ] loadReleveLearning:', e);
+        releveLearningCache = [];
+    }
+    return releveLearningCache;
+}
+
+function bestLearnedCategory(description, isDepense) {
+    const norm = normalizeReleveLibelle(description);
+    if (!norm) return null;
+    const rows = releveLearningCache || [];
+    let best = null;
+    let bestScore = 0;
+    for (const row of rows) {
+        if (row.is_depense !== isDepense) continue;
+        if (!row.libelle_norm) continue;
+        if (norm === row.libelle_norm) {
+            const score = 100 + (row.weight || 1);
+            if (score > bestScore) { bestScore = score; best = row; }
+        } else if (norm.startsWith(row.libelle_norm) || row.libelle_norm.startsWith(norm)) {
+            const score = 50 + (row.weight || 1) - Math.abs(norm.length - row.libelle_norm.length);
+            if (score > bestScore) { bestScore = score; best = row; }
+        } else if (norm.includes(row.libelle_norm) && row.libelle_norm.length >= 6) {
+            const score = (row.weight || 1) + row.libelle_norm.length;
+            if (score > bestScore) { bestScore = score; best = row; }
+        }
+    }
+    return best ? { category: best.category, score: bestScore } : null;
+}
+
+async function learnReleveCategorisation(transactions) {
+    if (!supabaseClient || !currentUser?.id) return;
+    try {
+        const profile = await supabaseClient.from('profiles').select('cabinet_id').eq('id', currentUser.id).single();
+        const cabinetId = profile?.data?.cabinet_id || null;
+        const rows = transactions.map(t => ({
+            libelle_norm: normalizeReleveLibelle(t.description),
+            category: t.category,
+            is_depense: t.type === 'dépense' || t.amount < 0,
+            weight: 1,
+            cabinet_id: cabinetId,
+            user_id: currentUser.id
+        })).filter(r => r.libelle_norm && r.category);
+        if (!rows.length) return;
+        const { error } = await supabaseClient.rpc('learn_releve_categorisation', { p_rows: rows });
+        if (error) {
+            const { error: upErr } = await supabaseClient.from('releve_learning').upsert(rows, {
+                onConflict: 'libelle_norm,category,is_depense',
+                ignoreDuplicates: false
+            });
+            if (upErr) console.error('[RELEVÉ] learn upsert:', upErr);
+            else {
+                try {
+                    await supabaseClient.rpc('increment_releve_weights', { p_rows: rows });
+                } catch (e) {}
+            }
+        }
+        releveLearningLoadedAt = 0;
+        await loadReleveLearning(true);
+    } catch (e) {
+        console.error('[RELEVÉ] learnReleveCategorisation:', e);
+    }
+}
+
 async function confirmAllTransactions() {
     if (!currentUser || !currentUser.id) {
         alert('Vous devez être connecté');
@@ -8130,6 +8309,8 @@ async function confirmAllTransactions() {
         renderCabinetHistory();
         renderComptaSummary();
         
+        learnReleveCategorisation([...depenses.map(d => ({ description: d.description, category: d.category, type: 'dépense', amount: -1 })), ...recettes.map(r => ({ description: r.description, category: r.category, type: 'recette', amount: 1 }))]);
+        
         alert(`${depenses.length + recettes.length} transaction(s) enregistrée(s)`);
         
     } catch (error) {
@@ -8169,6 +8350,8 @@ async function confirmSingleTransaction(index) {
         
         pendingTransactions[index].confirmed = true;
         renderTransactionsList();
+        
+        learnReleveCategorisation([{ description: record.description, category: record.category, type: isDepense ? 'dépense' : 'recette', amount: isDepense ? -1 : 1 }]);
         
         updatePendingCount();
     } catch (error) {

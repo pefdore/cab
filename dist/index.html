@@ -342,6 +342,13 @@ window.attemptLogin = function() {
                 </div>
                 <!-- Analysis zone inside modal -->
                 <div id="releveAnalysisModal" style="display: none; padding: 0 16px 16px;">
+                    <div id="relevePreviewBlock" style="margin: 10px 0 4px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Aperçu du relevé — vérifiez avant d'enregistrer</span>
+                            <button class="btn-secondary" style="padding: 3px 8px; font-size: 0.7rem; border-radius: 6px;" onclick="toggleReleveThumbs()">Masquer</button>
+                        </div>
+                        <div id="releveThumbs" style="display: flex; gap: 8px; overflow-x: auto; padding: 8px 0 4px;"></div>
+                    </div>
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 12px 4px 0; border-top: 1px solid var(--color-border);">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <h4 style="margin: 0; font-size: 0.95rem; font-weight: 600;">Transactions</h4>
@@ -353,6 +360,18 @@ window.attemptLogin = function() {
                         </button>
                     </div>
                     <div id="transactionsListModal" class="transactions-list" style="max-height: 320px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="relevePageViewer" class="modal-overlay" style="display:none; z-index: 10001;" onclick="closeRelevePageViewer()">
+            <div style="max-width: 92vw; max-height: 92vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px;">
+                <img id="relevePageViewerImg" src="" alt="Page du relevé" style="max-width: 88vw; max-height: 80vh; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); background: white;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn-secondary" onclick="releveViewerNav(-1)">←</button>
+                    <span id="relevePageViewerLabel" style="color: white; font-size: 0.85rem;"></span>
+                    <button class="btn-secondary" onclick="releveViewerNav(1)">→</button>
+                    <button class="btn-primary" onclick="closeRelevePageViewer()">Fermer</button>
                 </div>
             </div>
         </div>
@@ -3376,6 +3395,50 @@ window.attemptLogin = function() {
         if (uploadBody) uploadBody.style.display = 'block';
         if (loadingModal) loadingModal.style.display = 'none';
         if (analysisModal) analysisModal.style.display = 'none';
+        const viewer = document.getElementById('relevePageViewer');
+        if (viewer) viewer.style.display = 'none';
+      };
+
+      window.renderReleveThumbs = function() {
+        const el = document.getElementById('releveThumbs');
+        if (!el) return;
+        const thumbs = window.relevePageThumbs || [];
+        if (!thumbs.length) { el.innerHTML = ''; return; }
+        el.innerHTML = thumbs.map((p, i) => `
+          <div onclick="openRelevePageViewer(${i})" style="cursor: zoom-in; flex-shrink: 0; text-align: center;">
+            <img src="${p.thumb}" alt="Page ${p.page}" style="width: 110px; height: auto; border: 1px solid var(--color-border); border-radius: 6px; background: white;">
+            <div style="font-size: 0.7rem; color: var(--color-text-secondary); margin-top: 2px;">Page ${p.page}</div>
+          </div>`).join('');
+      };
+
+      window.toggleReleveThumbs = function() {
+        const el = document.getElementById('releveThumbs');
+        if (!el) return;
+        el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+        event && event.target && (event.target.textContent = el.style.display === 'none' ? 'Afficher' : 'Masquer');
+      };
+
+      window.openRelevePageViewer = function(index) {
+        const thumbs = window.relevePageThumbs || [];
+        if (!thumbs[index]) return;
+        window._releveViewerIndex = index;
+        const viewer = document.getElementById('relevePageViewer');
+        document.getElementById('relevePageViewerImg').src = thumbs[index].thumb;
+        document.getElementById('relevePageViewerLabel').textContent = 'Page ' + thumbs[index].page + ' / ' + thumbs.length;
+        viewer.style.display = 'flex';
+      };
+
+      window.releveViewerNav = function(delta) {
+        const thumbs = window.relevePageThumbs || [];
+        if (!thumbs.length) return;
+        let i = (window._releveViewerIndex || 0) + delta;
+        i = ((i % thumbs.length) + thumbs.length) % thumbs.length;
+        openRelevePageViewer(i);
+      };
+
+      window.closeRelevePageViewer = function() {
+        const viewer = document.getElementById('relevePageViewer');
+        if (viewer) viewer.style.display = 'none';
       };
 
       // Close FAB menu when clicking outside (only when menu is open)
