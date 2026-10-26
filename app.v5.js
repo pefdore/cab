@@ -9327,6 +9327,7 @@ function reunionFmt(dateStr, timeStr) {
 let reunionInitialized = false;
 let reunionMyCabinet = null;
 let reunionCurrentId = null;
+let reunionEtapeCouranteDetail = null;
 
 async function reunionGetCabinetId() {
     if (!supabaseClient || !currentUser) return null;
@@ -9794,63 +9795,126 @@ async function reunionGetCurrent() {
     return data || null;
 }
 
+// Étape courante selon la période : propositions avant J, ODJ le jour J, CR 3h après l'heure de réunion
+function reunionEtape(r) {
+    const now = Date.now();
+    const jour = new Date(r.date_reunion + 'T00:00').getTime();
+    const jourSuivant = jour + 24 * 3600 * 1000;
+    const heure = new Date(r.date_reunion + 'T' + (r.heure_reunion || '00:00')).getTime();
+    if (now < jour) return 'propositions';
+    if (now < jourSuivant) return 'odj';
+    if (now < heure + 3 * 3600 * 1000) return 'odj';
+    return 'cr';
+}
+
+function reunionEtapeLabel(etape) {
+    if (etape === 'propositions') return 'Propositions de sujets';
+    if (etape === 'odj') return 'Ordre du jour';
+    return 'Compte rendu';
+}
+
 async function reunionRenderDetail() {
     const detailEl = document.getElementById('reunionDetailView');
     if (!detailEl || !reunionCurrentId) return;
     const r = await reunionGetCurrent();
     if (!r) { detailEl.innerHTML = '<div class="odj-empty">Réunion introuvable.</div>'; return; }
-    const cabinetId = await reunionGetCabinetId();
-    const members = await reunionMembers(cabinetId);
-    const byId = reunionMembersById(members);
-    const sujets = await reunionLoadSujets(r.id);
-    const votes = await reunionLoadSujetVotes(sujets.map(s => s.id));
-    const canVote = reunionIsToday(r);
+    const etape = reunionEtape(r);
+    const navEtape = reunionEtapeCouranteDetail || etape;
 
     let html = '<div class="module-card">'
         + '<div class="reunion-detail-header">'
         + '<h3>Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</h3>'
         + '<button class="action-btn" id="reunionDetailCloseBtn">Fermer</button>'
-        + '</div>';
-
-    html += '<h4 style="margin-top:14px;">Ajouter un sujet à l’ordre du jour</h4>'
-        + '<div class="form-group"><label>Intitulé du sujet</label>'
-        + '<input type="text" id="sujetTitleInput" class="form-input" placeholder="Ex : Répartition des créneaux de permanence du samedi"></div>'
-        + '<div class="form-group"><label>Problème posé</label>'
-        + '<textarea id="sujetProblemInput" class="form-input" rows="3" placeholder="Décrivez le problème constaté..."></textarea></div>'
-        + '<div class="form-group"><label>Proposition de réponse</label>'
-        + '<textarea id="sujetProposalInput" class="form-input" rows="3" placeholder="Votre proposition pour résoudre le problème..."></textarea></div>'
-        + '<div style="display:flex; gap:12px; flex-wrap:wrap;">'
-        + '<button class="action-btn" id="sujetAiBtn">Analyser avec IA (contexte cabinet)</button>'
-        + '<button class="action-btn primary" id="sujetSubmitBtn">Ajouter à l’ordre du jour</button>'
         + '</div>'
-        + '<div id="sujetAiResult" class="result-container" style="display:none;"></div>';
+        + '<div class="odj-empty">Étape actuelle : <strong>' + reunionEtapeLabel(etape) + '</strong>'
+        + (etape === 'propositions' ? ' — jusqu’au jour de la réunion, chaque associé peut ajouter des sujets.' : '')
+        + (etape === 'odj' ? ' — jour de la réunion : lecture de l’ordre du jour et votes.' : '')
+        + (etape === 'cr' ? ' — la réunion est passée : rédigez le compte rendu.' : '')
+        + '</div>'
+        + '<div class="sub-tabs">'
+        + '<button class="sub-tab' + (navEtape === 'propositions' ? ' active' : '') + '" data-etape="propositions">Propositions</button>'
+        + '<button class="sub-tab' + (navEtape === 'odj' ? ' active' : '') + '" data-etape="odj">Ordre du jour</button>'
+        + '<button class="sub-tab' + (navEtape === 'cr' ? ' active' : '') + '" data-etape="cr">Compte rendu</button>'
+        + '</div>'
+        + '<div id="reunionEtapeContent"></div>'
+        + '</div>';
+    detailEl.innerHTML = html;
+    detailEl.style.display = 'block';
 
-    html += '<div id="odjStatus"></div>'
-        + '<button class="action-btn" id="odjGenerateBtn">Générer l’ordre du jour avec IA</button>'
-        + '<div id="odjResult"></div>';
+    detailEl.querySelector('#reunionDetailCloseBtn').addEventListener('click', reunionCloseDetail);
+    detailEl.querySelectorAll('.sub-tab[data-etape]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            reunionEtapeCouranteDetail = btn.dataset.etape;
+            reunionRenderDetail();
+        });
+    });
 
-    html += '<div id="crBox" style="margin-top:18px;">'
-        + '<h4>Compte rendu</h4>'
-        + '<div class="form-group"><label>Notes de la réunion</label>'
+    await reunionRenderEtape(navEtape, etape);
+}
+
+async function reunionRenderEtape(etape, etapeReelle) {
+    const box = document.getElementById('reunionEtapeContent');
+    if (!box) return;
+    const r = await reunionGetCurrent();
+    if (!r) return;
+
+    if (etape === 'propositions') {
+        let html = '<h4 style="margin-top:14px;">Ajouter un sujet à l’ordre du jour</h4>';
+        if (etapeReelle !== 'propositions') {
+            html += '<div class="odj-empty">La période de propositions est terminée (elle s’arrête au jour de la réunion) ; vous consultez une étape passée.</div>';
+        }
+        html += '<div class="form-group"><label>Intitulé du sujet</label>'
+            + '<input type="text" id="sujetTitleInput" class="form-input" placeholder="Ex : Répartition des créneaux de permanence du samedi"></div>'
+            + '<div class="form-group"><label>Problème posé</label>'
+            + '<textarea id="sujetProblemInput" class="form-input" rows="3" placeholder="Décrivez le problème constaté..."></textarea></div>'
+            + '<div class="form-group"><label>Proposition de réponse</label>'
+            + '<textarea id="sujetProposalInput" class="form-input" rows="3" placeholder="Votre proposition pour résoudre le problème..."></textarea></div>'
+            + '<div style="display:flex; gap:12px; flex-wrap:wrap;">'
+            + '<button class="action-btn" id="sujetAiBtn">Analyser avec IA (contexte cabinet)</button>'
+            + '<button class="action-btn primary" id="sujetSubmitBtn">Ajouter à l’ordre du jour</button>'
+            + '</div>'
+            + '<div id="sujetAiResult" class="result-container" style="display:none;"></div>';
+        box.innerHTML = html;
+        const aiBtn = box.querySelector('#sujetAiBtn');
+        if (aiBtn) aiBtn.addEventListener('click', sujetAnalyzeWithAI);
+        const sb = box.querySelector('#sujetSubmitBtn');
+        if (sb) sb.addEventListener('click', sujetSubmit);
+        return;
+    }
+
+    if (etape === 'odj') {
+        let html = '<div id="odjStatus"></div>'
+            + '<button class="action-btn" id="odjGenerateBtn">Générer l’ordre du jour avec IA</button>'
+            + '<div id="odjResult"></div>';
+        box.innerHTML = html;
+        const gb = box.querySelector('#odjGenerateBtn');
+        if (gb) gb.addEventListener('click', generateODJ);
+        await reunionRefreshOdjStatus();
+        await reunionRenderOdj();
+        return;
+    }
+
+    let html = '<h4 style="margin-top:14px;">Compte rendu</h4>';
+    if (etapeReelle !== 'cr') {
+        html += '<div class="odj-empty">Le compte rendu sera accessible 3h après la réunion.</div>';
+    }
+    html += '<div class="form-group"><label>Notes de la réunion</label>'
         + '<textarea id="crNotes" class="form-input" rows="4" placeholder="Saisissez les notes brutes pendant ou après la réunion..."></textarea></div>'
         + '<button class="action-btn primary" id="crGenerateBtn">Générer le CR avec IA</button>'
         + '<button class="action-btn" id="crDownloadBtn" style="display:none;">Télécharger le CR</button>'
-        + '<div id="crResult" class="result-container"></div>'
-        + '</div>';
-
-    html += '</div>';
-    detailEl.innerHTML = html;
-
-    detailEl.querySelector('#reunionDetailCloseBtn').addEventListener('click', reunionCloseDetail);
-    detailEl.querySelector('#sujetAiBtn').addEventListener('click', sujetAnalyzeWithAI);
-    detailEl.querySelector('#sujetSubmitBtn').addEventListener('click', sujetSubmit);
-    detailEl.querySelector('#odjGenerateBtn').addEventListener('click', generateODJ);
-    detailEl.querySelector('#crGenerateBtn').addEventListener('click', generateCR);
-    const crDl = detailEl.querySelector('#crDownloadBtn');
-    if (crDl) crDl.addEventListener('click', downloadCR);
-
-    await reunionRefreshOdjStatus();
-    await reunionRenderOdj();
+        + '<div id="crResult" class="result-container"></div>';
+    box.innerHTML = html;
+    const cg = box.querySelector('#crGenerateBtn');
+    if (cg) cg.addEventListener('click', generateCR);
+    const dl = box.querySelector('#crDownloadBtn');
+    if (dl) dl.addEventListener('click', downloadCR);
+    if (r.cr_contenu) {
+        reunionLastCR = r.cr_contenu;
+        const res = box.querySelector('#crResult');
+        if (res) res.innerHTML = '<h4>Compte rendu</h4><div style="white-space:pre-wrap;">' + reunionEsc(r.cr_contenu) + '</div>';
+        const dlb = box.querySelector('#crDownloadBtn');
+        if (dlb) dlb.style.display = 'inline-flex';
+    }
 }
 
 // ---------- Sujets et avis IA ----------
