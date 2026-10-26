@@ -4486,8 +4486,8 @@ h2 {
     
     /* Cabinet tabs mobile */
     .cabinet-tabs {
-        gap: 6px;
-        margin-bottom: 16px;
+        gap: 5px;
+        margin-bottom: 14px;
     }
     
     .cabinet-tabs::-webkit-scrollbar {
@@ -4495,14 +4495,14 @@ h2 {
     }
     
     .cabinet-tab {
-        padding: 8px 12px;
+        padding: 8px 11px;
         font-size: 0.75rem;
-        gap: 6px;
+        gap: 5px;
     }
     
     .cabinet-tab svg {
-        width: 14px;
-        height: 14px;
+        width: 13px;
+        height: 13px;
     }
     
     .cabinet-page-header {
@@ -5038,19 +5038,28 @@ h2 {
 
 .cabinet-tabs {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 24px;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+}
+
+.cabinet-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .cabinet-tab {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 16px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: var(--color-text-secondary);
     cursor: pointer;
@@ -5058,6 +5067,7 @@ h2 {
     transition: all 0.2s;
     font-family: inherit;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .cabinet-tab svg {
@@ -5901,25 +5911,35 @@ h2 {
 /* Cabinet Modules */
 .sub-tabs {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 24px;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+}
+
+.sub-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .sub-tab {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 8px 14px;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 13px;
     border: 1px solid var(--color-border);
     background: var(--color-bg);
     color: var(--color-text-secondary);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     cursor: pointer;
     border-radius: 999px;
     transition: all 0.2s;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .sub-tab svg {
@@ -6213,9 +6233,17 @@ h2 {
 /* Replacement Module Tabs */
 .replacement-sub-tabs {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 24px;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+}
+
+.replacement-sub-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .replacement-sub-tabs .sub-tab.active {
@@ -6966,13 +6994,19 @@ h2 {
 
 @media (max-width: 768px) {
     .sub-tabs {
-        gap: 6px;
-        margin-bottom: 16px;
+        gap: 5px;
+        margin-bottom: 14px;
     }
     
     .sub-tab {
-        padding: 7px 12px;
-        font-size: 0.8125rem;
+        padding: 7px 11px;
+        font-size: 0.75rem;
+        gap: 5px;
+    }
+    
+    .sub-tab svg {
+        width: 12px;
+        height: 12px;
     }
     
     .planning-grid {
