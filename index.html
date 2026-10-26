@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-C0Gdns0O.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-mfBHU953.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1057,12 +1057,11 @@ window.attemptLogin = function() {
                         <button class="action-btn" onclick="switchView('cabinet'); setTimeout(function(){ document.querySelector('.cabinet-tab[data-tab=\'stocks\']')?.click(); }, 100);">Gérer les stocks</button>
                     </div>
                     <div class="urgence-alerts-quick" id="urgenceStockAlerts"></div>
-                    <div class="inventory-table">
+                    <div class="inventory-table urgence-stock-table">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Produit</th>
-                                    <th>Catégorie</th>
                                     <th>Disponible</th>
                                     <th>Péremption</th>
                                     <th>État</th>
@@ -2057,12 +2056,11 @@ window.attemptLogin = function() {
                                 <button class="action-btn primary" id="urgenceAddProductBtn">Ajouter un produit</button>
                                 <button class="action-btn" id="urgenceExportStocksBtn">Exporter CSV</button>
                             </div>
-                            <div class="inventory-table">
+                            <div class="inventory-table urgence-stock-table">
                                 <table>
                                     <thead>
                                         <tr>
                                             <th>Produit</th>
-                                            <th>Catégorie</th>
                                             <th>Quantité</th>
                                             <th>Seuil</th>
                                             <th>Péremption</th>
@@ -2102,8 +2100,10 @@ window.attemptLogin = function() {
                             <div style="margin-bottom: 16px;">
                                 <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">Créer la commande à passer</button>
                             </div>
-                            <h4>Commandes en attente</h4>
+                            <h4>Commandes en préparation (à passer)</h4>
                             <div id="urgenceOrdersPending"></div>
+                            <h4 style="margin-top: 20px;">Commandées — en attente de livraison</h4>
+                            <div id="urgenceOrdersOrdered"></div>
                             <h4 style="margin-top: 20px;">Historique</h4>
                             <div id="urgenceOrdersHistory"></div>
                         </div>

@@ -10147,3 +10147,50 @@ html.no-anim *::after {
     .urgence-order-edit-row { flex-direction: column; align-items: stretch; }
     .urgence-order-edit-fields { justify-content: flex-end; flex-wrap: wrap; }
 }
+
+/* Stocks : ref + categorie en sous-ligne, table compacte sans scroll horizontal */
+.urgence-product-cell {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.urgence-product-cat {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    line-height: 1.2;
+    margin-top: 1px;
+}
+
+.urgence-stock-table th,
+.urgence-stock-table td {
+    padding: 8px 10px;
+    white-space: nowrap;
+}
+
+.urgence-stock-table td:first-child {
+    min-width: 180px;
+    max-width: 320px;
+}
+
+.urgence-stock-table .urgence-product-cell {
+    white-space: normal;
+}
+
+/* Réception : case « Arrivé » + notes de réception */
+.urgence-receive-check {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.urgence-reception-note {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-muted);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-top: 8px;
+}
