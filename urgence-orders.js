@@ -86,26 +86,101 @@ function urgenceCopyOrder(orderId) {
 
 // ---------- Réception ----------
 
-function urgenceReceiveOrder(orderId) {
+function urgenceMarkOrdered(orderId) {
     const order = urgenceData.orders.find(o => o.id === orderId);
     if (!order || order.status !== 'pending') return;
+
+    const existing = document.getElementById('urgenceOrderedModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'urgenceOrderedModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card urgence-modal-content">
+            <div class="modal-header">
+                <h3>Commande passée</h3>
+                <button type="button" class="modal-close" onclick="urgenceCloseOrderedModal()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Fournisseur (facultatif)</label>
+                    <input type="text" id="urgenceOrderSupplier" class="form-input" value="${order.supplier ? urgenceEscapeHtml(order.supplier) : ''}" placeholder="Ex : Cooper, Phocépharma…">
+                </div>
+                <p class="form-hint">La commande passera en « Commandée — en attente de livraison ». Vous pourrez réceptionner chaque référence séparément, quand elle arrive.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="urgenceCloseOrderedModal()">Annuler</button>
+                <button class="action-btn primary" onclick="urgenceConfirmOrdered('${orderId}')">Marquer commandée</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) urgenceCloseOrderedModal();
+    });
+    setTimeout(() => document.getElementById('urgenceOrderSupplier')?.focus(), 50);
+}
+
+function urgenceCloseOrderedModal() {
+    document.getElementById('urgenceOrderedModal')?.remove();
+}
+
+function urgenceConfirmOrdered(orderId) {
+    const order = urgenceData.orders.find(o => o.id === orderId);
+    if (!order || order.status !== 'pending') return;
+    const supplierInput = document.getElementById('urgenceOrderSupplier');
+    order.supplier = supplierInput ? supplierInput.value.trim() : '';
+    order.status = 'ordered';
+    order.orderedAt = new Date().toISOString();
+    if (!order.receptions) order.receptions = [];
+    saveUrgenceData();
+    urgenceCloseOrderedModal();
+    urgenceRenderOrders();
+    if (typeof showToast === 'function') showToast(order.supplier ? `Commande passée à ${order.supplier}` : 'Commande marquée commandée');
+}
+
+function urgenceItemReceivedQty(order, item) {
+    let total = 0;
+    (order.receptions || []).forEach(r => {
+        const line = r.items.find(x => x.productId === item.productId);
+        if (line) total += line.qty;
+    });
+    return total;
+}
+
+function urgenceOrderRemainingItems(order) {
+    return order.items.filter(i => urgenceItemReceivedQty(order, i) < i.qty);
+}
+
+function urgenceReceiveOrder(orderId) {
+    const order = urgenceData.orders.find(o => o.id === orderId);
+    if (!order || (order.status !== 'ordered' && order.status !== 'pending')) return;
 
     const existing = document.getElementById('urgenceReceiveModal');
     if (existing) existing.remove();
 
-    const rows = order.items.map(i => `
+    const remaining = urgenceOrderRemainingItems(order);
+    const rows = remaining.map(i => {
+        const already = urgenceItemReceivedQty(order, i);
+        const rest = i.qty - already;
+        return `
         <div class="urgence-receive-row">
             <div class="urgence-receive-name">
                 <strong>${urgenceEscapeHtml(i.name)}</strong>
-                <span class="urgence-pointage-sub">commandé : ${i.qty} ${urgenceEscapeHtml(i.unit)} · prix unitaire : ${i.unitPrice ? urgenceFmtEur(i.unitPrice) : '—'}</span>
+                <span class="urgence-pointage-sub">commandé : ${i.qty} ${urgenceEscapeHtml(i.unit)} · déjà reçu : ${already} · prix unitaire : ${i.unitPrice ? urgenceFmtEur(i.unitPrice) : '—'}</span>
             </div>
             <div class="urgence-pointage-input">
-                <label>Reçu :</label>
-                <input type="number" min="0" max="9999" class="form-input urgence-receive-qty" data-pid="${i.productId}" value="${i.qty}">
+                <label class="urgence-receive-check">
+                    <input type="checkbox" class="urgence-receive-ok" data-pid="${i.productId}" checked>
+                    Arrivé
+                </label>
+                <input type="number" min="0" max="${rest}" class="form-input urgence-receive-qty" data-pid="${i.productId}" value="${rest}">
+                <span class="urgence-pointage-unit">${urgenceEscapeHtml(i.unit)}</span>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 
-    const est = urgenceOrderEstimatedTotal(order);
+    const estRemaining = remaining.reduce((s, i) => s + (i.qty - urgenceItemReceivedQty(order, i)) * (i.unitPrice || 0), 0);
 
     const modal = document.createElement('div');
     modal.id = 'urgenceReceiveModal';
@@ -113,15 +188,15 @@ function urgenceReceiveOrder(orderId) {
     modal.innerHTML = `
         <div class="modal-card urgence-modal-content">
             <div class="modal-header">
-                <h3>Réception de commande</h3>
+                <h3>Réception — valider chaque référence</h3>
                 <button type="button" class="modal-close" onclick="urgenceCloseReceiveModal()" aria-label="Fermer">✕</button>
             </div>
             <div class="modal-body">
-                <p class="form-hint">Ajustez les quantités réellement reçues puis validez : le stock sera mis à jour.</p>
+                <p class="form-hint">Cochez « Arrivé » et ajustez la quantité reçue pour chaque référence livrée. Les références non cochées resteront « en attente de livraison » — vous pourrez les réceptionner plus tard (une commande peut être répartie sur plusieurs fournisseurs).</p>
                 ${rows}
                 <div class="form-group" style="margin-top: 12px;">
-                    <label>Coût total réel TTC de la commande (€)</label>
-                    <input type="number" min="0" step="0.01" id="urgenceReceiveCost" class="form-input" value="${est ? est.toFixed(2) : ''}" placeholder="Ex : 45.90">
+                    <label>Coût TTC de ce qui est reçu maintenant (€)</label>
+                    <input type="number" min="0" step="0.01" id="urgenceReceiveCost" class="form-input" value="${estRemaining ? estRemaining.toFixed(2) : ''}" placeholder="Ex : 45.90">
                 </div>
             </div>
             <div class="modal-footer">
@@ -133,6 +208,12 @@ function urgenceReceiveOrder(orderId) {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) urgenceCloseReceiveModal();
     });
+    modal.querySelectorAll('.urgence-receive-ok').forEach(chk => {
+        chk.addEventListener('change', () => {
+            const qty = modal.querySelector(`.urgence-receive-qty[data-pid="${chk.dataset.pid}"]`);
+            if (qty) qty.disabled = !chk.checked;
+        });
+    });
 }
 
 function urgenceCloseReceiveModal() {
@@ -141,31 +222,62 @@ function urgenceCloseReceiveModal() {
 
 function urgenceConfirmReceive(orderId) {
     const order = urgenceData.orders.find(o => o.id === orderId);
-    if (!order || order.status !== 'pending') return;
+    if (!order || (order.status !== 'ordered' && order.status !== 'pending')) return;
 
-    const qtyInputs = document.querySelectorAll('.urgence-receive-qty');
+    const checkboxes = document.querySelectorAll('.urgence-receive-ok');
+    const receivedItems = [];
+    checkboxes.forEach(chk => {
+        if (!chk.checked) return;
+        const pid = chk.dataset.pid;
+        const qtyInput = document.querySelector(`.urgence-receive-qty[data-pid="${pid}"]`);
+        const qty = parseInt(qtyInput?.value, 10);
+        if (isNaN(qty) || qty <= 0) return;
+        const item = order.items.find(i => i.productId === pid);
+        if (!item) return;
+        const already = urgenceItemReceivedQty(order, item);
+        receivedItems.push({
+            productId: pid,
+            name: item.name,
+            unit: item.unit,
+            qty: Math.min(qty, item.qty - already)
+        });
+    });
+
     const costInput = document.getElementById('urgenceReceiveCost');
     const realCost = costInput ? (parseFloat(costInput.value) || 0) : 0;
 
-    let updated = 0;
-    qtyInputs.forEach(input => {
-        const pid = input.dataset.pid;
-        const received = parseInt(input.value, 10);
-        if (isNaN(received) || received < 0) return;
-        const item = order.items.find(i => i.productId === pid);
-        const product = urgenceData.products.find(p => p.id === pid);
-        if (!product) return;
-        product.quantity = (product.quantity || 0) + received;
-        if (item) item.receivedQty = received;
-        updated++;
+    if (receivedItems.length === 0) {
+        if (typeof showToast === 'function') showToast('Aucune référence cochée « Arrivé » — rien à réceptionner', 'error');
+        return;
+    }
+
+    if (!order.receptions) order.receptions = [];
+    order.receptions.push({
+        date: new Date().toISOString(),
+        items: receivedItems,
+        cost: realCost,
+        by: (typeof currentUser !== 'undefined' && currentUser?.email) ? currentUser.email : 'secrétariat'
     });
 
-    order.status = 'received';
-    order.receivedAt = new Date().toISOString();
-    order.receivedBy = (typeof currentUser !== 'undefined' && currentUser?.email) ? currentUser.email : 'secrétariat';
-    order.realCost = realCost;
+    let updatedQty = 0;
+    receivedItems.forEach(r => {
+        const product = urgenceData.products.find(p => p.id === r.productId);
+        if (product) {
+            product.quantity = (product.quantity || 0) + r.qty;
+            updatedQty += r.qty;
+        }
+    });
 
-    if (realCost > 0) urgenceSpreadCost(order);
+    if (realCost > 0) urgenceSpreadReceptionCost(order, order.receptions[order.receptions.length - 1]);
+
+    const fullyReceived = urgenceOrderRemainingItems(order).length === 0;
+    if (fullyReceived) {
+        order.status = 'received';
+        order.receivedAt = new Date().toISOString();
+        order.realCost = order.receptions.reduce((s, r) => s + (r.cost || 0), 0);
+    } else {
+        order.status = 'ordered';
+    }
 
     saveUrgenceData();
     urgenceCloseReceiveModal();
@@ -174,24 +286,31 @@ function urgenceConfirmReceive(orderId) {
     urgenceRenderOrders();
     urgenceRenderCosts();
 
-    const msg = `Réception enregistrée : ${updated} produit(s) mis à jour dans le stock.` + (realCost ? ` Coût : ${urgenceFmtEur(realCost)}` : '');
+    const remainingCount = urgenceOrderRemainingItems(order).length;
+    const msg = fullyReceived
+        ? `Réception complète : ${receivedItems.length} référence(s), ${updatedQty} unité(s) ajoutées au stock.` + (realCost ? ` Coût : ${urgenceFmtEur(realCost)}` : '')
+        : `Réception partielle enregistrée : ${receivedItems.length} référence(s) reçue(s). ${remainingCount} reste(nt) en attente de livraison.`;
     if (typeof showToast === 'function') showToast(msg);
     else alert(msg);
 }
 
-// Répartit le cout reel TTC sur les produits de la commande (au prorata du prix estime)
+// Répartit le cout TTC d'une réception sur les produits reçus (au prorata du prix estime)
 // et met a jour le prix unitaire de chaque reference.
-function urgenceSpreadCost(order) {
-    const est = urgenceOrderEstimatedTotal(order);
-    order.items.forEach(i => {
+function urgenceSpreadReceptionCost(order, reception) {
+    const est = reception.items.reduce((s, i) => {
+        const item = order.items.find(x => x.productId === i.productId);
+        return s + i.qty * (item?.unitPrice || 0);
+    }, 0);
+    reception.items.forEach(i => {
         const product = urgenceData.products.find(p => p.id === i.productId);
         if (!product) return;
+        const item = order.items.find(x => x.productId === i.productId);
         let unitCost;
-        if (est > 0 && i.unitPrice > 0) {
-            const share = (i.qty * i.unitPrice) / est;
-            unitCost = order.realCost * share / Math.max(i.receivedQty || i.qty, 1);
-        } else if (i.receivedQty || i.qty) {
-            unitCost = order.realCost / (i.receivedQty || i.qty);
+        if (est > 0 && item?.unitPrice > 0) {
+            const share = (i.qty * item.unitPrice) / est;
+            unitCost = reception.cost * share / Math.max(i.qty, 1);
+        } else if (i.qty) {
+            unitCost = reception.cost / i.qty;
         } else {
             return;
         }
@@ -201,8 +320,9 @@ function urgenceSpreadCost(order) {
 
 function urgenceCancelOrder(orderId) {
     const order = urgenceData.orders.find(o => o.id === orderId);
-    if (!order || order.status !== 'pending') return;
-    if (!confirm('Annuler cette commande (aucun stock ne sera modifié) ?')) return;
+    if (!order || (order.status !== 'pending' && order.status !== 'ordered')) return;
+    const receivedNote = (order.receptions || []).length > 0 ? '\nDes références ont déjà été réceptionnées : le stock déjà reçu sera conservé.' : '';
+    if (!confirm('Annuler cette commande ?' + receivedNote)) return;
     order.status = 'cancelled';
     order.receivedAt = new Date().toISOString();
     saveUrgenceData();
@@ -222,9 +342,17 @@ function urgenceRenderOrders() {
             : pending.map(o => urgenceOrderEditCardHtml(o)).join('');
     }
 
+    const orderedEl = document.getElementById('urgenceOrdersOrdered');
+    if (orderedEl) {
+        const ordered = urgenceData.orders.filter(o => o.status === 'ordered');
+        orderedEl.innerHTML = ordered.length === 0
+            ? '<p class="urgence-empty">Aucune commande en attente de livraison.</p>'
+            : ordered.map(o => urgenceOrderOrderedCardHtml(o)).join('');
+    }
+
     const histEl = document.getElementById('urgenceOrdersHistory');
     if (histEl) {
-        const others = urgenceData.orders.filter(o => o.status !== 'pending').slice(0, 30);
+        const others = urgenceData.orders.filter(o => o.status === 'received' || o.status === 'cancelled').slice(0, 30);
         histEl.innerHTML = others.length === 0
             ? '<p class="urgence-empty">Aucun historique pour l\'instant.</p>'
             : others.map(o => urgenceOrderCardHtml(o)).join('');
@@ -275,7 +403,7 @@ function urgenceOrderEditCardHtml(o) {
                 <span>Total TTC estimé : <strong class="urgence-order-total" data-ordertotal="${o.id}">${urgenceFmtEur(urgenceOrderEstimatedTotal(o))}</strong></span>
                 <span class="urgence-order-actions">
                     <button class="action-btn" onclick="urgenceCopyOrder('${o.id}')">Copier</button>
-                    <button class="action-btn primary" onclick="urgenceReceiveOrder('${o.id}')">Réceptionner</button>
+                    <button class="action-btn primary" onclick="urgenceMarkOrdered('${o.id}')">Marquer commandée</button>
                     <button class="action-btn" onclick="urgenceCancelOrder('${o.id}')">Annuler</button>
                 </span>
             </div>
@@ -339,29 +467,66 @@ function urgenceOrderRemoveItem(orderId, idx) {
     if (typeof showToast === 'function') showToast(`« ${name} » retiré de la commande`);
 }
 
-function urgenceOrderCardHtml(o) {
-    const statusLabel = o.status === 'pending' ? 'À passer / en attente' : (o.status === 'received' ? 'Reçue ✅' : 'Annulée');
-    const statusClass = o.status === 'pending' ? 'warning' : (o.status === 'received' ? 'success' : 'danger');
+function urgenceOrderOrderedCardHtml(o) {
     const dateStr = new Date(o.createdAt).toLocaleDateString('fr-FR');
-    const items = o.items.map(i =>
-        `<li>${urgenceEscapeHtml(i.name)} — ${i.receivedQty !== undefined ? i.receivedQty : i.qty} ${urgenceEscapeHtml(i.unit)}${i.unitPrice ? ` · ${urgenceFmtEur(i.unitPrice)}/${urgenceEscapeHtml(i.unit)}` : ''}</li>`
+    const rows = o.items.map(i => {
+        const received = urgenceItemReceivedQty(o, i);
+        const done = received >= i.qty;
+        return `
+        <div class="urgence-order-edit-row">
+            <div class="urgence-order-edit-name">
+                <strong>${urgenceEscapeHtml(i.name)}</strong>
+                <span class="urgence-pointage-sub">commandé : ${i.qty} ${urgenceEscapeHtml(i.unit)} · reçu : ${received}</span>
+            </div>
+            <span class="urgence-state ${done ? 'success' : 'warning'}">${done ? '✓ reçu' : `${i.qty - received} en attente`}</span>
+        </div>`;
+    }).join('');
+    const receptionsHtml = (o.receptions || []).map(r =>
+        `<div class="urgence-reception-note">📦 Réception du ${new Date(r.date).toLocaleDateString('fr-FR')} : ${r.items.map(x => `${urgenceEscapeHtml(x.name)} ×${x.qty}`).join(', ')}${r.cost ? ` — ${urgenceFmtEur(r.cost)}` : ''}</div>`
     ).join('');
-    const total = o.status === 'received' && o.realCost ? urgenceFmtEur(o.realCost) : `≈ ${urgenceFmtEur(urgenceOrderEstimatedTotal(o))}`;
-    const actions = o.status === 'pending'
-        ? `<button class="action-btn" onclick="urgenceCopyOrder('${o.id}')">Copier</button>
-           <button class="action-btn primary" onclick="urgenceReceiveOrder('${o.id}')">Réceptionner</button>
-           <button class="action-btn" onclick="urgenceCancelOrder('${o.id}')">Annuler</button>`
-        : '';
+    const receivedTotal = (o.receptions || []).reduce((s, r) => s + (r.cost || 0), 0);
+    const total = receivedTotal > 0 ? urgenceFmtEur(receivedTotal) : `≈ ${urgenceFmtEur(urgenceOrderEstimatedTotal(o))}`;
     return `
         <div class="urgence-order-card">
             <div class="urgence-order-head">
-                <strong>Commande du ${dateStr}</strong>
+                <strong>Commande du ${dateStr}${o.supplier ? ` — ${urgenceEscapeHtml(o.supplier)}` : ''}</strong>
+                <span class="urgence-state warning">Commandée — en attente de livraison</span>
+            </div>
+            <div class="urgence-order-edit-list">${rows}</div>
+            ${receptionsHtml}
+            <div class="urgence-order-foot">
+                <span>Total TTC : <strong>${total}</strong></span>
+                <span class="urgence-order-actions">
+                    <button class="action-btn primary" onclick="urgenceReceiveOrder('${o.id}')">Réceptionner</button>
+                    <button class="action-btn" onclick="urgenceCancelOrder('${o.id}')">Annuler</button>
+                </span>
+            </div>
+        </div>`;
+}
+
+function urgenceOrderCardHtml(o) {
+    const statusLabel = o.status === 'received' ? 'Reçue ✅' : 'Annulée';
+    const statusClass = o.status === 'received' ? 'success' : 'danger';
+    const dateStr = new Date(o.createdAt).toLocaleDateString('fr-FR');
+    const items = o.items.map(i => {
+        const received = urgenceItemReceivedQty(o, i);
+        return `<li>${urgenceEscapeHtml(i.name)} — ${received > 0 ? received : i.qty} ${urgenceEscapeHtml(i.unit)}${i.unitPrice ? ` · ${urgenceFmtEur(i.unitPrice)}/${urgenceEscapeHtml(i.unit)}` : ''}</li>`;
+    }).join('');
+    const total = o.status === 'received' && o.realCost ? urgenceFmtEur(o.realCost) : `≈ ${urgenceFmtEur(urgenceOrderEstimatedTotal(o))}`;
+    const receptionsHtml = (o.receptions || []).map(r =>
+        `<div class="urgence-reception-note">📦 Réception du ${new Date(r.date).toLocaleDateString('fr-FR')} : ${r.items.map(x => `${urgenceEscapeHtml(x.name)} ×${x.qty}`).join(', ')}${r.cost ? ` — ${urgenceFmtEur(r.cost)}` : ''}</div>`
+    ).join('');
+    return `
+        <div class="urgence-order-card">
+            <div class="urgence-order-head">
+                <strong>Commande du ${dateStr}${o.supplier ? ` — ${urgenceEscapeHtml(o.supplier)}` : ''}</strong>
                 <span class="urgence-state ${statusClass}">${statusLabel}</span>
             </div>
             <ul class="urgence-order-items">${items}</ul>
+            ${receptionsHtml}
             <div class="urgence-order-foot">
                 <span>Total TTC : <strong>${total}</strong></span>
-                <span class="urgence-order-actions">${actions}</span>
+                <span class="urgence-order-actions"></span>
             </div>
         </div>`;
 }
@@ -476,3 +641,6 @@ window.urgenceRenderOrders = urgenceRenderOrders;
 window.urgenceRenderCosts = urgenceRenderCosts;
 window.urgenceOrderAddItem = urgenceOrderAddItem;
 window.urgenceOrderRemoveItem = urgenceOrderRemoveItem;
+window.urgenceMarkOrdered = urgenceMarkOrdered;
+window.urgenceConfirmOrdered = urgenceConfirmOrdered;
+window.urgenceCloseOrderedModal = urgenceCloseOrderedModal;

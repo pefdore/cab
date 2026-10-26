@@ -106,7 +106,7 @@ function renderUrgenceStocks() {
     if (tbody) {
         // Page Salle d'urgence : lecture seule, vue rapide de ce qui est disponible
         tbody.innerHTML = products.length === 0
-            ? '<tr><td colspan="6" class="urgence-empty">Aucun produit enregistré. Ajoutez-le depuis Cabinet → Stocks.</td></tr>'
+            ? '<tr><td colspan="5" class="urgence-empty">Aucun produit enregistré. Ajoutez-le depuis Cabinet → Stocks.</td></tr>'
             : products.map(p => {
                 const state = urgenceStockState(p);
                 const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'Stock bas' : 'OK');
@@ -115,11 +115,13 @@ function renderUrgenceStocks() {
                 const priceHtml = p.unitPrice ? Number(p.unitPrice).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '—';
                 return `
                     <tr>
-                        <td>${urgenceEscapeHtml(p.name)}</td>
-                        <td><span class="urgence-cat-badge">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</span></td>
+                        <td>
+                            <div class="urgence-product-cell">${urgenceEscapeHtml(p.name)}</div>
+                            <div class="urgence-product-cat">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</div>
+                        </td>
                         <td>${p.quantity} ${urgenceEscapeHtml(p.unit)}</td>
                         <td>${expiryHtml}</td>
-                        <td>${priceHtml ? Number(priceHtml).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '—'}</td>
+                        <td>${priceHtml}</td>
                         <td><span class="urgence-state ${stateClass}">${stateLabel}</span></td>
                     </tr>`;
             }).join('');
@@ -128,7 +130,7 @@ function renderUrgenceStocks() {
     if (cabinetTbody) {
         // Cabinet → Stocks : gestion complète (modifier / supprimer)
         cabinetTbody.innerHTML = products.length === 0
-            ? '<tr><td colspan="8" class="urgence-empty">Aucun produit. Ajoutez-en avec le bouton « Ajouter un produit ».</td></tr>'
+            ? '<tr><td colspan="7" class="urgence-empty">Aucun produit. Ajoutez-en avec le bouton « Ajouter un produit ».</td></tr>'
             : products.map(p => {
                 const state = urgenceStockState(p);
                 const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'À commander' : 'OK');
@@ -137,8 +139,10 @@ function renderUrgenceStocks() {
                 const priceHtml = p.unitPrice ? Number(p.unitPrice).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '—';
                 return `
                     <tr>
-                        <td>${urgenceEscapeHtml(p.name)}</td>
-                        <td><span class="urgence-cat-badge">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</span></td>
+                        <td>
+                            <div class="urgence-product-cell">${urgenceEscapeHtml(p.name)}</div>
+                            <div class="urgence-product-cat">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</div>
+                        </td>
                         <td>${p.quantity} ${urgenceEscapeHtml(p.unit)}</td>
                         <td>${p.minQuantity}</td>
                         <td>${expiryHtml}</td>
