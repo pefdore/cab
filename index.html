@@ -364,15 +364,26 @@ window.attemptLogin = function() {
             </div>
         </div>
 
-        <div id="relevePageViewer" class="modal-overlay" style="display:none; z-index: 10001;" onclick="closeRelevePageViewer()">
-            <div style="max-width: 92vw; max-height: 92vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px;">
-                <img id="relevePageViewerImg" src="" alt="Page du relevé" style="max-width: 88vw; max-height: 80vh; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); background: white;">
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <button class="btn-secondary" onclick="releveViewerNav(-1)">←</button>
-                    <span id="relevePageViewerLabel" style="color: white; font-size: 0.85rem;"></span>
-                    <button class="btn-secondary" onclick="releveViewerNav(1)">→</button>
+        <div id="relevePageViewer" class="modal-overlay" style="display:none; z-index: 10001;">
+            <div style="position:absolute; inset: 0; background: rgba(0,0,0,0.85);" onclick="closeRelevePageViewer()"></div>
+            <div style="position: relative; max-width: 96vw; max-height: 96vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px;">
+                <div id="releveViewerCanvasWrap" style="overflow: hidden; max-width: 94vw; max-height: 82vh; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); background: white; cursor: grab; position: relative;">
+                    <img id="relevePageViewerImg" src="" alt="Page du relevé" style="display:block; transform-origin: top left; border-radius: 8px;">
+                    <div id="releveHighlightBox" style="position:absolute; border: 2px solid #f59e0b; background: rgba(245,158,11,0.25); border-radius: 4px; pointer-events:none; display:none;"></div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.95); padding: 6px 12px; border-radius: 10px;">
+                    <button class="btn-secondary" onclick="releveViewerNav(-1)" title="Page précédente">←</button>
+                    <span id="relevePageViewerLabel" style="font-size: 0.85rem; min-width: 90px; text-align: center;"></span>
+                    <button class="btn-secondary" onclick="releveViewerNav(1)" title="Page suivante">→</button>
+                    <span style="width:1px;height:22px;background:#ccc;margin:0 4px;"></span>
+                    <button class="btn-secondary" onclick="releveViewerZoom(-1)" title="Zoom arrière">−</button>
+                    <span id="releveZoomLabel" style="font-size: 0.8rem; min-width: 46px; text-align: center;">100%</span>
+                    <button class="btn-secondary" onclick="releveViewerZoom(1)" title="Zoom avant">+</button>
+                    <button class="btn-secondary" onclick="releveViewerReset()" title="Réinitialiser">Reset</button>
+                    <span style="width:1px;height:22px;background:#ccc;margin:0 4px;"></span>
                     <button class="btn-primary" onclick="closeRelevePageViewer()">Fermer</button>
                 </div>
+                <div style="color:#d1d5db; font-size:0.75rem;">Molette = zoom · Cliquer-glisser = déplacer</div>
             </div>
         </div>
 
@@ -1074,6 +1085,9 @@ window.attemptLogin = function() {
                     <p class="module-desc" style="margin-top:8px;">Vous pouvez aussi importer un relevé de compte : les écritures détectées seront proposées ici, formatées par catégorie, à valider une par une.</p>
                     <button class="action-btn" onclick="document.getElementById('releve-upload-modal').style.display='flex'">Importer un relevé de compte</button>
                 </div>
+
+                <!-- Rapprochement commandes -->
+                <div id="flux-recon-pending"></div>
 
                 <!-- Jour par jour -->
                 <div class="module-card">
@@ -3001,6 +3015,7 @@ window.attemptLogin = function() {
     <script src="secretariat.js?v=202611023000" defer></script>
     <script src="urgence.js?v=202611023000" defer></script>
     <script src="flux.js?v=202611023000" defer></script>
+    <script src="reconciliation.js?v=202611023000" defer></script>
     <script src="urgence-orders.js?v=202611023000" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3418,28 +3433,127 @@ window.attemptLogin = function() {
         event && event.target && (event.target.textContent = el.style.display === 'none' ? 'Afficher' : 'Masquer');
       };
 
-      window.openRelevePageViewer = function(index) {
+      window._releveViewer = { zoom: 1, panX: 0, panY: 0, index: 0, dragging: false, lastX: 0, lastY: 0, tx: 0, ty: 0 };
+
+      window.openRelevePageViewer = function(index, highlightLine) {
         const thumbs = window.relevePageThumbs || [];
         if (!thumbs[index]) return;
-        window._releveViewerIndex = index;
-        const viewer = document.getElementById('relevePageViewer');
-        document.getElementById('relevePageViewerImg').src = thumbs[index].thumb;
+        window._releveViewer.index = index;
+        window._releveViewer.zoom = 1;
+        window._releveViewer.panX = 0;
+        window._releveViewer.panY = 0;
+        window._releveViewer.highlightLine = highlightLine || null;
+        const v = window._releveViewer;
+        const img = document.getElementById('relevePageViewerImg');
+        img.src = thumbs[index].thumb;
+        img.onload = () => { releveViewerApply(highlightLine); };
         document.getElementById('relevePageViewerLabel').textContent = 'Page ' + thumbs[index].page + ' / ' + thumbs.length;
-        viewer.style.display = 'flex';
+        document.getElementById('relevePageViewer').style.display = 'flex';
+        releveViewerApply(highlightLine);
+      };
+
+      window.releveViewerApply = function(highlightLine) {
+        const v = window._releveViewer;
+        const img = document.getElementById('relevePageViewerImg');
+        const wrap = document.getElementById('releveViewerCanvasWrap');
+        if (!img || !img.width) return;
+        const fitScale = Math.min((wrap.clientWidth) / img.naturalWidth, (wrap.clientHeight || window.innerHeight * 0.82) / img.naturalHeight, 2);
+        const scale = fitScale * v.zoom;
+        img.style.width = (img.naturalWidth * scale) + 'px';
+        img.style.height = 'auto';
+        img.style.transform = `translate(${v.panX}px, ${v.panY}px)`;
+        document.getElementById('releveZoomLabel').textContent = Math.round(v.zoom * 100) + '%';
+
+        const box = document.getElementById('releveHighlightBox');
+        const thumbs = window.relevePageThumbs || [];
+        const pageData = thumbs[v.index];
+        let hl = highlightLine != null ? highlightLine : v.highlightLine;
+        if (box && pageData && pageData.itemRects && pageData.itemRects.length && hl != null) {
+          const items = pageData.itemRects.filter(it => it._line === hl);
+          if (items.length) {
+            const xs = items.map(i => i.x), ys = items.map(i => i.y);
+            const x0 = Math.min(...xs) / pageData.pageWidth, x1 = (Math.max(...xs) + Math.max(...items.map(i => i.w))) / pageData.pageWidth;
+            const y0 = Math.min(...ys) / pageData.pageHeight, y1 = (Math.max(...ys) + 12) / pageData.pageHeight;
+            box.style.display = 'block';
+            box.style.left = (x0 * img.offsetWidth + v.panX) + 'px';
+            box.style.top = (y0 * img.offsetHeight + v.panY) + 'px';
+            box.style.width = ((x1 - x0) * img.offsetWidth) + 'px';
+            box.style.height = ((y1 - y0) * img.offsetHeight) + 'px';
+          } else box.style.display = 'none';
+        } else if (box) box.style.display = 'none';
+      };
+
+      window.releveViewerZoom = function(delta, cx, cy) {
+        const v = window._releveViewer;
+        const old = v.zoom;
+        v.zoom = Math.min(5, Math.max(0.5, v.zoom + delta * 0.25));
+        const img = document.getElementById('relevePageViewerImg');
+        if (cx != null && img) {
+          const rect = document.getElementById('releveViewerCanvasWrap').getBoundingClientRect();
+          const px = (cx - rect.left), py = (cy - rect.top);
+          v.panX = px - (px - v.panX) * (v.zoom / old);
+          v.panY = py - (py - v.panY) * (v.zoom / old);
+        }
+        releveViewerApply();
+      };
+
+      window.releveViewerReset = function() {
+        const v = window._releveViewer;
+        v.zoom = 1; v.panX = 0; v.panY = 0;
+        releveViewerApply();
       };
 
       window.releveViewerNav = function(delta) {
         const thumbs = window.relevePageThumbs || [];
         if (!thumbs.length) return;
-        let i = (window._releveViewerIndex || 0) + delta;
+        let i = (window._releveViewer.index + delta);
         i = ((i % thumbs.length) + thumbs.length) % thumbs.length;
+        window._releveViewer.highlightLine = null;
         openRelevePageViewer(i);
       };
+
+      (function() {
+        const wrap = document.getElementById('releveViewerCanvasWrap');
+        if (!wrap || wrap.dataset.binded) return;
+        wrap.dataset.binded = '1';
+        wrap.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          releveViewerZoom(e.deltaY < 0 ? 1 : -1, e.clientX, e.clientY);
+        }, { passive: false });
+        wrap.addEventListener('mousedown', function(e) { const v = window._releveViewer; v.dragging = true; v.lastX = e.clientX; v.lastY = e.clientY; });
+        window.addEventListener('mousemove', function(e) {
+          const v = window._releveViewer;
+          if (!v.dragging) return;
+          const img = document.getElementById('relevePageViewerImg');
+          if (!img) return;
+          v.panX += e.clientX - v.lastX; v.panY += e.clientY - v.lastY;
+          v.lastX = e.clientX; v.lastY = e.clientY;
+          releveViewerApply();
+        });
+        window.addEventListener('mouseup', function() { window._releveViewer.dragging = false; });
+        wrap.addEventListener('touchstart', function(e) {
+          if (e.touches.length === 2) {
+            const v = window._releveViewer;
+            v._pinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          }
+        }, { passive: true });
+        wrap.addEventListener('touchmove', function(e) {
+          if (e.touches.length === 2) {
+            e.preventDefault();
+            const v = window._releveViewer;
+            const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            if (v._pinchDist) releveViewerZoom((d - v._pinchDist) / 100, e.touches[0].clientX, e.touches[0].clientY);
+            v._pinchDist = d;
+          }
+        }, { passive: false });
+      })();
+      })();
 
       window.closeRelevePageViewer = function() {
         const viewer = document.getElementById('relevePageViewer');
         if (viewer) viewer.style.display = 'none';
       };
+
 
       // Close FAB menu when clicking outside (only when menu is open)
       window.addEventListener('click', function(e) {

@@ -99,14 +99,17 @@ function renderFluxView() {
                 const dayLabel = isNaN(dayDate) ? dayKey : dayDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
                 const rows = [];
                 byDay[dayKey].depenses.forEach(d => {
+                    const linked = (typeof reconLinkedOrdersLabel === 'function' && d.order_ids && d.order_ids.length) ? reconLinkedOrdersLabel(d) : '';
                     rows.push(`
                         <div class="depense-item">
                             <div>
                                 <span class="category">${fluxEscapeHtml(fluxCategoryLabel(d.category, true))}</span>
                                 <span class="description">${fluxEscapeHtml(d.description || d.sous_categorie || '-')}</span>
+                                ${linked ? `<div style="font-size:0.72rem; color:var(--color-primary); margin-top:2px;">📦 ${fluxEscapeHtml(linked)}</div>` : ''}
                             </div>
                             <div class="depense-right">
                                 <span class="amount">-${d.amount.toFixed(2)}€</span>
+                                <button class="action-btn" style="padding:2px 8px; font-size:0.7rem;" onclick="openReconModal(${d.id})" title="Rapprocher d'une commande">${d.order_ids && d.order_ids.length ? '⚙' : '＋'}</button>
                                 <button class="edit-btn-small" onclick="editDepense(${d.id})" title="Modifier">✎</button>
                                 <button class="delete-btn-small" onclick="deleteDepense(${d.id})" title="Supprimer">✕</button>
                             </div>
@@ -164,6 +167,8 @@ function renderFluxView() {
                 </div>`).join('');
         }
     }
+
+    if (typeof renderReconPending === 'function') renderReconPending();
 
     // Synthèse des 6 derniers mois
     const monthsEl = document.getElementById('flux-months-summary');
