@@ -18,16 +18,27 @@ function remindersMonthHasData(mKey) {
 }
 
 function remindersMissingMonths() {
+    return remindersYearMonths().filter(m => !m.imported);
+}
+
+// Liste de tous les mois de l'annee en cours, jusqu'au mois courant, avec statut d'import
+function remindersYearMonths() {
     const now = new Date();
-    const missing = [];
+    const months = [];
     for (let m = 0; m <= now.getMonth(); m++) {
         const d = new Date(now.getFullYear(), m, 1);
         const mKey = remindersMonthKey(d).slice(0, 7);
-        if (!remindersMonthHasData(mKey)) {
-            missing.push({ key: mKey, label: REMINDER_MONTHS[d.getMonth()] + ' ' + d.getFullYear() });
-        }
+        const depCount = (typeof cabinetDepenses !== 'undefined' ? cabinetDepenses : []).filter(e => (e.date || '').slice(0, 7) === mKey).length;
+        const recCount = (typeof cabinetRecettes !== 'undefined' ? cabinetRecettes : []).filter(e => (e.date || '').slice(0, 7) === mKey).length;
+        months.push({
+            key: mKey,
+            label: REMINDER_MONTHS[d.getMonth()] + ' ' + d.getFullYear(),
+            short: REMINDER_MONTHS[d.getMonth()],
+            imported: (depCount + recCount) > 0,
+            movements: depCount + recCount
+        });
     }
-    return missing;
+    return months;
 }
 
 function renderReminders() {
@@ -46,22 +57,26 @@ function renderReminders() {
         }
     });
 
-    // Carte de rappel dans la vue Flux
+    // Checklist annuelle dans la vue Flux
     const holder = document.getElementById('flux-reminders');
     if (!holder) return;
-    if (missing.length === 0) {
-        holder.innerHTML = '';
-        return;
-    }
+    const all = remindersYearMonths();
+    const okCount = all.filter(m => m.imported).length;
     holder.innerHTML = `
         <div class="module-card" style="border-left: 3px solid var(--color-primary);">
-            <h3>📅 Rappels relevés</h3>
-            <p class="module-desc">En ${now.getFullYear()}, ces mois n'ont encore aucun mouvement enregistré — pensez à importer le relevé de compte :</p>
-            ${missing.slice(0, 6).map(m => `
-                <div class="flux-cat-row">
-                    <span style="text-transform:capitalize; font-weight:500;">${m.label}</span>
-                    <button class="action-btn" style="padding:2px 10px; font-size:0.72rem;" onclick="document.getElementById('releve-upload-modal').style.display='flex'">Importer le relevé</button>
-                </div>`).join('')}
+            <h3>📅 Relevés ${new Date().getFullYear()} — ${okCount}/${all.length} importés</h3>
+            <p class="module-desc">Relevés de compte de l'année en cours. Les mois en vert sont importés, pas besoin de les refaire. Les mois en attente attendent leur relevé.</p>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;">
+                ${all.map(m => m.imported ? `
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4);">
+                        <span style="font-size:0.82rem; font-weight:500; color:#10b981;">✅ ${m.short}</span>
+                        <span style="font-size:0.68rem; color:#059669;">${m.movements} mvt</span>
+                    </div>` : `
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4);">
+                        <span style="font-size:0.82rem; font-weight:500; color:#b45309;">⏳ ${m.short}</span>
+                        <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="document.getElementById('releve-upload-modal').style.display='flex'" title="Importer le relevé de ${m.short}">Importer</button>
+                    </div>`).join('')}
+            </div>
         </div>`;
 }
 
