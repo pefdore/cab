@@ -7452,6 +7452,8 @@ function closeRelevéModal() {
 async function handleRelevéUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
+    window._releveCurrentFile = file;
+    window._relevePdfBytes = null;
     
     window.relevePageThumbs = [];
     const thumbsEl = document.getElementById('releveThumbs');
@@ -7563,6 +7565,7 @@ async function extractTextFromPDF(file) {
     }
     
     const arrayBuffer = await file.arrayBuffer();
+    window._relevePdfBytes = file.type === 'application/pdf' ? new Blob([arrayBuffer]) : null;
     const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
         cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/cmaps/',
@@ -8407,6 +8410,8 @@ async function confirmAllTransactions() {
         
         pendingTransactions = [];
         document.getElementById('releveAnalysisZone').style.display = 'none';
+        
+        saveRelevePdfToStorage(depenses, recettes);
         
         await loadCabinetData();
         renderCabinetHistory();
@@ -10813,6 +10818,51 @@ function countMonthDuplicates(transactions) {
     transactions.forEach(t => { if (findExistingDuplicate(t)) dup++; });
     return dup;
 }
+
+
+// ===== Archivage du PDF de relevé importé (bucket Supabase "releves") =====
+async function saveRelevePdfToStorage(depenses, recettes) {
+    try {
+        const blob = window._relevePdfBytes || (window._releveCurrentFile instanceof Blob ? window._releveCurrentFile : null);
+        if (!blob || !supabaseClient || !currentUser?.id) return;
+        const all = [...(depenses || []), ...(recettes || [])];
+        const monthKeys = [...new Set(all.map(t => (t.date || '').slice(0, 7)))].filter(Boolean).sort();
+        if (!monthKeys.length) return;
+        const fileName = monthKeys[0] + '.pdf';
+        try {
+            await supabaseClient.storage.createBucket('releves', { public: false });
+        } catch (e) {}
+        const { error } = await supabaseClient.storage
+            .from('releves')
+            .upload(currentUser.id + '/' + fileName, blob, { upsert: true });
+        if (error) {
+            console.error('[RELEVÉ] Archive PDF:', error.message);
+            return;
+        }
+        console.log('[RELEVÉ] PDF archivé:', fileName);
+        if (typeof renderReminders === 'function') renderReminders();
+    } catch (e) {
+        console.error('[RELEVÉ] saveRelevePdfToStorage:', e);
+    }
+}
+
+// Ouvre le PDF archivé d'un mois (visionneuse navigateur)
+async function viewRelevePdf(monthKey) {
+    if (!supabaseClient || !currentUser?.id) return;
+    try {
+        const { data, error } = await supabaseClient.storage
+            .from('releves')
+            .createSignedUrl(currentUser.id + '/' + monthKey + '.pdf', 3600);
+        if (error || !data?.signedUrl) {
+            showToast?.('Aucun PDF archivé pour ' + monthKey + ' (archive disponible pour les imports récents)');
+            return;
+        }
+        window.open(data.signedUrl, '_blank');
+    } catch (e) {
+        console.error('[RELEVÉ] viewRelevePdf:', e);
+    }
+}
+window.viewRelevePdf = viewRelevePdf;
 
 function showTransactionOnPdf(index) {
     const t = pendingTransactions[index];

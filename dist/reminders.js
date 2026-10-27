@@ -70,7 +70,10 @@ function renderReminders() {
                 ${all.map(m => m.imported ? `
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4);">
                         <span style="font-size:0.82rem; font-weight:500; color:#10b981;">✅ ${m.short}</span>
-                        <span style="font-size:0.68rem; color:#059669;">${m.movements} mvt</span>
+                        <span style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:0.68rem; color:#059669;">${m.movements} mvt</span>
+                            <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="viewRelevePdf('${m.key}')" title="Voir le PDF importé de ${m.short}">📄 PDF</button>
+                        </span>
                     </div>` : `
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4);">
                         <span style="font-size:0.82rem; font-weight:500; color:#b45309;">⏳ ${m.short}</span>
