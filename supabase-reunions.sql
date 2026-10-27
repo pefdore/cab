@@ -176,6 +176,8 @@ CREATE POLICY "Members delete own date votes" ON reunion_date_votes
 
 DROP POLICY IF EXISTS "Members update own sujets" ON reunion_sujets;
 DROP POLICY IF EXISTS "Members delete own sujets" ON reunion_sujets;
+DROP POLICY IF EXISTS "Cabinet members update sujets" ON reunion_sujets;
+DROP POLICY IF EXISTS "Creator deletes own sujet" ON reunion_sujets;
 
 -- Tout membre du cabinet peut modifier un sujet (updated_by facultatif pour tracer)
 ALTER TABLE reunion_sujets ADD COLUMN IF NOT EXISTS updated_by UUID REFERENCES auth.users(id);
