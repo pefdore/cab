@@ -147,6 +147,8 @@ ALTER TABLE reunion_date_votes ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Cabinet members view date votes" ON reunion_date_votes;
 DROP POLICY IF EXISTS "Members manage own date votes" ON reunion_date_votes;
+DROP POLICY IF EXISTS "Members update own date votes" ON reunion_date_votes;
+DROP POLICY IF EXISTS "Members delete own date votes" ON reunion_date_votes;
 
 CREATE POLICY "Cabinet members view date votes" ON reunion_date_votes
     FOR SELECT USING (
