@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
           </div>
         `,
         attachments: attachmentContent ? [{
-          filename: `honoraires-${pdf.month_key}.txt`,
+          filename: `honoraires-${pdf.month_key}.html`,
           content: attachmentContent
         }] : []
       })
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
             </div>
           `,
           attachments: attachmentContent ? [{
-            filename: `honoraires-${pdf.month_key}-${userLastName}.txt`,
+            filename: `honoraires-${pdf.month_key}-${userLastName}.html`,
             content: attachmentContent
           }] : []
         })
