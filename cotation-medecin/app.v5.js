@@ -959,6 +959,7 @@ function deletePDF(id) {
         .from('comptabilite')
         .delete()
         .eq('id', id)
+        .eq('user_id', currentUser.id)
         .then(({ error }) => {
             if (error) {
                 alert('Erreur lors de la suppression: ' + error.message);
@@ -1222,6 +1223,7 @@ async function loadData() {
         const { data: historyData, error: historyError } = await supabaseClient
             .from('comptabilite')
             .select('*')
+            .eq('user_id', currentUser.id)
             .order('generated_at', { ascending: false })
             .limit(12);
         
