@@ -10588,6 +10588,12 @@ async function reunionRenderOdj() {
     const byId = reunionMembersById(members);
     const votes = await reunionLoadSujetVotes(sujets.map(s => s.id));
     const canVote = reunionIsToday(r);
+    if (!canVote) {
+        const st = document.getElementById('odjStatus');
+        if (st && !st.querySelector('.reunion-vote-closed')) {
+            st.insertAdjacentHTML('beforeend', '<div class="reunion-cabinet-banner reunion-vote-closed" style="margin-top:8px;">⚠️ Les votes sont ouverts uniquement le jour de la réunion (' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '). Les boutons sont désactivés aujourd’hui.</div>');
+        }
+    }
     container.innerHTML = sujets.map((s, i) => {
         const arr = votes[s.id] || [];
         const mine = arr.find(v => v.user_id === currentUser.id);
@@ -10609,7 +10615,7 @@ async function reunionRenderOdj() {
             + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 0 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="0"' + (canVote ? '' : ' disabled') + '>✋ Abstention</button>'
             + '</div>';
         const sc = reunionVoteScore(arr);
-        html += '<div class="odj-vote-count">' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>';
+        html += '<div class="odj-vote-count">' + (mine ? 'Votre vote : <strong>' + (mine.vote === 1 ? 'Pour' : (mine.vote === -1 ? 'Contre' : 'Abstention')) + '</strong> — ' : '') + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>';
         html += reunionVotersHtml(arr, byId);
         html += '</div>';
         return html;
