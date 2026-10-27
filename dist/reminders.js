@@ -20,8 +20,8 @@ function remindersMonthHasData(mKey) {
 function remindersMissingMonths() {
     const now = new Date();
     const missing = [];
-    for (let i = 1; i <= 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    for (let m = 0; m <= now.getMonth(); m++) {
+        const d = new Date(now.getFullYear(), m, 1);
         const mKey = remindersMonthKey(d).slice(0, 7);
         if (!remindersMonthHasData(mKey)) {
             missing.push({ key: mKey, label: REMINDER_MONTHS[d.getMonth()] + ' ' + d.getFullYear() });
@@ -56,7 +56,7 @@ function renderReminders() {
     holder.innerHTML = `
         <div class="module-card" style="border-left: 3px solid var(--color-primary);">
             <h3>📅 Rappels relevés</h3>
-            <p class="module-desc">Mois sans aucun mouvement enregistré — pensez à importer le relevé de compte :</p>
+            <p class="module-desc">En ${now.getFullYear()}, ces mois n'ont encore aucun mouvement enregistré — pensez à importer le relevé de compte :</p>
             ${missing.slice(0, 6).map(m => `
                 <div class="flux-cat-row">
                     <span style="text-transform:capitalize; font-weight:500;">${m.label}</span>
