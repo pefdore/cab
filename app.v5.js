@@ -9859,6 +9859,7 @@ let reunionInitialized = false;
 let reunionMyCabinet = null;
 let reunionCurrentId = null;
 let reunionEtapeCouranteDetail = null;
+let reunionVoteFeedbackTimer = null;
 
 async function reunionGetCabinetId() {
     if (!supabaseClient || !currentUser) return null;
@@ -10315,8 +10316,11 @@ async function reunionFixDate() {
 
 async function reunionOpenDetail(reunionId) {
     reunionCurrentId = reunionId;
+    reunionEtapeCouranteDetail = null;
     const detailEl = document.getElementById('reunionDetailView');
+    const listCard = document.getElementById('reunionsListCard');
     if (!detailEl) return;
+    if (listCard) listCard.style.display = 'none';
     detailEl.style.display = 'block';
     detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await reunionRenderDetail();
@@ -10324,8 +10328,13 @@ async function reunionOpenDetail(reunionId) {
 
 async function reunionCloseDetail() {
     reunionCurrentId = null;
+    reunionEtapeCouranteDetail = null;
     const detailEl = document.getElementById('reunionDetailView');
-    if (detailEl) detailEl.style.display = 'none';
+    const listCard = document.getElementById('reunionsListCard');
+    if (detailEl) { detailEl.style.display = 'none'; detailEl.innerHTML = ''; }
+    if (listCard) listCard.style.display = 'block';
+    await reunionRenderList();
+    if (listCard) listCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function reunionGetCurrent() {
@@ -10367,7 +10376,7 @@ async function reunionRenderDetail() {
     let html = '<div class="module-card">'
         + '<div class="reunion-detail-header">'
         + '<h3>Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</h3>'
-        + '<button class="action-btn" id="reunionDetailCloseBtn">Fermer</button>'
+        + '<button class="action-btn" id="reunionDetailCloseBtn">← Retour aux réunions</button>'
         + '</div>'
         + '<div class="odj-empty">Étape actuelle : <strong>' + reunionEtapeLabel(etape) + '</strong>'
         + (etape === 'propositions' ? ' — jusqu’au jour de la réunion, chaque associé peut ajouter des sujets.' : '')
@@ -10427,6 +10436,7 @@ async function reunionRenderEtape(etape, etapeReelle) {
 
     if (etape === 'odj') {
         let html = '<div id="odjStatus"></div>'
+            + '<div id="odjVoteFeedback" class="reunion-cabinet-banner" style="display:none; margin-top:8px;"></div>'
             + '<button class="action-btn" id="odjGenerateBtn">Générer l’ordre du jour avec IA</button>'
             + '<div id="odjResult"></div>';
         box.innerHTML = html;
@@ -10684,10 +10694,14 @@ async function reunionVote(sujetId, vote) {
             .eq('sujet_id', sujetId)
             .eq('user_id', currentUser.id)
             .maybeSingle();
+        let removed = false;
         if (existing.data && existing.data.vote === vote) {
-            await supabaseClient.from('reunion_votes').delete().eq('id', existing.data.id);
+            const del = await supabaseClient.from('reunion_votes').delete().eq('id', existing.data.id);
+            if (del.error) throw del.error;
+            removed = true;
         } else if (existing.data) {
-            await supabaseClient.from('reunion_votes').update({ vote: vote }).eq('id', existing.data.id);
+            const upd = await supabaseClient.from('reunion_votes').update({ vote: vote }).eq('id', existing.data.id);
+            if (upd.error) throw upd.error;
         } else {
             const { error } = await supabaseClient
                 .from('reunion_votes')
@@ -10695,6 +10709,13 @@ async function reunionVote(sujetId, vote) {
             if (error) throw error;
         }
         await reunionRenderOdj();
+        const fb = document.getElementById('odjVoteFeedback');
+        if (fb) {
+            fb.textContent = removed ? 'Vote retiré.' : 'Vote enregistré — vous pouvez encore le changer.';
+            fb.style.display = 'block';
+            clearTimeout(reunionVoteFeedbackTimer);
+            reunionVoteFeedbackTimer = setTimeout(() => { fb.style.display = 'none'; }, 3000);
+        }
     } catch (e) {
         console.error('[REUNIONS] vote error:', e);
         alert('Erreur de vote : ' + (e.message || e));

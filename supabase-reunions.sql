@@ -123,6 +123,10 @@ CREATE POLICY "Cabinet members view votes" ON reunion_votes
 CREATE POLICY "Members manage own votes" ON reunion_votes
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Members update own votes" ON reunion_votes;
+CREATE POLICY "Members update own votes" ON reunion_votes
+    FOR UPDATE USING (auth.uid() = user_id);
+
 DROP POLICY IF EXISTS "Members delete own votes" ON reunion_votes;
 CREATE POLICY "Members delete own votes" ON reunion_votes
     FOR DELETE USING (auth.uid() = user_id);
