@@ -44,28 +44,126 @@ function loadUrgenceData() {
             urgenceData = JSON.parse(raw);
             if (!Array.isArray(urgenceData.products)) urgenceData.products = URGENCE_DEFAULT_PRODUCTS.slice();
             if (!Array.isArray(urgenceData.pointages)) urgenceData.pointages = [];
+            if (!Array.isArray(urgenceData.orders)) urgenceData.orders = [];
             if (!urgenceData.lastPointage) urgenceData.lastPointage = null;
         } else {
             urgenceData = {
                 products: URGENCE_DEFAULT_PRODUCTS.slice(),
                 pointages: [],
+                orders: [],
                 lastPointage: null
             };
             saveUrgenceData();
         }
     } catch (e) {
         console.error('[URGENCE] Erreur chargement:', e);
-        urgenceData = { products: URGENCE_DEFAULT_PRODUCTS.slice(), pointages: [], lastPointage: null };
+        urgenceData = { products: URGENCE_DEFAULT_PRODUCTS.slice(), pointages: [], orders: [], lastPointage: null };
     }
+    // Synchro Supabase (partage multi-appareils / multi-sessions du cabinet)
+    urgenceSyncPull();
 }
 
 function saveUrgenceData() {
     try {
         localStorage.setItem(URGENCE_STORAGE_KEY, JSON.stringify(urgenceData));
+        localStorage.setItem(URGENCE_STORAGE_KEY + '_ts', String(Date.now()));
     } catch (e) {
         console.error('[URGENCE] Erreur sauvegarde:', e);
         if (typeof showToast === 'function') showToast('Erreur : stockage local indisponible', 'error');
     }
+    urgenceSyncPush();
+}
+
+// ---------- Synchro Supabase (cabinet partagé) ----------
+let _urgenceSyncTimer = null;
+let _urgencePullTimer = null;
+let _urgenceLastSyncedAt = 0;
+
+async function urgenceGetCabinetId() {
+    try {
+        if (typeof supabaseClient === 'undefined' || !supabaseClient || !currentUser?.id) return null;
+        const { data, error } = await supabaseClient
+            .from('profiles')
+            .select('cabinet_id')
+            .eq('id', currentUser.id)
+            .single();
+        if (error || !data?.cabinet_id) return null;
+        return data.cabinet_id;
+    } catch (e) { return null; }
+}
+
+function urgenceSyncPush() {
+    if (_urgenceSyncTimer) clearTimeout(_urgenceSyncTimer);
+    _urgenceSyncTimer = setTimeout(async () => {
+        try {
+            if (typeof supabaseClient === 'undefined' || !supabaseClient || !currentUser?.id) return;
+            const cabinetId = await urgenceGetCabinetId();
+            if (!cabinetId || !urgenceData) return;
+            const { error } = await supabaseClient
+                .from('cabinet_stock_data')
+                .upsert({
+                    cabinet_id: cabinetId,
+                    data: urgenceData,
+                    updated_by: currentUser.id,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'cabinet_id' });
+            if (error) console.error('[URGENCE] Sync push:', error.message);
+            else _urgenceLastSyncedAt = Date.now();
+        } catch (e) {
+            console.error('[URGENCE] Sync push:', e);
+        }
+    }, 800);
+}
+
+async function urgenceSyncPull(force) {
+    try {
+        if (typeof supabaseClient === 'undefined' || !supabaseClient || !currentUser?.id) return;
+        const cabinetId = await urgenceGetCabinetId();
+        if (!cabinetId) return;
+        const { data, error } = await supabaseClient
+            .from('cabinet_stock_data')
+            .select('data, updated_at')
+            .eq('cabinet_id', cabinetId)
+            .single();
+        if (error || !data?.data) return;
+        const remote = data.data;
+        const remoteAt = new Date(data.updated_at).getTime();
+        const localRaw = localStorage.getItem(URGENCE_STORAGE_KEY);
+        const localAt = _urgenceLocalStorageTime();
+        // La donnée distante ne remplace le local que si plus recente (derniere ecriture gagne)
+        if (force || remoteAt > localAt) {
+            if (localRaw && Date.now() - _urgenceLastSyncedAt < 1500) return; // en cours d'ecriture locale
+            urgenceData = remote;
+            if (!Array.isArray(urgenceData.products)) urgenceData.products = URGENCE_DEFAULT_PRODUCTS.slice();
+            if (!Array.isArray(urgenceData.pointages)) urgenceData.pointages = [];
+            if (!Array.isArray(urgenceData.orders)) urgenceData.orders = [];
+            localStorage.setItem(URGENCE_STORAGE_KEY, JSON.stringify(urgenceData));
+            localStorage.setItem(URGENCE_STORAGE_KEY + '_ts', String(remoteAt));
+            if (typeof renderUrgenceStocks === 'function') renderUrgenceStocks();
+            if (typeof renderUrgenceAlerts === 'function') renderUrgenceAlerts();
+            if (typeof urgenceRenderOrders === 'function') urgenceRenderOrders();
+            if (typeof urgenceRenderCosts === 'function') urgenceRenderCosts();
+            if (typeof renderFluxView === 'function') renderFluxView();
+            console.log('[URGENCE] Sync pull: données distantes appliquées');
+        }
+    } catch (e) {
+        console.error('[URGENCE] Sync pull:', e);
+    }
+}
+
+function _urgenceLocalStorageTime() {
+    const ts = parseInt(localStorage.getItem(URGENCE_STORAGE_KEY + '_ts') || '0', 10);
+    return ts || 0;
+}
+
+// Rafraichissement periodique : capte les changements des autres sessions
+if (typeof window !== 'undefined' && !window._urgencePullInterval) {
+    window._urgencePullInterval = setInterval(() => {
+        if (typeof currentUser !== 'undefined' && currentUser?.id) urgenceSyncPull(false);
+    }, 30000);
+    window.addEventListener('focus', () => {
+        if (typeof currentUser !== 'undefined' && currentUser?.id) urgenceSyncPull(false);
+    });
 }
 
 // ---------- Utilitaires ----------
