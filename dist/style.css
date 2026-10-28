@@ -10595,7 +10595,7 @@ html.no-anim *::after {
     font-weight: 600;
     padding-bottom: 2px;
 }
-.ft-cell.ft-head:first-child { text-align: left; visibility: hidden; }
+.ft-cell.ft-head:first-child { text-align: left; }
 .ft-cell.ft-label {
     text-align: left;
     font-weight: 600;

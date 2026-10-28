@@ -91,7 +91,10 @@ function renderFluxView() {
         yBalEl.style.color = (yRec - yDep) >= 0 ? '#10b981' : '#ef4444';
     }
     if (yLblEl) yLblEl.textContent = String(yearNow);
-    if (mLblEl) mLblEl.textContent = FLUX_MONTH_NAMES[fluxCurrentMonth.getMonth()].toLowerCase();
+    if (mLblEl) {
+        const mName = FLUX_MONTH_NAMES[fluxCurrentMonth.getMonth()];
+        mLblEl.textContent = mName.charAt(0) + mName.slice(1).toLowerCase();
+    }
 
     // Jour par jour, groupé par catégorie
     const byDay = {};
