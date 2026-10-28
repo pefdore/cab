@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-CG9FTWvc.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-CKkAE7fo.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1111,51 +1111,6 @@ window.attemptLogin = function() {
                         <div class="ft-cell expense"><strong id="flux-total-depenses">0€</strong></div>
                         <div class="ft-cell balance"><strong id="flux-total-balance">0€</strong></div>
                     </div>
-                </div>
-
-                <!-- Saisie d'une dépense -->
-                <div class="module-card">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-                        <h3 style="margin:0;">Saisie manuelle</h3>
-                        <button class="action-btn primary" onclick="toggleFluxManualForm()">＋ Ajouter une ligne</button>
-                    </div>
-                    <div id="flux-manual-form" style="display:none; margin-top:12px;">
-                    <div class="depense-recette-toggle" style="margin-top:12px;">
-                        <button class="switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')">Dépense</button>
-                        <button class="switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')">Entrée / recette</button>
-                    </div>
-                    <div id="add-depense-form" style="margin-top: 12px;">
-                        <div class="inventory-filters" style="position:relative;">
-                            <select id="add-depenseCategory" class="form-input">
-                                <option value="">Catégorie…</option>
-                            </select>
-                            <select id="add-depenseSousCategorie" class="form-input">
-                                <option value="">Sous-catégorie…</option>
-                            </select>
-                            <input type="date" id="add-depenseDate" class="form-input">
-                            <input type="text" id="add-depenseDescription" class="form-input" placeholder="Description" autocomplete="off">
-                            <div id="add-depense-autocomplete" class="autocomplete-dropdown" style="display:none;"></div>
-                            <input type="number" step="0.01" id="add-depenseAmount" class="form-input" placeholder="Montant (€)">
-                            <button class="action-btn primary" id="add-saveDepenseBtn" onclick="saveDepense()">Enregistrer la dépense</button>
-                        </div>
-                    </div>
-                    <div id="add-recette-form" style="display:none; margin-top: 12px;">
-                        <div class="inventory-filters">
-                            <select id="add-recetteCategory" class="form-input">
-                                <option value="">Catégorie…</option>
-                            </select>
-                            <select id="add-recetteSousCategorie" class="form-input">
-                                <option value="">Sous-catégorie…</option>
-                            </select>
-                            <input type="date" id="add-recetteDate" class="form-input">
-                            <input type="text" id="add-recetteDescription" class="form-input" placeholder="Description">
-                            <input type="number" step="0.01" id="add-recetteAmount" class="form-input" placeholder="Montant (€)">
-                            <button class="action-btn primary" id="add-saveRecetteBtn" onclick="saveRecette()">Enregistrer la recette</button>
-                        </div>
-                    </div>
-                    </div>
-                    <p class="module-desc" style="margin-top:8px;">Vous pouvez aussi importer un relevé de compte : les écritures détectées seront proposées ici, formatées par catégorie, à valider une par une.</p>
-                    <button class="action-btn" onclick="document.getElementById('releve-upload-modal').style.display='flex'">Importer un relevé de compte</button>
                 </div>
 
                 <!-- Rappels relevés -->
@@ -2686,6 +2641,56 @@ window.attemptLogin = function() {
         </div>
 
         <!-- FAB - Floating Action Button -->
+        <!-- Saisie manuelle (dépense / entrée hors relevé bancaire) -->
+        <div id="manual-movement-modal" class="modal-overlay" style="display:none; z-index: 10000;">
+            <div class="modal-card" style="max-width: 520px; width: 95%; max-height: 88vh; overflow-y: auto;">
+                <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--color-border);">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.05rem;">Saisie manuelle</h3>
+                        <p style="margin: 3px 0 0; font-size: 0.75rem; color: #b45309;">⚠️ À réserver aux mouvements <strong>absents du relevé bancaire</strong> (paiement espèces, chèque personnel, prélèvement non bancaire…). Tout ce qui figure sur le relevé doit passer par l'import du relevé.</p>
+                    </div>
+                    <button class="modal-close" onclick="closeManualMovementModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <div class="depense-recette-toggle">
+                        <button class="switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')">Dépense</button>
+                        <button class="switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')">Entrée / recette</button>
+                    </div>
+                    <div id="add-depense-form" style="margin-top: 12px;">
+                        <div class="inventory-filters" style="position:relative;">
+                            <select id="add-depenseCategory" class="form-input">
+                                <option value="">Catégorie…</option>
+                            </select>
+                            <select id="add-depenseSousCategorie" class="form-input">
+                                <option value="">Sous-catégorie…</option>
+                            </select>
+                            <input type="date" id="add-depenseDate" class="form-input">
+                            <input type="text" id="add-depenseDescription" class="form-input" placeholder="Description" autocomplete="off">
+                            <div id="add-depense-autocomplete" class="autocomplete-dropdown" style="display:none;"></div>
+                            <input type="number" step="0.01" id="add-depenseAmount" class="form-input" placeholder="Montant (€)">
+                            <button class="action-btn primary" id="add-saveDepenseBtn" onclick="saveDepense()">Enregistrer la dépense</button>
+                        </div>
+                    </div>
+                    <div id="add-recette-form" style="display:none; margin-top: 12px;">
+                        <div class="inventory-filters">
+                            <select id="add-recetteCategory" class="form-input">
+                                <option value="">Catégorie…</option>
+                            </select>
+                            <select id="add-recetteSousCategorie" class="form-input">
+                                <option value="">Sous-catégorie…</option>
+                            </select>
+                            <input type="date" id="add-recetteDate" class="form-input">
+                            <input type="text" id="add-recetteDescription" class="form-input" placeholder="Description">
+                            <input type="number" step="0.01" id="add-recetteAmount" class="form-input" placeholder="Montant (€)">
+                            <button class="action-btn primary" id="add-saveRecetteBtn" onclick="saveRecette()">Enregistrer la recette</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="fab-container" id="fabContainer">
             <div class="fab-menu" id="fabMenu">
                 <div class="fab-menu-item" id="fab-add-passage" style="display:none;" onclick="fabAction('passage')">
@@ -2695,6 +2700,10 @@ window.attemptLogin = function() {
                 <div class="fab-menu-item" onclick="fabAction('releve')">
                     <span class="fab-menu-icon">🏦</span>
                     <span class="fab-menu-label">Ajouter un relevé bancaire</span>
+                </div>
+                <div class="fab-menu-item" onclick="fabAction('manual-movement')">
+                    <span class="fab-menu-icon">✍️</span>
+                    <span class="fab-menu-label">Dépense / entrée manuelle</span>
                 </div>
                 <div class="fab-menu-item" onclick="fabAction('contrat')">
                     <span class="fab-menu-icon">📄</span>
@@ -3429,6 +3438,21 @@ window.attemptLogin = function() {
       };
 
       // Use the existing switchView from app.v4.js for proper view loading
+
+      window.openManualMovementModal = function() {
+        const m = document.getElementById('manual-movement-modal');
+        if (!m) return;
+        m.style.display = 'flex';
+        if (typeof fluxInitCategorySelects === 'function') fluxInitCategorySelects();
+        if (typeof switchAddDepenseRecette === 'function') switchAddDepenseRecette('depense');
+        const d = document.getElementById('add-depenseDate');
+        if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+      };
+      window.closeManualMovementModal = function() {
+        const m = document.getElementById('manual-movement-modal');
+        if (m) m.style.display = 'none';
+      };
+
       window.fabAction = function(action) {
         const fab = document.getElementById('fabContainer');
         fab.classList.remove('open');
@@ -3438,6 +3462,11 @@ window.attemptLogin = function() {
           if (typeof openPassageModal === 'function') {
             openPassageModal();
           }
+          return;
+        }
+
+        if (action === 'manual-movement') {
+          openManualMovementModal();
           return;
         }
 
@@ -3491,20 +3520,6 @@ window.attemptLogin = function() {
         if (viewer) viewer.style.display = 'none';
       };
 
-
-      window.toggleFluxManualForm = function() {
-        const f = document.getElementById('flux-manual-form');
-        if (!f) return;
-        const open = f.style.display === 'none';
-        f.style.display = open ? 'block' : 'none';
-        const btn = event && event.target && event.target.closest('button');
-        if (btn) btn.textContent = open ? 'Masquer le formulaire' : '＋ Ajouter une ligne';
-        if (open && typeof fluxInitCategorySelects === 'function') fluxInitCategorySelects();
-        if (open) {
-            const d = document.getElementById('add-depenseDate');
-            if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
-        }
-      };
 
       window.renderReleveThumbs = function() {
         const el = document.getElementById('releveThumbs');
