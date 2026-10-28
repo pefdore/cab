@@ -83,9 +83,7 @@ async function secLoadJoinRequests() {
         // de cabinet_join_requests limite deja la lecture aux membres du cabinet.
         // En cas de divergence role, on tente l'affichage quand meme si un cabinet existe.
         if (!profile?.cabinet_id) {
-            if (typeof showToast === 'function') {
-                showToast('[SEC] Aucun cabinet sur votre profil medecin', 'error');
-            }
+            console.warn('[SEC-SPACE] pas de cabinet sur le profil');
             return [];
         }
         if (profile.role !== 'medecin_installe') {
@@ -100,9 +98,6 @@ async function secLoadJoinRequests() {
             .order('created_at', { ascending: true });
         if (error) {
             console.error('[SEC-SPACE] loadJoinRequests:', error.message);
-            if (typeof showToast === 'function') {
-                showToast('[SEC] Lecture demandes: ' + error.message, 'error');
-            }
             return [];
         }
         if (!data || data.length === 0) {
@@ -308,6 +303,14 @@ function secResetUiOnLogout() {
         if (el) { el.style.display = ''; el.classList.remove('active'); }
     });
     if (secSpacePollTimer) { clearInterval(secSpacePollTimer); secSpacePollTimer = null; }
+    // Restaurer le FAB pour le prochain utilisateur
+    const fab = document.getElementById('fabContainer');
+    if (fab) fab.style.display = '';
+    document.querySelectorAll('[data-settings-page]').forEach(el => { el.style.display = ''; });
+    ['settings-page-pdf', 'settings-page-cotation'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
 }
 
 function secApplySecretarySpace() {
@@ -348,6 +351,22 @@ function secApplySecretarySpace() {
     contentsToHide.forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.classList.remove('active'); el.style.display = 'none'; }
+    });
+    // Le bouton flottant (FAB) donne acces aux releves bancaires et depenses :
+    // reserve aux medecins. Masque pour toute secretaire.
+    const fab = document.getElementById('fabContainer');
+    if (fab) fab.style.display = 'none';
+    // Parametres : les pages reservees aux medecins sont masquees.
+    // La secretaire garde : profil, preferences (theme), donnees.
+    // Lui retirer : PDF & documents (logo, signature, IBAN, modeles),
+    // cotations, passages, IA, zone dangereuse.
+    document.querySelectorAll('[data-settings-page="pdf"], [data-settings-page="cotation"]').forEach(el => {
+        el.style.display = 'none';
+    });
+    const medPages = ['settings-page-pdf', 'settings-page-cotation'];
+    medPages.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
     });
 
     const content = document.getElementById('secSpaceContent');
