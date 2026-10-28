@@ -46,13 +46,17 @@ async function secResolveCabinetByAddress(address) {
         if (!address) return null;
         const { data } = await supabaseClient
             .from('cabinets')
-            .select('id, address')
+            .select('id, address, profiles(id)')
             .ilike('address', '%' + address + '%')
             .limit(5);
         if (!data || !data.length) return null;
         const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
-        const exact = data.find(c => norm(c.address) === norm(address));
-        return (exact || data[0]).id;
+        // En cas de cabinets partages (meme adresse), privilegier celui qui a
+        // deja des membres (le vrai cabinet) plutit que le premier trouve
+        const withMembers = data.filter(c => Array.isArray(c.profiles) && c.profiles.length > 0);
+        const pool = withMembers.length ? withMembers : data;
+        const exact = pool.find(c => norm(c.address) === norm(address));
+        return (exact || pool[0]).id;
     } catch (e) { return null; }
 }
 
