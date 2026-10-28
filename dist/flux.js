@@ -101,33 +101,37 @@ function renderFluxView() {
                 byDay[dayKey].depenses.forEach(d => {
                     const linked = (typeof reconLinkedOrdersLabel === 'function' && d.order_ids && d.order_ids.length) ? reconLinkedOrdersLabel(d) : '';
                     rows.push(`
-                        <div class="depense-item">
-                            <div>
+                        <div class="depense-item flux-row">
+                            <div class="flux-row-main">
                                 <span class="category">${fluxEscapeHtml(fluxCategoryLabel(d.category, true))}</span>
                                 <span class="description">${fluxEscapeHtml(d.description || d.sous_categorie || '-')}</span>
                                 ${linked ? `<div style="font-size:0.72rem; color:var(--color-primary); margin-top:2px;">📦 ${fluxEscapeHtml(linked)}</div>` : ''}
                             </div>
-                            <div class="depense-right">
+                            <div class="flux-row-side">
                                 <span class="amount">-${d.amount.toFixed(2)}€</span>
-                                <button class="action-btn" style="padding:2px 8px; font-size:0.7rem;" onclick="openReconModal(${d.id})" title="Rapprocher d'une commande">${d.order_ids && d.order_ids.length ? '⚙' : '＋'}</button>
-                                <button class="action-btn" style="padding:2px 8px; font-size:0.7rem; ${d.document_id ? 'color:var(--color-primary);' : ''}" onclick="openAttachModal(${d.id}, true)" title="${d.document_id ? 'Voir / changer la pièce jointe' : 'Associer une pièce jointe'}">${d.document_id ? '📎' : '🖇'}</button>
-                                <button class="edit-btn-small" onclick="editDepense(${d.id})" title="Modifier">✎</button>
-                                <button class="delete-btn-small" onclick="deleteDepense(${d.id})" title="Supprimer">✕</button>
+                                <div class="flux-row-actions">
+                                    <button class="icon-btn-28" onclick="openReconModal(${d.id})" title="Rapprocher d'une commande">${d.order_ids && d.order_ids.length ? '⚙' : '＋'}</button>
+                                    <button class="icon-btn-28 ${d.document_id ? 'active' : ''}" onclick="openAttachModal(${d.id}, true)" title="${d.document_id ? 'Voir / changer la pièce jointe' : 'Associer une pièce jointe'}">📎</button>
+                                    <button class="icon-btn-28" onclick="editDepense(${d.id})" title="Modifier">✎</button>
+                                    <button class="icon-btn-28 danger" onclick="deleteDepense(${d.id})" title="Supprimer">✕</button>
+                                </div>
                             </div>
                         </div>`);
                 });
                 byDay[dayKey].recettes.forEach(r => {
                     rows.push(`
-                        <div class="depense-item income">
-                            <div>
+                        <div class="depense-item income flux-row">
+                            <div class="flux-row-main">
                                 <span class="category">${fluxEscapeHtml(fluxCategoryLabel(r.category, false))}</span>
                                 <span class="description">${fluxEscapeHtml(r.description || '-')}</span>
                             </div>
-                            <div class="depense-right">
+                            <div class="flux-row-side">
                                 <span class="amount">+${r.amount.toFixed(2)}€</span>
-                                <button class="action-btn" style="padding:2px 8px; font-size:0.7rem; ${r.document_id ? 'color:var(--color-primary);' : ''}" onclick="openAttachModal(${r.id}, false)" title="${r.document_id ? 'Voir / changer la pièce jointe' : 'Associer une pièce jointe'}">${r.document_id ? '📎' : '🖇'}</button>
-                                <button class="edit-btn-small" onclick="editRecette(${r.id})" title="Modifier">✎</button>
-                                <button class="delete-btn-small" onclick="deleteRecette(${r.id})" title="Supprimer">✕</button>
+                                <div class="flux-row-actions">
+                                    <button class="icon-btn-28 ${r.document_id ? 'active' : ''}" onclick="openAttachModal(${r.id}, false)" title="${r.document_id ? 'Voir / changer la pièce jointe' : 'Associer une pièce jointe'}">📎</button>
+                                    <button class="icon-btn-28" onclick="editRecette(${r.id})" title="Modifier">✎</button>
+                                    <button class="icon-btn-28 danger" onclick="deleteRecette(${r.id})" title="Supprimer">✕</button>
+                                </div>
                             </div>
                         </div>`);
                 });
