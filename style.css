@@ -8837,8 +8837,7 @@ html.no-anim *::after {
     display: block;
 }
 
-/* =====================================
-   MODULE SALLE D'URGENCE
+/* ==============================   MODULE SALLE D'URGENCE
    ============================================ */
 
 .urgence-cat-badge {
@@ -10241,8 +10240,7 @@ html.no-anim *::after {
     box-shadow: 0 0 0 1px var(--color-primary);
 }
 
-/* =====================================
-   MODULE SALLE D'URGENCE — Commandes & Coûts
+/* ==============================   MODULE SALLE D'URGENCE — Commandes & Coûts
    ============================================ */
 
 .urgence-order-card {
@@ -10885,7 +10883,8 @@ html.no-anim *::after {
     color: #7f1d1d;
     border-radius: 10px;
     padding: 10px 12px;
-=======
+}
+
 /* ===== Note personnelle inline sous le libellé ===== */
 .flux-note {
     display: block;
