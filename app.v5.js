@@ -97,6 +97,14 @@ async function onAuthSuccess() {
     setDefaultDate();
     populateCotationSelect();
     
+    // Des que le role est connu (metadata), appliquer l'espace secretaire sans
+    // attendre le chargement complet : evite le flash du dashboard medecin
+    // pendant 1-2 s a l'arrivee depuis le lien de validation email
+    if (typeof secApplySecretarySpace === 'function' &&
+        (currentUser?.user_metadata?.role === 'secretaire')) {
+        secApplySecretarySpace();
+    }
+    
     // Setup event listeners
     setupEventListeners();
     
@@ -181,7 +189,11 @@ function onAuthLogout() {
         sessionStorage.removeItem('cab_current_view');
         localStorage.removeItem('cab_pending_secretary_cabinet');
         localStorage.removeItem('cab_pending_secretary_cabinet_id');
+        // Purger le cache de reglages (logo, signature) : donnees par compte,
+        // elles ne doivent jamais fuiter d'un compte vers le suivant
+        localStorage.removeItem('userSettings');
     } catch (e) {}
+    settings = { logo: null, signature: null, cotation_enabled: localStorage.getItem('cotation_enabled') || null };
     if (typeof secResetUiOnLogout === 'function') secResetUiOnLogout();
     entries = [];
     patients = [];
@@ -7282,14 +7294,12 @@ async function loadUserProfile() {
 
 async function loadUserSettings() {
     console.log('[SETTINGS] Loading user settings (key/value)');
-    try {
-        const ls = JSON.parse(localStorage.getItem('userSettings') || '{}');
-        Object.keys(ls).forEach(k => {
-            if (settings[k] === undefined || settings[k] === null) settings[k] = ls[k];
-        });
-    } catch (e) {
-        console.log('[SETTINGS] localStorage parse error:', e);
-    }
+    // Le localStorage userSettings est un cache par APPAREIL, pas par compte :
+    // a chaque chargement on repart des valeurs serveur du compte courant.
+    // Sans cela, la signature/logo d'un compte precedent fuite vers le suivant
+    // (ex : medecin puis secretaire sur le meme navigateur).
+    try { localStorage.removeItem('userSettings'); } catch (e) {}
+    settings = { logo: null, signature: null, cotation_enabled: localStorage.getItem('cotation_enabled') || null };
 
     if (!currentUser || !supabaseClient) {
         renderLogoPreview();
