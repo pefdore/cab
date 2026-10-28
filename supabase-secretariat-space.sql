@@ -140,16 +140,19 @@ CREATE OR REPLACE FUNCTION sec_resolve_target_cabinet(p_profile record)
 RETURNS UUID AS $$
 DECLARE
     v_cabinet UUID;
+    v_exists BOOLEAN;
 BEGIN
-    -- 1) cabinet_id direct
+    -- 1) cabinet_id direct, seulement s'il pointe vers un cabinet existant
     IF p_profile.cabinet_id IS NOT NULL THEN
-        -- Si la secretaire est rattachee mais qu'aucune demande n'existe,
-        -- on garde ce cabinet comme cible (cas retro-compatibilite gele :
-        -- l'acces reste verrouille tant que la demande n'est pas approved)
-        RETURN p_profile.cabinet_id;
+        SELECT EXISTS (SELECT 1 FROM cabinets c WHERE c.id = p_profile.cabinet_id)
+          INTO v_exists;
+        IF v_exists THEN
+            RETURN p_profile.cabinet_id;
+        END IF;
+        -- sinon : cabinet_id orphelin (cabinet supprime) -> resolution par adresse
     END IF;
 
-    -- 2) resolution par adresse : cabinet avec des membres d'abord
+    -- 2) resolution par adresse : cabinet avec des medecins associes d'abord
     IF p_profile.cabinet_address IS NOT NULL THEN
         SELECT c.id INTO v_cabinet
         FROM cabinets c
