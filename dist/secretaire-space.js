@@ -73,13 +73,24 @@ function secEsc(s) {
 async function secLoadJoinRequests() {
     try {
         if (typeof supabaseClient === 'undefined' || !supabaseClient || !window.currentUser?.id) return [];
-        const { data: profile } = await supabaseClient
+        const { data: profile, error: pErr } = await supabaseClient
             .from('profiles')
             .select('cabinet_id, role')
             .eq('id', window.currentUser.id)
             .single();
-        if (!profile?.cabinet_id) return [];
-        if (profile.role !== 'medecin_installe') return [];
+        // Tolerance : on ne filtre plus sur le role (user_profiles peut diverger de
+        // profiles et la table lue par loadUserProfile est user_profiles) ; la RLS
+        // de cabinet_join_requests limite deja la lecture aux membres du cabinet.
+        // En cas de divergence role, on tente l'affichage quand meme si un cabinet existe.
+        if (!profile?.cabinet_id) {
+            if (typeof showToast === 'function') {
+                showToast('[SEC] Aucun cabinet sur votre profil medecin', 'error');
+            }
+            return [];
+        }
+        if (profile.role !== 'medecin_installe') {
+            console.warn('[SEC-SPACE] role dans profiles =', profile.role, '- tentative d\'affichage quand meme');
+        }
 
         const { data, error } = await supabaseClient
             .from('cabinet_join_requests')
@@ -89,7 +100,13 @@ async function secLoadJoinRequests() {
             .order('created_at', { ascending: true });
         if (error) {
             console.error('[SEC-SPACE] loadJoinRequests:', error.message);
+            if (typeof showToast === 'function') {
+                showToast('[SEC] Lecture demandes: ' + error.message, 'error');
+            }
             return [];
+        }
+        if (!data || data.length === 0) {
+            console.log('[SEC-SPACE] 0 demande pending pour le cabinet', profile.cabinet_id);
         }
         return data || [];
     } catch (e) {
