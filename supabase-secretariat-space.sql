@@ -125,3 +125,86 @@ CREATE INDEX IF NOT EXISTS idx_cabinet_tasks_cabinet ON cabinet_tasks(cabinet_id
 --             WHERE p2.id = auth.uid() AND p2.role = 'medecin_installe'
 --         )
 --     );
+
+-- ============================================================
+-- CREATION AUTOMATIQUE DE LA DEMANDE (cote serveur)
+-- Trigger : des qu'une secretaire a un cabinet_cible connu dans profiles
+-- (cabinet_id OU cabinet_address), la demande pending est creee/mise a jour
+-- par le serveur. Plus aucune dependance au client : la demande existe
+-- des l'inscription ou la mise a jour du profil.
+-- ============================================================
+
+-- Fonction : resoudre le cabinet cible d'une secretaire.
+-- Privilege le cabinet qui a deja des membres en cas d'adresses en doublon.
+CREATE OR REPLACE FUNCTION sec_resolve_target_cabinet(p_profile record)
+RETURNS UUID AS $$
+DECLARE
+    v_cabinet UUID;
+BEGIN
+    -- 1) cabinet_id direct
+    IF p_profile.cabinet_id IS NOT NULL THEN
+        -- Si la secretaire est rattachee mais qu'aucune demande n'existe,
+        -- on garde ce cabinet comme cible (cas retro-compatibilite gele :
+        -- l'acces reste verrouille tant que la demande n'est pas approved)
+        RETURN p_profile.cabinet_id;
+    END IF;
+
+    -- 2) resolution par adresse : cabinet avec des membres d'abord
+    IF p_profile.cabinet_address IS NOT NULL THEN
+        SELECT c.id INTO v_cabinet
+        FROM cabinets c
+        WHERE c.address ILIKE '%' || p_profile.cabinet_address || '%'
+        ORDER BY (
+            SELECT count(*) FROM profiles m
+            WHERE m.cabinet_id = c.id AND m.role = 'medecin_installe'
+        ) DESC, c.created_at ASC
+        LIMIT 1;
+        RETURN v_cabinet;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
+-- Fonction : creer la demande pending si elle n'existe pas
+CREATE OR REPLACE FUNCTION sec_ensure_join_request()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_cabinet UUID;
+    v_name TEXT;
+    v_email TEXT;
+    v_role TEXT;
+BEGIN
+    v_role := NEW.role;
+    IF v_role IS DISTINCT FROM 'secretaire' THEN
+        RETURN NEW;
+    END IF;
+
+    v_cabinet := sec_resolve_target_cabinet(NEW);
+    IF v_cabinet IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    v_name := trim(coalesce(NEW.first_name, '') || ' ' || coalesce(NEW.last_name, ''));
+    v_email := NEW.email;
+
+    INSERT INTO cabinet_join_requests
+        (cabinet_id, requester_id, requester_name, requester_email, role, status)
+    VALUES
+        (v_cabinet, NEW.id, coalesce(nullif(v_name, ''), 'Secretaire'),
+         coalesce(v_email, ''), 'secretaire', 'pending')
+    ON CONFLICT DO NOTHING;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Index unique pour que ON CONFLICT DO NOTHING protege des doublons
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_join_request_per_requester_cabinet
+    ON cabinet_join_requests (requester_id, cabinet_id);
+
+DROP TRIGGER IF EXISTS trg_sec_ensure_join_request ON profiles;
+CREATE TRIGGER trg_sec_ensure_join_request
+    AFTER INSERT OR UPDATE OF role, cabinet_id, cabinet_address
+    ON profiles
+    FOR EACH ROW EXECUTE FUNCTION sec_ensure_join_request();
