@@ -292,34 +292,44 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
             return;
         }
         
-        // Save cabinet address to public cabinets table if it's a new cabinet
-        if (cabinetAddress && !cabinetId) {
-            await supabaseClient.from('cabinets').insert({
-                address: cabinetAddress,
-                name: firstName + ' ' + lastName
-            });
+        // Cabinet : creation (fondateur) ou rattachement
+        // - Medecin qui cree un nouveau cabinet : fondateur, rattache directement
+        // - Medecin qui REJOINT un cabinet existant : validation obligatoire par un
+        //   associe deja valide (meme process que la secretaire)
+        // - Une secretaire ne cree jamais de cabinet
+        if (cabinetAddress && !cabinetId && role !== 'secretaire') {
+            const { data: newCab } = await supabaseClient
+                .from('cabinets')
+                .insert({
+                    address: cabinetAddress,
+                    name: firstName + ' ' + lastName
+                })
+                .select('id')
+                .single();
+            cabinetId = newCab?.id || null;
         }
         
         // Update user profile with cabinet_id
-        // Une secretaire n'est pas rattachee directement : sa demande doit etre validee
-        // par un medecin associe (cabinet_join_requests) avant d'acceder a l'espace cabinet.
         const isSecretarySignup = (role === 'secretaire');
-        if (isSecretarySignup && cabinetAddress) {
-            // On enregistre l'adresse du cabinet visé pour la demande de validation,
-            // mais PAS cabinet_id : l'accès ne sera accordé qu'après approbation.
+        const isDoctorJoining = (role === 'medecin_installe' && !!cabinetId);
+        const needsValidation = isSecretarySignup || isDoctorJoining;
+        if (needsValidation && (cabinetAddress || cabinetId)) {
+            // On enregistre l'adresse (et l'id exact) du cabinet vise pour la demande
+            // de validation, mais PAS cabinet_id : l'acces ne sera accorde qu'apres
+            // approbation par un associe deja valide du cabinet.
             const { error: addrError } = await supabaseClient
                 .from('profiles')
                 .update({ cabinet_address: cabinetAddress })
                 .eq('id', data.user.id);
             if (addrError) console.error('[AUTH] Error saving cabinet_address:', addrError);
             try {
-                localStorage.setItem('cab_pending_secretary_cabinet', cabinetAddress);
+                localStorage.setItem('cab_pending_secretary_cabinet', cabinetAddress || '');
                 // Cabinet selectionne via la modale « rejoindre un cabinet » : id exact
                 if (cabinetId) localStorage.setItem('cab_pending_secretary_cabinet_id', cabinetId);
                 else localStorage.removeItem('cab_pending_secretary_cabinet_id');
             } catch (e) {}
         }
-        if (data.user && (cabinetId || cabinetAddress) && !isSecretarySignup) {
+        if (data.user && (cabinetId || cabinetAddress) && !needsValidation) {
             const { error: profileError } = await supabaseClient
                 .from('profiles')
                 .update({
@@ -335,8 +345,8 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
             }
         }
         
-        if (isSecretarySignup) {
-            alert('Compte créé ! Votre demande d\'accès au cabinet a été enregistrée : un médecin associé doit la valider pour activer votre espace secrétariat. Veuillez aussi confirmer votre adresse email.');
+        if (needsValidation) {
+            alert('Compte créé ! Votre demande d\'accès au cabinet a été enregistrée : un médecin associé du cabinet doit la valider pour vous donner accès à l\'espace cabinet. Veuillez aussi confirmer votre adresse email.');
         } else {
             alert('Compte créé! Veuillez vérifier votre email pour confirmer votre adresse.');
         }

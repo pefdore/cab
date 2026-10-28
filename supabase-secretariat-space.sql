@@ -179,12 +179,27 @@ DECLARE
     v_role TEXT;
 BEGIN
     v_role := NEW.role;
-    IF v_role IS DISTINCT FROM 'secretaire' THEN
+
+    -- Process uniforme pour tout membre rejoignant un cabinet :
+    -- secretaire ET medecin_installe qui rejoignent un cabinet existant
+    -- passent par la validation. Un medecin fondateur (qui cree le cabinet)
+    -- est rattache directement par l'app et n'a pas de demande a creer :
+    -- il est deja membre, aucune demande ne doit exister pour lui-meme.
+    IF v_role NOT IN ('secretaire', 'medecin_installe') THEN
         RETURN NEW;
     END IF;
 
     v_cabinet := sec_resolve_target_cabinet(NEW);
     IF v_cabinet IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    -- Ne pas creer de demande si le profil est deja rattache directement
+    -- (fondateur ou membre deja valide/approuve)
+    IF NEW.cabinet_id IS NOT NULL AND EXISTS (
+        SELECT 1 FROM profiles m
+        WHERE m.cabinet_id = NEW.cabinet_id AND m.role = 'medecin_installe'
+    ) THEN
         RETURN NEW;
     END IF;
 
@@ -194,8 +209,8 @@ BEGIN
     INSERT INTO cabinet_join_requests
         (cabinet_id, requester_id, requester_name, requester_email, role, status)
     VALUES
-        (v_cabinet, NEW.id, coalesce(nullif(v_name, ''), 'Secretaire'),
-         coalesce(v_email, ''), 'secretaire', 'pending')
+        (v_cabinet, NEW.id, coalesce(nullif(v_name, ''), 'Membre'),
+         coalesce(v_email, ''), coalesce(v_role, 'secretaire'), 'pending')
     ON CONFLICT DO NOTHING;
 
     RETURN NEW;
