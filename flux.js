@@ -110,6 +110,7 @@ function renderFluxView() {
                             <div class="depense-right">
                                 <span class="amount">-${d.amount.toFixed(2)}€</span>
                                 <button class="action-btn" style="padding:2px 8px; font-size:0.7rem;" onclick="openReconModal(${d.id})" title="Rapprocher d'une commande">${d.order_ids && d.order_ids.length ? '⚙' : '＋'}</button>
+                                <button class="action-btn" style="padding:2px 8px; font-size:0.7rem; ${d.document_id ? 'color:var(--color-primary);' : ''}" onclick="openAttachModal(${d.id}, true)" title="${d.document_id ? 'Voir / changer la pièce jointe' : 'Associer une pièce jointe'}">${d.document_id ? '📎' : '🖇'}</button>
                                 <button class="edit-btn-small" onclick="editDepense(${d.id})" title="Modifier">✎</button>
                                 <button class="delete-btn-small" onclick="deleteDepense(${d.id})" title="Supprimer">✕</button>
                             </div>
@@ -124,6 +125,7 @@ function renderFluxView() {
                             </div>
                             <div class="depense-right">
                                 <span class="amount">+${r.amount.toFixed(2)}€</span>
+                                <button class="action-btn" style="padding:2px 8px; font-size:0.7rem; ${r.document_id ? 'color:var(--color-primary);' : ''}" onclick="openAttachModal(${r.id}, false)" title="${r.document_id ? 'Voir / changer la pièce jointe' : 'Associer une pièce jointe'}">${r.document_id ? '📎' : '🖇'}</button>
                                 <button class="edit-btn-small" onclick="editRecette(${r.id})" title="Modifier">✎</button>
                                 <button class="delete-btn-small" onclick="deleteRecette(${r.id})" title="Supprimer">✕</button>
                             </div>

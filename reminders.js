@@ -57,14 +57,24 @@ function renderReminders() {
         }
     });
 
-    // Checklist annuelle dans la vue Flux
+    // Checklist annuelle dans la vue Flux (pliee par defaut)
     const holder = document.getElementById('flux-reminders');
     if (!holder) return;
     const all = remindersYearMonths();
     const okCount = all.filter(m => m.imported).length;
+    const pendingCount = all.length - okCount;
+    const open = window._releveListOpen === true;
+    const headerColor = pendingCount > 0 ? '#b45309' : '#059669';
+    const headerTxt = pendingCount > 0
+        ? `${pendingCount} relevé${pendingCount > 1 ? 's' : ''} en attente d'import`
+        : `Tous les relevés ${new Date().getFullYear()} sont importés ✅`;
     holder.innerHTML = `
         <div class="module-card" style="border-left: 3px solid var(--color-primary);">
-            <h3>📅 Relevés ${new Date().getFullYear()} — ${okCount}/${all.length} importés</h3>
+            <div onclick="toggleReleveChecklist()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
+                <h3 style="margin:0; color:${headerColor};">📅 ${headerTxt}</h3>
+                <span style="font-size:0.8rem; color:var(--color-text-secondary);">${open ? '▲ Replier' : '▼ Détail (' + okCount + '/' + all.length + ')'}</span>
+            </div>
+            <div id="releve-checklist-body" style="display:${open ? 'block' : 'none'}; margin-top:12px;">
             <p class="module-desc">Relevés de compte de l'année en cours. Les mois en vert sont importés, pas besoin de les refaire. Les mois en attente attendent leur relevé.</p>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;">
                 ${all.map(m => m.imported ? `
@@ -80,8 +90,14 @@ function renderReminders() {
                         <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="document.getElementById('releve-upload-modal').style.display='flex'" title="Importer le relevé de ${m.short}">Importer</button>
                     </div>`).join('')}
             </div>
+            </div>
         </div>`;
 }
 
 window.renderReminders = renderReminders;
 window.remindersMissingMonths = remindersMissingMonths;
+
+window.toggleReleveChecklist = function() {
+    window._releveListOpen = !window._releveListOpen;
+    renderReminders();
+};

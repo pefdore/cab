@@ -7501,8 +7501,11 @@ async function handleRelevéUpload(event) {
                 out.category = learned.category;
                 out.learned = true;
             }
-            if (findExistingDuplicate(out)) {
+            const dup = findExistingDuplicate(out);
+            if (dup) {
                 out.duplicate = true;
+                out.duplicateOf = dup;
+                out.rejected = true;
             }
             return out;
         });
@@ -7982,8 +7985,14 @@ function renderTransactionsList() {
         ` : '';
         
         return `
-            <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.duplicate ? 'border-left: 3px solid #ef4444;' : ''}">
-                ${t.duplicate ? '<div style="font-size:0.72rem; color:#ef4444; font-weight:600; margin-bottom:4px;">⚠️ Probable doublon — déjà en base (même date, montant, libellé)</div>' : ''}
+            <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.rejected ? 'opacity: 0.45; border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);' : (t.duplicate ? 'border-left: 3px solid #f59e0b;' : '')}">
+                ${t.duplicate ? `<div style="padding:6px 8px; margin-bottom:6px; border-radius:6px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35);">
+                    <div style="font-size:0.72rem; color:#ef4444; font-weight:600; margin-bottom:4px;">⚠️ Doublon détecté — déjà en base (même date, montant, libellé). Le relevé fait foi.</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="action-btn" style="padding:2px 8px; font-size:0.68rem; ${t.rejected ? 'background:#ef4444; color:white;' : ''}" onclick="setTransactionRejected(${index}, true)">Rejeter la ligne</button>
+                        <button class="action-btn" style="padding:2px 8px; font-size:0.68rem; ${!t.rejected ? 'background:#10b981; color:white;' : ''}" onclick="setTransactionRejected(${index}, false)">Valider quand même</button>
+                    </div>
+                </div>` : ''}
                 ${suggestionHtml}
                 <div class="transaction-row">
                     <div class="transaction-field">
@@ -8368,6 +8377,7 @@ async function confirmAllTransactions() {
     try {
         // Check type - could be 'dépense', 'recette', or based on amount sign
         const depenses = pendingTransactions.filter(t => {
+            if (t.confirmed || t.rejected) return false;
             const isDepense = t.type === 'dépense' || (t.type !== 'recette' && t.amount < 0);
             return isDepense;
         }).map(t => ({
@@ -8379,6 +8389,7 @@ async function confirmAllTransactions() {
         }));
         
         const recettes = pendingTransactions.filter(t => {
+            if (t.confirmed || t.rejected) return false;
             const isRecette = t.type === 'recette' || (t.type !== 'dépense' && t.amount >= 0);
             return isRecette;
         }).map(t => ({
@@ -8498,7 +8509,7 @@ function addNewTransaction() {
 }
 
 function updatePendingCount() {
-    const count = pendingTransactions.filter(t => !t.confirmed).length;
+    const count = pendingTransactions.filter(t => !t.confirmed && !t.rejected).length;
     const badge = document.getElementById('pendingCountBadge');
     if (badge) {
         badge.textContent = count;
@@ -9859,6 +9870,7 @@ let reunionInitialized = false;
 let reunionMyCabinet = null;
 let reunionCurrentId = null;
 let reunionEtapeCouranteDetail = null;
+let reunionVoteFeedbackTimer = null;
 
 async function reunionGetCabinetId() {
     if (!supabaseClient || !currentUser) return null;
@@ -10315,8 +10327,11 @@ async function reunionFixDate() {
 
 async function reunionOpenDetail(reunionId) {
     reunionCurrentId = reunionId;
+    reunionEtapeCouranteDetail = null;
     const detailEl = document.getElementById('reunionDetailView');
+    const listCard = document.getElementById('reunionsListCard');
     if (!detailEl) return;
+    if (listCard) listCard.style.display = 'none';
     detailEl.style.display = 'block';
     detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await reunionRenderDetail();
@@ -10324,8 +10339,13 @@ async function reunionOpenDetail(reunionId) {
 
 async function reunionCloseDetail() {
     reunionCurrentId = null;
+    reunionEtapeCouranteDetail = null;
     const detailEl = document.getElementById('reunionDetailView');
-    if (detailEl) detailEl.style.display = 'none';
+    const listCard = document.getElementById('reunionsListCard');
+    if (detailEl) { detailEl.style.display = 'none'; detailEl.innerHTML = ''; }
+    if (listCard) listCard.style.display = 'block';
+    await reunionRenderList();
+    if (listCard) listCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function reunionGetCurrent() {
@@ -10367,7 +10387,7 @@ async function reunionRenderDetail() {
     let html = '<div class="module-card">'
         + '<div class="reunion-detail-header">'
         + '<h3>Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</h3>'
-        + '<button class="action-btn" id="reunionDetailCloseBtn">Fermer</button>'
+        + '<button class="action-btn" id="reunionDetailCloseBtn">← Retour aux réunions</button>'
         + '</div>'
         + '<div class="odj-empty">Étape actuelle : <strong>' + reunionEtapeLabel(etape) + '</strong>'
         + (etape === 'propositions' ? ' — jusqu’au jour de la réunion, chaque associé peut ajouter des sujets.' : '')
@@ -10427,6 +10447,7 @@ async function reunionRenderEtape(etape, etapeReelle) {
 
     if (etape === 'odj') {
         let html = '<div id="odjStatus"></div>'
+            + '<div id="odjVoteFeedback" class="reunion-cabinet-banner" style="display:none; margin-top:8px;"></div>'
             + '<button class="action-btn" id="odjGenerateBtn">Générer l’ordre du jour avec IA</button>'
             + '<div id="odjResult"></div>';
         box.innerHTML = html;
@@ -10578,6 +10599,12 @@ async function reunionRenderOdj() {
     const byId = reunionMembersById(members);
     const votes = await reunionLoadSujetVotes(sujets.map(s => s.id));
     const canVote = reunionIsToday(r);
+    if (!canVote) {
+        const st = document.getElementById('odjStatus');
+        if (st && !st.querySelector('.reunion-vote-closed')) {
+            st.insertAdjacentHTML('beforeend', '<div class="reunion-cabinet-banner reunion-vote-closed" style="margin-top:8px;">⚠️ Les votes sont ouverts uniquement le jour de la réunion (' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '). Les boutons sont désactivés aujourd’hui.</div>');
+        }
+    }
     container.innerHTML = sujets.map((s, i) => {
         const arr = votes[s.id] || [];
         const mine = arr.find(v => v.user_id === currentUser.id);
@@ -10599,7 +10626,7 @@ async function reunionRenderOdj() {
             + '<button class="action-btn odj-vote-btn ' + (mine && mine.vote === 0 ? 'voted' : '') + '" data-vote="' + s.id + '" data-val="0"' + (canVote ? '' : ' disabled') + '>✋ Abstention</button>'
             + '</div>';
         const sc = reunionVoteScore(arr);
-        html += '<div class="odj-vote-count">' + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>';
+        html += '<div class="odj-vote-count">' + (mine ? 'Votre vote : <strong>' + (mine.vote === 1 ? 'Pour' : (mine.vote === -1 ? 'Contre' : 'Abstention')) + '</strong> — ' : '') + sc.pour + ' pour · ' + sc.contre + ' contre · ' + sc.abstention + ' abstention</div>';
         html += reunionVotersHtml(arr, byId);
         html += '</div>';
         return html;
@@ -10684,10 +10711,14 @@ async function reunionVote(sujetId, vote) {
             .eq('sujet_id', sujetId)
             .eq('user_id', currentUser.id)
             .maybeSingle();
+        let removed = false;
         if (existing.data && existing.data.vote === vote) {
-            await supabaseClient.from('reunion_votes').delete().eq('id', existing.data.id);
+            const del = await supabaseClient.from('reunion_votes').delete().eq('id', existing.data.id);
+            if (del.error) throw del.error;
+            removed = true;
         } else if (existing.data) {
-            await supabaseClient.from('reunion_votes').update({ vote: vote }).eq('id', existing.data.id);
+            const upd = await supabaseClient.from('reunion_votes').update({ vote: vote }).eq('id', existing.data.id);
+            if (upd.error) throw upd.error;
         } else {
             const { error } = await supabaseClient
                 .from('reunion_votes')
@@ -10695,6 +10726,13 @@ async function reunionVote(sujetId, vote) {
             if (error) throw error;
         }
         await reunionRenderOdj();
+        const fb = document.getElementById('odjVoteFeedback');
+        if (fb) {
+            fb.textContent = removed ? 'Vote retiré.' : 'Vote enregistré — vous pouvez encore le changer.';
+            fb.style.display = 'block';
+            clearTimeout(reunionVoteFeedbackTimer);
+            reunionVoteFeedbackTimer = setTimeout(() => { fb.style.display = 'none'; }, 3000);
+        }
     } catch (e) {
         console.error('[REUNIONS] vote error:', e);
         alert('Erreur de vote : ' + (e.message || e));
@@ -11044,3 +11082,11 @@ async function attachTransactionPreview(index) {
 }
 window.attachTransactionPreview = attachTransactionPreview;
 window.releveCropLineDataUrl = releveCropLineDataUrl;
+
+function setTransactionRejected(index, rejected) {
+    if (!pendingTransactions[index]) return;
+    pendingTransactions[index].rejected = rejected;
+    renderTransactionsList();
+    updatePendingCount();
+}
+window.setTransactionRejected = setTransactionRejected;

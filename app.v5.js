@@ -7501,8 +7501,11 @@ async function handleRelevéUpload(event) {
                 out.category = learned.category;
                 out.learned = true;
             }
-            if (findExistingDuplicate(out)) {
+            const dup = findExistingDuplicate(out);
+            if (dup) {
                 out.duplicate = true;
+                out.duplicateOf = dup;
+                out.rejected = true;
             }
             return out;
         });
@@ -7982,8 +7985,14 @@ function renderTransactionsList() {
         ` : '';
         
         return `
-            <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.duplicate ? 'border-left: 3px solid #ef4444;' : ''}">
-                ${t.duplicate ? '<div style="font-size:0.72rem; color:#ef4444; font-weight:600; margin-bottom:4px;">⚠️ Probable doublon — déjà en base (même date, montant, libellé)</div>' : ''}
+            <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.rejected ? 'opacity: 0.45; border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);' : (t.duplicate ? 'border-left: 3px solid #f59e0b;' : '')}">
+                ${t.duplicate ? `<div style="padding:6px 8px; margin-bottom:6px; border-radius:6px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35);">
+                    <div style="font-size:0.72rem; color:#ef4444; font-weight:600; margin-bottom:4px;">⚠️ Doublon détecté — déjà en base (même date, montant, libellé). Le relevé fait foi.</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="action-btn" style="padding:2px 8px; font-size:0.68rem; ${t.rejected ? 'background:#ef4444; color:white;' : ''}" onclick="setTransactionRejected(${index}, true)">Rejeter la ligne</button>
+                        <button class="action-btn" style="padding:2px 8px; font-size:0.68rem; ${!t.rejected ? 'background:#10b981; color:white;' : ''}" onclick="setTransactionRejected(${index}, false)">Valider quand même</button>
+                    </div>
+                </div>` : ''}
                 ${suggestionHtml}
                 <div class="transaction-row">
                     <div class="transaction-field">
@@ -8368,6 +8377,7 @@ async function confirmAllTransactions() {
     try {
         // Check type - could be 'dépense', 'recette', or based on amount sign
         const depenses = pendingTransactions.filter(t => {
+            if (t.confirmed || t.rejected) return false;
             const isDepense = t.type === 'dépense' || (t.type !== 'recette' && t.amount < 0);
             return isDepense;
         }).map(t => ({
@@ -8379,6 +8389,7 @@ async function confirmAllTransactions() {
         }));
         
         const recettes = pendingTransactions.filter(t => {
+            if (t.confirmed || t.rejected) return false;
             const isRecette = t.type === 'recette' || (t.type !== 'dépense' && t.amount >= 0);
             return isRecette;
         }).map(t => ({
@@ -8498,7 +8509,7 @@ function addNewTransaction() {
 }
 
 function updatePendingCount() {
-    const count = pendingTransactions.filter(t => !t.confirmed).length;
+    const count = pendingTransactions.filter(t => !t.confirmed && !t.rejected).length;
     const badge = document.getElementById('pendingCountBadge');
     if (badge) {
         badge.textContent = count;
@@ -11071,3 +11082,11 @@ async function attachTransactionPreview(index) {
 }
 window.attachTransactionPreview = attachTransactionPreview;
 window.releveCropLineDataUrl = releveCropLineDataUrl;
+
+function setTransactionRejected(index, rejected) {
+    if (!pendingTransactions[index]) return;
+    pendingTransactions[index].rejected = rejected;
+    renderTransactionsList();
+    updatePendingCount();
+}
+window.setTransactionRejected = setTransactionRejected;

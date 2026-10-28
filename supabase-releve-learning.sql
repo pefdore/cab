@@ -67,3 +67,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Rapprochement dépenses fournisseurs <-> commandes de stock
 ALTER TABLE cabinet_depenses
     ADD COLUMN IF NOT EXISTS order_ids TEXT[] DEFAULT NULL;
+
+-- Pièces jointes sur les lignes de flux
+ALTER TABLE cabinet_depenses
+    ADD COLUMN IF NOT EXISTS document_id UUID REFERENCES documents(id) ON DELETE SET NULL;
+ALTER TABLE cabinet_recettes
+    ADD COLUMN IF NOT EXISTS document_id UUID REFERENCES documents(id) ON DELETE SET NULL;
