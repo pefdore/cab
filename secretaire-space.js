@@ -204,6 +204,32 @@ async function secCreateJoinRequest(cabinetId) {
 
 // ---------- Espace secretaire : activation de la vue ----------
 
+function secResetUiOnLogout() {
+    const secSpace = document.getElementById('secretarySpace');
+    if (secSpace) secSpace.style.display = 'none';
+    const banner = document.getElementById('secPendingApprovalBanner');
+    if (banner) banner.style.display = 'none';
+    const joinBanner = document.getElementById('secJoinRequestsBanner');
+    if (joinBanner) { joinBanner.style.display = 'none'; joinBanner.innerHTML = ''; }
+    ['secNavBadge', 'secNavBadgeMobile'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.style.display = 'none';
+    });
+    // Restaurer la visibilite par defaut des vues et onglets
+    ['view-dashboard', 'view-flux', 'view-history', 'view-urgence'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = '';
+    });
+    document.querySelectorAll('.nav-item, .mobile-nav-item, .cabinet-tab').forEach(item => {
+        item.style.display = '';
+    });
+    ['cabinet-secretariat', 'cabinet-reunions', 'cabinet-remplacants'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.display = ''; el.classList.remove('active'); }
+    });
+    if (secSpacePollTimer) { clearInterval(secSpacePollTimer); secSpacePollTimer = null; }
+}
+
 function secApplySecretarySpace() {
     const secSpace = document.getElementById('secretarySpace');
     if (!secSpace) return;
@@ -512,6 +538,22 @@ function secStartRequestsPolling() {
     }, 30000);
 }
 
+function secStartApprovalWatch() {
+    // Le profil charge en async : on re-evalue le role quelques fois apres le login
+    // pour afficher le bandeau/badge des demandes des que currentProfile arrive
+    let tries = 0;
+    const watcher = setInterval(() => {
+        tries++;
+        if (!window.currentUser || tries > 20) { clearInterval(watcher); return; }
+        const role = window.currentProfile?.role || window.currentUser.user_metadata?.role;
+        if (role === 'medecin_installe') {
+            secRenderJoinRequestsBanner();
+            secStartRequestsPolling();
+            clearInterval(watcher);
+        }
+    }, 500);
+}
+
 // ---------- Init ----------
 
 async function initSecretarySpace() {
@@ -551,6 +593,9 @@ async function initSecretarySpace() {
     if (role === 'medecin_installe') {
         secRenderJoinRequestsBanner();
         secStartRequestsPolling();
+    } else {
+        // currentProfile pas encore charge : surveiller son arrivee
+        secStartApprovalWatch();
     }
 }
 
@@ -573,4 +618,5 @@ if (typeof window !== 'undefined') {
     window.secCreateJoinRequest = secCreateJoinRequest;
     window.secRefreshSpace = secRefreshSpace;
     window.secApplySecretarySpace = secApplySecretarySpace;
+    window.secResetUiOnLogout = secResetUiOnLogout;
 }

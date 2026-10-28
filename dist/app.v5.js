@@ -171,6 +171,18 @@ function onAuthLogout() {
     
     currentUser = null;
     currentProfile = null;
+    // Nettoyer les references globales et l'etat secretaire residuel,
+    // sinon le role de la session precedente s'applique au prochain login
+    window.currentUser = null;
+    window.currentProfile = null;
+    window._pendingSecretaryCabinetId = null;
+    try {
+        sessionStorage.removeItem('cab_sec_approved');
+        sessionStorage.removeItem('cab_current_view');
+        localStorage.removeItem('cab_pending_secretary_cabinet');
+        localStorage.removeItem('cab_pending_secretary_cabinet_id');
+    } catch (e) {}
+    if (typeof secResetUiOnLogout === 'function') secResetUiOnLogout();
     entries = [];
     patients = [];
     
