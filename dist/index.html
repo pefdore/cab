@@ -11,14 +11,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Cotation">
-    <link rel="manifest" href="/assets/manifest-BGmaG6wq.json">
-    <link rel="icon" type="image/svg+xml" href="/assets/icon-192-mySIpaht.svg">
-    <link rel="apple-touch-icon" href="/assets/icon-192-mySIpaht.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon-192.svg">
+    <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
+    <link rel="stylesheet" href="style.css?v=202611024000">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-DZIGX93t.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -428,7 +428,7 @@ window.attemptLogin = function() {
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                         <polyline points="9 22 9 12 15 12 15 22"/>
                     </svg>
-                    Cabinet
+                    <span style="position:relative;">Cabinet<span id="secNavBadge" style="display:none; position:absolute; top:-6px; right:-14px; background:#f59e0b; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span></span>
                 </a>
                 <a href="#" class="nav-item" data-view="settings">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1720,6 +1720,9 @@ window.attemptLogin = function() {
                     </div>
                 </div>
 
+                <!-- Bandeau : demandes d'acces secretaire en attente (medecins associes) -->
+                <div id="secJoinRequestsBanner" class="sec-join-banner" style="display:none;"></div>
+
                 <div class="cabinet-tabs">
                     <button class="cabinet-tab active" data-tab="secretariat">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -2368,6 +2371,71 @@ window.attemptLogin = function() {
                         <div id="historiqueList" class="historique-list"></div>
                         <div id="noHistorique" class="no-entries" style="display:none;">
                             <p>Aucun historique de remplacement</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                     ESPACE SECRETAIRE (visible uniquement pour les secretaires
+                     validees par un medecin associe du cabinet)
+                     ============================================================ -->
+                <div id="secretarySpace" class="secretary-space" style="display:none;">
+                    <div class="secretary-header">
+                        <div class="secretary-title">
+                            <span class="secretary-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </span>
+                            <div>
+                                <h2>Espace Secrétariat</h2>
+                                <p>Bonjour ! Voici vos tâches et l'état des stocks du cabinet.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bandeau : acces en attente de validation -->
+                    <div id="secPendingApprovalBanner" class="sec-pending-banner" style="display:none;">
+                        <span class="sec-pending-icon">⏳</span>
+                        <div>
+                            <span class="sec-pending-title">Accès en attente de validation</span>
+                            <span class="sec-pending-text">Votre demande a bien été envoyée. Un médecin associé du cabinet doit la valider pour activer votre espace.</span>
+                        </div>
+                    </div>
+
+                    <div id="secSpaceContent">
+                        <!-- Gestionnaire de taches -->
+                        <div class="module-card">
+                            <div class="sec-tasks-header">
+                                <h3>Mes tâches</h3>
+                                <span class="sec-tasks-counter"><span id="secTasksCounter">0</span> en cours</span>
+                            </div>
+                            <p class="module-desc">Ce que vous avez à faire au cabinet. Les médecins associés peuvent aussi vous en attribuer.</p>
+                            <div class="sec-task-new">
+                                <input type="text" id="secNewTaskTitle" class="form-input" placeholder="Nouvelle tâche (« Commande fournitures », « Relancer laboratoire »…)">
+                                <input type="text" id="secNewTaskNotes" class="form-input" placeholder="Détails (optionnel)">
+                                <div class="sec-task-new-row">
+                                    <input type="date" id="secNewTaskDue" class="form-input">
+                                    <select id="secNewTaskPrio" class="form-input">
+                                        <option value="basse">Priorité basse</option>
+                                        <option value="normale" selected>Priorité normale</option>
+                                        <option value="haute">Priorité haute</option>
+                                    </select>
+                                    <button class="action-btn primary" onclick="secAddTask()">+ Ajouter</button>
+                                </div>
+                            </div>
+                            <h4 class="sec-tasks-subtitle">En cours</h4>
+                            <div id="secTasksTodo" class="sec-tasks-list"></div>
+                            <h4 class="sec-tasks-subtitle">Terminées</h4>
+                            <div id="secTasksDone" class="sec-tasks-list done-list"></div>
+                        </div>
+
+                        <!-- Synthese stocks -->
+                        <div class="module-card">
+                            <div class="sec-tasks-header">
+                                <h3>Gestion de stock</h3>
+                                <button class="action-btn" onclick="secGoToStocksTab()">Gérer les stocks</button>
+                            </div>
+                            <p class="module-desc">État du stock partagé de la salle d'urgence du cabinet.</p>
+                            <div id="secSpaceStocksSummary"></div>
                         </div>
                     </div>
                 </div>
@@ -3056,7 +3124,7 @@ window.attemptLogin = function() {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
-                <span>Cabinet</span>
+                <span style="position:relative;">Cabinet<span id="secNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#f59e0b; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
             <a href="#" class="mobile-nav-item" data-view="settings">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3096,14 +3164,15 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202611023000" defer></script>
-    <script src="secretariat.js?v=202611023000" defer></script>
-    <script src="urgence.js?v=202611023000" defer></script>
-    <script src="flux.js?v=202611023000" defer></script>
-    <script src="reconciliation.js?v=202611023000" defer></script>
-    <script src="reminders.js?v=202611023000" defer></script>
-    <script src="attachments.js?v=202611023000" defer></script>
-    <script src="urgence-orders.js?v=202611023000" defer></script>
+    <script src="app.v5.js?v=202611024000" defer></script>
+    <script src="secretariat.js?v=202611024000" defer></script>
+    <script src="secretaire-space.js?v=202611024000" defer></script>
+    <script src="urgence.js?v=202611024000" defer></script>
+    <script src="flux.js?v=202611024000" defer></script>
+    <script src="reconciliation.js?v=202611024000" defer></script>
+    <script src="reminders.js?v=202611024000" defer></script>
+    <script src="attachments.js?v=202611024000" defer></script>
+    <script src="urgence-orders.js?v=202611024000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
@@ -3314,7 +3383,7 @@ window.attemptLogin = function() {
         setTimeout(function() {
           // The fallback is already set, but we can try to load the real script
           var script = document.createElement('script');
-          script.src = 'secretariat.js?v=202611023000';
+          script.src = 'secretariat.js?v=202611024000';
           script.onload = function() {
             console.log('[DEBUG] Secretariat script loaded');
             if (typeof window.showAddEmployeeModal === 'function' && window.showAddEmployeeModal.toString().indexOf('[FALLBACK]') > -1) {
