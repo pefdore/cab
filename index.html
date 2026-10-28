@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-J0Itw__K.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-DosTCV0W.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1096,19 +1096,21 @@ window.attemptLogin = function() {
                 <h2>Flux</h2>
                 <p class="urgence-page-desc">Flux des entrées et des dépenses du cabinet, jour par jour et mois par mois, classés par catégorie. Le dashboard s'alimente automatiquement de ces données.</p>
 
-                <!-- Totaux du mois -->
-                <div class="compta-summary">
-                    <div class="compta-card income">
-                        <span class="compta-label">Entrées du mois</span>
-                        <span class="compta-value" id="flux-total-recettes">0€</span>
+                <!-- Synthèse compacte : année puis mois -->
+                <div class="flux-totals">
+                    <div class="flux-totals-row">
+                        <span class="flux-totals-title">Année <strong id="flux-year-label"></strong></span>
+                        <span class="flux-totals-sep"></span>
+                        <span class="flux-total expense"><span class="lbl">Dépenses</span> <strong id="flux-year-depenses">0€</strong></span>
+                        <span class="flux-total income"><span class="lbl">Entrées</span> <strong id="flux-year-recettes">0€</strong></span>
+                        <span class="flux-total balance"><span class="lbl">Solde</span> <strong id="flux-year-balance">0€</strong></span>
                     </div>
-                    <div class="compta-card expense">
-                        <span class="compta-label">Dépenses du mois</span>
-                        <span class="compta-value" id="flux-total-depenses">0€</span>
-                    </div>
-                    <div class="compta-card balance">
-                        <span class="compta-label">Solde du mois</span>
-                        <span class="compta-value" id="flux-total-balance">0€</span>
+                    <div class="flux-totals-row month">
+                        <span class="flux-totals-title">Mois <strong id="flux-month-label"></strong></span>
+                        <span class="flux-totals-sep"></span>
+                        <span class="flux-total expense"><span class="lbl">Dépenses</span> <strong id="flux-total-depenses">0€</strong></span>
+                        <span class="flux-total income"><span class="lbl">Entrées</span> <strong id="flux-total-recettes">0€</strong></span>
+                        <span class="flux-total balance"><span class="lbl">Solde</span> <strong id="flux-total-balance">0€</strong></span>
                     </div>
                 </div>
 

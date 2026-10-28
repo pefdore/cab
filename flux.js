@@ -75,6 +75,24 @@ function renderFluxView() {
         balEl.style.color = (totalRecettes - totalDepenses) >= 0 ? '#10b981' : '#ef4444';
     }
 
+    // Synthèse année en cours (depuis janvier)
+    const yearNow = fluxCurrentMonth.getFullYear();
+    const yDep = cabinetDepenses.filter(d => (d.date || '').slice(0, 4) === String(yearNow)).reduce((s, d) => s + d.amount, 0);
+    const yRec = cabinetRecettes.filter(r => (r.date || '').slice(0, 4) === String(yearNow)).reduce((s, r) => s + r.amount, 0);
+    const yDepEl = document.getElementById('flux-year-depenses');
+    const yRecEl = document.getElementById('flux-year-recettes');
+    const yBalEl = document.getElementById('flux-year-balance');
+    const yLblEl = document.getElementById('flux-year-label');
+    const mLblEl = document.getElementById('flux-month-label');
+    if (yDepEl) yDepEl.textContent = yDep.toFixed(2) + '€';
+    if (yRecEl) yRecEl.textContent = yRec.toFixed(2) + '€';
+    if (yBalEl) {
+        yBalEl.textContent = (yRec - yDep).toFixed(2) + '€';
+        yBalEl.style.color = (yRec - yDep) >= 0 ? '#10b981' : '#ef4444';
+    }
+    if (yLblEl) yLblEl.textContent = String(yearNow);
+    if (mLblEl) mLblEl.textContent = FLUX_MONTH_NAMES[fluxCurrentMonth.getMonth()].toLowerCase();
+
     // Jour par jour, groupé par catégorie
     const byDay = {};
     monthDepenses.forEach(d => {
