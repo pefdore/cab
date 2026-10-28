@@ -10648,8 +10648,7 @@ html.no-anim *::after {
     width: 100%;
 }
 
-/* ============================================================
-   ESPACE SECRETAIRE
+/* =====================================================   ESPACE SECRETAIRE
    ============================================================ */
 
 .secretary-space {
@@ -10886,4 +10885,49 @@ html.no-anim *::after {
     color: #7f1d1d;
     border-radius: 10px;
     padding: 10px 12px;
+=======
+/* ===== Note personnelle inline sous le libellé ===== */
+.flux-note {
+    display: block;
+    font-size: 0.72rem;
+    font-style: italic;
+    color: var(--color-text-tertiary);
+    min-height: 0;
+    padding: 0;
+    outline: none;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.flux-note:empty::before {
+    content: "＋ note";
+    opacity: 0.55;
+    font-style: italic;
+}
+.flux-note:focus {
+    background: var(--color-primary-light, #eef2ff);
+    border-radius: 4px;
+    padding: 0 4px;
+    white-space: normal;
+    overflow: visible;
+}
+.flux-note.filled {
+    color: var(--color-text-secondary);
+}
+
+/* ===== Cartes pliées : plus compactes ===== */
+#flux-reminders .module-card,
+#flux-recon-pending .module-card {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+#flux-reminders .module-card h3,
+#flux-recon-pending .module-card h3 {
+    font-size: 0.88rem;
+}
+#flux-reminders .module-card .module-desc,
+#flux-recon-pending .module-card .module-desc {
+    font-size: 0.72rem;
+    margin: 4px 0 0;
 }

@@ -165,11 +165,11 @@ window.renderReconPending = function() {
     container.innerHTML = `
         <div class="module-card" style="border-left: 3px solid #f59e0b;">
             <div onclick="toggleReconPending()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
-                <h3 style="margin:0; color:#b45309;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
-                <span style="font-size:0.8rem; color:var(--color-text-secondary);">${open ? '▲ Replier' : '▼ Détail'}</span>
+                <h3 style="margin:0; color:#b45309; font-size:0.88rem;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
+                <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼'}</span>
             </div>
-            <p class="module-desc" style="margin:6px 0 0;">Paiements fournisseurs du relevé probablement liés à des commandes passées dans la gestion des stocks (matériel, consommables). Rapprocher chaque dépense de sa commande pour suivre le coût réel du stock dans le dashboard.</p>
-            <div id="recon-pending-body" style="display:${open ? 'block' : 'none'}; margin-top:10px;">
+            <div id="recon-pending-body" style="display:${open ? 'block' : 'none'}; margin-top:8px;">
+            <p class="module-desc" style="font-size:0.72rem; margin:0 0 8px;">Paiements fournisseurs du relevé probablement liés à des commandes passées dans la gestion des stocks (matériel, consommables). Rapprocher chaque dépense de sa commande pour suivre le coût réel du stock dans le dashboard.</p>
             ${pending.slice(0, 8).map(d => `
                 <div class="depense-item flux-row">
                     <div class="flux-row-main">

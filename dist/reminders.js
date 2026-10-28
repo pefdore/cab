@@ -71,8 +71,8 @@ function renderReminders() {
     holder.innerHTML = `
         <div class="module-card" style="border-left: 3px solid var(--color-primary);">
             <div onclick="toggleReleveChecklist()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
-                <h3 style="margin:0; color:${headerColor};">📅 ${headerTxt}</h3>
-                <span style="font-size:0.8rem; color:var(--color-text-secondary);">${open ? '▲ Replier' : '▼ Détail (' + okCount + '/' + all.length + ')'}</span>
+                <h3 style="margin:0; color:${headerColor}; font-size:0.88rem;">📅 ${headerTxt}</h3>
+                <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼ ' + okCount + '/' + all.length}</span>
             </div>
             <div id="releve-checklist-body" style="display:${open ? 'block' : 'none'}; margin-top:12px;">
             <p class="module-desc">Relevés de compte de l'année en cours. Les mois en vert sont importés, pas besoin de les refaire. Les mois en attente attendent leur relevé.</p>
