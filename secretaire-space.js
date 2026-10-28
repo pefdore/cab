@@ -314,13 +314,21 @@ function secApplySecretarySpace() {
         }
     });
     // Dans l'espace Cabinet : masquer les onglets reserves aux medecins
-    // (Secretariat RH, Reunions, Remplacants) ainsi que leurs contenus
+    // (Secretariat RH, Reunions, Remplacants) ainsi que leurs contenus.
+    // L'onglet Stocks reste visible seulement si la secretaire est approuvee.
+    const approved = secIsApproved();
+    const tabsToHide = approved
+        ? ['secretariat', 'reunions', 'remplacants']
+        : ['secretariat', 'reunions', 'remplacants', 'stocks'];
     document.querySelectorAll('.cabinet-tab').forEach(tab => {
-        if (['secretariat', 'reunions', 'remplacants'].includes(tab.dataset.tab)) {
+        if (tabsToHide.includes(tab.dataset.tab)) {
             tab.style.display = 'none';
         }
     });
-    ['cabinet-secretariat', 'cabinet-reunions', 'cabinet-remplacants'].forEach(id => {
+    const contentsToHide = approved
+        ? ['cabinet-secretariat', 'cabinet-reunions', 'cabinet-remplacants']
+        : ['cabinet-secretariat', 'cabinet-reunions', 'cabinet-remplacants', 'cabinet-stocks'];
+    contentsToHide.forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.classList.remove('active'); el.style.display = 'none'; }
     });
