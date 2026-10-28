@@ -10609,3 +10609,41 @@ html.no-anim *::after {
     .ft-cell { font-size: 0.72rem; }
     .ft-cell.ft-label { font-size: 0.7rem; }
 }
+
+/* ===== Modal saisie manuelle : formulaire responsive ===== */
+.mm-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.mm-form .form-input,
+.mm-form select,
+.mm-form input {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+}
+.mm-form button.action-btn {
+    width: 100%;
+    margin-top: 4px;
+    padding: 12px;
+    font-size: 0.9rem;
+}
+#manual-movement-modal .depense-recette-toggle {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+#manual-movement-modal .depense-recette-toggle .switch-btn {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+}
+#manual-movement-modal .modal-body {
+    padding: 16px;
+}
+#manual-movement-modal .autocomplete-dropdown {
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+}
