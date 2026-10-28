@@ -88,6 +88,18 @@ Deno.serve(async (req) => {
       
       if (!userEmail) continue
 
+      // Email comptabilite du medecin : depuis ses Parametres (user_settings), sinon la variable globale
+      let medecinAccEmail = accountingEmail
+      try {
+        const { data: settingRow } = await supabase
+          .from('user_settings')
+          .select('value')
+          .eq('user_id', pdf.user_id)
+          .eq('key', 'accounting_email')
+          .maybeSingle()
+        if (settingRow && settingRow.value) medecinAccEmail = settingRow.value
+      } catch (_e) { /* fallback vers global */ }
+
       // Extract content from data URI
       let attachmentContent = ''
       if (pdf.pdf_data && pdf.pdf_data.includes(',')) {
@@ -114,18 +126,19 @@ Deno.serve(async (req) => {
           </div>
         `,
         attachments: attachmentContent ? [{
-          filename: `honoraires-${pdf.month_key}.txt`,
-          content: attachmentContent
+          filename: `honoraires-${pdf.month_key}.pdf`,
+          content: attachmentContent,
+          contentType: 'application/pdf'
         }] : []
       })
 
       console.log(`Email sent to physician: ${userEmail}`, physicianResult)
 
-      // Send to accounting
-      if (accountingEmail && accountingEmail !== 'comptabilite@hopital.fr') {
+      // Send to accounting (email fixe defini dans les Parametres du medecin)
+      if (medecinAccEmail && medecinAccEmail !== 'comptabilite@hopital.fr') {
         const accountingResult = await resend.emails.send({
           from: 'Cotation Médecin <onboarding@resend.dev>',
-          to: [accountingEmail],
+          to: [medecinAccEmail],
           subject: `Honoraires ${pdf.month_name} - ${userName} ${userLastName}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -140,15 +153,16 @@ Deno.serve(async (req) => {
             </div>
           `,
           attachments: attachmentContent ? [{
-            filename: `honoraires-${pdf.month_key}-${userLastName}.txt`,
-            content: attachmentContent
+            filename: `honoraires-${pdf.month_key}-${userLastName}.pdf`,
+            content: attachmentContent,
+            contentType: 'application/pdf'
           }] : []
         })
 
         console.log(`Email sent to accounting: ${accountingEmail}`, accountingResult)
       }
 
-      results.push({ email: userEmail, accounting: accountingEmail, sent: true })
+      results.push({ email: userEmail, accounting: medecinAccEmail, sent: true })
     }
 
     return new Response(JSON.stringify({ 
