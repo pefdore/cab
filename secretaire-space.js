@@ -79,7 +79,7 @@ async function secLoadJoinRequests() {
 
         const { data, error } = await supabaseClient
             .from('cabinet_join_requests')
-            .select('*')
+            .select('*, cabinets(address, name)')
             .eq('cabinet_id', profile.cabinet_id)
             .eq('status', 'pending')
             .order('created_at', { ascending: true });
@@ -123,6 +123,7 @@ async function secRenderJoinRequestsBanner() {
                 '<div class="sec-request-info">' +
                     '<span class="sec-request-name">' + secEsc((r.requester_name || '').trim() || 'Secretaire') + '</span>' +
                     '<span class="sec-request-email">' + secEsc(r.requester_email || '') + '</span>' +
+                    (r.cabinets?.address ? '<span class="sec-request-cabinet">Cabinet : ' + secEsc(r.cabinets.address) + '</span>' : '') +
                 '</div>' +
                 '<div class="sec-request-actions">' +
                     '<button class="action-btn primary" onclick="secApproveRequest(\'' + r.id + '\')">Approuver</button>' +
