@@ -1,12 +1,13 @@
-const CACHE_NAME = 'cotation-v202611023000';
+const CACHE_NAME = 'cotation-v202611024000';
 const ASSETS = [
   '/',
   '/index.html',
-  '/app.v5.js?v=202611023000',
-  '/secretariat.js?v=202611023000',
-  '/urgence.js?v=202611023000',
-  '/urgence-orders.js?v=202611023000',
-  '/style.css?v=202611023000',
+  '/app.v5.js?v=202611024000',
+  '/secretariat.js?v=202611024000',
+  '/secretaire-space.js?v=202611024000',
+  '/urgence.js?v=202611024000',
+  '/urgence-orders.js?v=202611024000',
+  '/style.css?v=202611024000',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
@@ -28,32 +29,39 @@ self.addEventListener('activate', event => {
           }
         })
       )
-    ).then(() => self.clients.claim())  // prend le contrôle immédiatement des onglets ouverts
+    )
   );
+  return self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-  // N'intercepter que les requêtes same-origin (app, JS, CSS)
-  if (url.origin !== self.location.origin) return;
+  const request = event.request;
+  const url = new URL(request.url);
 
-  // Stratégie network-first : reseau d'abord, cache en secours.
-  // Evite de servir indefiniment une vieille version, et evite la page blanche
-  // quand l'URL versionnee n'est pas encore en cache.
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        if (response && response.status === 200 && response.type === 'basic') {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
-        }
-        return response;
+  // 1. Jamais de cache pour l'API
+  if (url.pathname.startsWith('/api/')) {
+    return;
+  }
+
+  // 2. Auth Supabase / API externes : reseau direct (pas de cache)
+  if (url.hostname.includes('supabase.co')) {
+    return;
+  }
+
+  // 3. Static assets: cache-first avec update en arriere-plan
+  if (request.method === 'GET' && url.origin === location.origin) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async cache => {
+        const cached = await cache.match(request, { ignoreSearch: true });
+        const fetchPromise = fetch(request).then(response => {
+          if (response && response.status === 200) {
+            cache.put(request, response.clone());
+          }
+          return response;
+        }).catch(() => cached);
+
+        return cached || fetchPromise;
       })
-      .catch(() =>
-        // secours hors-ligne : cache, sinon la page d'accueil
-        caches.match(event.request).then(cached =>
-          cached || caches.match('/index.html')
-        )
-      )
-  );
+    );
+  }
 });

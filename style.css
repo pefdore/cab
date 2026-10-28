@@ -10648,6 +10648,244 @@ html.no-anim *::after {
     width: 100%;
 }
 
+/* =====================================================   ESPACE SECRETAIRE
+   ============================================================ */
+
+.secretary-space {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    padding: 4px 0 24px;
+}
+
+.secretary-header .secretary-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.secretary-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--color-primary-light, #eef2ff);
+    color: var(--color-primary, #2563eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.secretary-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.secretary-header p {
+    margin: 2px 0 0;
+    color: var(--color-text-secondary, #64748b);
+    font-size: 0.88rem;
+}
+
+/* Bandeau d'attente de validation */
+.sec-pending-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 12px;
+    padding: 16px;
+    color: #92400e;
+}
+
+.sec-pending-icon { font-size: 1.6rem; }
+
+.sec-pending-title {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.sec-pending-text { font-size: 0.88rem; }
+
+/* Bandeau demandes d'acces (cote medecin) */
+.sec-join-banner {
+    background: var(--color-bg-elevated, #fff);
+    border: 1px solid #f59e0b;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.sec-join-banner h3 {
+    margin: 0 0 2px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #b45309;
+}
+
+.sec-banner-desc {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary, #64748b);
+}
+
+.sec-request-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.sec-request-info { display: flex; flex-direction: column; }
+.sec-request-name { font-weight: 600; }
+.sec-request-email { font-size: 0.82rem; color: var(--color-text-secondary, #64748b); }
+.sec-request-actions { display: flex; gap: 8px; }
+
+/* Gestionnaire de taches */
+.sec-tasks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sec-tasks-header h3 { margin: 0; }
+
+.sec-tasks-counter {
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: var(--color-primary-light, #eef2ff);
+    color: var(--color-primary, #2563eb);
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+
+.sec-task-new {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 14px 0 6px;
+}
+
+.sec-task-new-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.sec-task-new-row .form-input { flex: 1; min-width: 140px; width: auto; }
+
+.sec-tasks-subtitle {
+    margin: 18px 0 10px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-secondary, #64748b);
+}
+
+.sec-tasks-list { display: flex; flex-direction: column; gap: 8px; }
+
+.sec-task-empty {
+    color: var(--color-text-secondary, #64748b);
+    font-size: 0.88rem;
+    margin: 4px 0;
+}
+
+.sec-task-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.sec-task-card.done { opacity: 0.6; }
+.sec-task-card.done .sec-task-title { text-decoration: line-through; }
+
+.sec-task-check input { width: 18px; height: 18px; cursor: pointer; }
+
+.sec-task-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.sec-task-title { font-weight: 600; }
+.sec-task-notes { font-size: 0.85rem; color: var(--color-text-secondary, #64748b); }
+
+.sec-task-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+}
+
+.sec-task-prio { border-radius: 999px; padding: 2px 8px; font-weight: 600; }
+.sec-task-prio-high { background: #fee2e2; color: #b91c1c; }
+.sec-task-prio-normal { background: #e0e7ff; color: #3730a3; }
+.sec-task-prio-low { background: #e2e8f0; color: #475569; }
+
+.sec-task-due { color: var(--color-text-secondary, #64748b); }
+.sec-task-due.late { color: #b91c1c; font-weight: 600; }
+
+.sec-task-del {
+    border: none;
+    background: none;
+    color: var(--color-text-secondary, #94a3b8);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 4px;
+}
+
+.sec-task-del:hover { color: #b91c1c; }
+
+/* Synthese stocks */
+.sec-stock-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.sec-stock-tile {
+    background: var(--color-bg-elevated, #fff);
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sec-stock-tile.warn { border-color: #fca5a5; }
+
+.sec-stock-num { font-size: 1.4rem; font-weight: 700; }
+.sec-stock-label { font-size: 0.8rem; color: var(--color-text-secondary, #64748b); }
+
+.sec-stock-lowlist {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #7f1d1d;
+    border-radius: 10px;
+    padding: 10px 12px;
+=======
 /* ===== Note personnelle inline sous le libellé ===== */
 .flux-note {
     display: block;
