@@ -10565,3 +10565,50 @@ html.no-anim *::after {
         min-width: 30px;
     }
 }
+
+/* ===== Synthèse Flux : 2 lignes compactes (année puis mois) ===== */
+.flux-totals {
+    background: var(--color-bg-secondary, #f5f5f7);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.flux-totals-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+}
+.flux-totals-row.month {
+    padding-top: 4px;
+    border-top: 1px dashed var(--color-border);
+    font-size: 0.8rem;
+}
+.flux-totals-title {
+    font-weight: 600;
+    color: var(--color-text);
+    white-space: nowrap;
+}
+.flux-totals-sep {
+    flex: 0 0 1px;
+    align-self: stretch;
+    background: var(--color-border);
+}
+.flux-total {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+}
+.flux-total .lbl {
+    color: var(--color-text-secondary);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.flux-total.expense strong { color: #ef4444; }
+.flux-total.income strong { color: #10b981; }
+.flux-total.balance strong { font-size: 0.95rem; }
