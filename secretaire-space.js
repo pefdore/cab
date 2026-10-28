@@ -571,12 +571,14 @@ async function initSecretarySpace() {
             try { return localStorage.getItem('cab_pending_secretary_cabinet'); } catch (e) { return null; }
         })();
         const cabinetId = profile?.cabinet_id || pendingCabinetId || secGetStoredCabinetId() || await secResolveCabinetByAddress(profile?.cabinet_address || storedAddress);
-        if (cabinetId && !profile?.cabinet_id) {
-            // Requester pas encore rattachee : on note le cabinet pour la demande seulement
-            window._pendingSecretaryCabinetId = cabinetId;
+        if (cabinetId) {
+            // La demande de validation est (re)creee si elle n'existe pas encore,
+            // y compris pour une secretaire deja rattachee par un ancien bug :
+            // tant qu'aucune demande approved n'existe, l'acces reste verrouille
+            if (!profile?.cabinet_id) window._pendingSecretaryCabinetId = cabinetId;
             const { data: existing } = await supabaseClient
                 .from('cabinet_join_requests')
-                .select('id')
+                .select('id, status')
                 .eq('requester_id', window.currentUser.id)
                 .eq('cabinet_id', cabinetId)
                 .limit(1);
