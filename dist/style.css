@@ -10930,3 +10930,9 @@ html.no-anim *::after {
     font-size: 0.72rem;
     margin: 4px 0 0;
 }
+
+.sec-request-cabinet {
+    font-size: 0.78rem;
+    color: #b45309;
+    font-weight: 600;
+}
