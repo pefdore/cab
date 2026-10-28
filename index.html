@@ -1096,21 +1096,20 @@ window.attemptLogin = function() {
                 <h2>Flux</h2>
                 <p class="urgence-page-desc">Flux des entrées et des dépenses du cabinet, jour par jour et mois par mois, classés par catégorie. Le dashboard s'alimente automatiquement de ces données.</p>
 
-                <!-- Synthèse compacte : année puis mois -->
+                <!-- Synthèse compacte : 1 ligne = année + mois -->
                 <div class="flux-totals">
-                    <div class="flux-totals-row">
-                        <span class="flux-totals-title">Année <strong id="flux-year-label"></strong></span>
-                        <span class="flux-totals-sep"></span>
-                        <span class="flux-total expense"><span class="lbl">Dépenses</span> <strong id="flux-year-depenses">0€</strong></span>
-                        <span class="flux-total income"><span class="lbl">Entrées</span> <strong id="flux-year-recettes">0€</strong></span>
-                        <span class="flux-total balance"><span class="lbl">Solde</span> <strong id="flux-year-balance">0€</strong></span>
-                    </div>
-                    <div class="flux-totals-row month">
-                        <span class="flux-totals-title">Mois <strong id="flux-month-label"></strong></span>
-                        <span class="flux-totals-sep"></span>
-                        <span class="flux-total expense"><span class="lbl">Dépenses</span> <strong id="flux-total-depenses">0€</strong></span>
-                        <span class="flux-total income"><span class="lbl">Entrées</span> <strong id="flux-total-recettes">0€</strong></span>
-                        <span class="flux-total balance"><span class="lbl">Solde</span> <strong id="flux-total-balance">0€</strong></span>
+                    <div class="flux-totals-grid">
+                        <div class="ft-cell ft-head expense">Dép.</div>
+                        <div class="ft-cell ft-head income">Ent.</div>
+                        <div class="ft-cell ft-head balance">Solde</div>
+                        <div class="ft-cell ft-label">Année <strong id="flux-year-label"></strong></div>
+                        <div class="ft-cell expense"><strong id="flux-year-depenses">0€</strong></div>
+                        <div class="ft-cell income"><strong id="flux-year-recettes">0€</strong></div>
+                        <div class="ft-cell balance"><strong id="flux-year-balance">0€</strong></div>
+                        <div class="ft-cell ft-label">Mois <strong id="flux-month-label"></strong></div>
+                        <div class="ft-cell expense"><strong id="flux-total-depenses">0€</strong></div>
+                        <div class="ft-cell income"><strong id="flux-total-recettes">0€</strong></div>
+                        <div class="ft-cell balance"><strong id="flux-total-balance">0€</strong></div>
                     </div>
                 </div>
 

@@ -10566,49 +10566,45 @@ html.no-anim *::after {
     }
 }
 
-/* ===== Synthèse Flux : 2 lignes compactes (année puis mois) ===== */
+/* ===== Synthèse Flux : grille compacte 1 ligne ===== */
 .flux-totals {
     background: var(--color-bg-secondary, #f5f5f7);
     border-radius: 10px;
-    padding: 8px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    padding: 8px 10px;
+    overflow: hidden;
 }
-.flux-totals-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    font-size: 0.85rem;
+.flux-totals-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) repeat(3, minmax(0, 1fr));
+    gap: 2px 4px;
+    align-items: baseline;
 }
-.flux-totals-row.month {
-    padding-top: 4px;
-    border-top: 1px dashed var(--color-border);
-    font-size: 0.8rem;
+.ft-cell {
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
 }
-.flux-totals-title {
+.ft-cell.ft-head {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    padding-bottom: 2px;
+}
+.ft-cell.ft-head:first-child { text-align: left; visibility: hidden; }
+.ft-cell.ft-label {
+    text-align: left;
     font-weight: 600;
     color: var(--color-text);
-    white-space: nowrap;
+    font-size: 0.75rem;
 }
-.flux-totals-sep {
-    flex: 0 0 1px;
-    align-self: stretch;
-    background: var(--color-border);
+.ft-cell.expense strong { color: #ef4444; font-weight: 600; }
+.ft-cell.income strong { color: #10b981; font-weight: 600; }
+.ft-cell.balance strong { font-weight: 700; }
+@media (max-width: 420px) {
+    .ft-cell { font-size: 0.72rem; }
+    .ft-cell.ft-label { font-size: 0.7rem; }
 }
-.flux-total {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    white-space: nowrap;
-}
-.flux-total .lbl {
-    color: var(--color-text-secondary);
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-.flux-total.expense strong { color: #ef4444; }
-.flux-total.income strong { color: #10b981; }
-.flux-total.balance strong { font-size: 0.95rem; }
