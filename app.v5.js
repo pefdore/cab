@@ -6901,6 +6901,7 @@ async function saveDepense() {
     await loadCabinetData();
     renderComptaSummary();
     renderAddDepensesRecettes();
+    if (typeof closeManualMovementModal === 'function') closeManualMovementModal();
 }
 
 async function saveRecette() {
@@ -6948,14 +6949,14 @@ async function saveRecette() {
     await loadCabinetData();
     renderComptaSummary();
     renderAddDepensesRecettes();
+    if (typeof closeManualMovementModal === 'function') closeManualMovementModal();
 }
 
 function editDepense(id) {
     const depense = cabinetDepenses.find(d => d.id === id);
     if (!depense) return;
     
-    window.scroll(0, 0);
-    
+    if (typeof openManualMovementModal === 'function') openManualMovementModal();
     switchAddDepenseRecette('depense');
     
     document.getElementById('add-depenseDescription').value = depense.description || '';
@@ -7015,8 +7016,7 @@ function editRecette(id) {
     const recette = cabinetRecettes.find(r => r.id === id);
     if (!recette) return;
     
-    window.scroll(0, 0);
-    
+    if (typeof openManualMovementModal === 'function') openManualMovementModal();
     switchAddDepenseRecette('recette');
     
     document.getElementById('add-recetteDescription').value = recette.description || '';

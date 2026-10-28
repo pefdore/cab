@@ -10571,6 +10571,7 @@ html.no-anim *::after {
     background: var(--color-bg-secondary, #f5f5f7);
     border-radius: 10px;
     padding: 8px 10px;
+    margin-bottom: 16px;
     overflow: hidden;
 }
 .flux-totals-grid {
