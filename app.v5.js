@@ -589,8 +589,11 @@ function setupAuthListeners() {
             
             console.log('[REGISTER] Role:', role, 'Address:', cabinetAddress);
             
-            // Check if address already exists for medecin/secretaire
-            if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
+            // La modale de choix de cabinet ne concerne que le medecin installé
+            // (rejoindre un cabinet existant ou en creer un nouveau).
+            // Une secretaire rejoint toujours le cabinet existant a cette adresse :
+            // sa demande de validation sera traitee par les associes.
+            if (cabinetAddress && role === 'medecin_installe') {
                 console.log('[REGISTER] Checking for existing cabinet at address...');
                 const existingDoctors = await checkAddressExists(cabinetAddress);
                 console.log('[REGISTER] Existing doctors found:', existingDoctors);
@@ -823,7 +826,10 @@ async function checkAddressOnSelect(address) {
   var role = document.getElementById('register-role')?.value;
   console.log('[ADDRESS] Address selected:', address, 'Role:', role);
   
-  if (role !== 'medecin_installe' && role !== 'secretaire') {
+  // La verification/modale au moment de la selection d'adresse ne concerne
+  // que le medecin installé. Une secretaire ne choisit pas de cabinet :
+  // elle rejoindra automatiquement le cabinet existant a cette adresse.
+  if (role !== 'medecin_installe') {
     console.log('[ADDRESS] Role does not need cabinet check');
     return;
   }

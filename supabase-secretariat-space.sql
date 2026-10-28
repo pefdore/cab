@@ -142,7 +142,10 @@ DECLARE
     v_cabinet UUID;
     v_exists BOOLEAN;
 BEGIN
-    -- 1) cabinet_id direct, seulement s'il pointe vers un cabinet existant
+    -- 1) cabinet_id direct, seulement s'il pointe vers un cabinet existant.
+    -- Dans le trigger de demande, un cabinet_id pose signifie deja rattache :
+    -- on ne l'utilise jamais comme cible de demande (le trigger l'exclut avant).
+    -- Ici on garde le comportement pour les usages hors trigger.
     IF p_profile.cabinet_id IS NOT NULL THEN
         SELECT EXISTS (SELECT 1 FROM cabinets c WHERE c.id = p_profile.cabinet_id)
           INTO v_exists;
@@ -196,10 +199,7 @@ BEGIN
 
     -- Ne pas creer de demande si le profil est deja rattache directement
     -- (fondateur ou membre deja valide/approuve)
-    IF NEW.cabinet_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM profiles m
-        WHERE m.cabinet_id = NEW.cabinet_id AND m.role = 'medecin_installe'
-    ) THEN
+    IF NEW.cabinet_id IS NOT NULL THEN
         RETURN NEW;
     END IF;
 
@@ -213,6 +213,11 @@ BEGIN
          coalesce(v_email, ''), coalesce(v_role, 'secretaire'), 'pending')
     ON CONFLICT DO NOTHING;
 
+    -- Le trigger ne doit JAMAIS faire echouer l'inscription ou la mise a jour
+    -- du profil : toute erreur est avalee et loggee, l'INSERT est au pire saute.
+    RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING '[sec_ensure_join_request] erreur ignoree: %', SQLERRM;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
