@@ -173,6 +173,59 @@ async function secDecideRequest(requestId, approve) {
 window.secApproveRequest = (id) => secDecideRequest(id, true);
 window.secRejectRequest = (id) => secDecideRequest(id, false);
 
+// ---------- Filet de securite cote medecin : creer les demandes manquantes ----------
+// Pour chaque secretaire du cabinet sans demande en base, le medecin cree la
+// demande pending (utile si l'insert cote secretaire a ete bloque par RLS).
+async function secBackfillRequestsForCabinet() {
+    try {
+        const cabinetId = await secGetCabinetId();
+        if (!cabinetId) return;
+        const { data: secretaries, error } = await supabaseClient
+            .from('profiles')
+            .select('id, first_name, last_name, email, role, cabinet_address')
+            .eq('role', 'secretaire')
+            .or(`cabinet_id.eq.${cabinetId},and(cabinet_id.isnull,cabinet_address.not.isnull)`);
+        if (error) {
+            console.error('[SEC-SPACE] backfill secretaires:', error.message);
+            return;
+        }
+        if (!secretaries || !secretaries.length) {
+            console.log('[SEC-SPACE] backfill: aucune secretaire trouvee');
+            return;
+        }
+        for (const s of secretaries) {
+            // Son cabinet vise : celui du profil, sinon resolution par adresse
+            let targetCabinet = s.cabinet_id;
+            if (!targetCabinet && s.cabinet_address) {
+                targetCabinet = await secResolveCabinetByAddress(s.cabinet_address);
+            }
+            if (!targetCabinet) continue;
+            if (String(targetCabinet) !== String(cabinetId)) continue;
+            const { data: existing } = await supabaseClient
+                .from('cabinet_join_requests')
+                .select('id')
+                .eq('requester_id', s.id)
+                .eq('cabinet_id', cabinetId)
+                .limit(1);
+            if (existing && existing.length) continue;
+            const { error: insErr } = await supabaseClient
+                .from('cabinet_join_requests')
+                .insert({
+                    cabinet_id: cabinetId,
+                    requester_id: s.id,
+                    requester_name: ((s.first_name || '') + ' ' + (s.last_name || '')).trim() || 'Secretaire',
+                    requester_email: s.email || '',
+                    role: SECRETARY_ROLE
+                });
+            if (insErr) console.error('[SEC-SPACE] backfill insert:', insErr.message);
+            else console.log('[SEC-SPACE] backfill: demande creee pour', s.email);
+        }
+        secRenderJoinRequestsBanner();
+    } catch (e) {
+        console.error('[SEC-SPACE] backfill:', e);
+    }
+}
+
 // ---------- Creation de la demande (a l'inscription secretaire) ----------
 
 function secGoToStocksTab() {
@@ -188,7 +241,7 @@ async function secCreateJoinRequest(cabinetId) {
         const user = window.currentUser;
         if (!user) return;
         const name = ((user.user_metadata?.first_name || '') + ' ' + (user.user_metadata?.last_name || '')).trim();
-        await supabaseClient
+        const { error } = await supabaseClient
             .from('cabinet_join_requests')
             .insert({
                 cabinet_id: cabinetId,
@@ -197,6 +250,11 @@ async function secCreateJoinRequest(cabinetId) {
                 requester_email: user.email || '',
                 role: SECRETARY_ROLE
             });
+        if (error) {
+            console.error('[SEC-SPACE] createJoinRequest erreur (probablement RLS):', error.message, error.code, error.hint);
+        } else {
+            console.log('[SEC-SPACE] Demande de validation creee pour le cabinet', cabinetId);
+        }
     } catch (e) {
         console.error('[SEC-SPACE] createJoinRequest:', e);
     }
@@ -549,6 +607,7 @@ function secStartApprovalWatch() {
         if (role === 'medecin_installe') {
             secRenderJoinRequestsBanner();
             secStartRequestsPolling();
+            secBackfillRequestsForCabinet();
             clearInterval(watcher);
         }
     }, 500);
@@ -595,6 +654,7 @@ async function initSecretarySpace() {
     if (role === 'medecin_installe') {
         secRenderJoinRequestsBanner();
         secStartRequestsPolling();
+        secBackfillRequestsForCabinet();
     } else {
         // currentProfile pas encore charge : surveiller son arrivee
         secStartApprovalWatch();
