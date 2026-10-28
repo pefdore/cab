@@ -126,6 +126,7 @@ function renderFluxView() {
                             <div class="flux-row-main">
                                 <span class="category">${fluxEscapeHtml(fluxCategoryLabel(d.category, true))}</span>
                                 <span class="description">${fluxEscapeHtml(d.description || d.sous_categorie || '-')}</span>
+                                <span class="flux-note" contenteditable="true" data-type="depense" data-id="${d.id}" title="Note personnelle (cliquer pour modifier)">${fluxEscapeHtml(d.note || '')}</span>
                                 ${linked ? `<div style="font-size:0.72rem; color:var(--color-primary); margin-top:2px;">📦 ${fluxEscapeHtml(linked)}</div>` : ''}
                             </div>
                             <div class="flux-row-side">
@@ -145,6 +146,7 @@ function renderFluxView() {
                             <div class="flux-row-main">
                                 <span class="category">${fluxEscapeHtml(fluxCategoryLabel(r.category, false))}</span>
                                 <span class="description">${fluxEscapeHtml(r.description || '-')}</span>
+                                <span class="flux-note" contenteditable="true" data-type="recette" data-id="${r.id}" title="Note personnelle (cliquer pour modifier)">${fluxEscapeHtml(r.note || '')}</span>
                             </div>
                             <div class="flux-row-side">
                                 <span class="amount">+${r.amount.toFixed(2)}€</span>
@@ -254,3 +256,37 @@ function fluxInitCategorySelects() {
 window.fluxChangeMonth = fluxChangeMonth;
 window.fluxSelectMonth = fluxSelectMonth;
 window.renderFluxView = renderFluxView;
+
+
+// Notes inline : sauvegarde au blur (perte de focus)
+document.addEventListener('blur', async (e) => {
+    const el = e.target;
+    if (!el.classList || !el.classList.contains('flux-note')) return;
+    const id = el.dataset.id;
+    const type = el.dataset.type;
+    const note = el.textContent.trim();
+    const table = type === 'depense' ? 'cabinet_depenses' : 'cabinet_recettes';
+    const list = type === 'depense' ? cabinetDepenses : cabinetRecettes;
+    const item = list.find(x => String(x.id) === String(id));
+    if (item && (item.note || '') === note) return;
+    try {
+        const { error } = await supabaseClient.from(table).update({ note: note || null }).eq('id', id);
+        if (error) throw error;
+        if (item) item.note = note;
+        if (!note) el.classList.remove('filled');
+        else el.classList.add('filled');
+        if (typeof showToast === 'function' && note) showToast('Note enregistrée');
+    } catch (err) {
+        alert('Erreur note: ' + err.message);
+    }
+}, true);
+
+// Afficher visuellement les notes remplies / vides
+window._fluxNoteObserver = new MutationObserver(() => {});
+(function initNoteStyles() {
+    document.addEventListener('input', (e) => {
+        const el = e.target;
+        if (!el.classList || !el.classList.contains('flux-note')) return;
+        el.classList.toggle('filled', el.textContent.trim().length > 0);
+    });
+})();

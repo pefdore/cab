@@ -6959,7 +6959,19 @@ function editDepense(id) {
     if (typeof openManualMovementModal === 'function') openManualMovementModal();
     switchAddDepenseRecette('depense');
     
-    document.getElementById('add-depenseDescription').value = depense.description || '';
+    document.getElementById('add-depenseDescription').value = depense.releve_libelle || depense.description || '';
+    const descInput = document.getElementById('add-depenseDescription');
+    if (descInput) {
+        if (depense.releve_libelle) {
+            descInput.readOnly = true;
+            descInput.style.opacity = '0.7';
+            descInput.title = 'Libellé du relevé — non modifiable';
+        } else {
+            descInput.readOnly = false;
+            descInput.style.opacity = '1';
+            descInput.title = '';
+        }
+    }
     document.getElementById('add-depenseAmount').value = depense.amount;
     document.getElementById('add-depenseCategory').value = depense.category;
     document.getElementById('add-depenseDate').value = depense.date;
@@ -6974,7 +6986,9 @@ function editDepense(id) {
 }
 
 async function updateDepense(id) {
-    const description = document.getElementById('add-depenseDescription')?.value;
+    const existing = cabinetDepenses.find(d => d.id === id);
+    const descInput = document.getElementById('add-depenseDescription');
+    const description = existing?.releve_libelle ? existing.releve_libelle : (descInput?.value);
     const amount = parseFloat(document.getElementById('add-depenseAmount')?.value);
     const category = document.getElementById('add-depenseCategory')?.value;
     const date = document.getElementById('add-depenseDate')?.value;
@@ -7019,7 +7033,19 @@ function editRecette(id) {
     if (typeof openManualMovementModal === 'function') openManualMovementModal();
     switchAddDepenseRecette('recette');
     
-    document.getElementById('add-recetteDescription').value = recette.description || '';
+    document.getElementById('add-recetteDescription').value = recette.releve_libelle || recette.description || '';
+    const rdescInput = document.getElementById('add-recetteDescription');
+    if (rdescInput) {
+        if (recette.releve_libelle) {
+            rdescInput.readOnly = true;
+            rdescInput.style.opacity = '0.7';
+            rdescInput.title = 'Libellé du relevé — non modifiable';
+        } else {
+            rdescInput.readOnly = false;
+            rdescInput.style.opacity = '1';
+            rdescInput.title = '';
+        }
+    }
     document.getElementById('add-recetteAmount').value = recette.amount;
     document.getElementById('add-recetteCategory').value = recette.category;
     document.getElementById('add-recetteDate').value = recette.date;
@@ -7034,7 +7060,8 @@ function editRecette(id) {
 }
 
 async function updateRecette(id) {
-    const description = document.getElementById('add-recetteDescription')?.value;
+    const existing = cabinetRecettes.find(r => r.id === id);
+    const description = existing?.releve_libelle ? existing.releve_libelle : (document.getElementById('add-recetteDescription')?.value);
     const amount = parseFloat(document.getElementById('add-recetteAmount')?.value);
     const category = document.getElementById('add-recetteCategory')?.value;
     const date = document.getElementById('add-recetteDate')?.value;
@@ -8383,6 +8410,7 @@ async function confirmAllTransactions() {
         }).map(t => ({
             user_id: currentUser.id,
             description: t.description,
+            releve_libelle: t.description,
             amount: Math.abs(parseFloat(t.amount) || 0),
             category: t.category || 'services',
             date: t.date || new Date().toISOString().split('T')[0]
@@ -8395,6 +8423,7 @@ async function confirmAllTransactions() {
         }).map(t => ({
             user_id: currentUser.id,
             description: t.description,
+            releve_libelle: t.description,
             amount: Math.abs(parseFloat(t.amount) || 0),
             category: t.category || 'autres',
             date: t.date || new Date().toISOString().split('T')[0]

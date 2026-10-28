@@ -73,3 +73,13 @@ ALTER TABLE cabinet_depenses
     ADD COLUMN IF NOT EXISTS document_id UUID REFERENCES documents(id) ON DELETE SET NULL;
 ALTER TABLE cabinet_recettes
     ADD COLUMN IF NOT EXISTS document_id UUID REFERENCES documents(id) ON DELETE SET NULL;
+
+-- Libellé d'origine du relevé (non modifiable) + note personnelle
+ALTER TABLE cabinet_depenses
+    ADD COLUMN IF NOT EXISTS releve_libelle TEXT;
+ALTER TABLE cabinet_depenses
+    ADD COLUMN IF NOT EXISTS note TEXT;
+ALTER TABLE cabinet_recettes
+    ADD COLUMN IF NOT EXISTS releve_libelle TEXT;
+ALTER TABLE cabinet_recettes
+    ADD COLUMN IF NOT EXISTS note TEXT;
