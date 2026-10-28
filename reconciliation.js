@@ -160,23 +160,35 @@ window.renderReconPending = function() {
         container.innerHTML = '';
         return;
     }
+    const open = window._reconListOpen === true;
     container.innerHTML = `
         <div class="module-card" style="border-left: 3px solid #f59e0b;">
-            <h3>À rapprocher (${pending.length})</h3>
-            <p class="module-desc">Ces paiements fournisseurs peuvent correspondre à des commandes de stock.</p>
+            <div onclick="toggleReconPending()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
+                <h3 style="margin:0; color:#b45309;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
+                <span style="font-size:0.8rem; color:var(--color-text-secondary);">${open ? '▲ Replier' : '▼ Détail'}</span>
+            </div>
+            <p class="module-desc" style="margin:6px 0 0;">Paiements fournisseurs du relevé probablement liés à des commandes passées dans la gestion des stocks (matériel, consommables). Rapprocher chaque dépense de sa commande pour suivre le coût réel du stock dans le dashboard.</p>
+            <div id="recon-pending-body" style="display:${open ? 'block' : 'none'}; margin-top:10px;">
             ${pending.slice(0, 8).map(d => `
-                <div class="depense-item">
-                    <div>
-                        <span class="date-small">${d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '-'}</span>
-                        <span class="description">${reconEscapeHtml(d.description || '-')}</span>
+                <div class="depense-item flux-row">
+                    <div class="flux-row-main">
                         <span class="category">${reconEscapeHtml(d.category || '')}</span>
+                        <span class="description">${reconEscapeHtml(d.description || '-')}</span>
+                        <span class="date-small">${d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '-'}</span>
                     </div>
-                    <div class="depense-right">
+                    <div class="flux-row-side">
                         <span class="amount">-${Number(d.amount).toFixed(2)}€</span>
                         <button class="action-btn" onclick="openReconModal(${d.id})">Rapprocher</button>
                     </div>
                 </div>`).join('')}
+            ${pending.length > 8 ? `<div style="font-size:0.75rem; color:var(--color-text-secondary); padding:4px 2px;">+ ${pending.length - 8} autre(s)…</div>` : ''}
+            </div>
         </div>`;
+};
+
+window.toggleReconPending = function() {
+    window._reconListOpen = !window._reconListOpen;
+    if (typeof renderReconPending === 'function') renderReconPending();
 };
 
 // Libellé des commandes liées à une dépense (affichage flux/dashboard)
