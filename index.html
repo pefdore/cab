@@ -1454,6 +1454,13 @@ window.attemptLogin = function() {
                     </div>
                     
                     <div class="settings-section">
+                        <h3>Email comptabilité</h3>
+                        <p class="settings-desc">Destinataire fixe qui reçoit automatiquement la feuille d'honoraires le 1er de chaque mois</p>
+                        <input type="email" id="accountingEmailInput" placeholder="comptabilite@hopital.fr" style="width: 100%; max-width: 420px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.9rem; background: var(--color-bg-elevated); color: var(--color-text); margin-bottom: 8px;">
+                        <p class="settings-hint">Le PDF du mois précédent est envoyé automatiquement à cet email et à l'email de votre compte, le 1er de chaque mois. Sauvegardé automatiquement quand vous quittez le champ.</p>
+                    </div>
+                    
+                    <div class="settings-section">
                         <h3>Signature</h3>
                         <p class="settings-desc">Uploadez votre signature (affichée en bas de page du PDF)</p>
                         <div class="logo-upload-wrapper">
@@ -3174,6 +3181,9 @@ window.attemptLogin = function() {
     <script src="reminders.js?v=202611024000" defer></script>
     <script src="attachments.js?v=202611024000" defer></script>
     <script src="urgence-orders.js?v=202611024000" defer></script>
+    <script src="app.v5.js?v=202610263000" defer></script>
+    <script src="secretariat.js?v=202610262800" defer></script>
+    <script src="urgence.js?v=202610262800" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {

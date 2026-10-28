@@ -444,6 +444,9 @@ async function loadUserSettings() {
         // champ IBAN des Parametres
         const ibanInput = document.getElementById('ibanInput');
         if (ibanInput && settings.iban) ibanInput.value = settings.iban;
+        // champ Email comptabilite des Parametres
+        const accEmailInput = document.getElementById('accountingEmailInput');
+        if (accEmailInput && settings.accounting_email) accEmailInput.value = settings.accounting_email;
         renderLogoPreview();
         loadTheme();
         applyCotationVisibility();
@@ -3579,6 +3582,18 @@ function setupEventListeners() {
     if (ibanField) {
         ibanField.addEventListener('blur', async () => {
             await saveSetting('iban', ibanField.value.trim() || null);
+        });
+    }
+    // Email comptabilite des Parametres : sauvegarde automatique au blur
+    const accEmailField = document.getElementById('accountingEmailInput');
+    if (accEmailField) {
+        accEmailField.addEventListener('blur', async () => {
+            const v = accEmailField.value.trim();
+            if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+                alert('Adresse email invalide');
+                return;
+            }
+            await saveSetting('accounting_email', v || null);
         });
     }
     const pdfBtn = document.getElementById('generatePdfBtn');
