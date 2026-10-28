@@ -131,6 +131,10 @@ try {
     let lastView = 'dashboard';
     try { lastView = sessionStorage.getItem('cab_current_view') || 'dashboard'; } catch (e) {}
     if (['dashboard', 'urgence', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
+    if (['dashboard', 'flux', 'history', 'urgence'].includes(lastView)) {
+        const role = (window.currentProfile?.role) || currentUser?.user_metadata?.role;
+        if (role === 'secretaire') lastView = 'cabinet';
+    }
     switchView(lastView);
     
     // Expose currentUser and supabaseClient globally for other modules
@@ -144,6 +148,11 @@ try {
     // Initialize secretariat module
     if (typeof initSecretariatWhenReady === 'function') {
         initSecretariatWhenReady();
+    }
+
+    // Initialize secretariat space (espace secretaire + validation des acces)
+    if (typeof initSecretarySpaceWhenReady === 'function') {
+        initSecretarySpaceWhenReady();
     }
     
     // Initialize replacements module
@@ -259,7 +268,9 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
                     role: role,
                     remplace_medecin_id: replaceMedecinId,
                     cabinet_address: cabinetAddress,
-                    cabinet_id: cabinetId
+                    // Une secretaire n'est JAMAIS rattachee directement : le trigger
+                    // profiles recopie ce champ, elle doit passer par la validation
+                    cabinet_id: role === 'secretaire' ? null : cabinetId
                 }
             }
         });
@@ -278,7 +289,25 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
         }
         
         // Update user profile with cabinet_id
-        if (data.user && (cabinetId || cabinetAddress)) {
+        // Une secretaire n'est pas rattachee directement : sa demande doit etre validee
+        // par un medecin associe (cabinet_join_requests) avant d'acceder a l'espace cabinet.
+        const isSecretarySignup = (role === 'secretaire');
+        if (isSecretarySignup && cabinetAddress) {
+            // On enregistre l'adresse du cabinet visé pour la demande de validation,
+            // mais PAS cabinet_id : l'accès ne sera accordé qu'après approbation.
+            const { error: addrError } = await supabaseClient
+                .from('profiles')
+                .update({ cabinet_address: cabinetAddress })
+                .eq('id', data.user.id);
+            if (addrError) console.error('[AUTH] Error saving cabinet_address:', addrError);
+            try {
+                localStorage.setItem('cab_pending_secretary_cabinet', cabinetAddress);
+                // Cabinet selectionne via la modale « rejoindre un cabinet » : id exact
+                if (cabinetId) localStorage.setItem('cab_pending_secretary_cabinet_id', cabinetId);
+                else localStorage.removeItem('cab_pending_secretary_cabinet_id');
+            } catch (e) {}
+        }
+        if (data.user && (cabinetId || cabinetAddress) && !isSecretarySignup) {
             const { error: profileError } = await supabaseClient
                 .from('profiles')
                 .update({
@@ -294,7 +323,11 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
             }
         }
         
-        alert('Compte créé! Veuillez vérifier votre email pour confirmer votre adresse.');
+        if (isSecretarySignup) {
+            alert('Compte créé ! Votre demande d\'accès au cabinet a été enregistrée : un médecin associé doit la valider pour activer votre espace secrétariat. Veuillez aussi confirmer votre adresse email.');
+        } else {
+            alert('Compte créé! Veuillez vérifier votre email pour confirmer votre adresse.');
+        }
         showLoginForm();
         
     } catch (e) {
@@ -4699,6 +4732,8 @@ function switchView(viewName) {
         }
     } else if (viewName === 'cabinet') {
         loadCabinetData();
+        if (typeof secApplySecretarySpace === 'function') secApplySecretarySpace();
+        if (typeof secRenderJoinRequestsBanner === 'function') secRenderJoinRequestsBanner();
     } else if (viewName === 'flux') {
         loadCabinetData().then(() => {
             if (typeof renderFluxView === 'function') renderFluxView();
