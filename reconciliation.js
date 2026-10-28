@@ -104,7 +104,8 @@ window.openReconModal = async function(depenseId) {
                     <strong>${reconEscapeHtml(depense.description || '-')}</strong><br>
                     ${new Date(depense.date).toLocaleDateString('fr-FR')} · ${Number(depense.amount).toFixed(2)}€ · ${reconEscapeHtml(depense.category || '')}
                 </div>
-                <p style="font-size:0.8rem; color:var(--color-text-secondary); margin:0 0 10px;">Sélectionnez la ou les commandes fournisseurs payées par cette dépense :</p>
+                ${reconLinkedDetailHtml(depense)}
+                <p style="font-size:0.8rem; color:var(--color-text-secondary); margin:12px 0 10px;">${(depense.order_ids || []).length ? 'Commandes liées (modifiable) :' : 'Sélectionnez la ou les commandes fournisseurs payées par cette dépense :'}</p>
                 <div id="reconOrderList">
                     ${orders.map(o => {
                         const isSugg = suggestions.some(s => s.id === o.id);
@@ -198,3 +199,52 @@ window.reconLinkedOrdersLabel = function(depense) {
     const orders = reconAllOrders().filter(o => ids.includes(o.id));
     return orders.map(reconOrderLabel).join(' · ');
 };
+
+// Vue detaillee d'une depense rapprochee : references, montants, receptions, ecart
+function reconLinkedDetailHtml(depense) {
+    const ids = depense.order_ids || [];
+    if (!ids.length) return '';
+    const orders = reconAllOrders().filter(o => ids.includes(o.id));
+    if (!orders.length) return '';
+    const totalLinked = orders.reduce((sum, o) => sum + reconOrderTotal(o), 0);
+    const paid = Number(depense.amount) || 0;
+    const ecart = paid - totalLinked;
+    const complet = Math.abs(ecart) < 0.01;
+    return `
+    <div style="margin-top:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+            <span style="font-size:0.78rem; font-weight:600; color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:0.4px;">Détail de la dépense</span>
+            <span style="font-size:0.72rem; font-weight:700; padding:3px 10px; border-radius:12px; ${complet ? 'background:rgba(16,185,129,0.15); color:#059669;' : 'background:rgba(245,158,11,0.15); color:#b45309;'}">${complet ? '✓ Rapprochement complet' : 'Écart : ' + ecart.toFixed(2) + '€'}</span>
+        </div>
+        ${orders.map(o => `
+            <div style="border:1px solid var(--color-border); border-radius:8px; padding:10px 12px; margin-bottom:8px; background:rgba(16,185,129,0.04);">
+                <div style="display:flex; justify-content:space-between; gap:8px; align-items:baseline;">
+                    <strong style="font-size:0.85rem;">${reconEscapeHtml(o.supplier || 'Commande')} · ${o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : '-'}</strong>
+                    <span style="font-size:0.85rem; font-weight:700;">${reconOrderTotal(o).toFixed(2)}€</span>
+                </div>
+                <table style="width:100%; border-collapse:collapse; margin-top:6px; font-size:0.75rem;">
+                    ${(o.items || []).map(i => `
+                        <tr>
+                            <td style="padding:3px 4px; border-top:1px solid var(--color-border);">${reconEscapeHtml(i.name || i.productId)}</td>
+                            <td style="padding:3px 4px; border-top:1px solid var(--color-border); text-align:right; white-space:nowrap;">${i.qty} ${reconEscapeHtml(i.unit || '')} × ${(Number(i.unitPrice) || 0).toFixed(2)}€</td>
+                            <td style="padding:3px 4px; border-top:1px solid var(--color-border); text-align:right; font-weight:600; white-space:nowrap;">${((Number(i.qty) || 0) * (Number(i.unitPrice) || 0)).toFixed(2)}€</td>
+                        </tr>`).join('')}
+                    ${(o.receptions || []).length ? `
+                        <tr><td colspan="3" style="padding:5px 4px 2px; border-top:1px solid var(--color-border); font-size:0.7rem; color:#059669; font-weight:600;">Réception(s) :</td></tr>
+                        ${(o.receptions || []).map(r => `
+                            <tr>
+                                <td style="padding:3px 4px; border-top:1px dashed var(--color-border); color:var(--color-text-secondary);">${r.date ? new Date(r.date).toLocaleDateString('fr-FR') : '-'} · ${(r.items || []).length} réf.</td>
+                                <td style="padding:3px 4px; border-top:1px dashed var(--color-border); text-align:right; color:var(--color-text-secondary);">coût réel</td>
+                                <td style="padding:3px 4px; border-top:1px dashed var(--color-border); text-align:right; font-weight:600;">${(Number(r.cost) || 0).toFixed(2)}€</td>
+                            </tr>`).join('')}` : ''}
+                </table>
+            </div>`).join('')}
+        <div style="display:flex; justify-content:space-between; padding:6px 12px; border-radius:6px; background:var(--color-bg-secondary,#f5f5f7); font-size:0.8rem;">
+            <span>Total payé sur le relevé</span><strong>${paid.toFixed(2)}€</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:6px 12px; border-radius:6px; background:var(--color-bg-secondary,#f5f5f7); font-size:0.8rem; margin-top:2px;">
+            <span>Total des commandes liées</span><strong>${totalLinked.toFixed(2)}€</strong>
+        </div>
+    </div>`;
+}
+window.reconLinkedDetailHtml = reconLinkedDetailHtml;
