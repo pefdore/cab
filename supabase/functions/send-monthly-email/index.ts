@@ -178,7 +178,9 @@ Deno.serve(async (req) => {
       console.log(`Email sent to physician: ${userEmail}`, physicianResult)
 
       // Send to accounting (email fixe defini dans les Parametres du medecin)
-      if (medecinAccEmail && medecinAccEmail !== 'comptabilite@hopital.fr') {
+      // Sauf si c'est la meme adresse que le medecin : inutile d'envoyer deux fois le meme mail
+      const memeAdresse = (a: string, b: string) => (a || '').toLowerCase().trim() === (b || '').toLowerCase().trim()
+      if (medecinAccEmail && medecinAccEmail !== 'comptabilite@hopital.fr' && !memeAdresse(medecinAccEmail, userEmail)) {
         const accountingResult = await resend.emails.send({
           from: 'Cotation Médecin <onboarding@resend.dev>',
           to: [medecinAccEmail],
