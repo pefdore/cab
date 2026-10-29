@@ -3197,7 +3197,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610292900" defer></script>
+    <script src="app.v5.js?v=202610293000" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -3206,7 +3206,7 @@ window.attemptLogin = function() {
     <script src="reminders.js?v=202611024000" defer></script>
     <script src="attachments.js?v=202611024000" defer></script>
     <script src="urgence-orders.js?v=202611024000" defer></script>
-    <script src="app.v5.js?v=202610292900" defer></script>
+    <script src="app.v5.js?v=202610293000" defer></script>
     <script src="secretariat.js?v=202610262800" defer></script>
     <script src="urgence.js?v=202610262800" defer></script>
     <script>
@@ -4361,16 +4361,67 @@ window.attemptLogin = function() {
         }
       };
 
-      // Garantie d'affichage: toutes les secondes, si le champ n'est pas en cours de saisie,
-      // afficher la valeur sauvegardee (contourne tout probleme de timing de remplissage)
+      // ===== Email comptabilite: sauvegarde + affichage complets (script inline, independant de app.v5.js) =====
+      // Affichage continu: la valeur sauvegardee apparait dans le champ des qu'elle existe
       setInterval(() => {
         const f = document.getElementById('accountingEmailInput');
-        if (f && document.activeElement !== f && window.getSetting) {
-          const saved = window.getSetting('accounting_email');
-          const txt = (saved === null || saved === undefined) ? '' : String(saved);
-          if (f.value !== txt && !(f.value && !txt)) f.value = txt;
-        }
+        if (!f || document.activeElement === f) return;
+        window.__accEmailGet().then(txt => {
+          if (typeof txt === 'string' && f.value !== txt && !(f.value && !txt)) f.value = txt;
+        }).catch(() => {});
       }, 1000);
+
+      // Lecture de l'email sauvegarde pour CE compte (base > localStorage)
+      window.__accEmailGet = async function() {
+        try {
+          if (window.supabaseClient && window.currentUser) {
+            const r = await window.supabaseClient.from('user_settings')
+              .select('value').eq('user_id', window.currentUser.id).eq('key', 'accounting_email').maybeSingle();
+            if (!r.error && r.data && r.data.value) return r.data.value;
+          }
+        } catch (e) {}
+        return '';
+      };
+
+      // Sauvegarde directe en base (meme mecanisme que le bouton de diagnostic, prouve fonctionnel)
+      window.__accEmailSet = async function(v) {
+        if (!window.supabaseClient || !window.currentUser) return null;
+        try {
+          const r = await window.supabaseClient.from('user_settings').upsert({
+            user_id: window.currentUser.id, key: 'accounting_email', value: v
+          }, { onConflict: 'user_id,key' });
+          return !r.error;
+        } catch (e) { return false; }
+      };
+
+      // Brancher la sauvegarde sur le champ (listeners attaches au chargement, delegation robuste)
+      document.addEventListener('DOMContentLoaded', function() { setTimeout(brancherEmailCompta, 500); });
+      setTimeout(brancherEmailCompta, 1500);
+      let __accEmailBranche = false;
+      function brancherEmailCompta() {
+        if (__accEmailBranche) return;
+        const f = document.getElementById('accountingEmailInput');
+        if (!f) { setTimeout(brancherEmailCompta, 1000); return; }
+        __accEmailBranche = true;
+        let timer = null;
+        f.addEventListener('input', function() {
+          clearTimeout(timer);
+          timer = setTimeout(async function() {
+            const v = f.value.trim();
+            if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { return; }
+            const ok = await window.__accEmailSet(v);
+            if (ok !== null) alert(ok ? 'Email comptabilité enregistré' : 'ERREUR: email non enregistré');
+          }, 800);
+        });
+        f.addEventListener('blur', async function() {
+          const v = f.value.trim();
+          if (!v || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return;
+          const ok = await window.__accEmailSet(v);
+          if (ok !== null) alert(ok ? 'Email comptabilité enregistré' : 'ERREUR: email non enregistré');
+        });
+        // remplissage immediat
+        window.__accEmailGet().then(txt => { if (txt) f.value = txt; }).catch(() => {});
+      }
 
       // Diagnostic complet de la sauvegarde de l'email comptabilite (bouton Parametres)
       window.diagSaveEmail = async function() {
@@ -4454,16 +4505,67 @@ window.attemptLogin = function() {
       };
 
       // Also load documents when filter button is clicked
-      // Garantie d'affichage: toutes les secondes, si le champ n'est pas en cours de saisie,
-      // afficher la valeur sauvegardee (contourne tout probleme de timing de remplissage)
+      // ===== Email comptabilite: sauvegarde + affichage complets (script inline, independant de app.v5.js) =====
+      // Affichage continu: la valeur sauvegardee apparait dans le champ des qu'elle existe
       setInterval(() => {
         const f = document.getElementById('accountingEmailInput');
-        if (f && document.activeElement !== f && window.getSetting) {
-          const saved = window.getSetting('accounting_email');
-          const txt = (saved === null || saved === undefined) ? '' : String(saved);
-          if (f.value !== txt && !(f.value && !txt)) f.value = txt;
-        }
+        if (!f || document.activeElement === f) return;
+        window.__accEmailGet().then(txt => {
+          if (typeof txt === 'string' && f.value !== txt && !(f.value && !txt)) f.value = txt;
+        }).catch(() => {});
       }, 1000);
+
+      // Lecture de l'email sauvegarde pour CE compte (base > localStorage)
+      window.__accEmailGet = async function() {
+        try {
+          if (window.supabaseClient && window.currentUser) {
+            const r = await window.supabaseClient.from('user_settings')
+              .select('value').eq('user_id', window.currentUser.id).eq('key', 'accounting_email').maybeSingle();
+            if (!r.error && r.data && r.data.value) return r.data.value;
+          }
+        } catch (e) {}
+        return '';
+      };
+
+      // Sauvegarde directe en base (meme mecanisme que le bouton de diagnostic, prouve fonctionnel)
+      window.__accEmailSet = async function(v) {
+        if (!window.supabaseClient || !window.currentUser) return null;
+        try {
+          const r = await window.supabaseClient.from('user_settings').upsert({
+            user_id: window.currentUser.id, key: 'accounting_email', value: v
+          }, { onConflict: 'user_id,key' });
+          return !r.error;
+        } catch (e) { return false; }
+      };
+
+      // Brancher la sauvegarde sur le champ (listeners attaches au chargement, delegation robuste)
+      document.addEventListener('DOMContentLoaded', function() { setTimeout(brancherEmailCompta, 500); });
+      setTimeout(brancherEmailCompta, 1500);
+      let __accEmailBranche = false;
+      function brancherEmailCompta() {
+        if (__accEmailBranche) return;
+        const f = document.getElementById('accountingEmailInput');
+        if (!f) { setTimeout(brancherEmailCompta, 1000); return; }
+        __accEmailBranche = true;
+        let timer = null;
+        f.addEventListener('input', function() {
+          clearTimeout(timer);
+          timer = setTimeout(async function() {
+            const v = f.value.trim();
+            if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { return; }
+            const ok = await window.__accEmailSet(v);
+            if (ok !== null) alert(ok ? 'Email comptabilité enregistré' : 'ERREUR: email non enregistré');
+          }, 800);
+        });
+        f.addEventListener('blur', async function() {
+          const v = f.value.trim();
+          if (!v || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return;
+          const ok = await window.__accEmailSet(v);
+          if (ok !== null) alert(ok ? 'Email comptabilité enregistré' : 'ERREUR: email non enregistré');
+        });
+        // remplissage immediat
+        window.__accEmailGet().then(txt => { if (txt) f.value = txt; }).catch(() => {});
+      }
 
       // Diagnostic complet de la sauvegarde de l'email comptabilite (bouton Parametres)
       window.diagSaveEmail = async function() {
