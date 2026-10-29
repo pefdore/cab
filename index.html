@@ -3197,7 +3197,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610292800" defer></script>
+    <script src="app.v5.js?v=202610292900" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -3206,7 +3206,7 @@ window.attemptLogin = function() {
     <script src="reminders.js?v=202611024000" defer></script>
     <script src="attachments.js?v=202611024000" defer></script>
     <script src="urgence-orders.js?v=202611024000" defer></script>
-    <script src="app.v5.js?v=202610292800" defer></script>
+    <script src="app.v5.js?v=202610292900" defer></script>
     <script src="secretariat.js?v=202610262800" defer></script>
     <script src="urgence.js?v=202610262800" defer></script>
     <script>
@@ -4361,6 +4361,17 @@ window.attemptLogin = function() {
         }
       };
 
+      // Garantie d'affichage: toutes les secondes, si le champ n'est pas en cours de saisie,
+      // afficher la valeur sauvegardee (contourne tout probleme de timing de remplissage)
+      setInterval(() => {
+        const f = document.getElementById('accountingEmailInput');
+        if (f && document.activeElement !== f && window.getSetting) {
+          const saved = window.getSetting('accounting_email');
+          const txt = (saved === null || saved === undefined) ? '' : String(saved);
+          if (f.value !== txt && !(f.value && !txt)) f.value = txt;
+        }
+      }, 1000);
+
       // Diagnostic complet de la sauvegarde de l'email comptabilite (bouton Parametres)
       window.diagSaveEmail = async function() {
         const out = [];
@@ -4443,6 +4454,17 @@ window.attemptLogin = function() {
       };
 
       // Also load documents when filter button is clicked
+      // Garantie d'affichage: toutes les secondes, si le champ n'est pas en cours de saisie,
+      // afficher la valeur sauvegardee (contourne tout probleme de timing de remplissage)
+      setInterval(() => {
+        const f = document.getElementById('accountingEmailInput');
+        if (f && document.activeElement !== f && window.getSetting) {
+          const saved = window.getSetting('accounting_email');
+          const txt = (saved === null || saved === undefined) ? '' : String(saved);
+          if (f.value !== txt && !(f.value && !txt)) f.value = txt;
+        }
+      }, 1000);
+
       // Diagnostic complet de la sauvegarde de l'email comptabilite (bouton Parametres)
       window.diagSaveEmail = async function() {
         const out = [];
