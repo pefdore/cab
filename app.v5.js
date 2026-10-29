@@ -7344,6 +7344,11 @@ async function loadUserSettings() {
         console.error('[SETTINGS] Exception:', e);
     }
 
+    // remplir les champs des Parametres depuis les settings du compte
+    const ibanInputSetting = document.getElementById('ibanInput');
+    if (ibanInputSetting) ibanInputSetting.value = settings.iban || '';
+    const accEmailInputSetting = document.getElementById('accountingEmailInput');
+    if (accEmailInputSetting) accEmailInputSetting.value = settings.accounting_email || '';
     renderLogoPreview();
     loadTheme();
     applyCotationVisibility();
