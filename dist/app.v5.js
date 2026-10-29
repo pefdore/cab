@@ -4035,6 +4035,11 @@ function showOverlaySettingsPage(overlay, pageName) {
     } else if (pageName === 'pdf') {
         renderLogoPreview();
         loadPdfPrefs();
+        // remplir les champs IBAN et Email comptabilite depuis les settings du compte
+        const ibanFld = document.getElementById('ibanInput');
+        if (ibanFld) ibanFld.value = getSetting('iban') || '';
+        const accFld = document.getElementById('accountingEmailInput');
+        if (accFld) accFld.value = getSetting('accounting_email') || '';
     } else if (pageName === 'preferences') {
         loadTheme();
         loadNotifPrefs();
@@ -4115,6 +4120,11 @@ async function openSettingsPage(pageName) {
     } else if (pageName === 'pdf') {
         renderLogoPreview();
         loadPdfPrefs();
+        // remplir les champs IBAN et Email comptabilite depuis les settings du compte
+        const ibanFld = document.getElementById('ibanInput');
+        if (ibanFld) ibanFld.value = getSetting('iban') || '';
+        const accFld = document.getElementById('accountingEmailInput');
+        if (accFld) accFld.value = getSetting('accounting_email') || '';
     } else if (pageName === 'preferences') {
         loadTheme();
         loadNotifPrefs();
