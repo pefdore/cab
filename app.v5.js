@@ -3584,17 +3584,28 @@ function setupEventListeners() {
             await saveSetting('iban', ibanField.value.trim() || null);
         });
     }
-    // Email comptabilite des Parametres : sauvegarde automatique au blur
+    // Email comptabilite des Parametres : sauvegarde automatique (blur + change + frappe debounced)
     const accEmailField = document.getElementById('accountingEmailInput');
     if (accEmailField) {
-        accEmailField.addEventListener('blur', async () => {
+        let accEmailTimer = null;
+        const saveAccEmail = async (showToast = true) => {
             const v = accEmailField.value.trim();
             if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
-                alert('Adresse email invalide');
-                return;
+                if (showToast) showToast('Adresse email invalide');
+                return false;
             }
-            await saveSetting('accounting_email', v || null);
+            const ok = await saveSettingWithFeedback('accounting_email', v || null);
+            if (showToast && ok !== null) showToast(ok ? 'Email comptabilité enregistré' : 'ERREUR: email non enregistré');
+            return ok;
+        };
+        accEmailField.addEventListener('blur', () => saveAccEmail(true));
+        accEmailField.addEventListener('change', () => saveAccEmail(true));
+        accEmailField.addEventListener('input', () => {
+            clearTimeout(accEmailTimer);
+            accEmailTimer = setTimeout(() => saveAccEmail(false), 800);
         });
+        // sauvegarder aussi avant fermeture/rechargement de la page
+        window.addEventListener('beforeunload', () => { saveAccEmail(false); });
     }
     const pdfBtn = document.getElementById('generatePdfBtn');
     if (pdfBtn) pdfBtn.disabled = false;
@@ -7370,6 +7381,28 @@ function getSettingsInput(id) {
         if (el.offsetParent !== null) return el;
     }
     return els[0] || null;
+}
+
+// saveSetting avec retour de succes/echec de l'ecriture en base
+async function saveSettingWithFeedback(key, value) {
+    await saveSetting(key, value);
+    if (!currentUser || !supabaseClient) return null; // pas connecte : localStorage seulement
+    try {
+        const { data, error } = await supabaseClient
+            .from('user_settings')
+            .select('value')
+            .eq('user_id', currentUser.id)
+            .eq('key', key)
+            .maybeSingle();
+        if (error) {
+            console.error('[SETTINGS] Verification erreur:', error);
+            return false;
+        }
+        return (value === null) ? (!data) : (data && data.value === value);
+    } catch (e) {
+        console.error('[SETTINGS] Verification exception:', e);
+        return false;
+    }
 }
 
 async function saveSetting(key, value) {
