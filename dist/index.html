@@ -3197,7 +3197,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610292500" defer></script>
+    <script src="app.v5.js?v=202610292600" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -3206,7 +3206,7 @@ window.attemptLogin = function() {
     <script src="reminders.js?v=202611024000" defer></script>
     <script src="attachments.js?v=202611024000" defer></script>
     <script src="urgence-orders.js?v=202611024000" defer></script>
-    <script src="app.v5.js?v=202610292500" defer></script>
+    <script src="app.v5.js?v=202610292600" defer></script>
     <script src="secretariat.js?v=202610262800" defer></script>
     <script src="urgence.js?v=202610262800" defer></script>
     <script>
@@ -4365,22 +4365,26 @@ window.attemptLogin = function() {
       window.diagSaveEmail = async function() {
         const out = [];
         const field = document.getElementById('accountingEmailInput');
-        const v = field ? field.value.trim() : '';
-        out.push('1. Champ trouve: ' + (field ? 'OUI (valeur="' + v + '")' : 'NON'));
+        let v = field ? field.value.trim() : '';
+        const valeurTest = 'test-' + Date.now() + '@diagnostic.fr';
+        if (!v) v = valeurTest;  // champ vide: on teste quand meme avec une valeur test
+        out.push('1. Champ trouve: ' + (field ? 'OUI' : 'NON') + ' | valeur testee: ' + v);
         out.push('2. Connecte: ' + (window.currentUser ? 'OUI (' + (window.currentUser.email || window.currentUser.id) + ')' : 'NON'));
         out.push('3. Client Supabase: ' + (window.supabaseClient ? 'OUI' : 'NON'));
-        if (window.supabaseClient && window.currentUser && v) {
+        if (window.supabaseClient && window.currentUser) {
           try {
             const r = await window.supabaseClient.from('user_settings').upsert({
               user_id: window.currentUser.id, key: 'accounting_email', value: v
             }, { onConflict: 'user_id,key' });
-            out.push('4. Upsert: ' + (r.error ? 'ERREUR -> ' + r.error.message : 'OK'));
+            out.push('4. Upsert: ' + (r.error ? 'ERREUR -> ' + r.error.message + ' (code ' + r.error.code + ')' : 'OK'));
             const rr = await window.supabaseClient.from('user_settings')
               .select('value').eq('user_id', window.currentUser.id).eq('key', 'accounting_email').maybeSingle();
-            out.push('5. Relecture: ' + (rr.error ? 'ERREUR -> ' + rr.error.message : (rr.data && rr.data.value === v ? 'OK, valeur identique en base' : 'DIFFERENT! base="' + (rr.data ? rr.data.value : 'null') + '"')));
+            out.push('5. Relecture: ' + (rr.error ? 'ERREUR -> ' + rr.error.message + ' (code ' + rr.error.code + ')' : (rr.data && rr.data.value === v ? 'OK - valeur identique en base (SAUVEGARDE FONCTIONNE)' : 'DIFFERENT - base contient: "' + (rr.data ? rr.data.value : 'null') + '"')));
           } catch (e) {
-            out.push('4/5. EXCEPTION: ' + e.message);
+            out.push('4/5. EXCEPTION: ' + (e && e.message ? e.message : JSON.stringify(e)));
           }
+        } else {
+          out.push('4/5. SKIPPES (pas de client ou pas de session)');
         }
         alert(out.join('\n'));
       };
@@ -4437,22 +4441,26 @@ window.attemptLogin = function() {
       window.diagSaveEmail = async function() {
         const out = [];
         const field = document.getElementById('accountingEmailInput');
-        const v = field ? field.value.trim() : '';
-        out.push('1. Champ trouve: ' + (field ? 'OUI (valeur="' + v + '")' : 'NON'));
+        let v = field ? field.value.trim() : '';
+        const valeurTest = 'test-' + Date.now() + '@diagnostic.fr';
+        if (!v) v = valeurTest;  // champ vide: on teste quand meme avec une valeur test
+        out.push('1. Champ trouve: ' + (field ? 'OUI' : 'NON') + ' | valeur testee: ' + v);
         out.push('2. Connecte: ' + (window.currentUser ? 'OUI (' + (window.currentUser.email || window.currentUser.id) + ')' : 'NON'));
         out.push('3. Client Supabase: ' + (window.supabaseClient ? 'OUI' : 'NON'));
-        if (window.supabaseClient && window.currentUser && v) {
+        if (window.supabaseClient && window.currentUser) {
           try {
             const r = await window.supabaseClient.from('user_settings').upsert({
               user_id: window.currentUser.id, key: 'accounting_email', value: v
             }, { onConflict: 'user_id,key' });
-            out.push('4. Upsert: ' + (r.error ? 'ERREUR -> ' + r.error.message : 'OK'));
+            out.push('4. Upsert: ' + (r.error ? 'ERREUR -> ' + r.error.message + ' (code ' + r.error.code + ')' : 'OK'));
             const rr = await window.supabaseClient.from('user_settings')
               .select('value').eq('user_id', window.currentUser.id).eq('key', 'accounting_email').maybeSingle();
-            out.push('5. Relecture: ' + (rr.error ? 'ERREUR -> ' + rr.error.message : (rr.data && rr.data.value === v ? 'OK, valeur identique en base' : 'DIFFERENT! base="' + (rr.data ? rr.data.value : 'null') + '"')));
+            out.push('5. Relecture: ' + (rr.error ? 'ERREUR -> ' + rr.error.message + ' (code ' + rr.error.code + ')' : (rr.data && rr.data.value === v ? 'OK - valeur identique en base (SAUVEGARDE FONCTIONNE)' : 'DIFFERENT - base contient: "' + (rr.data ? rr.data.value : 'null') + '"')));
           } catch (e) {
-            out.push('4/5. EXCEPTION: ' + e.message);
+            out.push('4/5. EXCEPTION: ' + (e && e.message ? e.message : JSON.stringify(e)));
           }
+        } else {
+          out.push('4/5. SKIPPES (pas de client ou pas de session)');
         }
         alert(out.join('\n'));
       };
