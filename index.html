@@ -3197,7 +3197,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610292600" defer></script>
+    <script src="app.v5.js?v=202610292700" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -3206,7 +3206,7 @@ window.attemptLogin = function() {
     <script src="reminders.js?v=202611024000" defer></script>
     <script src="attachments.js?v=202611024000" defer></script>
     <script src="urgence-orders.js?v=202611024000" defer></script>
-    <script src="app.v5.js?v=202610292600" defer></script>
+    <script src="app.v5.js?v=202610292700" defer></script>
     <script src="secretariat.js?v=202610262800" defer></script>
     <script src="urgence.js?v=202610262800" defer></script>
     <script>
@@ -4373,6 +4373,12 @@ window.attemptLogin = function() {
         out.push('3. Client Supabase: ' + (window.supabaseClient ? 'OUI' : 'NON'));
         if (window.supabaseClient && window.currentUser) {
           try {
+            // 3bis. Verifier ce que le chargement des settings a mis en memoire
+            out.push('3b. settings.accounting_email en memoire: ' + JSON.stringify((typeof settings !== 'undefined' ? settings.accounting_email : 'variable settings inconnue')));
+            out.push('3c. userSettings window: ' + JSON.stringify(window.userSettings ? window.userSettings.accounting_email : 'absent'));
+            // 3ter. Lister toutes les cles presentes dans user_settings pour ce compte
+            const la = await window.supabaseClient.from('user_settings').select('key').eq('user_id', window.currentUser.id);
+            out.push('3d. Cles en base pour ce compte: ' + (la.error ? 'ERREUR ' + la.error.message : JSON.stringify((la.data || []).map(x => x.key))));
             const r = await window.supabaseClient.from('user_settings').upsert({
               user_id: window.currentUser.id, key: 'accounting_email', value: v
             }, { onConflict: 'user_id,key' });
@@ -4449,6 +4455,12 @@ window.attemptLogin = function() {
         out.push('3. Client Supabase: ' + (window.supabaseClient ? 'OUI' : 'NON'));
         if (window.supabaseClient && window.currentUser) {
           try {
+            // 3bis. Verifier ce que le chargement des settings a mis en memoire
+            out.push('3b. settings.accounting_email en memoire: ' + JSON.stringify((typeof settings !== 'undefined' ? settings.accounting_email : 'variable settings inconnue')));
+            out.push('3c. userSettings window: ' + JSON.stringify(window.userSettings ? window.userSettings.accounting_email : 'absent'));
+            // 3ter. Lister toutes les cles presentes dans user_settings pour ce compte
+            const la = await window.supabaseClient.from('user_settings').select('key').eq('user_id', window.currentUser.id);
+            out.push('3d. Cles en base pour ce compte: ' + (la.error ? 'ERREUR ' + la.error.message : JSON.stringify((la.data || []).map(x => x.key))));
             const r = await window.supabaseClient.from('user_settings').upsert({
               user_id: window.currentUser.id, key: 'accounting_email', value: v
             }, { onConflict: 'user_id,key' });
