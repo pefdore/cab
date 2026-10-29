@@ -48,10 +48,21 @@ Deno.serve(async (req) => {
     // Get PDFs - no join needed
     console.log('Querying comptabilite for month:', monthKey)
     
-    const { data: pdfs, error: pdfsError } = await supabase
+    const { data: pdfsRaw, error: pdfsError } = await supabase
       .from('comptabilite')
       .select('*')
       .eq('month_key', monthKey)
+      .order('generated_at', { ascending: false })
+
+    // Dedoublonner par utilisateur : garder uniquement la feuille la plus recente
+    // (evite l'envoi de plusieurs mails si plusieurs entrees existent pour le meme medecin/mois)
+    const vusUsers = new Set<string>()
+    const pdfs: any[] = []
+    for (const row of (pdfsRaw || [])) {
+      if (vusUsers.has(row.user_id)) continue
+      vusUsers.add(row.user_id)
+      pdfs.push(row)
+    }
 
     console.log('PDFs query result:', pdfsError ? 'ERROR: ' + pdfsError.message : `Found ${pdfs?.length || 0} PDFs`)
 
@@ -122,6 +133,9 @@ Deno.serve(async (req) => {
           if (ehpadLieux.includes(normL(p.location))) montantEhpad += m
           else montantMedecine += m
         }
+        // En medecine/SSR, une retenue de 10% est due a l'etablissement :
+        // le montant a afficher est le montant A VERSER (apres retenue), comme sur le PDF
+        montantMedecine = montantMedecine * 0.90
       } catch (_e) { /* montants indisponibles: on affichera le total global */ }
       const fmtEuro = (x: number) => x.toFixed(2).replace('.', ',') + ' \u20ac'
 
@@ -138,9 +152,9 @@ Deno.serve(async (req) => {
             <p>Bonjour,</p>
             <p>Veuillez trouver ci-dessous la feuille d'honoraires du Dr ${userLastName} ${userName} pour le mois de <strong>${pdf.month_name}</strong>.</p>
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>Médecine / SSR :</strong> ${fmtEuro(montantMedecine)}</p>
+              <p style="margin: 5px 0;"><strong>Médecine / SSR (après retenue 10%) :</strong> ${fmtEuro(montantMedecine)}</p>
               <p style="margin: 5px 0;"><strong>EHPAD :</strong> ${fmtEuro(montantEhpad)}</p>
-              <p style="margin: 5px 0;"><strong>Total général :</strong> ${fmtEuro(montantMedecine + montantEhpad)}</p>
+              <p style="margin: 5px 0;"><strong>Total à verser :</strong> ${fmtEuro(montantMedecine + montantEhpad)}</p>
             </div>
             <p>Vous trouverez ci-joint le PDF détaillé de la feuille d'honoraires.</p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">

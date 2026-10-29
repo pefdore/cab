@@ -181,7 +181,7 @@ function entete(doc: any, refs: string, avecRetenue: boolean, doctorName: string
   return y + 7
 }
 
-function memoire(doc: any, montant: number, y: number, dateStr: string, doctorNameShort: string) {
+function memoire(doc: any, montant: number, y: number, dateStr: string, doctorName: string, signatureData: string | null) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.text('Arrêt le présent mémoire à la somme de :', MARGE, y)
@@ -190,9 +190,13 @@ function memoire(doc: any, montant: number, y: number, dateStr: string, doctorNa
   doc.text(doc.splitTextToSize(enLettresTxt, LARGEUR), MARGE, y + 6)
   doc.setFont('helvetica', 'normal')
   doc.text(`La Guerche de Bretagne, le ${dateStr}`, MARGE, y + 18)
+  // Nom complet du medecin puis signature EN DESSOUS
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
-  doc.text(doctorNameShort || 'Docteur', 210 - MARGE, y + 40, { align: 'right' })
+  doc.text(doctorName || 'Docteur', 210 - MARGE, y + 28, { align: 'right' })
+  if (signatureData) {
+    try { doc.addImage(signatureData, 'PNG', 150, y + 31, 42, 13) } catch (_e) { /* signature optionnelle */ }
+  }
 }
 
 function tableauMedecine(doc: any, y: number, passages: Passage[]): { total: number, retenue: number, verser: number, y: number } {
@@ -244,15 +248,12 @@ function tableauMedecine(doc: any, y: number, passages: Passage[]): { total: num
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
   doc.text('Montant total', 134, y, { align: 'right' })
-  doc.line(134, y - 5, 192, y - 5)
   doc.text(fmt(total), 192, y, { align: 'right' })
   y += 8
   doc.text('Retenue 10%', 134, y, { align: 'right' })
   doc.text(fmt(retenue), 192, y, { align: 'right' })
   y += 8
   doc.text('Montant à verser', 134, y, { align: 'right' })
-  doc.line(134, y - 5, 192, y - 5)
-  doc.line(134, y + 2, 192, y + 2)
   doc.text(fmt(verser), 192, y, { align: 'right' })
   return { total, retenue, verser, y: y + 6 }
 }
@@ -329,7 +330,7 @@ function normalize(s: string): string {
   return (s || '').toLowerCase().trim()
 }
 
-function pagePatients(doc: any, passages: Passage[], moisLabel: string, dateStr: string) {
+function pagePatients(doc: any, passages: Passage[], moisLabel: string, dateStr: string, doctorName: string, signatureData: string | null) {
   doc.addPage()
   try {
     doc.addImage(LOGO_B64, 'JPEG', MARGE, 12, 23.5, 20)
@@ -362,6 +363,7 @@ function pagePatients(doc: any, passages: Passage[], moisLabel: string, dateStr:
   }
   enteteTableau()
   const rowsPerPage = Math.floor((280 - y) / 6.5)
+  const medecinCol = doctorName.replace(/^Docteur\s+/i, 'Dr ')
   let count = 0
   for (const p of passages) {
     if (count > 0 && count % rowsPerPage === 0) {
@@ -369,13 +371,22 @@ function pagePatients(doc: any, passages: Passage[], moisLabel: string, dateStr:
       y = 18
       enteteTableau()
     }
-    const cells = [p.date || '-', 'Dr DORE', (p.patients?.name || 'Inconnu').substring(0, 28), p.location || '', p.cotation || '']
+    const cells = [p.date || '-', medecinCol, (p.patients?.name || 'Inconnu').substring(0, 28), p.location || '', p.cotation || '']
     cells.forEach((c, i) => {
       doc.rect(cumSum(WP, i), y, WP[i], 6.5, 'S')
       doc.text(String(c), i === 2 ? cumSum(WP, i) + 2 : cumSum(WP, i) + WP[i] / 2, y + 4.7, { align: i === 2 ? 'left' : 'center' })
     })
     y += 6.5
     count++
+  }
+
+  // Nom du praticien puis signature en bas de la page patients
+  y += 14
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.text(doctorName || 'Docteur', 210 - MARGE, y, { align: 'right' })
+  if (signatureData) {
+    try { doc.addImage(signatureData, 'PNG', 150, y + 3, 42, 13) } catch (_e) { /* signature optionnelle */ }
   }
 }
 
@@ -450,6 +461,18 @@ Deno.serve(async (req) => {
         iban = (settingRow && settingRow.value) || ''
       } catch (_e) { iban = '' }
 
+      // Signature depuis user_settings (champ Parametres > Signature)
+      let signatureData: string | null = null
+      try {
+        const { data: sigRow } = await supabase
+          .from('user_settings')
+          .select('value')
+          .eq('user_id', profile.id)
+          .eq('key', 'signature')
+          .maybeSingle()
+        signatureData = (sigRow && sigRow.value) || null
+      } catch (_e) { signatureData = null }
+
       const day = String(now.getDate()).padStart(2, '0')
       const dateStr = `${day} ${MOIS_NOMS[now.getMonth()]} ${now.getFullYear()}`
 
@@ -457,17 +480,17 @@ Deno.serve(async (req) => {
 
       // ---- Page 1 : Médecine / SSR ----
       let y = entete(doc, "Application de la loi 2021-502 du 26 avril 2021 (notamment l'article 19) - Application des articles L 6146-2 et L 6146-41 du Code de la santé publique", true, doctorName, iban)
-      const t1 = tableauMedecine(doc, y, medecinePassages)
-      memoire(doc, t1.verser, 232, dateStr, doctorNameShort)
+      const t1 = tableauMedecine(doc, y, medecinePassages, moisLabel.toUpperCase())
+      memoire(doc, t1.verser, 232, dateStr, doctorName, signatureData)
 
       // ---- Page 2 : EHPAD (une page) ----
       doc.addPage()
       y = entete(doc, 'contrat pluriannuel d\'Objectif et de Moyens signés le 29 juin 2020 - Articles L 313-11, L 313-12, L313-12-2 du Code de l\'Action Sociale et des Familles', false, doctorName, iban)
       const t2 = tableauEhpad(doc, y, ehpadPassages, moisLabel.toUpperCase())
-      memoire(doc, t2.total, t2.y + 4, dateStr, doctorNameShort)
+      memoire(doc, t2.total, t2.y + 4, dateStr, doctorName, signatureData)
 
       // ---- Page 3 : Liste des patients ----
-      pagePatients(doc, passages, moisLabel.toUpperCase(), dateStr)
+      pagePatients(doc, passages, moisLabel.toUpperCase(), dateStr, doctorName, signatureData)
 
       const pdfBase64 = doc.output('datauristring')
 
