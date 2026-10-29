@@ -191,7 +191,11 @@ Deno.serve(async (req) => {
           }] : []
         })
 
-        console.log(`Email sent to accounting: ${accountingEmail}`, accountingResult)
+        console.log(`Email sent to accounting: ${medecinAccEmail}`, JSON.stringify(accountingResult))
+        if (accountingResult && accountingResult.error) {
+          console.error('ERREUR envoi comptabilite:', JSON.stringify(accountingResult.error))
+          results.push({ email: medecinAccEmail, sent: false, error: JSON.stringify(accountingResult.error) })
+        }
       }
 
       results.push({ email: userEmail, accounting: medecinAccEmail, sent: true })
