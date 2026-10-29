@@ -1,13 +1,13 @@
-const CACHE_NAME = 'cotation-v202610292200';
+const CACHE_NAME = 'cotation-v202610292300';
 const ASSETS = [
   '/',
   '/index.html',
-  '/app.v5.js?v=202610292200',
+  '/app.v5.js?v=202610292300',
   '/secretariat.js?v=202611024000',
   '/secretaire-space.js?v=202611024000',
   '/urgence.js?v=202611024000',
   '/urgence-orders.js?v=202611024000',
-  '/style.css?v=202610292200',
+  '/style.css?v=202610292300',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
@@ -52,7 +52,9 @@ self.addEventListener('fetch', event => {
   if (request.method === 'GET' && url.origin === location.origin) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async cache => {
-        const cached = await cache.match(request, { ignoreSearch: true });
+        // IMPORTANT: ne PAS utiliser ignoreSearch - la version ?v= doit etre prise en compte
+        // pour que les nouveaux deploiements (cache busting) soient reellement charges
+        const cached = await cache.match(request);
         const fetchPromise = fetch(request).then(response => {
           if (response && response.status === 200) {
             cache.put(request, response.clone());
