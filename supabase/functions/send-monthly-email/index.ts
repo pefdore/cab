@@ -100,31 +100,60 @@ Deno.serve(async (req) => {
         if (settingRow && settingRow.value) medecinAccEmail = settingRow.value
       } catch (_e) { /* fallback vers global */ }
 
+      // Recalcul des sous-totaux depuis les passages du mois (meme regle EHPAD que le PDF)
+      // pdf.month_key = 'AAAA-MM' du mois concerne
+      const [mkYear, mkMonth] = pdf.month_key.split('-').map(Number)
+      const lastDay = new Date(mkYear, mkMonth, 0).getDate()
+      const startDate = `${pdf.month_key}-01`
+      const endDate = `${pdf.month_key}-${lastDay}`
+      const ehpadLieux = ['lilas rdc', 'lilias rdc', 'lilas rdc', 'lilas 1er', 'lilias 1er', 'lilas 1er etage', 'lilias 1er etage', 'availles', 'tamaris']
+      const normL = (s: string) => (s || '').toLowerCase().trim()
+      let montantMedecine = 0
+      let montantEhpad = 0
+      try {
+        const { data: passagesMois } = await supabase
+          .from('passages')
+          .select('location, amount')
+          .eq('user_id', pdf.user_id)
+          .gte('date', startDate)
+          .lte('date', endDate)
+        for (const p of (passagesMois || [])) {
+          const m = parseFloat(p.amount) || 0
+          if (ehpadLieux.includes(normL(p.location))) montantEhpad += m
+          else montantMedecine += m
+        }
+      } catch (_e) { /* montants indisponibles: on affichera le total global */ }
+      const fmtEuro = (x: number) => x.toFixed(2).replace('.', ',') + ' \u20ac'
+
       // Extract content from data URI
       let attachmentContent = ''
       if (pdf.pdf_data && pdf.pdf_data.includes(',')) {
         attachmentContent = pdf.pdf_data.split(',')[1]
       }
 
-      // Send to physician
-      const physicianResult = await resend.emails.send({
-        from: 'Cotation Médecin <onboarding@resend.dev>',
-        to: [userEmail],
-        subject: `Honoraires ${pdf.month_name} - PDF généré`,
-        html: `
+      // Corps du mail destine au service comptable de l'hopital
+      const corpsHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #1e40af;">Honoraires ${pdf.month_name}</h1>
-            <p>Bonjour ${userName},</p>
-            <p>Votre feuille d'honoraires pour <strong>${pdf.month_name}</strong> a été générée automatiquement.</p>
+            <p>Bonjour,</p>
+            <p>Veuillez trouver ci-dessous la feuille d'honoraires du Dr ${userLastName} ${userName} pour le mois de <strong>${pdf.month_name}</strong>.</p>
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>Total:</strong> <span style="color: #059669; font-size: 24px;">${pdf.total_amount.toFixed(2)} €</span></p>
-              <p style="margin: 5px 0;"><strong>Nombre d'actes:</strong> ${pdf.total_visits}</p>
+              <p style="margin: 5px 0;"><strong>Médecine / SSR :</strong> ${fmtEuro(montantMedecine)}</p>
+              <p style="margin: 5px 0;"><strong>EHPAD :</strong> ${fmtEuro(montantEhpad)}</p>
+              <p style="margin: 5px 0;"><strong>Total général :</strong> ${fmtEuro(montantMedecine + montantEhpad)}</p>
             </div>
-            <p>Vous pouvez la télécharger depuis l'application dans la section "Documents".</p>
+            <p>Vous trouverez ci-joint le PDF détaillé de la feuille d'honoraires.</p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
             <p style="color: #6b7280; font-size: 12px;">Cet email a été envoyé automatiquement par l'application Cotation Médecin.</p>
           </div>
-        `,
+        `
+
+      // Envoi au medecin (copie de sa feuille)
+      const physicianResult = await resend.emails.send({
+        from: 'Cotation Médecin <onboarding@resend.dev>',
+        to: [userEmail],
+        subject: `Honoraires ${pdf.month_name}`,
+        html: corpsHtml,
         attachments: attachmentContent ? [{
           filename: `honoraires-${pdf.month_key}.pdf`,
           content: attachmentContent,
@@ -139,19 +168,8 @@ Deno.serve(async (req) => {
         const accountingResult = await resend.emails.send({
           from: 'Cotation Médecin <onboarding@resend.dev>',
           to: [medecinAccEmail],
-          subject: `Honoraires ${pdf.month_name} - ${userName} ${userLastName}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h1 style="color: #1e40af;">Honoraires ${pdf.month_name}</h1>
-              <p><strong>Médecin:</strong> ${userName} ${userLastName}</p>
-              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 5px 0;"><strong>Total:</strong> <span style="color: #059669; font-size: 24px;">${pdf.total_amount.toFixed(2)} €</span></p>
-                <p style="margin: 5px 0;"><strong>Nombre d'actes:</strong> ${pdf.total_visits}</p>
-              </div>
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-              <p style="color: #6b7280; font-size: 12px;">Cet email a été envoyé automatiquement par l'application Cotation Médecin.</p>
-            </div>
-          `,
+          subject: `Honoraires ${pdf.month_name} - Dr ${userLastName} ${userName}`,
+          html: corpsHtml,
           attachments: attachmentContent ? [{
             filename: `honoraires-${pdf.month_key}-${userLastName}.pdf`,
             content: attachmentContent,
