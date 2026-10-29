@@ -525,6 +525,56 @@ Deno.serve(async (req) => {
         }])
       }
 
+      // ===== Integration dans le module Documents (meme presentation que le bouton 'Generer PDF' de l'app) =====
+      // 1) Upload du PDF dans le Storage (bucket 'documents', dossier passages/)
+      const fileName = `feuille-comptabilite-hopital-ehpad-${monthKey}.pdf`
+      const filePath = `passages/${monthKey}-${Date.now()}.pdf`
+      let docUrl = ''
+      try {
+        const base64Payload = pdfBase64.includes(',') ? pdfBase64.split(',')[1] : pdfBase64
+        const pdfBytes = Uint8Array.from(atob(base64Payload), c => c.charCodeAt(0))
+        const pdfFile = new File([pdfBytes], fileName, { type: 'application/pdf' })
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('documents')
+          .upload(filePath, pdfFile, { upsert: true })
+        if (uploadError) throw uploadError
+        const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
+        docUrl = urlData.publicUrl || ''
+      } catch (e) {
+        console.error('Erreur upload Storage:', e)
+      }
+
+      // 2) Entree dans la table documents (categorie et description identiques a l'app)
+      if (docUrl) {
+        const todayStr = new Date().toISOString().split('T')[0]
+        const docRecord = {
+          user_id: profile.id,
+          file_name: fileName,
+          file_url: docUrl,
+          category: 'comptabilite-hopital-ehpad - Feuille de comptabilité hôpital EHPAD',
+          description: 'Feuille de comptabilité hôpital EHPAD - ' + moisLabel,
+          doc_type: 'passage',
+          doc_date: todayStr
+        }
+        try {
+          // remplacer une eventuelle entree precedente du meme mois pour eviter les doublons
+          const { data: existingDoc } = await supabase
+            .from('documents')
+            .select('id')
+            .eq('user_id', profile.id)
+            .eq('doc_type', 'passage')
+            .ilike('description', '% - ' + moisLabel)
+          for (const ed of (existingDoc || [])) {
+            await supabase.from('documents').delete().eq('id', ed.id)
+          }
+          const { error: docError } = await supabase.from('documents').insert(docRecord)
+          if (docError) throw docError
+        } catch (e) {
+          console.error('Erreur enregistrement document:', e)
+        }
+      }
+
       console.log(`PDF généré pour ${profile.email}: ${passages.length} passages, ${totalAmount}€`)
       results.push({ user: profile.email, passages: passages.length, total: totalAmount, medecine: t1.total, ehpad: t2.total })
     }
