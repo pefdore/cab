@@ -206,6 +206,7 @@ function onAuthLogout() {
     window._pendingSecretaryCabinetId = null;
     try {
         sessionStorage.removeItem('cab_sec_approved');
+        sessionStorage.removeItem('cab_admin_seen');
         sessionStorage.removeItem('cab_current_view');
         localStorage.removeItem('cab_pending_secretary_cabinet');
         localStorage.removeItem('cab_pending_secretary_cabinet_id');
@@ -11325,11 +11326,13 @@ function isAdminUser() {
 }
 
 async function applyAdminNavVisibility() {
+    let sticky = false;
+    try { sticky = sessionStorage.getItem('cab_admin_seen') === '1'; } catch (e) {}
     await refreshCurrentProfileFromDb();
     const hasRole = (window.currentProfile && window.currentProfile.role) ||
         (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.role);
     if (!hasRole) return; // profil pas encore charge : on ne masque rien
-    const visible = isAdminUser();
+    const visible = sticky || isAdminUser();
     if (visible) {
         try { sessionStorage.setItem('cab_admin_seen', '1'); } catch (e) {}
     }
