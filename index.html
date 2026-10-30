@@ -1457,7 +1457,8 @@ window.attemptLogin = function() {
                         <h3>Email comptabilité</h3>
                         <p class="settings-desc">Destinataire fixe qui reçoit automatiquement la feuille d'honoraires le 1er de chaque mois</p>
                         <input type="email" id="accountingEmailInput" placeholder="comptabilite@hopital.fr" style="width: 100%; max-width: 420px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.9rem; background: var(--color-bg-elevated); color: var(--color-text); margin-bottom: 8px;">
-                        <p class="settings-hint">Le PDF du mois précédent est envoyé automatiquement à cet email et à l'email de votre compte, le 1er de chaque mois. Sauvegardé automatiquement quand vous quittez le champ.</p>
+                        <p class="settings-hint">Le PDF du mois précédent est envoyé automatiquement à cet email et à l'email de votre compte, le 1er de chaque mois.</p>
+                        <button type="button" onclick="window.__accEmailSaveButton()" style="margin-top: 8px; padding: 10px 18px; background: var(--color-primary); color: white; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; font-weight: 600;">💾 Enregistrer</button>
                     </div>
                     
                     <div class="settings-section">
@@ -3196,7 +3197,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610293400" defer></script>
+    <script src="app.v5.js?v=202610293500" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -4406,6 +4407,16 @@ window.attemptLogin = function() {
 
       // Also load documents when filter button is clicked
       // ===== Email comptabilite: sauvegarde + affichage (script inline) =====
+      // Bouton Enregistrer: sauvegarde + confirmation visible
+      window.__accEmailSaveButton = async function() {
+        const f = document.getElementById('accountingEmailInput');
+        const v = f ? f.value.trim() : '';
+        if (!v) { alert('Le champ est vide'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { alert('Adresse email invalide : ' + v); return; }
+        const ok = await window.__accEmailSet(v);
+        alert(ok ? '✔ Email comptabilité enregistré : ' + v : '✘ ERREUR : email non enregistré');
+      };
+
       // Lecture de l'email sauvegarde pour CE compte (base > localStorage)
       window.__accEmailGet = async function() {
         try {
