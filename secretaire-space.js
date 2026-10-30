@@ -86,7 +86,7 @@ async function secLoadJoinRequests() {
             console.warn('[SEC-SPACE] pas de cabinet sur le profil');
             return [];
         }
-        if (profile.role !== 'medecin_installe') {
+        if (!secIsDoctorOrAdmin(profile.role)) {
             console.warn('[SEC-SPACE] role dans profiles =', profile.role, '- tentative d\'affichage quand meme');
         }
 
@@ -108,6 +108,11 @@ async function secLoadJoinRequests() {
         console.error('[SEC-SPACE] loadJoinRequests:', e);
         return [];
     }
+}
+
+
+function secIsDoctorOrAdmin(role) {
+    return role === 'medecin_installe' || role === 'admin';
 }
 
 async function secRenderJoinRequestsBanner() {
@@ -641,7 +646,7 @@ function secStartRequestsPolling() {
     secSpacePollTimer = setInterval(() => {
         if (!window.currentUser) return;
         const role = window.currentProfile?.role || window.currentUser.user_metadata?.role;
-        if (role === 'medecin_installe') secRenderJoinRequestsBanner();
+        if (secIsDoctorOrAdmin(role)) secRenderJoinRequestsBanner();
     }, 30000);
 }
 
@@ -653,7 +658,7 @@ function secStartApprovalWatch() {
         tries++;
         if (!window.currentUser || tries > 20) { clearInterval(watcher); return; }
         const role = window.currentProfile?.role || window.currentUser.user_metadata?.role;
-        if (role === 'medecin_installe') {
+        if (secIsDoctorOrAdmin(role)) {
             secRenderJoinRequestsBanner();
             secStartRequestsPolling();
             secBackfillRequestsForCabinet();
@@ -700,7 +705,7 @@ async function initSecretarySpace() {
     secApplySecretarySpace();
 
     const role = window.currentProfile?.role || window.currentUser.user_metadata?.role;
-    if (role === 'medecin_installe') {
+    if (secIsDoctorOrAdmin(role)) {
         secRenderJoinRequestsBanner();
         secStartRequestsPolling();
         secBackfillRequestsForCabinet();
