@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-C_1ZVvNK.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-Dt27FznL.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -430,6 +430,12 @@ window.attemptLogin = function() {
                     </svg>
                     Cabinet
                     <span id="secNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#f59e0b; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
+                </a>
+                <a href="#" class="nav-item" data-view="admin" id="navAdmin" style="display:none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
+                    </svg>
+                    Admin
                 </a>
                 <a href="#" class="nav-item" data-view="settings">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2448,6 +2454,130 @@ window.attemptLogin = function() {
                     </div>
                 </div>
             </section>
+            <section id="view-admin" class="view">
+                <div class="cabinet-page-header">
+                    <div class="cabinet-page-title">
+                        <span class="cabinet-page-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                        </span>
+                        <div>
+                            <h2>Administration</h2>
+                            <p>Vue d'ensemble de tous les cabinets et de tous les inscrits</p>
+                        </div>
+                    </div>
+                    <button class="action-btn" id="adminRefreshBtn" onclick="loadAdminData()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Actualiser
+                    </button>
+                </div>
+
+                <div class="cabinet-stats-row" id="adminStatsRow">
+                    <div class="cabinet-stat-card">
+                        <div class="cabinet-stat-icon blue">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        </div>
+                        <div class="cabinet-stat-content">
+                            <span class="cabinet-stat-label">Cabinets inscrits</span>
+                            <span class="cabinet-stat-value" id="adminStatCabinets">-</span>
+                        </div>
+                    </div>
+                    <div class="cabinet-stat-card">
+                        <div class="cabinet-stat-icon green">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        </div>
+                        <div class="cabinet-stat-content">
+                            <span class="cabinet-stat-label">Médecins installés</span>
+                            <span class="cabinet-stat-value" id="adminStatInstalles">-</span>
+                        </div>
+                    </div>
+                    <div class="cabinet-stat-card">
+                        <div class="cabinet-stat-icon orange">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div class="cabinet-stat-content">
+                            <span class="cabinet-stat-label">Remplaçants inscrits</span>
+                            <span class="cabinet-stat-value" id="adminStatRemplacants">-</span>
+                        </div>
+                    </div>
+                    <div class="cabinet-stat-card">
+                        <div class="cabinet-stat-icon purple">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+                        </div>
+                        <div class="cabinet-stat-content">
+                            <span class="cabinet-stat-label">Secrétaires inscrits</span>
+                            <span class="cabinet-stat-value" id="adminStatSecretaires">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cabinet-stat-card" style="margin-bottom:24px;">
+                    <div class="cabinet-stat-icon teal">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div class="cabinet-stat-content">
+                        <span class="cabinet-stat-label">Total inscrits (tous rôles)</span>
+                        <span class="cabinet-stat-value" id="adminStatTotal">-</span>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h3>Tous les cabinets</h3>
+                        <input type="text" id="adminSearchCabinets" class="admin-search" placeholder="Rechercher un cabinet (nom ou adresse)..." oninput="renderAdminCabinets()">
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Cabinet</th>
+                                    <th>Adresse</th>
+                                    <th>Médecins installés</th>
+                                    <th>Secrétaires</th>
+                                    <th>Total membres</th>
+                                    <th>Créé le</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminCabinetsBody">
+                                <tr><td colspan="6" class="admin-empty">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel" style="margin-top:24px;">
+                    <div class="admin-panel-header">
+                        <h3>Tous les inscrits</h3>
+                        <div class="admin-filters">
+                            <input type="text" id="adminSearchUsers" class="admin-search" placeholder="Rechercher un inscrit..." oninput="renderAdminUsers()">
+                            <select id="adminFilterRole" class="admin-search" onchange="renderAdminUsers()">
+                                <option value="">Tous les rôles</option>
+                                <option value="medecin_installe">Médecins installés</option>
+                                <option value="medecin_remplacant">Remplaçants</option>
+                                <option value="secretaire">Secrétaires</option>
+                            </select>
+                            <select id="adminFilterCabinet" class="admin-search" onchange="renderAdminUsers()">
+                                <option value="">Tous les cabinets</option>
+                                <option value="__none__">Sans cabinet</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Rôle</th>
+                                    <th>Cabinet</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersBody">
+                                <tr><td colspan="4" class="admin-empty">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <!-- Remplaçant Modal - Create/Edit -->
@@ -3133,6 +3263,12 @@ window.attemptLogin = function() {
                     <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
                 <span style="position:relative;">Cabinet<span id="secNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#f59e0b; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
+            </a>
+            <a href="#" class="mobile-nav-item" data-view="admin" id="navAdminMobile" style="display:none;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
+                </svg>
+                <span>Admin</span>
             </a>
             <a href="#" class="mobile-nav-item" data-view="settings">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
