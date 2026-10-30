@@ -158,7 +158,11 @@ try {
     let lastView = 'dashboard';
     try { lastView = sessionStorage.getItem('cab_current_view') || 'dashboard'; } catch (e) {}
     if (['dashboard', 'flux', 'urgence', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
-    if (['dashboard', 'flux', 'history', 'urgence'].includes(lastView)) {
+    // Membre en attente de validation (secretaire OU medecin ayant rejoint un
+    // cabinet) : force la vue cabinet, la seule qui affiche le bandeau d'attente
+    if (typeof secIsMemberLocked === 'function' && secIsMemberLocked()) {
+        lastView = 'cabinet';
+    } else if (['dashboard', 'flux', 'history', 'urgence'].includes(lastView)) {
         const role = (window.currentProfile?.role) || currentUser?.user_metadata?.role;
         if (role === 'secretaire') lastView = 'cabinet';
     }

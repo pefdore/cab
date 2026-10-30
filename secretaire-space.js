@@ -26,6 +26,17 @@ function secIsApproved() {
 
 function secSetApproved(v) {
     try { sessionStorage.setItem('cab_sec_approved', v ? '1' : '0'); } catch (e) {}
+    secSetMemberLocked(!v);
+}
+
+function secSetMemberLocked(v) {
+    window._secMemberLocked = v;
+    try { sessionStorage.setItem('cab_member_locked', v ? '1' : '0'); } catch (e) {}
+}
+
+function secIsMemberLocked() {
+    if (window._secMemberLocked !== undefined) return window._secMemberLocked;
+    try { return sessionStorage.getItem('cab_member_locked') === '1'; } catch (e) { return false; }
 }
 
 async function secGetCabinetId() {
@@ -122,6 +133,16 @@ async function secLoadJoinRequests() {
 
 function secIsDoctorOrAdmin(role) {
     return role === 'medecin_installe' || role === 'admin';
+}
+
+// Le verrou d'attente de validation concerne TOUT membre non encore
+// rattache : secretaire ET medecin_installe qui ont rejoint un cabinet
+// existant (pending_cabinet_id / cabinet_address sans cabinet_id).
+function secNeedsCabinetApproval(profile) {
+    if (!profile) return false;
+    if (profile.cabinet_id) return false;
+    if (profile.role !== 'medecin_installe' && profile.role !== SECRETARY_ROLE) return false;
+    return !!(profile.pending_cabinet_id || profile.cabinet_address);
 }
 
 async function secRenderJoinRequestsBanner() {
@@ -294,6 +315,7 @@ async function secCreateJoinRequest(cabinetId) {
 // ---------- Espace secretaire : activation de la vue ----------
 
 function secResetUiOnLogout() {
+    secSetMemberLocked(false);
     const secSpace = document.getElementById('secretarySpace');
     if (secSpace) secSpace.style.display = 'none';
     const banner = document.getElementById('secPendingApprovalBanner');
@@ -331,13 +353,16 @@ function secApplySecretarySpace() {
     const secSpace = document.getElementById('secretarySpace');
     if (!secSpace) return;
 
-    if (!secIsSecretary()) {
+    const isSecretary = secIsSecretary();
+    if (!isSecretary && !secIsMemberLocked()) {
         secSpace.style.display = 'none';
         return;
     }
 
     // Toute secretaire (validee ou non) est soustraite aux vues medecin :
-    // dashboard cotation/finances, flux, documents, urgence
+    // dashboard cotation/finances, flux, documents, urgence.
+    // Un medecin installé VERROUILLE (en attente de validation) est aussi
+    // soustrait a TOUTES ces vues : il ne doit voir que le bandeau d'attente.
     ['view-dashboard', 'view-flux', 'view-history', 'view-urgence'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -347,10 +372,16 @@ function secApplySecretarySpace() {
             item.style.display = 'none';
         }
     });
+    // Medecin verrouille : masquer AUSSI les navs cabinet et parametres
+    if (!isSecretary && secIsMemberLocked()) {
+        document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(item => {
+            item.style.display = 'none';
+        });
+    }
     // Dans l'espace Cabinet : masquer les onglets reserves aux medecins
     // (Secretariat RH, Reunions, Remplacants) ainsi que leurs contenus.
     // L'onglet Stocks reste visible seulement si la secretaire est approuvee.
-    const approved = secIsApproved();
+    const approved = isSecretary && secIsApproved();
     const tabsToHide = approved
         ? ['secretariat', 'reunions', 'remplacants']
         : ['secretariat', 'reunions', 'remplacants', 'stocks'];
@@ -596,50 +627,58 @@ async function secRenderPendingBanner() {
     } catch (e) {}
 }
 
-// ---------- Verrou d'acces : la secretaire ne voit l'espace que si approuvee ----------
+// ---------- Verrou d'acces : TOUT membre en attente (secretaire OU medecin
+// installé qui a rejoint un cabinet) ne voit QUE le bandeau d'attente ----------
 
 async function secCheckApproval() {
-    if (!secIsSecretary()) return true;
     try {
         const { data: profile } = await supabaseClient
             .from('profiles')
-            .select('cabinet_id, cabinet_address, pending_cabinet_id')
+            .select('cabinet_id, cabinet_address, pending_cabinet_id, role')
             .eq('id', window.currentUser.id)
             .single();
-        if (profile?.cabinet_id) {
-            const { data: req } = await supabaseClient
-                .from('cabinet_join_requests')
-                .select('status')
-                .eq('requester_id', window.currentUser.id)
-                .eq('cabinet_id', profile.cabinet_id)
-                .order('created_at', { ascending: false })
-                .limit(1);
-            const status = req && req.length ? req[0].status : null;
-            // Une secretaire n'accede a l'espace que si une demande a ete APPROUVEE
-            const approved = status === 'approved';
-            secSetApproved(approved);
-            if (!approved) secRenderPendingBanner();
-            return approved;
+
+        // Hors process de validation (fondateur, remplacant, admin, aucun cabinet vise)
+        // => acces normal, pas de verrou
+        if (!secNeedsCabinetApproval(profile)) {
+            if (profile?.cabinet_id && profile.role === SECRETARY_ROLE) {
+                // Secretaire rattachee : verifier que la demande a bien ete approuvee
+                const { data: req } = await supabaseClient
+                    .from('cabinet_join_requests')
+                    .select('status')
+                    .eq('requester_id', window.currentUser.id)
+                    .eq('cabinet_id', profile.cabinet_id)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                const approved = req && req.length && req[0].status === 'approved';
+                secSetApproved(approved);
+                if (!approved) secRenderPendingBanner();
+                return approved;
+            }
+            secSetApproved(true);
+            secSetMemberLocked(false);
+            return true;
         }
-        // Pas encore rattachee a un cabinet : on regarde si une demande a ete approuvee
-        const storedAddress = (function() {
-            try { return localStorage.getItem('cab_pending_secretary_cabinet'); } catch (e) { return null; }
-        })();
-        const cabinetId = window._pendingSecretaryCabinetId || profile?.pending_cabinet_id || secGetStoredCabinetId() || await secResolveCabinetByAddress(profile?.cabinet_address || storedAddress);
-        if (cabinetId) {
+
+        // Membre en attente (secretaire ou medecin) : verrou jusqu'a approbation
+        const cabinetId = profile?.cabinet_id || profile?.pending_cabinet_id || await secResolveCabinetByAddress(profile?.cabinet_address);
+        if (profile?.cabinet_id || cabinetId) {
+            const targetCabinet = profile?.cabinet_id || cabinetId;
             const { data: req } = await supabaseClient
                 .from('cabinet_join_requests')
                 .select('status')
                 .eq('requester_id', window.currentUser.id)
-                .eq('cabinet_id', cabinetId)
+                .eq('cabinet_id', targetCabinet)
                 .order('created_at', { ascending: false })
                 .limit(1);
             if (req && req.length && req[0].status === 'approved') {
                 secSetApproved(true);
+                secSetMemberLocked(false);
                 return true;
             }
         }
         secSetApproved(false);
+        secSetMemberLocked(true);
         secRenderPendingBanner();
         return false;
     } catch (e) {
