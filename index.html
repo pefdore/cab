@@ -3171,7 +3171,7 @@ window.attemptLogin = function() {
     </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-      window.__APP_BUILD = '202610293800';
+      window.__APP_BUILD = '202610293900';
 
       // Recuperation service worker: si la version deployee ne correspond pas a celle deja vue,
       // on desinscrit le SW et purge TOUS les caches (garde-fou contre les vieux SW qui servent du code obsolete)
@@ -3199,7 +3199,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610293800" defer></script>
+    <script src="app.v5.js?v=202610293900" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -4431,16 +4431,19 @@ window.attemptLogin = function() {
         alert((ok ? '✔ Email comptabilité enregistré : ' + v : '✘ ERREUR : email non enregistré') + '\n\n(version app: ' + (window.__APP_BUILD || 'inconnue') + ')');
       };
 
-      // Lecture de l'email sauvegarde pour CE compte (base > localStorage)
+      // Lecture de l'email sauvegarde: base d'abord, fallback localStorage (memes appareils)
       window.__accEmailGet = async function() {
         try {
           if (window.supabaseClient && window.currentUser) {
             const r = await window.supabaseClient.from('user_settings')
               .select('value').eq('user_id', window.currentUser.id).eq('key', 'accounting_email').maybeSingle();
-            if (!r.error && r.data && r.data.value) return r.data.value;
+            if (!r.error && r.data && r.data.value) {
+              try { localStorage.setItem('acc_email_ok', r.data.value); } catch (e) {}
+              return r.data.value;
+            }
           }
         } catch (e) {}
-        return '';
+        try { return localStorage.getItem('acc_email_ok') || ''; } catch (e) { return ''; }
       };
 
       // Sauvegarde directe en base AVEC VERIFICATION REELLE (relecture apres upsert)
@@ -4458,6 +4461,7 @@ window.attemptLogin = function() {
           if (check.error) { console.error('[ACC_EMAIL] check error:', check.error); return false; }
           const ok = !!(check.data && check.data.value === v);
           if (!ok) console.error('[ACC_EMAIL] ECHEC: valeur en base =', check.data ? check.data.value : 'null', 'au lieu de', v);
+          if (ok) { try { localStorage.setItem('acc_email_ok', v); } catch (e) {} }
           return ok;
         } catch (e) { console.error('[ACC_EMAIL] exception:', e); return false; }
       };
