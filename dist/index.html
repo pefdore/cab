@@ -3171,7 +3171,7 @@ window.attemptLogin = function() {
     </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-      window.__APP_BUILD = '202610294300';
+      window.__APP_BUILD = '202610294400';
 
       // (garde-fou SW retire: le service worker est desormais corrige et respecte les versions;
       //  le garde-fou causait des rechargements parasites, notamment en navigation privee)
@@ -3179,7 +3179,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610294300" defer></script>
+    <script src="app.v5.js?v=202610294400" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -4398,7 +4398,7 @@ window.attemptLogin = function() {
         }
         return els[0] || null;
       }
-      // Remplissage des champs quand la page PDF s'affiche (overlay mobile ou page desktop)
+      // Remplissage des champs quand la page PDF s'affiche (tous les champs, original + clones)
       async function __accEmailFill() {
         try {
           const txt = await window.__accEmailGet();
@@ -4407,25 +4407,48 @@ window.attemptLogin = function() {
           });
         } catch (e) {}
       }
-      // hooker la fonction d'ouverture de page overlay (mobile)
-      const __origShowOverlay = window.showOverlaySettingsPage;
-      window.showOverlaySettingsPage = function(overlay, pageName) {
-        const r = __origShowOverlay ? __origShowOverlay(overlay, pageName) : undefined;
-        if (pageName === 'pdf') setTimeout(__accEmailFill, 100);
-        return r;
-      };
-      // et l'ouverture desktop
-      const __origOpenSettings = window.openSettingsPage;
-      window.openSettingsPage = function(pageName) {
-        const p = (pageName && pageName.then) ? pageName : pageName;
-        const r = __origOpenSettings ? __origOpenSettings(pageName) : undefined;
-        if (pageName === 'pdf') setTimeout(__accEmailFill, 100);
-        return r;
-      };
+
+      // Tracker: memoriser le DERNIER champ email dans lequel l'utilisateur a tape
+      // (quelle que soit la version du champ: original ou clone overlay mobile)
+      window.__accEmailLastTyped = null;
+      document.addEventListener('input', function(ev) {
+        if (ev.target && ev.target.id === 'accountingEmailInput') {
+          window.__accEmailLastTyped = ev.target;
+        }
+      }, true);
+
+      // Hooks robustes: app.v5.js charge APRES ce script et ecrase window.* nos wrappers.
+      // On poll: wrapper chaque fonction des qu'elle apparait / est reassignee.
+      (function hookPoll() {
+        try {
+          if (window.showOverlaySettingsPage && !window.showOverlaySettingsPage.__accWrap) {
+            const orig = window.showOverlaySettingsPage;
+            const wrapped = function(overlay, pageName) {
+              const r = orig.apply(this, arguments);
+              if (pageName === 'pdf') setTimeout(__accEmailFill, 150);
+              return r;
+            };
+            wrapped.__accWrap = true;
+            window.showOverlaySettingsPage = wrapped;
+          }
+          if (window.openSettingsPage && !window.openSettingsPage.__accWrap) {
+            const orig2 = window.openSettingsPage;
+            const wrapped2 = function(pageName) {
+              const r = orig2.apply(this, arguments);
+              if (pageName === 'pdf') setTimeout(__accEmailFill, 150);
+              return r;
+            };
+            wrapped2.__accWrap = true;
+            window.openSettingsPage = wrapped2;
+          }
+        } catch (e) {}
+        setTimeout(hookPoll, 400);
+      })();
 
       // Bouton Enregistrer: sauvegarde + confirmation visible
       window.__accEmailSaveButton = async function() {
-        const f = __accEmailField();
+        // priorite au champ que l'utilisateur vient de taper, sinon champ visible
+        let f = (window.__accEmailLastTyped && window.__accEmailLastTyped.isConnected) ? window.__accEmailLastTyped : __accEmailField();
         const v = f ? f.value.trim() : '';
         if (!v) { alert('Le champ est vide'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { alert('Adresse email invalide : ' + v); return; }
