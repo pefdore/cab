@@ -1457,8 +1457,7 @@ window.attemptLogin = function() {
                         <h3>Email comptabilité</h3>
                         <p class="settings-desc">Destinataire fixe qui reçoit automatiquement la feuille d'honoraires le 1er de chaque mois</p>
                         <input type="email" id="accountingEmailInput" placeholder="comptabilite@hopital.fr" style="width: 100%; max-width: 420px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.9rem; background: var(--color-bg-elevated); color: var(--color-text); margin-bottom: 8px;">
-                        <p class="settings-hint">Le PDF du mois précédent est envoyé automatiquement à cet email et à l'email de votre compte, le 1er de chaque mois.</p>
-                        <button type="button" onclick="window.__accEmailSaveButton()" style="margin-top: 8px; padding: 10px 18px; background: var(--color-primary); color: white; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; font-weight: 600;">💾 Enregistrer</button>
+                        <p class="settings-hint">Le PDF du mois précédent est envoyé automatiquement à cet email et à l'email de votre compte, le 1er de chaque mois. Sauvegardé automatiquement quand vous quittez le champ.</p>
                     </div>
                     
                     <div class="settings-section">
@@ -3171,7 +3170,7 @@ window.attemptLogin = function() {
     </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-      window.__APP_BUILD = '202610294500';
+      window.__APP_BUILD = '202610294600';
 
       // (garde-fou SW retire: le service worker est desormais corrige et respecte les versions;
       //  le garde-fou causait des rechargements parasites, notamment en navigation privee)
@@ -3179,7 +3178,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610294500" defer></script>
+    <script src="app.v5.js?v=202610294600" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -4445,16 +4444,38 @@ window.attemptLogin = function() {
         setTimeout(hookPoll, 400);
       })();
 
-      // Bouton Enregistrer: sauvegarde + confirmation visible
-      window.__accEmailSaveButton = async function() {
-        // priorite au champ que l'utilisateur vient de taper, sinon champ visible
-        let f = (window.__accEmailLastTyped && window.__accEmailLastTyped.isConnected) ? window.__accEmailLastTyped : __accEmailField();
+      // Sauvegarde automatique silencieuse avec toast (blur + debounce de saisie)
+      window.__accEmailAutoSave = async function(f) {
         const v = f ? f.value.trim() : '';
-        if (!v) { alert('Le champ est vide'); return; }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { alert('Adresse email invalide : ' + v); return; }
+        if (!v) return;  // champ vide: rien a sauvegarder
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { return; }  // invalide: on attend une saisie complete
         const ok = await window.__accEmailSet(v);
-        alert(ok ? '✔ Email comptabilité enregistré : ' + v : '✘ ERREUR : email non enregistré');
+        if (typeof showToast === 'function') {
+          showToast(ok ? 'Email comptabilité enregistré' : 'ERREUR : email non enregistré', ok ? 'success' : 'error');
+        } else if (ok !== null) {
+          alert(ok ? 'Email comptabilité enregistré' : 'ERREUR : email non enregistré');
+        }
       };
+      // brancher blur + saisie debounced sur TOUS les champs (original + clones overlay),
+      // installes et re-installes par polling (les clones apparaissent plus tard sur mobile)
+      (function brancherAuto() {
+        try {
+          document.querySelectorAll('#accountingEmailInput').forEach(champ => {
+            if (champ.__accAuto) return;
+            champ.__accAuto = true;
+            let t = null;
+            champ.addEventListener('input', function() {
+              clearTimeout(t);
+              t = setTimeout(function() { window.__accEmailAutoSave(champ); }, 900);
+            });
+            champ.addEventListener('blur', function() {
+              clearTimeout(t);
+              window.__accEmailAutoSave(champ);
+            });
+          });
+        } catch (e) {}
+        setTimeout(brancherAuto, 500);
+      })();
 
       // Lecture de l'email sauvegarde: base d'abord, fallback localStorage (memes appareils)
       window.__accEmailGet = async function() {
