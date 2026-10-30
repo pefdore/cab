@@ -3197,7 +3197,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610293500" defer></script>
+    <script src="app.v5.js?v=202610293600" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -4407,6 +4407,18 @@ window.attemptLogin = function() {
 
       // Also load documents when filter button is clicked
       // ===== Email comptabilite: sauvegarde + affichage (script inline) =====
+      // Reaffichage: toutes les 2s, si le champ est visible+vide+non-focus, le remplir depuis la base
+      setInterval(async () => {
+        try {
+          const f = document.getElementById('accountingEmailInput');
+          if (!f || document.activeElement === f || f.value) return;
+          // uniquement si la page PDF est affichee (champ visible)
+          if (f.offsetParent === null) return;
+          const txt = await window.__accEmailGet();
+          if (txt) f.value = txt;
+        } catch (e) {}
+      }, 2000);
+
       // Bouton Enregistrer: sauvegarde + confirmation visible
       window.__accEmailSaveButton = async function() {
         const f = document.getElementById('accountingEmailInput');
