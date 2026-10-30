@@ -11734,7 +11734,13 @@ function renderAdminUsers() {
             '<td>' + roleSel + '</td>' +
             '<td>' + adminEsc(adminUserCabinetLabel(u)) + '</td>' +
             '<td>' + adminFmtDate(u.created_at) + '</td>' +
-            '<td>' + (isMe ? '' : '<button class="action-btn admin-btn-danger" onclick="adminDetachUser(\'' + u.id + '\')">D\u00e9tacher</button>') + '</td>' +
+            '<td>' + (isMe ? '' : (
+                '<select class="admin-search admin-cabinet-select" onchange="adminAttachUser(\'' + u.id + '\', this.value)">' +
+                '<option value="">— Cabinet —</option>' +
+                adminCache.cabinets.map(c => '<option value="' + c.id + '"' + (u.cabinet_id === c.id ? ' selected' : '') + '>' + adminEsc(c.address || c.name || c.id) + '</option>').join('') +
+                '</select> ' +
+                (u.cabinet_id ? '<button class="action-btn admin-btn-danger" onclick="adminDetachUser(\'' + u.id + '\')">D\u00e9tacher</button>' : '')
+            )) + '</td>' +
             '</tr>';
     }).join('') : '<tr><td colspan="6" class="admin-empty">Aucun inscrit trouv\u00e9</td></tr>';
 }
@@ -11760,6 +11766,25 @@ async function adminChangeRole(userId, newRole) {
     }
 }
 window.adminChangeRole = adminChangeRole;
+
+async function adminAttachUser(userId, cabinetId) {
+    const u = adminCache.users.find(x => x.id === userId);
+    if (!u || !currentUser) return;
+    const cab = adminCache.cabinets.find(c => c.id === cabinetId);
+    if (!cab) return;
+    if (!confirm('Rattacher ' + ((u.first_name || '') + ' ' + (u.last_name || '')).trim() + ' au cabinet "' + (cab.address || cab.name || cab.id) + '" ?')) return;
+    try {
+        const { error } = await supabaseClient.from('profiles').update({ cabinet_id: cabinetId }).eq('id', userId);
+        if (error) throw error;
+        u.cabinet_id = cabinetId;
+        showToast('Utilisateur rattach\u00e9 au cabinet', 'success');
+        renderAdminAll();
+    } catch (e) {
+        console.error('[ADMIN] attachUser:', e);
+        showToast('Erreur : ' + (e.message || e), 'error');
+    }
+}
+window.adminAttachUser = adminAttachUser;
 
 async function adminDetachUser(userId) {
     const u = adminCache.users.find(x => x.id === userId);
