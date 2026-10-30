@@ -82,26 +82,35 @@ async function secLoadJoinRequests() {
         // profiles et la table lue par loadUserProfile est user_profiles) ; la RLS
         // de cabinet_join_requests limite deja la lecture aux membres du cabinet.
         // En cas de divergence role, on tente l'affichage quand meme si un cabinet existe.
-        if (!profile?.cabinet_id) {
+        // Un admin (sans cabinet_id) voit toutes les demandes pending.
+        if (profile?.cabinet_id) {
+            const { data, error } = await supabaseClient
+                .from('cabinet_join_requests')
+                .select('*, cabinets(address, name)')
+                .eq('cabinet_id', profile.cabinet_id)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: true });
+            if (error) {
+                console.error('[SEC-SPACE] loadJoinRequests:', error.message);
+                return [];
+            }
+            if (!data || data.length === 0) {
+                console.log('[SEC-SPACE] 0 demande pending pour le cabinet', profile.cabinet_id);
+            }
+            return data || [];
+        }
+        if (profile?.role !== 'admin') {
             console.warn('[SEC-SPACE] pas de cabinet sur le profil');
             return [];
         }
-        if (!secIsDoctorOrAdmin(profile.role)) {
-            console.warn('[SEC-SPACE] role dans profiles =', profile.role, '- tentative d\'affichage quand meme');
-        }
-
         const { data, error } = await supabaseClient
             .from('cabinet_join_requests')
             .select('*, cabinets(address, name)')
-            .eq('cabinet_id', profile.cabinet_id)
             .eq('status', 'pending')
             .order('created_at', { ascending: true });
         if (error) {
             console.error('[SEC-SPACE] loadJoinRequests:', error.message);
             return [];
-        }
-        if (!data || data.length === 0) {
-            console.log('[SEC-SPACE] 0 demande pending pour le cabinet', profile.cabinet_id);
         }
         return data || [];
     } catch (e) {

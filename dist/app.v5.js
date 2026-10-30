@@ -418,14 +418,14 @@ async function loadUserProfile() {
             .single();
         
         if (!error && data) {
-            currentProfile = data;
+            currentProfile = mergeProfileData(currentProfile, data);
             window.currentProfile = currentProfile;
             console.log('[AUTH] Profil chargé:', currentProfile.role);
         }
     } catch (e) {
         console.error('[AUTH] Erreur chargement profil:', e);
     }
-    if (!currentProfile && currentUser) {
+    if (currentUser) {
         try {
             const { data: p, error: pErr } = await supabaseClient
                 .from('profiles')
@@ -433,7 +433,7 @@ async function loadUserProfile() {
                 .eq('id', currentUser.id)
                 .single();
             if (!pErr && p) {
-                currentProfile = p;
+                currentProfile = mergeProfileData(currentProfile, p);
                 window.currentProfile = currentProfile;
             }
         } catch (e2) {
@@ -4416,6 +4416,20 @@ window.callLLM = async function(prompt, taskType) {
     return data.choices?.[0]?.message?.content || 'Aucune réponse';
 };
 
+function mergeProfileData(base, incoming) {
+    if (!base) return incoming;
+    const merged = { ...base };
+    Object.keys(incoming || {}).forEach(k => {
+        const v = incoming[k];
+        if (v === null || v === undefined || v === '') return;
+        if (merged[k] === null || merged[k] === undefined || merged[k] === '') {
+            merged[k] = v;
+        }
+    });
+    return merged;
+}
+window.mergeProfileData = mergeProfileData;
+
 // Profile functions
 async function loadProfileData() {
     if (!currentUser) return;
@@ -4427,7 +4441,7 @@ async function loadProfileData() {
                 .select('*')
                 .eq('id', currentUser.id)
                 .single();
-            if (!error && data) currentProfile = data;
+            if (!error && data) currentProfile = mergeProfileData(currentProfile, data);
         } catch (e) {
             console.error('[PROFILE] loadProfileData error:', e);
         }
@@ -11311,8 +11325,8 @@ async function refreshCurrentProfileFromDb() {
             .eq('id', currentUser.id)
             .single();
         if (!error && data) {
-            currentProfile = data;
-            window.currentProfile = data;
+            currentProfile = mergeProfileData(currentProfile, data);
+            window.currentProfile = currentProfile;
         }
     } catch (e) {
         console.error('[ADMIN] refreshCurrentProfileFromDb error:', e);
@@ -11326,16 +11340,8 @@ function isAdminUser() {
 }
 
 async function applyAdminNavVisibility() {
-    let sticky = false;
-    try { sticky = sessionStorage.getItem('cab_admin_seen') === '1'; } catch (e) {}
     await refreshCurrentProfileFromDb();
-    const hasRole = (window.currentProfile && window.currentProfile.role) ||
-        (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.role);
-    if (!hasRole) return; // profil pas encore charge : on ne masque rien
-    const visible = sticky || isAdminUser();
-    if (visible) {
-        try { sessionStorage.setItem('cab_admin_seen', '1'); } catch (e) {}
-    }
+    const visible = isAdminUser();
     const nav = document.getElementById('navAdmin');
     const navMobile = document.getElementById('navAdminMobile');
     if (nav) nav.style.display = visible ? '' : 'none';
