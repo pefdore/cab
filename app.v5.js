@@ -4051,6 +4051,10 @@ function showOverlaySettingsPage(overlay, pageName) {
         }
         if (em && currentUser) { em.value = currentUser.email || ''; em.readOnly = true; }
 
+        if (typeof renderProfileCabinetBox === 'function') {
+            try { window.renderProfileCabinetBox(); } catch (e) {}
+        }
+
         const saveBtn = overlay.querySelector('#saveProfileBtn');
         if (saveBtn && !saveBtn.dataset.bound) {
             saveBtn.dataset.bound = '1';
@@ -10338,28 +10342,29 @@ async function reunionRenderCabinetBanner() {
 }
 
 async function renderProfileCabinetBox() {
-    const box = document.getElementById('profileCabinetBox');
-    if (!box || !supabaseClient || !currentUser) return;
+    const boxes = document.querySelectorAll('#profileCabinetBox');
+    if (!boxes.length || !supabaseClient || !currentUser) return;
     const cab = await reunionLoadMyCabinet();
     const label = reunionCabinetLabel(cab);
+    let html;
     if (!label) {
-        box.innerHTML = '<div class="odj-empty">Aucun cabinet associé. Les modules partagés du cabinet (réunions, ordres du jour, comptabilité) ne sont pas disponibles.</div>';
+        html = '<div class="odj-empty">Aucun cabinet associé. Les modules partagés du cabinet (réunions, ordres du jour, comptabilité) ne sont pas disponibles.</div>';
     } else {
-        let html = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong></div>';
+        html = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong></div>';
         if (cab.address) {
             html += '<div class="odj-voters">Adresse : ' + reunionEsc(cab.address) + '</div>';
         }
         const members = await reunionMembers(cab.id);
-        const associes = members.filter(m => m.role === 'medecin_installe');
-        const salaries = members.filter(m => m.role !== 'medecin_installe');
+        const associes = members.filter(m => m.role === 'medecin_installe' || m.role === 'admin');
+        const salaries = members.filter(m => m.role !== 'medecin_installe' && m.role !== 'admin');
         if (associes.length) {
             html += '<div class="odj-voters">Médecins associés : ' + associes.map(m => '<span class="odj-voter-chip">' + reunionEsc(m.first_name + ' ' + (m.last_name || '')) + '</span>').join('') + '</div>';
         }
         if (salaries.length) {
             html += '<div class="odj-voters">Salariés affiliés : ' + salaries.map(m => '<span class="odj-voter-chip">' + reunionEsc((m.first_name + ' ' + (m.last_name || '')).trim()) + (m.role ? ' <span class="sujet-author">(' + reunionEsc(reunionRoleLabel(m.role)) + ')</span>' : '') + '</span>').join('') + '</div>';
         }
-        box.innerHTML = html;
     }
+    boxes.forEach(box => { box.innerHTML = html; });
 }
 window.renderProfileCabinetBox = renderProfileCabinetBox;
 
@@ -11373,8 +11378,7 @@ function isAdminUser() {
 async function applyAdminNavVisibility() {
     await refreshCurrentProfileFromDb();
     const visible = isAdminUser();
-    const card = document.getElementById('settingsCardAdmin');
-    if (card) card.style.display = visible ? '' : 'none';
+    document.querySelectorAll('#settingsCardAdmin').forEach(card => { card.style.display = visible ? '' : 'none'; });
     try {
         const lastView = sessionStorage.getItem('cab_current_view');
         if (!visible && lastView === 'admin') {
