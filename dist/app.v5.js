@@ -158,7 +158,11 @@ try {
     let lastView = 'dashboard';
     try { lastView = sessionStorage.getItem('cab_current_view') || 'dashboard'; } catch (e) {}
     if (['dashboard', 'flux', 'urgence', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
-    if (['dashboard', 'flux', 'history', 'urgence'].includes(lastView)) {
+    // Membre en attente de validation (secretaire OU medecin ayant rejoint un
+    // cabinet) : force la vue cabinet, la seule qui affiche le bandeau d'attente
+    if (typeof secIsMemberLocked === 'function' && secIsMemberLocked()) {
+        lastView = 'cabinet';
+    } else if (['dashboard', 'flux', 'history', 'urgence'].includes(lastView)) {
         const role = (window.currentProfile?.role) || currentUser?.user_metadata?.role;
         if (role === 'secretaire') lastView = 'cabinet';
     }
@@ -283,6 +287,10 @@ async function doLogin(email, password) {
     }
 }
 
+function needsValidationFlow(role, cabinetId) {
+    return role === 'secretaire' || (role === 'medecin_installe' && !!cabinetId);
+}
+
 async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress = null, cabinetId = null) {
     console.log('[AUTH] Tentative inscription:', email);
     
@@ -325,6 +333,22 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
             return;
         }
         
+        // Sans session (confirmation email activee), AUCUNE ecriture client
+        // ne passe (RLS/anon) : tout est gere par le trigger serveur
+        // handle_new_user (creation cabinet fondateur, rattachement, demande
+        // pending). On ne tente rien cote client pour eviter les echecs
+        // silencieux qui laissaient l'inscrit sans cabinet ni demande.
+        if (!data.session) {
+            console.log('[AUTH] Pas de session (confirmation email): profil et cabinet geres par le trigger serveur');
+            if (needsValidationFlow(role, cabinetId)) {
+                alert('Compte créé ! Votre demande d\'accès au cabinet a été enregistrée : un médecin associé du cabinet doit la valider pour vous donner accès à l\'espace cabinet. Veuillez aussi confirmer votre adresse email.');
+            } else {
+                alert('Compte créé ! Veuillez vérifier votre email pour confirmer votre adresse.');
+            }
+            showLoginForm();
+            return;
+        }
+
         // Cabinet : creation (fondateur) ou rattachement
         // - Medecin qui cree un nouveau cabinet : fondateur, rattache directement
         // - Medecin qui REJOINT un cabinet existant : validation obligatoire par un
@@ -344,8 +368,7 @@ async function doSignUp(email, password, firstName, lastName, role, replaceMedec
         
         // Update user profile with cabinet_id
         const isSecretarySignup = (role === 'secretaire');
-        const isDoctorJoining = (role === 'medecin_installe' && !!cabinetId);
-        const needsValidation = isSecretarySignup || isDoctorJoining;
+        const needsValidation = needsValidationFlow(role, cabinetId);
         if (needsValidation && (cabinetAddress || cabinetId)) {
             // On enregistre l'adresse (et l'id exact) du cabinet vise pour la demande
             // de validation, mais PAS cabinet_id : l'acces ne sera accorde qu'apres
