@@ -1458,7 +1458,6 @@ window.attemptLogin = function() {
                         <p class="settings-desc">Destinataire fixe qui reçoit automatiquement la feuille d'honoraires le 1er de chaque mois</p>
                         <input type="email" id="accountingEmailInput" placeholder="comptabilite@hopital.fr" style="width: 100%; max-width: 420px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.9rem; background: var(--color-bg-elevated); color: var(--color-text); margin-bottom: 8px;">
                         <p class="settings-hint">Le PDF du mois précédent est envoyé automatiquement à cet email et à l'email de votre compte, le 1er de chaque mois. Sauvegardé automatiquement quand vous quittez le champ.</p>
-                        <button type="button" onclick="window.diagSaveEmail()" style="margin-top: 8px; padding: 8px 14px; background: var(--color-primary); color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">Tester la sauvegarde</button>
                     </div>
                     
                     <div class="settings-section">
@@ -3197,7 +3196,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610293300" defer></script>
+    <script src="app.v5.js?v=202610293400" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -4358,40 +4357,6 @@ window.attemptLogin = function() {
         }
       };
 
-      // Diagnostic complet de la sauvegarde de l'email comptabilite (bouton Parametres)
-      window.diagSaveEmail = async function() {
-        const out = [];
-        const field = document.getElementById('accountingEmailInput');
-        let v = field ? field.value.trim() : '';
-        const valeurTest = 'test-' + Date.now() + '@diagnostic.fr';
-        if (!v) v = valeurTest;  // champ vide: on teste quand meme avec une valeur test
-        out.push('1. Champ trouve: ' + (field ? 'OUI' : 'NON') + ' | valeur testee: ' + v);
-        out.push('2. Connecte: ' + (window.currentUser ? 'OUI (' + (window.currentUser.email || window.currentUser.id) + ')' : 'NON'));
-        out.push('3. Client Supabase: ' + (window.supabaseClient ? 'OUI' : 'NON'));
-        if (window.supabaseClient && window.currentUser) {
-          try {
-            // 3bis. Verifier ce que le chargement des settings a mis en memoire
-            out.push('3b. settings.accounting_email en memoire: ' + JSON.stringify((typeof settings !== 'undefined' ? settings.accounting_email : 'variable settings inconnue')));
-            out.push('3c. userSettings window: ' + JSON.stringify(window.userSettings ? window.userSettings.accounting_email : 'absent'));
-            // 3ter. Lister toutes les cles presentes dans user_settings pour ce compte
-            const la = await window.supabaseClient.from('user_settings').select('key').eq('user_id', window.currentUser.id);
-            out.push('3d. Cles en base pour ce compte: ' + (la.error ? 'ERREUR ' + la.error.message : JSON.stringify((la.data || []).map(x => x.key))));
-            const r = await window.supabaseClient.from('user_settings').upsert({
-              user_id: window.currentUser.id, key: 'accounting_email', value: v
-            }, { onConflict: 'user_id,key' });
-            out.push('4. Upsert: ' + (r.error ? 'ERREUR -> ' + r.error.message + ' (code ' + r.error.code + ')' : 'OK'));
-            const rr = await window.supabaseClient.from('user_settings')
-              .select('value').eq('user_id', window.currentUser.id).eq('key', 'accounting_email').maybeSingle();
-            out.push('5. Relecture: ' + (rr.error ? 'ERREUR -> ' + rr.error.message + ' (code ' + rr.error.code + ')' : (rr.data && rr.data.value === v ? 'OK - valeur identique en base (SAUVEGARDE FONCTIONNE)' : 'DIFFERENT - base contient: "' + (rr.data ? rr.data.value : 'null') + '"')));
-          } catch (e) {
-            out.push('4/5. EXCEPTION: ' + (e && e.message ? e.message : JSON.stringify(e)));
-          }
-        } else {
-          out.push('4/5. SKIPPES (pas de client ou pas de session)');
-        }
-        alert(out.join('\n'));
-      };
-
       window.filterDocuments = function(filter) {
         currentDocFilter = filter;
         document.querySelectorAll('.doc-filter-btn').forEach(btn => {
@@ -4440,16 +4405,7 @@ window.attemptLogin = function() {
       };
 
       // Also load documents when filter button is clicked
-      // ===== Email comptabilite: sauvegarde + affichage complets (script inline, independant de app.v5.js) =====
-      // Affichage continu: la valeur sauvegardee apparait dans le champ des qu'elle existe
-      setInterval(() => {
-        const f = document.getElementById('accountingEmailInput');
-        if (!f || document.activeElement === f) return;
-        window.__accEmailGet().then(txt => {
-          if (typeof txt === 'string' && f.value !== txt && !(f.value && !txt)) f.value = txt;
-        }).catch(() => {});
-      }, 1000);
-
+      // ===== Email comptabilite: sauvegarde + affichage (script inline) =====
       // Lecture de l'email sauvegarde pour CE compte (base > localStorage)
       window.__accEmailGet = async function() {
         try {
@@ -4501,40 +4457,6 @@ window.attemptLogin = function() {
         // remplissage immediat
         window.__accEmailGet().then(txt => { if (txt) f.value = txt; }).catch(() => {});
       }
-
-      // Diagnostic complet de la sauvegarde de l'email comptabilite (bouton Parametres)
-      window.diagSaveEmail = async function() {
-        const out = [];
-        const field = document.getElementById('accountingEmailInput');
-        let v = field ? field.value.trim() : '';
-        const valeurTest = 'test-' + Date.now() + '@diagnostic.fr';
-        if (!v) v = valeurTest;  // champ vide: on teste quand meme avec une valeur test
-        out.push('1. Champ trouve: ' + (field ? 'OUI' : 'NON') + ' | valeur testee: ' + v);
-        out.push('2. Connecte: ' + (window.currentUser ? 'OUI (' + (window.currentUser.email || window.currentUser.id) + ')' : 'NON'));
-        out.push('3. Client Supabase: ' + (window.supabaseClient ? 'OUI' : 'NON'));
-        if (window.supabaseClient && window.currentUser) {
-          try {
-            // 3bis. Verifier ce que le chargement des settings a mis en memoire
-            out.push('3b. settings.accounting_email en memoire: ' + JSON.stringify((typeof settings !== 'undefined' ? settings.accounting_email : 'variable settings inconnue')));
-            out.push('3c. userSettings window: ' + JSON.stringify(window.userSettings ? window.userSettings.accounting_email : 'absent'));
-            // 3ter. Lister toutes les cles presentes dans user_settings pour ce compte
-            const la = await window.supabaseClient.from('user_settings').select('key').eq('user_id', window.currentUser.id);
-            out.push('3d. Cles en base pour ce compte: ' + (la.error ? 'ERREUR ' + la.error.message : JSON.stringify((la.data || []).map(x => x.key))));
-            const r = await window.supabaseClient.from('user_settings').upsert({
-              user_id: window.currentUser.id, key: 'accounting_email', value: v
-            }, { onConflict: 'user_id,key' });
-            out.push('4. Upsert: ' + (r.error ? 'ERREUR -> ' + r.error.message + ' (code ' + r.error.code + ')' : 'OK'));
-            const rr = await window.supabaseClient.from('user_settings')
-              .select('value').eq('user_id', window.currentUser.id).eq('key', 'accounting_email').maybeSingle();
-            out.push('5. Relecture: ' + (rr.error ? 'ERREUR -> ' + rr.error.message + ' (code ' + rr.error.code + ')' : (rr.data && rr.data.value === v ? 'OK - valeur identique en base (SAUVEGARDE FONCTIONNE)' : 'DIFFERENT - base contient: "' + (rr.data ? rr.data.value : 'null') + '"')));
-          } catch (e) {
-            out.push('4/5. EXCEPTION: ' + (e && e.message ? e.message : JSON.stringify(e)));
-          }
-        } else {
-          out.push('4/5. SKIPPES (pas de client ou pas de session)');
-        }
-        alert(out.join('\n'));
-      };
 
       window.filterDocuments = function(filter) {
         currentDocFilter = filter;
