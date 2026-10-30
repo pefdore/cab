@@ -11330,6 +11330,9 @@ async function applyAdminNavVisibility() {
         (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.role);
     if (!hasRole) return; // profil pas encore charge : on ne masque rien
     const visible = isAdminUser();
+    if (visible) {
+        try { sessionStorage.setItem('cab_admin_seen', '1'); } catch (e) {}
+    }
     const nav = document.getElementById('navAdmin');
     const navMobile = document.getElementById('navAdminMobile');
     if (nav) nav.style.display = visible ? '' : 'none';
