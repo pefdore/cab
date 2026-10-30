@@ -2416,12 +2416,6 @@ h2 {
     z-index: 1000;
 }
 
-@media (max-width: 768px) {
-    .mobile-bottom-nav {
-        display: none;
-    }
-}
-
 @media (min-width: 769px) {
     .mobile-bottom-nav {
         display: none;
@@ -2433,7 +2427,7 @@ h2 {
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    padding: 8px 12px;
+    padding: 8px 6px;
     color: var(--color-text-secondary);
     text-decoration: none;
     font-size: 0.625rem;
