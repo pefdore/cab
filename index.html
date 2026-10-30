@@ -3171,35 +3171,15 @@ window.attemptLogin = function() {
     </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-      window.__APP_BUILD = '202610294100';
+      window.__APP_BUILD = '202610294200';
 
-      // Recuperation service worker: si la version deployee ne correspond pas a celle deja vue,
-      // on desinscrit le SW et purge TOUS les caches (garde-fou contre les vieux SW qui servent du code obsolete)
-      (function() {
-        var SW_FORCED_VERSION = 'sw-fix-20261029';
-        try {
-          if (localStorage.getItem('sw_forced_version') !== SW_FORCED_VERSION) {
-            localStorage.setItem('sw_forced_version', SW_FORCED_VERSION);
-            var done = 0, total = 2;
-            var finish = function() { done++; if (done >= total) location.reload(); };
-            if ('caches' in window) {
-              caches.keys().then(function(names) {
-                return Promise.all(names.map(function(n) { return caches.delete(n); }));
-              }).then(finish).catch(finish);
-            } else { finish(); }
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(regs) {
-                return Promise.all(regs.map(function(r) { return r.unregister(); }));
-              }).then(finish).catch(finish);
-            } else { finish(); }
-          }
-        } catch (e) { /* ne jamais bloquer le chargement */ }
-      })();
+      // (garde-fou SW retire: le service worker est desormais corrige et respecte les versions;
+      //  le garde-fou causait des rechargements parasites, notamment en navigation privee)
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610294100" defer></script>
+    <script src="app.v5.js?v=202610294200" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
