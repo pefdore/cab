@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Resend } from 'https://esm.sh/resend@3.2.0'
+import nodemailer from 'npm:nodemailer@6.9.13'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,15 +13,56 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ===== Couche d'envoi unifiee =====
+    // Option SMTP Gmail (recommande pour une adresse Gmail du cabinet):
+    //   secrets GMAIL_USER + GMAIL_APP_PASSWORD -> envoi via SMTP Gmail (expediteur = adresse du cabinet)
+    // Sinon: Resend (mode test sans domaine: uniquement l'adresse du compte Resend)
+    const gmailUser = Deno.env.get('GMAIL_USER')
+    const gmailPass = Deno.env.get('GMAIL_APP_PASSWORD')
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    console.log('GMAIL_USER configured:', gmailUser ? 'YES' : 'NO')
     console.log('RESEND_API_KEY configured:', resendApiKey ? 'YES' : 'NO')
-    
-    if (!resendApiKey) {
-      throw new Error('RESEND_API_KEY not configured')
+
+    let smtpTransport: any = null
+    let resend: any = null
+    let fromAddress = 'Cotation Médecin <onboarding@resend.dev>'
+
+    if (gmailUser && gmailPass) {
+      smtpTransport = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: { user: gmailUser, pass: gmailPass }
+      })
+      fromAddress = gmailUser  // l'adresse Gmail du cabinet devient l'expediteur
+      console.log('Envoi via SMTP Gmail:', gmailUser)
+    } else {
+      if (!resendApiKey) {
+        throw new Error('Ni GMAIL_USER/GMAIL_APP_PASSWORD ni RESEND_API_KEY configures')
+      }
+      resend = new Resend(resendApiKey)
+      console.log('Envoi via Resend (mode test)')
     }
 
-    const resend = new Resend(resendApiKey)
-    console.log('Resend client created')
+    // Fonction d'envoi unique: SMTP si configure, sinon Resend
+    const sendMail = async (opts: { to: string[], subject: string, html: string, attachments: any[] }): Promise<any> => {
+      if (smtpTransport) {
+        return await smtpTransport.sendMail({
+          from: fromAddress,
+          to: opts.to.join(', '),
+          subject: opts.subject,
+          html: opts.html,
+          attachments: opts.attachments.map(a => ({ filename: a.filename, content: a.content, encoding: 'base64' }))
+        })
+      }
+      return await resend.emails.send({
+        from: fromAddress,
+        to: opts.to,
+        subject: opts.subject,
+        html: opts.html,
+        attachments: opts.attachments
+      })
+    }
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -163,8 +205,7 @@ Deno.serve(async (req) => {
         `
 
       // Envoi au medecin (copie de sa feuille)
-      const physicianResult = await resend.emails.send({
-        from: 'Cotation Médecin <onboarding@resend.dev>',
+      const physicianResult = await sendMail({
         to: [userEmail],
         subject: `Honoraires ${pdf.month_name}`,
         html: corpsHtml,
@@ -181,8 +222,7 @@ Deno.serve(async (req) => {
       // Sauf si c'est la meme adresse que le medecin : inutile d'envoyer deux fois le meme mail
       const memeAdresse = (a: string, b: string) => (a || '').toLowerCase().trim() === (b || '').toLowerCase().trim()
       if (medecinAccEmail && medecinAccEmail !== 'comptabilite@hopital.fr' && !memeAdresse(medecinAccEmail, userEmail)) {
-        const accountingResult = await resend.emails.send({
-          from: 'Cotation Médecin <onboarding@resend.dev>',
+        const accountingResult = await sendMail({
           to: [medecinAccEmail],
           subject: `Honoraires ${pdf.month_name} - Dr ${userLastName} ${userName}`,
           html: corpsHtml,
