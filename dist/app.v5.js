@@ -168,6 +168,7 @@ try {
     window.currentUser = currentUser;
     window.supabaseClient = supabaseClient;
     console.log('[AUTH] Exposed currentUser and supabaseClient to window');
+    if (typeof applyAdminNavVisibility === 'function') applyAdminNavVisibility();
     
     // Initialize autocomplete handlers (must be after DOM is ready)
     init();
@@ -11300,13 +11301,31 @@ window.setTransactionRejected = setTransactionRejected;
 // ============================================================
 let adminCache = { cabinets: [], users: [] };
 
+async function refreshCurrentProfileFromDb() {
+    if (!supabaseClient || !currentUser) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
+        if (!error && data) {
+            currentProfile = data;
+            window.currentProfile = data;
+        }
+    } catch (e) {
+        console.error('[ADMIN] refreshCurrentProfileFromDb error:', e);
+    }
+}
+
 function isAdminUser() {
     const role = (window.currentProfile && window.currentProfile.role) ||
         (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.role);
     return role === 'admin';
 }
 
-function applyAdminNavVisibility() {
+async function applyAdminNavVisibility() {
+    await refreshCurrentProfileFromDb();
     const visible = isAdminUser();
     const nav = document.getElementById('navAdmin');
     const navMobile = document.getElementById('navAdminMobile');
