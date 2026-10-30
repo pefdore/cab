@@ -1,13 +1,13 @@
-const CACHE_NAME = 'cotation-v2026103022000';
+const CACHE_NAME = 'cotation-v2026103023000';
 const ASSETS = [
   '/',
   '/index.html',
-  '/app.v5.js?v=2026103022000',
-  '/secretariat.js?v=2026103022000',
-  '/secretaire-space.js?v=2026103022000',
-  '/urgence.js?v=2026103022000',
-  '/urgence-orders.js?v=2026103022000',
-  '/style.css?v=2026103022000',
+  '/app.v5.js?v=2026103023000',
+  '/secretariat.js?v=2026103023000',
+  '/secretaire-space.js?v=2026103023000',
+  '/urgence.js?v=2026103023000',
+  '/urgence-orders.js?v=2026103023000',
+  '/style.css?v=2026103023000',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
@@ -48,22 +48,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 3. Static assets: cache-first avec update en arriere-plan
+  // 3. Static assets: NETWORK-FIRST (reseau d'abord, cache seulement hors ligne).
+  // Guarantit que chaque deploiement est immediatement servi apres un simple
+  // rechargement - le cache-first faisait tourner de vieux code pendant des heures.
   if (request.method === 'GET' && url.origin === location.origin) {
     event.respondWith(
-      caches.open(CACHE_NAME).then(async cache => {
-        // IMPORTANT: ne PAS utiliser ignoreSearch - la version ?v= doit etre prise en compte
-        // pour que les nouveaux deploiements (cache busting) soient reellement charges
-        const cached = await cache.match(request);
-        const fetchPromise = fetch(request).then(response => {
-          if (response && response.status === 200) {
-            cache.put(request, response.clone());
-          }
-          return response;
-        }).catch(() => cached);
-
-        return cached || fetchPromise;
-      })
+      fetch(request).then(response => {
+        if (response && response.status === 200) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+        }
+        return response;
+      }).catch(() =>
+        caches.match(request).then(cached => cached || caches.match('/index.html'))
+      )
     );
   }
 });
