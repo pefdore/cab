@@ -46,13 +46,16 @@ function initAuth() {
         
         if (event === 'SIGNED_IN' && session) {
             currentUser = session.user;
+            window.currentUser = currentUser;
             onAuthSuccess();
         } else if (event === 'SIGNED_OUT') {
             currentUser = null;
+            window.currentUser = null;
             currentProfile = null;
             onAuthLogout();
         } else if (event === 'TOKEN_REFRESHED' && session) {
             currentUser = session.user;
+            window.currentUser = currentUser;
         }
     });
     
@@ -63,6 +66,21 @@ function initAuth() {
     setupAuthListeners();
     
     authInitialized = true;
+
+    // Garde-fou: resynchroniser window.currentUser depuis la session Supabase
+    // (garantit que les modules externes voient toujours l'utilisateur connecte)
+    setInterval(async () => {
+        try {
+            if (!window.currentUser && supabaseClient) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    currentUser = session.user;
+                    window.currentUser = currentUser;
+                    console.log('[AUTH] Garde-fou: window.currentUser resynchronise');
+                }
+            }
+        } catch (e) {}
+    }, 2000);
 }
 
 async function checkExistingSession() {
@@ -71,6 +89,7 @@ async function checkExistingSession() {
         if (session) {
             console.log('[AUTH] Session existante trouvée');
             currentUser = session.user;
+            window.currentUser = currentUser;  // exposer IMMEDIATEMENT, avant tout await
             onAuthSuccess();
         } else {
             console.log('[AUTH] Aucune session, affichage login');
