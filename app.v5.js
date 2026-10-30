@@ -423,6 +423,22 @@ async function loadUserProfile() {
     } catch (e) {
         console.error('[AUTH] Erreur chargement profil:', e);
     }
+    if (!currentProfile && currentUser) {
+        try {
+            const { data: p, error: pErr } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            if (!pErr && p) {
+                currentProfile = p;
+                window.currentProfile = currentProfile;
+            }
+        } catch (e2) {
+            console.error('[AUTH] Fallback profiles error:', e2);
+        }
+    }
+    if (typeof applyAdminNavVisibility === 'function') applyAdminNavVisibility();
 }
 
 async function loadUserSettings() {
