@@ -3171,7 +3171,7 @@ window.attemptLogin = function() {
     </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-      window.__APP_BUILD = '202610294200';
+      window.__APP_BUILD = '202610294300';
 
       // (garde-fou SW retire: le service worker est desormais corrige et respecte les versions;
       //  le garde-fou causait des rechargements parasites, notamment en navigation privee)
@@ -3179,7 +3179,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610294200" defer></script>
+    <script src="app.v5.js?v=202610294300" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -4398,18 +4398,30 @@ window.attemptLogin = function() {
         }
         return els[0] || null;
       }
-      // Reaffichage: toutes les 2s, remplir le champ UNIQUEMENT s'il est visible, vide, non focus,
-      // et que la page PDF est affichee (ne JAMAIS ecraser une saisie en cours)
-      setInterval(async () => {
+      // Remplissage des champs quand la page PDF s'affiche (overlay mobile ou page desktop)
+      async function __accEmailFill() {
         try {
-          const f = __accEmailField();
-          if (!f || document.activeElement === f || f.value) return;
-          if (!f.offsetParent) return;  // page PDF masquee
           const txt = await window.__accEmailGet();
-          // re-verifier APRES l'await: l'utilisateur a peut-etre commence a taper pendant la lecture
-          if (txt && !f.value && document.activeElement !== f && f.offsetParent) f.value = txt;
+          document.querySelectorAll('#accountingEmailInput').forEach(champ => {
+            if (txt && !champ.value && document.activeElement !== champ) champ.value = txt;
+          });
         } catch (e) {}
-      }, 2000);
+      }
+      // hooker la fonction d'ouverture de page overlay (mobile)
+      const __origShowOverlay = window.showOverlaySettingsPage;
+      window.showOverlaySettingsPage = function(overlay, pageName) {
+        const r = __origShowOverlay ? __origShowOverlay(overlay, pageName) : undefined;
+        if (pageName === 'pdf') setTimeout(__accEmailFill, 100);
+        return r;
+      };
+      // et l'ouverture desktop
+      const __origOpenSettings = window.openSettingsPage;
+      window.openSettingsPage = function(pageName) {
+        const p = (pageName && pageName.then) ? pageName : pageName;
+        const r = __origOpenSettings ? __origOpenSettings(pageName) : undefined;
+        if (pageName === 'pdf') setTimeout(__accEmailFill, 100);
+        return r;
+      };
 
       // Bouton Enregistrer: sauvegarde + confirmation visible
       window.__accEmailSaveButton = async function() {
