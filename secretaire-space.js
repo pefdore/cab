@@ -603,7 +603,7 @@ async function secCheckApproval() {
     try {
         const { data: profile } = await supabaseClient
             .from('profiles')
-            .select('cabinet_id, cabinet_address')
+            .select('cabinet_id, cabinet_address, pending_cabinet_id')
             .eq('id', window.currentUser.id)
             .single();
         if (profile?.cabinet_id) {
@@ -625,7 +625,7 @@ async function secCheckApproval() {
         const storedAddress = (function() {
             try { return localStorage.getItem('cab_pending_secretary_cabinet'); } catch (e) { return null; }
         })();
-        const cabinetId = window._pendingSecretaryCabinetId || secGetStoredCabinetId() || await secResolveCabinetByAddress(profile?.cabinet_address || storedAddress);
+        const cabinetId = window._pendingSecretaryCabinetId || profile?.pending_cabinet_id || secGetStoredCabinetId() || await secResolveCabinetByAddress(profile?.cabinet_address || storedAddress);
         if (cabinetId) {
             const { data: req } = await supabaseClient
                 .from('cabinet_join_requests')
@@ -686,13 +686,13 @@ async function initSecretarySpace() {
         const pendingCabinetId = window._pendingSecretaryCabinetId;
         const { data: profile } = await supabaseClient
             .from('profiles')
-            .select('cabinet_id, cabinet_address')
+            .select('cabinet_id, cabinet_address, pending_cabinet_id')
             .eq('id', window.currentUser.id)
             .single();
         const storedAddress = (function() {
             try { return localStorage.getItem('cab_pending_secretary_cabinet'); } catch (e) { return null; }
         })();
-        const cabinetId = profile?.cabinet_id || pendingCabinetId || secGetStoredCabinetId() || await secResolveCabinetByAddress(profile?.cabinet_address || storedAddress);
+        const cabinetId = profile?.cabinet_id || pendingCabinetId || profile?.pending_cabinet_id || secGetStoredCabinetId() || await secResolveCabinetByAddress(profile?.cabinet_address || storedAddress);
         if (cabinetId) {
             // La demande de validation est (re)creee si elle n'existe pas encore,
             // y compris pour une secretaire deja rattachee par un ancien bug :
