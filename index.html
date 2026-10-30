@@ -3171,7 +3171,7 @@ window.attemptLogin = function() {
     </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-      window.__APP_BUILD = '202610294000';
+      window.__APP_BUILD = '202610294100';
 
       // Recuperation service worker: si la version deployee ne correspond pas a celle deja vue,
       // on desinscrit le SW et purge TOUS les caches (garde-fou contre les vieux SW qui servent du code obsolete)
@@ -3199,7 +3199,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202610294000" defer></script>
+    <script src="app.v5.js?v=202610294100" defer></script>
     <script src="secretariat.js?v=202611024000" defer></script>
     <script src="secretaire-space.js?v=202611024000" defer></script>
     <script src="urgence.js?v=202611024000" defer></script>
@@ -4409,11 +4409,20 @@ window.attemptLogin = function() {
 
       // Also load documents when filter button is clicked
       // ===== Email comptabilite: sauvegarde + affichage (script inline) =====
+      // Sur mobile, la vue Parametres est CLONEE dans un overlay: il existe donc 2 champs
+      // avec le meme id. Il faut toujours cibler le champ VISIBLE (comme getSettingsInput de l'app).
+      function __accEmailField() {
+        const els = document.querySelectorAll('#accountingEmailInput');
+        for (const el of els) {
+          if (el.offsetParent !== null) return el;  // champ visible
+        }
+        return els[0] || null;
+      }
       // Reaffichage: toutes les 2s, remplir le champ UNIQUEMENT s'il est visible, vide, non focus,
       // et que la page PDF est affichee (ne JAMAIS ecraser une saisie en cours)
       setInterval(async () => {
         try {
-          const f = document.getElementById('accountingEmailInput');
+          const f = __accEmailField();
           if (!f || document.activeElement === f || f.value) return;
           if (!f.offsetParent) return;  // page PDF masquee
           const txt = await window.__accEmailGet();
@@ -4424,7 +4433,7 @@ window.attemptLogin = function() {
 
       // Bouton Enregistrer: sauvegarde + confirmation visible
       window.__accEmailSaveButton = async function() {
-        const f = document.getElementById('accountingEmailInput');
+        const f = __accEmailField();
         const v = f ? f.value.trim() : '';
         if (!v) { alert('Le champ est vide'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { alert('Adresse email invalide : ' + v); return; }
@@ -4473,9 +4482,11 @@ window.attemptLogin = function() {
       let __accEmailBranche = false;
       function brancherEmailCompta() {
         if (__accEmailBranche) return;
-        const f = document.getElementById('accountingEmailInput');
-        if (!f) { setTimeout(brancherEmailCompta, 1000); return; }
+        // brancher les DEUX champs (original + clone overlay mobile)
+        const champs = document.querySelectorAll('#accountingEmailInput');
+        if (!champs.length) { setTimeout(brancherEmailCompta, 1000); return; }
         __accEmailBranche = true;
+        const f = champs[champs.length - 1];
         let timer = null;
         f.addEventListener('input', function() {
           clearTimeout(timer);
@@ -4492,10 +4503,14 @@ window.attemptLogin = function() {
           const ok = await window.__accEmailSet(v);
           if (ok !== null) alert(ok ? 'Email comptabilité enregistré' : 'ERREUR: email non enregistré');
         });
-        // remplissage immediat: UNIQUEMENT si champ vide et non focus (ne jamais ecraser une saisie)
-        if (!f.value && document.activeElement !== f) {
-          window.__accEmailGet().then(txt => { if (txt && !f.value && document.activeElement !== f) f.value = txt; }).catch(() => {});
-        }
+        // remplissage immediat sur TOUS les champs (original + overlay): jamais ecraser une saisie
+        champs.forEach(champ => {
+          if (!champ.value && document.activeElement !== champ) {
+            window.__accEmailGet().then(txt => {
+              if (txt && !champ.value && document.activeElement !== champ) champ.value = txt;
+            }).catch(() => {});
+          }
+        });
       }
 
       window.filterDocuments = function(filter) {
