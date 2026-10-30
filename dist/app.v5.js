@@ -423,6 +423,22 @@ async function loadUserProfile() {
     } catch (e) {
         console.error('[AUTH] Erreur chargement profil:', e);
     }
+    if (!currentProfile && currentUser) {
+        try {
+            const { data: p, error: pErr } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            if (!pErr && p) {
+                currentProfile = p;
+                window.currentProfile = currentProfile;
+            }
+        } catch (e2) {
+            console.error('[AUTH] Fallback profiles error:', e2);
+        }
+    }
+    if (typeof applyAdminNavVisibility === 'function') applyAdminNavVisibility();
 }
 
 async function loadUserSettings() {
@@ -4414,6 +4430,7 @@ async function loadProfileData() {
             console.error('[PROFILE] loadProfileData error:', e);
         }
     }
+    if (typeof applyAdminNavVisibility === 'function') applyAdminNavVisibility();
 
     const lastname = (currentProfile && currentProfile.last_name) || '';
     const firstname = (currentProfile && currentProfile.first_name) || '';
@@ -4762,6 +4779,7 @@ function switchView(viewName) {
         'urgence': 'Salle d’urgence',
         'history': 'Documents',
         'cabinet': 'Cabinet',
+        'admin': 'Administration',
         'settings': 'Paramètres'
     };
     
@@ -4779,6 +4797,8 @@ function switchView(viewName) {
             loadVLHistory().then(() => renderDashboardLists());
         }
         renderCharts();
+    } else if (viewName === 'admin') {
+        if (isAdminUser()) loadAdminData();
     } else if (viewName === 'history') {
         renderHistory();
         if (typeof loadDocuments === 'function') {
@@ -11274,3 +11294,163 @@ function setTransactionRejected(index, rejected) {
     updatePendingCount();
 }
 window.setTransactionRejected = setTransactionRejected;
+
+// ============================================================
+// ESPACE ADMINISTRATEUR (vue 360 de la plateforme)
+// ============================================================
+let adminCache = { cabinets: [], users: [] };
+
+function isAdminUser() {
+    const role = (window.currentProfile && window.currentProfile.role) ||
+        (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.role);
+    return role === 'admin';
+}
+
+function applyAdminNavVisibility() {
+    const visible = isAdminUser();
+    const nav = document.getElementById('navAdmin');
+    const navMobile = document.getElementById('navAdminMobile');
+    if (nav) nav.style.display = visible ? '' : 'none';
+    if (navMobile) navMobile.style.display = visible ? '' : 'none';
+    try {
+        const lastView = sessionStorage.getItem('cab_current_view');
+        if (!visible && lastView === 'admin') {
+            sessionStorage.setItem('cab_current_view', 'dashboard');
+        }
+    } catch (e) {}
+}
+window.isAdminUser = isAdminUser;
+window.applyAdminNavVisibility = applyAdminNavVisibility;
+
+async function loadAdminData() {
+    if (!isAdminUser() || !supabaseClient) return;
+    const cabBody = document.getElementById('adminCabinetsBody');
+    const userBody = document.getElementById('adminUsersBody');
+    if (cabBody) cabBody.innerHTML = '<tr><td colspan="6" class="admin-empty">Chargement...</td></tr>';
+    if (userBody) userBody.innerHTML = '<tr><td colspan="4" class="admin-empty">Chargement...</td></tr>';
+    try {
+        const [cabinetsRes, profilesRes] = await Promise.all([
+            supabaseClient.from('cabinets').select('id, name, address, created_at').order('created_at', { ascending: false }),
+            supabaseClient.from('profiles').select('id, first_name, last_name, role, cabinet_id, cabinet_address, created_at')
+        ]);
+        if (cabinetsRes.error) throw cabinetsRes.error;
+        if (profilesRes.error) throw profilesRes.error;
+        adminCache.cabinets = cabinetsRes.data || [];
+        adminCache.users = profilesRes.data || [];
+        renderAdminStats();
+        fillAdminCabinetFilter();
+        renderAdminCabinets();
+        renderAdminUsers();
+    } catch (e) {
+        console.error('[ADMIN] loadAdminData error:', e);
+        if (cabBody) cabBody.innerHTML = '<tr><td colspan="6" class="admin-empty">Erreur de chargement : ' + (e.message || e) + '</td></tr>';
+        if (userBody) userBody.innerHTML = '<tr><td colspan="4" class="admin-empty">Erreur de chargement : ' + (e.message || e) + '</td></tr>';
+    }
+}
+window.loadAdminData = loadAdminData;
+
+function fillAdminCabinetFilter() {
+    const sel = document.getElementById('adminFilterCabinet');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Tous les cabinets</option><option value="__none__">Sans cabinet</option>';
+    adminCache.cabinets.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.id;
+        o.textContent = c.name || c.address || c.id;
+        sel.appendChild(o);
+    });
+    if (current) sel.value = current;
+}
+
+function renderAdminStats() {
+    const users = adminCache.users;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('adminStatCabinets', adminCache.cabinets.length);
+    set('adminStatInstalles', users.filter(u => u.role === 'medecin_installe').length);
+    set('adminStatRemplacants', users.filter(u => u.role === 'medecin_remplacant').length);
+    set('adminStatSecretaires', users.filter(u => u.role === 'secretaire').length);
+    set('adminStatTotal', users.length);
+}
+
+function adminEsc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function adminRoleLabel(role) {
+    if (role === 'medecin_installe') return 'Médecin installé';
+    if (role === 'medecin_remplacant') return 'Remplaçant';
+    if (role === 'secretaire') return 'Secrétaire';
+    if (role === 'admin') return 'Administrateur';
+    return role || '—';
+}
+
+function renderAdminCabinets() {
+    const body = document.getElementById('adminCabinetsBody');
+    if (!body) return;
+    const q = (document.getElementById('adminSearchCabinets')?.value || '').trim().toLowerCase();
+    const cabinetById = {};
+    adminCache.cabinets.forEach(c => { cabinetById[c.id] = c; });
+    const rows = adminCache.cabinets.filter(c => {
+        if (!q) return true;
+        return ((c.name || '') + ' ' + (c.address || '')).toLowerCase().includes(q);
+    }).map(c => {
+        const members = adminCache.users.filter(u => u.cabinet_id === c.id);
+        const installes = members.filter(u => u.role === 'medecin_installe').length;
+        const secretaires = members.filter(u => u.role === 'secretaire').length;
+        const created = c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '—';
+        return '<tr>' +
+            '<td><strong>' + adminEsc(c.name || 'Sans nom') + '</strong></td>' +
+            '<td>' + adminEsc(c.address || '—') + '</td>' +
+            '<td>' + installes + '</td>' +
+            '<td>' + secretaires + '</td>' +
+            '<td>' + members.length + '</td>' +
+            '<td>' + created + '</td>' +
+            '</tr>';
+    });
+    body.innerHTML = rows.length
+        ? rows.join('')
+        : '<tr><td colspan="6" class="admin-empty">Aucun cabinet trouvé</td></tr>';
+}
+window.renderAdminCabinets = renderAdminCabinets;
+
+function renderAdminUsers() {
+    const body = document.getElementById('adminUsersBody');
+    if (!body) return;
+    const q = (document.getElementById('adminSearchUsers')?.value || '').trim().toLowerCase();
+    const roleFilter = document.getElementById('adminFilterRole')?.value || '';
+    const cabFilter = document.getElementById('adminFilterCabinet')?.value || '';
+    if (cabFilter && cabFilter !== '__none__') {
+        const opt = document.getElementById('adminFilterCabinet').querySelector('option[value="' + cabFilter + '"]');
+        if (!opt) {
+            const o = document.createElement('option');
+            o.value = cabFilter; o.textContent = cabFilter;
+            document.getElementById('adminFilterCabinet').appendChild(o);
+        }
+    }
+    const rows = adminCache.users.filter(u => {
+        if (roleFilter && u.role !== roleFilter) return false;
+        if (cabFilter === '__none__' && u.cabinet_id) return false;
+        if (cabFilter && cabFilter !== '__none__' && u.cabinet_id !== cabFilter) return false;
+        if (q) {
+            const hay = ((u.first_name || '') + ' ' + (u.last_name || '') + ' ' + (u.cabinet_address || '')).toLowerCase();
+            if (!hay.includes(q)) return false;
+        }
+        return true;
+    }).map(u => {
+        const cab = u.cabinet_id && adminCache.cabinets.find(c => c.id === u.cabinet_id);
+        const cabLabel = cab ? (cab.name || cab.address) : (u.cabinet_address || 'Sans cabinet');
+        return '<tr>' +
+            '<td><strong>' + adminEsc((u.first_name || '') + ' ' + (u.last_name || '')) + '</strong></td>' +
+            '<td>' + adminEsc(u.email || u.id) + '</td>' +
+            '<td><span class="admin-role-badge admin-role-' + adminEsc(u.role || 'other') + '">' + adminEsc(adminRoleLabel(u.role)) + '</span></td>' +
+            '<td>' + adminEsc(cabLabel) + '</td>' +
+            '</tr>';
+    });
+    body.innerHTML = rows.length
+        ? rows.join('')
+        : '<tr><td colspan="4" class="admin-empty">Aucun inscrit trouvé</td></tr>';
+}
+window.renderAdminUsers = renderAdminUsers;
