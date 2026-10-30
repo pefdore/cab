@@ -157,7 +157,7 @@ try {
     // NOW switch to the view the user was on before reload (dashboard by default) - data is ready
     let lastView = 'dashboard';
     try { lastView = sessionStorage.getItem('cab_current_view') || 'dashboard'; } catch (e) {}
-    if (['dashboard', 'flux', 'urgence', 'history', 'cabinet', 'admin', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
+    if (['dashboard', 'flux', 'urgence', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
     if (['dashboard', 'flux', 'history', 'urgence'].includes(lastView)) {
         const role = (window.currentProfile?.role) || currentUser?.user_metadata?.role;
         if (role === 'secretaire') lastView = 'cabinet';
@@ -11342,14 +11342,12 @@ function isAdminUser() {
 async function applyAdminNavVisibility() {
     await refreshCurrentProfileFromDb();
     const visible = isAdminUser();
-    const nav = document.getElementById('navAdmin');
-    const navMobile = document.getElementById('navAdminMobile');
-    if (nav) nav.style.display = visible ? '' : 'none';
-    if (navMobile) navMobile.style.display = visible ? '' : 'none';
+    const card = document.getElementById('settingsCardAdmin');
+    if (card) card.style.display = visible ? '' : 'none';
     try {
         const lastView = sessionStorage.getItem('cab_current_view');
         if (!visible && lastView === 'admin') {
-            sessionStorage.setItem('cab_current_view', 'dashboard');
+            sessionStorage.setItem('cab_current_view', 'settings');
         }
     } catch (e) {}
 }
