@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=2026103023000">
+    <link rel="stylesheet" href="style.css?v=2026103023300">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -430,12 +430,6 @@ window.attemptLogin = function() {
                     </svg>
                     Cabinet
                     <span id="secNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#f59e0b; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
-                </a>
-                <a href="#" class="nav-item" data-view="admin" id="navAdmin" style="display:none;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
-                    </svg>
-                    Admin
                 </a>
                 <a href="#" class="nav-item" data-view="settings">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1327,6 +1321,20 @@ window.attemptLogin = function() {
                             <h3>Préférences</h3>
                             <p>Thème, cotation hors cabinet et notifications</p>
                             <span class="settings-card-value" id="menuPrefsValue"></span>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="settings-card" id="settingsCardAdmin" data-view="admin" style="display:none;" onclick="switchView('admin')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #ef4444, #f87171);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Administration</h3>
+                            <p>Vue 360 des cabinets et des inscrits</p>
                         </div>
                         <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M9 18l6-6-6-6"/>
@@ -3264,12 +3272,6 @@ window.attemptLogin = function() {
                 </svg>
                 <span style="position:relative;">Cabinet<span id="secNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#f59e0b; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
-            <a href="#" class="mobile-nav-item" data-view="admin" id="navAdminMobile" style="display:none;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
-                </svg>
-                <span>Admin</span>
-            </a>
             <a href="#" class="mobile-nav-item" data-view="settings">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"/>
@@ -3306,7 +3308,7 @@ window.attemptLogin = function() {
     </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-      window.__APP_BUILD = '2026103023000';
+      window.__APP_BUILD = '2026103023300';
 
       // (garde-fou SW retire: le service worker est desormais corrige et respecte les versions;
       //  le garde-fou causait des rechargements parasites, notamment en navigation privee)
@@ -3314,15 +3316,15 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=2026103023000" defer></script>
-    <script src="secretariat.js?v=2026103023000" defer></script>
-    <script src="secretaire-space.js?v=2026103023000" defer></script>
-    <script src="urgence.js?v=2026103023000" defer></script>
-    <script src="flux.js?v=2026103023000" defer></script>
-    <script src="reconciliation.js?v=2026103023000" defer></script>
-    <script src="reminders.js?v=2026103023000" defer></script>
-    <script src="attachments.js?v=2026103023000" defer></script>
-    <script src="urgence-orders.js?v=2026103023000" defer></script>
+    <script src="app.v5.js?v=2026103023300" defer></script>
+    <script src="secretariat.js?v=2026103023300" defer></script>
+    <script src="secretaire-space.js?v=2026103023300" defer></script>
+    <script src="urgence.js?v=2026103023300" defer></script>
+    <script src="flux.js?v=2026103023300" defer></script>
+    <script src="reconciliation.js?v=2026103023300" defer></script>
+    <script src="reminders.js?v=2026103023300" defer></script>
+    <script src="attachments.js?v=2026103023300" defer></script>
+    <script src="urgence-orders.js?v=2026103023300" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
@@ -3533,7 +3535,7 @@ window.attemptLogin = function() {
         setTimeout(function() {
           // The fallback is already set, but we can try to load the real script
           var script = document.createElement('script');
-          script.src = 'secretariat.js?v=2026103023000';
+          script.src = 'secretariat.js?v=2026103023300';
           script.onload = function() {
             console.log('[DEBUG] Secretariat script loaded');
             if (typeof window.showAddEmployeeModal === 'function' && window.showAddEmployeeModal.toString().indexOf('[FALLBACK]') > -1) {
