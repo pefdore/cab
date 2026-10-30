@@ -10936,3 +10936,55 @@ html.no-anim *::after {
     color: #b45309;
     font-weight: 600;
 }
+
+/* ============================================================
+   ESPACE ADMINISTRATEUR
+   ============================================================ */
+.admin-panel { background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 12px; padding: 20px; }
+
+.admin-panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.admin-panel-header h3 { margin: 0; font-size: 1rem; }
+
+.admin-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.admin-search {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 0.875rem;
+    min-width: 220px;
+}
+.admin-search:focus { outline: 2px solid var(--color-primary-subtle); border-color: var(--color-primary); }
+select.admin-search { min-width: 170px; }
+
+.admin-table-wrap { overflow-x: auto; }
+
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.admin-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+.admin-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); color: var(--color-text); vertical-align: middle; }
+.admin-table tbody tr:hover { background: var(--color-bg-muted, rgba(0,0,0,0.02)); }
+.admin-empty { text-align: center; color: var(--color-text-secondary); padding: 24px 12px !important; }
+
+.admin-role-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+.admin-role-medecin_installe { background: var(--color-success-bg); color: var(--color-success); }
+.admin-role-medecin_remplacant { background: #fff7ed; color: #ea580c; }
+.admin-role-secretaire { background: #f3e8ff; color: #9333ea; }
+.admin-role-admin { background: var(--color-primary-subtle); color: var(--color-primary); }
+.admin-role-other { background: var(--color-bg-muted, #f1f5f9); color: var(--color-text-secondary); }
+
+@media (max-width: 768px) {
+    .admin-search { min-width: 100%; width: 100%; }
+    .admin-filters { width: 100%; }
+    .admin-panel { padding: 14px; }
+}
