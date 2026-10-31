@@ -86,9 +86,9 @@ window.renderReleveReview = function() {
         <div class="review-line ${isCurrent ? 'current' : ''} ${tr.confirmed ? 'confirmed' : ''} ${tr.rejected ? 'rejected' : ''} ${tr.duplicate ? 'dup' : ''}" data-index="${index}" onclick="setReviewCurrent(${index})">
             <div class="review-line-head">
                 <span class="review-badge ${isDepense ? 'debit' : 'credit'}" onclick="event.stopPropagation(); reviewUpdateType(${index})" title="Cliquer pour inverser débit/crédit" style="cursor:pointer;">${isDepense ? '▼ DÉBIT' : '▲ CRÉDIT'}</span>
-                ${isCurrent ? `<input type="number" step="0.01" value="${Math.abs(tr.amount).toFixed(2)}" onchange="reviewUpdateAmount(${index}, this.value)" style="width:90px; font-weight:700; font-size:0.9rem; padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); ${isDepense ? 'color:#ef4444;' : 'color:#10b981;'}">` : `<span class="review-amount ${isDepense ? 'debit' : 'credit'}">${isDepense ? '-' : '+'}${Math.abs(tr.amount).toFixed(2)}€</span>`}
-                ${isCurrent ? `<input type="date" value="${tr.date}" onchange="reviewUpdate(${index}, 'date', this.value)" style="padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); font-size:0.72rem;">` : `<span class="review-date">${tr.date}</span>`}
-                ${isCurrent ? `<input type="text" value="${reviewEscapeHtml(tr.description)}" placeholder="Libellé…" onchange="reviewUpdate(${index}, 'description', this.value)" style="flex:1; min-width:120px; padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); font-size:0.78rem;">` : ''}
+                ${isCurrent ? `<input type="number" step="0.01" value="${Math.abs(tr.amount).toFixed(2)}" onclick="event.stopPropagation()" onchange="reviewUpdateAmount(${index}, this.value)" style="width:90px; font-weight:700; font-size:0.9rem; padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); ${isDepense ? 'color:#ef4444;' : 'color:#10b981;'}">` : `<span class="review-amount ${isDepense ? 'debit' : 'credit'}">${isDepense ? '-' : '+'}${Math.abs(tr.amount).toFixed(2)}€</span>`}
+                ${isCurrent ? `<input type="date" value="${tr.date}" onclick="event.stopPropagation()" onchange="reviewUpdate(${index}, 'date', this.value)" style="padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); font-size:0.72rem;">` : `<span class="review-date">${tr.date}</span>`}
+                ${isCurrent ? `<input type="text" value="${reviewEscapeHtml(tr.description)}" placeholder="Libellé…" onclick="event.stopPropagation()" onchange="reviewUpdate(${index}, 'description', this.value)" style="flex:1; min-width:120px; padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); font-size:0.78rem;">` : ''}
                 ${tr.confirmed ? '<span class="review-state ok">✓ validée</span>' : ''}
                 ${tr.rejected ? '<span class="review-state ko">✕ rejetée</span>' : ''}
                 ${tr.duplicate && !tr.rejected ? '<span class="review-state warn">⚠ doublon</span>' : ''}
@@ -96,7 +96,7 @@ window.renderReleveReview = function() {
             </div>
             <div class="review-libelle">${reviewEscapeHtml(tr.description)}</div>
             ${isCurrent ? `
-            <div class="review-fields">
+            <div class="review-fields" onclick="event.stopPropagation()">
                 <div class="review-field">
                     <label>Type</label>
                     <select onchange="reviewUpdate(${index}, 'type', this.value)">
