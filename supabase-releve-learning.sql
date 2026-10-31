@@ -84,7 +84,7 @@ ALTER TABLE cabinet_recettes
 ALTER TABLE cabinet_recettes
     ADD COLUMN IF NOT EXISTS note TEXT;
 
--- Historique des relevés importés : un mois n'est validé QUE par un import confirmé
+-- Historique des imports de releves : un mois n est valide QUE par un import confirme
 CREATE TABLE IF NOT EXISTS releve_imports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
