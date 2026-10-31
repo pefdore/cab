@@ -232,11 +232,21 @@ async function renderReviewPdf(t) {
     }
 
     zone.innerHTML = `
-        <div style="position:relative; display:inline-block; max-width:100%; max-height:100%;">
-            <img src="${imgSrc}" alt="Page ${label}" style="max-height:calc(30vh - 60px); max-width:100%; display:block; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+        <div style="font-size:0.7rem; color:var(--color-text-secondary); margin-bottom:6px;">Page ${label} — ligne en cours surlignée (scroll pour voir le reste du relevé)</div>
+        <div id="review-pdf-inner" style="position:relative; display:inline-block; width:100%; max-width:1100px;">
+            <img src="${imgSrc}" alt="Page ${label}" style="width:100%; display:block; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
             ${hlHtml}
-        </div>
-        <div style="font-size:0.7rem; color:var(--color-text-secondary); margin-top:4px;">Page ${label} — ligne en cours surlignée</div>`;
+        </div>`;
+
+    // scroll automatique du bandeau pour centrer la ligne surlignee
+    if (t) {
+        const inner = document.getElementById('review-pdf-inner');
+        const hl = inner ? inner.querySelector('div[style*="3b82f6"]') : null;
+        if (hl) {
+            const hlTop = hl.offsetTop;
+            zone.scrollTop = Math.max(0, hlTop - zone.clientHeight / 2 + hl.offsetHeight / 2);
+        }
+    }
 }
 
 // retrouve le rectangle (relatif) de la ligne de la transaction
