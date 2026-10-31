@@ -354,3 +354,63 @@ function reviewUpdateAmount(index, value) {
     updatePendingCount();
 }
 window.reviewUpdateAmount = reviewUpdateAmount;
+
+
+// ===== Pinch-to-zoom du PDF dans le bandeau =====
+(function initReviewPdfZoom() {
+    if (window._reviewZoomInit) return;
+    window._reviewZoomInit = true;
+    const state = { scale: 1, pinchDist: 0, lastTap: 0 };
+
+    document.addEventListener('touchstart', (e) => {
+        const zone = document.getElementById('review-pdf-zone');
+        const inner = document.getElementById('review-pdf-inner');
+        if (!zone || !inner || !zone.contains(e.target)) return;
+        if (e.touches.length === 2) {
+            state.pinchDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+        } else if (e.touches.length === 1) {
+            // double-tap = zoom 2x / retour 1x
+            const now = Date.now();
+            if (now - state.lastTap < 300) {
+                state.scale = state.scale > 1.2 ? 1 : 2;
+                applyZoom(inner, zone);
+            }
+            state.lastTap = now;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        const zone = document.getElementById('review-pdf-zone');
+        const inner = document.getElementById('review-pdf-inner');
+        if (!zone || !inner || !zone.contains(e.target)) return;
+        if (e.touches.length === 2 && state.pinchDist) {
+            e.preventDefault();
+            const d = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const factor = d / state.pinchDist;
+            const newScale = Math.min(5, Math.max(1, state.scale * factor));
+            // reference : on garde le point median du pinch fixe
+            state.scale = newScale;
+            state.pinchDist = d;
+            applyZoom(inner, zone);
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) state.pinchDist = 0;
+    }, { passive: true });
+
+    function applyZoom(inner, zone) {
+        inner.style.transform = `scale(${state.scale})`;
+        inner.style.transformOrigin = 'center top';
+        if (state.scale > 1) {
+            inner.style.width = '100%';
+            zone.style.scrollBehavior = 'auto';
+        }
+    }
+})();
