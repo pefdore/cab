@@ -133,10 +133,11 @@ function reviewUpdate(index, field, value) {
     if (field === 'type') {
         tr.amount = value === 'recette' ? Math.abs(tr.amount) : -Math.abs(tr.amount);
         tr.type = value;
+        renderReleveReview();
     } else {
         tr[field] = value;
+        // champs inline : pas de re-render (le focus et la saisie seraient perdus)
     }
-    renderReleveReview();
 }
 window.reviewUpdate = reviewUpdate;
 
@@ -313,6 +314,14 @@ function findReviewLineRect(t, pageData) {
     const sameRow = pageData.itemRects.filter(it => Math.abs(it.y - yMid) < 22);
     const rowXs = sameRow.map(i => i.x);
     const rowX1s = sameRow.map(i => i.x + (i.w || 0));
+    // garde-fou : une rangee qui couvre quasi toute la largeur = en-tete de tableau,
+    // pas une ligne de transaction -> selection qui decoupe mieux
+    const rowW = (Math.max(...rowX1s) - Math.min(...rowXs));
+    if (rowW > pageData.pageWidth * 0.93) {
+        // trop large : on se limite aux items de la transaction elle-meme
+        rowXs.length = 0; rowX1s.length = 0;
+        items.forEach(i => { rowXs.push(i.x); rowX1s.push(i.x + (i.w || 0)); });
+    }
     const x0 = Math.max(0, Math.min(...rowXs) - 15);
     const x1 = Math.min(pageData.pageWidth, Math.max(...rowX1s) + 15);
     const y0 = Math.max(0, Math.min(...ys) - 14);
@@ -341,6 +350,7 @@ function reviewUpdateAmount(index, value) {
     if (!tr) return;
     const v = parseFloat(value) || 0;
     tr.amount = (tr.type === 'recette') ? Math.abs(v) : -Math.abs(v);
-    renderReleveReview();
+    // pas de re-render : garder le focus dans le champ pendant la saisie
+    updatePendingCount();
 }
 window.reviewUpdateAmount = reviewUpdateAmount;
