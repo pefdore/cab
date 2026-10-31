@@ -85,9 +85,10 @@ window.renderReleveReview = function() {
         return `
         <div class="review-line ${isCurrent ? 'current' : ''} ${tr.confirmed ? 'confirmed' : ''} ${tr.rejected ? 'rejected' : ''} ${tr.duplicate ? 'dup' : ''}" data-index="${index}" onclick="setReviewCurrent(${index})">
             <div class="review-line-head">
-                <span class="review-badge ${isDepense ? 'debit' : 'credit'}">${isDepense ? '▼ DÉBIT' : '▲ CRÉDIT'}</span>
-                <span class="review-amount ${isDepense ? 'debit' : 'credit'}">${isDepense ? '-' : '+'}${Math.abs(tr.amount).toFixed(2)}€</span>
-                <span class="review-date">${tr.date}</span>
+                <span class="review-badge ${isDepense ? 'debit' : 'credit'}" onclick="event.stopPropagation(); reviewUpdateType(${index})" title="Cliquer pour inverser débit/crédit" style="cursor:pointer;">${isDepense ? '▼ DÉBIT' : '▲ CRÉDIT'}</span>
+                ${isCurrent ? `<input type="number" step="0.01" value="${Math.abs(tr.amount).toFixed(2)}" onchange="reviewUpdateAmount(${index}, this.value)" style="width:90px; font-weight:700; font-size:0.9rem; padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); ${isDepense ? 'color:#ef4444;' : 'color:#10b981;'}">` : `<span class="review-amount ${isDepense ? 'debit' : 'credit'}">${isDepense ? '-' : '+'}${Math.abs(tr.amount).toFixed(2)}€</span>`}
+                ${isCurrent ? `<input type="date" value="${tr.date}" onchange="reviewUpdate(${index}, 'date', this.value)" style="padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); font-size:0.72rem;">` : `<span class="review-date">${tr.date}</span>`}
+                ${isCurrent ? `<input type="text" value="${reviewEscapeHtml(tr.description)}" placeholder="Libellé…" onchange="reviewUpdate(${index}, 'description', this.value)" style="flex:1; min-width:120px; padding:3px 6px; border-radius:6px; border:1px solid var(--color-border); font-size:0.78rem;">` : ''}
                 ${tr.confirmed ? '<span class="review-state ok">✓ validée</span>' : ''}
                 ${tr.rejected ? '<span class="review-state ko">✕ rejetée</span>' : ''}
                 ${tr.duplicate && !tr.rejected ? '<span class="review-state warn">⚠ doublon</span>' : ''}
@@ -146,6 +147,24 @@ function applyReviewSuggestion(index) {
     if (sug) { tr.sous_categorie = sug; renderReleveReview(); }
 }
 window.applyReviewSuggestion = applyReviewSuggestion;
+
+// Ajoute une ligne non detectee automatiquement (saisie manuelle dans la revue)
+window.reviewAddLine = function() {
+    pendingTransactions.push({
+        date: new Date().toISOString().split('T')[0],
+        description: 'Ligne ajoutée manuellement',
+        amount: 0,
+        type: 'dépense',
+        category: 'autres_depenses',
+        sous_categorie: '',
+        comment: '',
+        confirmed: false,
+        manual: true
+    });
+    window._reviewState.current = pendingTransactions.length - 1;
+    renderReleveReview();
+    updatePendingCount();
+};
 
 window.setReviewCurrent = function(index) {
     window._reviewState.current = index;
@@ -233,15 +252,15 @@ async function renderReviewPdf(t) {
 
     zone.innerHTML = `
         <div style="font-size:0.7rem; color:var(--color-text-secondary); margin-bottom:6px;">Page ${label} — ligne en cours surlignée (scroll pour voir le reste du relevé)</div>
-        <div id="review-pdf-inner" style="position:relative; display:inline-block; width:100%; max-width:1100px;">
-            <img src="${imgSrc}" alt="Page ${label}" style="width:100%; display:block; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
-            ${hlHtml}
+        <div id="review-pdf-inner" style="position:relative; display:inline-block; width:100%; max-width:1100px; vertical-align:top;">
+            <img id="review-pdf-img" src="${imgSrc}" alt="Page ${label}" style="width:100%; display:block; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+            <div id="review-hl-wrap" style="position:absolute; inset:0; overflow:hidden; border-radius:6px; pointer-events:none;">${hlHtml}</div>
         </div>`;
 
     // scroll automatique du bandeau pour centrer la ligne surlignee
     if (t) {
-        const inner = document.getElementById('review-pdf-inner');
-        const hl = inner ? inner.querySelector('div[style*="3b82f6"]') : null;
+        const wrap = document.getElementById('review-hl-wrap');
+        const hl = wrap ? wrap.firstElementChild : null;
         if (hl) {
             const hlTop = hl.offsetTop;
             zone.scrollTop = Math.max(0, hlTop - zone.clientHeight / 2 + hl.offsetHeight / 2);
@@ -277,11 +296,11 @@ function findReviewLineRect(t, pageData) {
     const yMid = (Math.min(...items.map(i => i.y)) + Math.max(...items.map(i => i.y))) / 2;
     const sameRow = pageData.itemRects.filter(it => Math.abs(it.y - yMid) < 22);
     const xs = sameRow.map(i => i.x), x1s = sameRow.map(i => i.x + (i.w || 0));
-    const ys = items.map(i => i.y);
+    const ys = sameRow.length ? sameRow.map(i => i.y) : items.map(i => i.y);
     const x0 = Math.max(0, Math.min(...xs) - 15);
     const x1 = Math.min(pageData.pageWidth, Math.max(...x1s) + 15);
-    const y0 = Math.max(0, Math.min(...ys) - 8);
-    const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 16);
+    const y0 = Math.max(0, Math.min(...ys) - 12);
+    const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 20);
     return {
         x: x0 / pageData.pageWidth,
         y: y0 / pageData.pageHeight,
@@ -290,3 +309,22 @@ function findReviewLineRect(t, pageData) {
     };
 }
 window.findReviewLineRect = findReviewLineRect;
+
+
+function reviewUpdateType(index) {
+    const tr = pendingTransactions[index];
+    if (!tr) return;
+    tr.type = (tr.type === 'dépense' || tr.amount < 0) ? 'recette' : 'dépense';
+    tr.amount = tr.type === 'recette' ? Math.abs(tr.amount) : -Math.abs(tr.amount);
+    renderReleveReview();
+}
+window.reviewUpdateType = reviewUpdateType;
+
+function reviewUpdateAmount(index, value) {
+    const tr = pendingTransactions[index];
+    if (!tr) return;
+    const v = parseFloat(value) || 0;
+    tr.amount = (tr.type === 'recette') ? Math.abs(v) : -Math.abs(v);
+    renderReleveReview();
+}
+window.reviewUpdateAmount = reviewUpdateAmount;
