@@ -8353,6 +8353,35 @@ function parseRelevéLocalement(text) {
     return transactions;
 }
 
+const SCM_SOUS_CATEGORIES = {
+    depense: [
+        // Personnel
+        'Salaire secrétaire(s)', 'Salaire femme de ménage', 'Salaire autre personnel', 'Prime / bonus personnel',
+        'Vacations remplacement secrétariat', 'Indemnité kilométrique personnel',
+        'URSSAF salaires', 'Retraite complémentaire salariés', 'Mutuelle salariés', 'Prévoyance personnel', 'Médecine du travail',
+        // Local
+        'Loyer cabinet', 'Charges copropriété', 'Électricité', 'Eau', 'Chauffage / gaz',
+        'Taxe foncière', 'TEOM (ordures)', 'CFE', 'Entretien / réparations local', 'Travaux & aménagements',
+        // Informatique & abonnements
+        'Logiciel de gestion', 'Maintenance informatique', 'Télétransmission', 'Site internet / hébergement',
+        'Abonnement internet', 'Téléphone fixe', 'Téléphone mobile', 'Carte Vitale / Ségur', 'Consommables informatiques',
+        // Fournisseurs & fournitures
+        'Fournitures bureau', 'Consommables médicaux', 'Petit matériel médical', 'Uniformes / blouses',
+        'Nettoyage / produits d\'entretien', 'Literie / linge cabinet',
+        // Services & pros
+        'Honoraires expert-comptable', 'Honoraires avocat / juridique', 'Comptabilité / paie',
+        'Assurance RC professionnelle', 'Assurance local', 'Assurance matériel', 'Assurance homme-clé',
+        // Banque & financement
+        'Frais bancaires', 'Intérêts emprunt', 'Remboursement capital emprunt', 'Leasing matériel',
+        // Divers
+        'Réception & représentation', 'Formation du personnel', 'Publicité / communication', 'Frais postaux', 'Divers'
+    ],
+    recette: [
+        'Cotisation mensuelle associés (quote-part)', 'Cotisation Dr — quote-part', 'Participation ponctuelle associés',
+        'Régularisation cotisations', 'Remboursement URSSAF / CARSAT', 'Remboursement assurance',
+        'Aide / subvention', 'Produits financiers (intérêts)', 'Vente matériel du cabinet', 'Indemnité (litige, retard)', 'Divers recettes'
+    ]
+};
 function renderTransactionsList() {
     const container = document.getElementById('transactionsList');
     const containerModal = document.getElementById('transactionsListModal');
@@ -11430,35 +11459,7 @@ window.getImportedMonths = getImportedMonths;
 
 
 // ===== Sous-catégories usuelles d'une SCM médicale =====
-const SCM_SOUS_CATEGORIES = {
-    depense: [
-        // Personnel
-        'Salaire secrétaire(s)', 'Salaire femme de ménage', 'Salaire autre personnel', 'Prime / bonus personnel',
-        'Vacations remplacement secrétariat', 'Indemnité kilométrique personnel',
-        'URSSAF salaires', 'Retraite complémentaire salariés', 'Mutuelle salariés', 'Prévoyance personnel', 'Médecine du travail',
-        // Local
-        'Loyer cabinet', 'Charges copropriété', 'Électricité', 'Eau', 'Chauffage / gaz',
-        'Taxe foncière', 'TEOM (ordures)', 'CFE', 'Entretien / réparations local', 'Travaux & aménagements',
-        // Informatique & abonnements
-        'Logiciel de gestion', 'Maintenance informatique', 'Télétransmission', 'Site internet / hébergement',
-        'Abonnement internet', 'Téléphone fixe', 'Téléphone mobile', 'Carte Vitale / Ségur', 'Consommables informatiques',
-        // Fournisseurs & fournitures
-        'Fournitures bureau', 'Consommables médicaux', 'Petit matériel médical', 'Uniformes / blouses',
-        'Nettoyage / produits d\'entretien', 'Literie / linge cabinet',
-        // Services & pros
-        'Honoraires expert-comptable', 'Honoraires avocat / juridique', 'Comptabilité / paie',
-        'Assurance RC professionnelle', 'Assurance local', 'Assurance matériel', 'Assurance homme-clé',
-        // Banque & financement
-        'Frais bancaires', 'Intérêts emprunt', 'Remboursement capital emprunt', 'Leasing matériel',
-        // Divers
-        'Réception & représentation', 'Formation du personnel', 'Publicité / communication', 'Frais postaux', 'Divers'
-    ],
-    recette: [
-        'Cotisation mensuelle associés (quote-part)', 'Cotisation Dr — quote-part', 'Participation ponctuelle associés',
-        'Régularisation cotisations', 'Remboursement URSSAF / CARSAT', 'Remboursement assurance',
-        'Aide / subvention', 'Produits financiers (intérêts)', 'Vente matériel du cabinet', 'Indemnité (litige, retard)', 'Divers recettes'
-    ]
-};
+
 
 // Suggestions de sous-categorie par similarite avec l'historique :
 // une ligne du releve ressemble a une ligne deja enregistree -> on propose la sous-categorie utilisee la fois d'avant
