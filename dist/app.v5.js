@@ -8130,8 +8130,9 @@ function t_detectColumnSides(pageData) {
 
     for (const it of pageData.itemRects) {
         const low = (it.str || '').trim().toLowerCase();
-        if (isCreditHeader(low) && creditX === null) creditX = it.x;
-        if (isDebitHeader(low) && debitX === null) debitX = it.x;
+        const cx = it.x + (it.w || 0) / 2;
+        if (isCreditHeader(low) && creditX === null) creditX = cx;
+        if (isDebitHeader(low) && debitX === null) debitX = cx;
     }
 
     // Si introuvable sur cette page, chercher sur les autres pages du même relevé
@@ -8245,13 +8246,15 @@ function parseRelevéLocalement(text) {
                 const pageW = pageData.pageWidth || 600;
                 if (rightmost.x - leftmost.x > pageW * 0.18) {
                     const sides = t_detectColumnSides(pageData);
+                    const colTol = pageW * 0.15;
+                    const centerXOf = (it) => it.x + (it.w || 0) / 2;
                     if (sides && sides.creditX !== null && sides.debitX !== null) {
-                        // Le montant de la transaction = l'item situe dans la colonne debit OU credit
-                        // (et non le solde qui est plus a droite)
-                        const debitItem = moneyItems.filter(it => Math.abs(it.x - sides.debitX) < pageW * 0.12)
-                            .sort((a, b) => Math.abs(a.x - sides.debitX) - Math.abs(b.x - sides.debitX))[0];
-                        const creditItem = moneyItems.filter(it => Math.abs(it.x - sides.creditX) < pageW * 0.12)
-                            .sort((a, b) => Math.abs(a.x - sides.creditX) - Math.abs(b.x - sides.creditX))[0];
+                        // Comparaison au CENTRE de cellule : les montants sont alignes a droite de la colonne,
+                        // l'en-tete peut etre aligne a gauche/centre => on compare x centre a x centre
+                        const debitItem = moneyItems.filter(it => Math.abs(centerXOf(it) - sides.debitX) < colTol)
+                            .sort((a, b) => Math.abs(centerXOf(a) - sides.debitX) - Math.abs(centerXOf(b) - sides.debitX))[0];
+                        const creditItem = moneyItems.filter(it => Math.abs(centerXOf(it) - sides.creditX) < colTol)
+                            .sort((a, b) => Math.abs(centerXOf(a) - sides.creditX) - Math.abs(centerXOf(b) - sides.creditX))[0];
                         if (debitItem && !creditItem) {
                             const v = cleanAmount(debitItem.str);
                             if (v !== null) amount = -Math.abs(v);
@@ -8259,17 +8262,14 @@ function parseRelevéLocalement(text) {
                             const v = cleanAmount(creditItem.str);
                             if (v !== null) amount = Math.abs(v);
                         } else if (debitItem && creditItem) {
-                            // Les deux colonnes remplies : solde intermediaire ? on privilegie la colonne
-                            // correspondant au dernier montant de la ligne (celui avant le solde)
                             const v = cleanAmount((creditItem.x > debitItem.x ? creditItem : debitItem).str);
                             if (v !== null) amount = (creditItem.x > debitItem.x) ? Math.abs(v) : -Math.abs(v);
                         }
                     } else if (sides && (sides.creditX !== null || sides.debitX !== null)) {
-                        // Une seule colonne identifiee : le montant doit y etre
                         const refX = sides.creditX !== null ? sides.creditX : sides.debitX;
                         const isCreditCol = sides.creditX !== null;
-                        const best = moneyItems.filter(it => Math.abs(it.x - refX) < pageW * 0.12)
-                            .sort((a, b) => Math.abs(a.x - refX) - Math.abs(b.x - refX))[0];
+                        const best = moneyItems.filter(it => Math.abs(centerXOf(it) - refX) < colTol)
+                            .sort((a, b) => Math.abs(centerXOf(a) - refX) - Math.abs(centerXOf(b) - refX))[0];
                         if (best) {
                             const v = cleanAmount(best.str);
                             if (v !== null) amount = isCreditCol ? Math.abs(v) : -Math.abs(v);
