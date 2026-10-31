@@ -291,7 +291,30 @@ function needsValidationFlow(role, cabinetId) {
     return role === 'secretaire' || (role === 'medecin_installe' && !!cabinetId);
 }
 
+function formatFirstName(name) {
+    return String(name || '').trim().replace(/\s+/g, ' ')
+        .split(' ').map(function(p) {
+            if (!p) return p;
+            // Particules et prefixes : d', de, du, le, la, van, von...
+            if (/^(d'|de|du|del|le|la|von|van)$/i.test(p)) return p.toLowerCase();
+            return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+        }).join(' ');
+}
+
+function formatLastName(name) {
+    return String(name || '').trim().replace(/\s+/g, ' ').toUpperCase();
+}
+
+function formatFirstLast(firstName, lastName) {
+    return { firstName: formatFirstName(firstName), lastName: formatLastName(lastName) };
+}
+window.formatFirstName = formatFirstName;
+window.formatLastName = formatLastName;
+
 async function doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress = null, cabinetId = null) {
+    // Formatage uniforme : prenom avec majuscule initiale, nom de famille en
+    // majuscules — quelle que soit la facon dont l'inscrit a tape son nom.
+    ({ firstName, lastName } = formatFirstLast(firstName, lastName));
     console.log('[AUTH] Tentative inscription:', email);
     
     if (!email || !password || !firstName || !lastName || !role) {
@@ -4106,8 +4129,8 @@ function showOverlaySettingsPage(overlay, pageName) {
         if (saveBtn && !saveBtn.dataset.bound) {
             saveBtn.dataset.bound = '1';
             saveBtn.addEventListener('click', async () => {
-                const lastname = (overlay.querySelector('#profileLastname')?.value || '').trim();
-                const firstname = (overlay.querySelector('#profileFirstname')?.value || '').trim();
+                const lastname = formatLastName(overlay.querySelector('#profileLastname')?.value || '');
+                const firstname = formatFirstName(overlay.querySelector('#profileFirstname')?.value || '');
                 if (!lastname || !firstname) { showToast('Veuillez remplir tous les champs', 'error'); return; }
                 try {
                     const { error } = await supabaseClient.from('profiles').update({ last_name: lastname, first_name: firstname }).eq('id', currentUser.id);
@@ -4561,8 +4584,8 @@ document.getElementById('saveProfileBtn')?.addEventListener('click', (e) => {
         const lastnameEl = getSettingsInput('profileLastname');
         const firstnameEl = getSettingsInput('profileFirstname');
         if (!lastnameEl || !firstnameEl) return;
-        const lastname = lastnameEl.value.trim();
-        const firstname = firstnameEl.value.trim();
+        const lastname = formatLastName(lastnameEl.value);
+        const firstname = formatFirstName(firstnameEl.value);
 
         if (!lastname || !firstname) {
             showToast('Veuillez remplir tous les champs', 'error');
