@@ -1021,24 +1021,31 @@ async function checkAddressExists(address) {
         for (var i = 0; i < matchingCabinets.length; i++) {
             var cabinet = matchingCabinets[i];
             
-            // Get all profiles linked to this cabinet
-            var cabinetMembers = [];
-            
-            // First try to get from profiles (requires authentication)
-            const { data: profiles } = await supabaseClient
-                .from('profiles')
-                .select('id, first_name, last_name, role')
-                .eq('cabinet_id', cabinet.id);
-            
-            if (profiles && profiles.length > 0) {
-                cabinetMembers = profiles;
-            } else {
-                // Fallback: use cabinet name if no profiles found
-                cabinetMembers = [{ first_name: cabinet.name || 'Cabinet', last_name: '' }];
+            // Lecture des medecins installes via RPC SECURITY DEFINER : fonctionne
+            // aussi pour un visiteur NON connecte (pendant l'inscription), ou la
+            // lecture directe de profiles est bloquee par RLS. On ne liste que
+            // les associes (medecin_installe / admin) : ce sont eux qui
+            // designent le cabinet et que l'inscrit doit reconnaitre.
+            let associes = [];
+            try {
+                const { data: rpcData, error: rpcErr } = await supabaseClient
+                    .rpc('cabinet_associes_public', { p_cabinet_id: cabinet.id });
+                if (!rpcErr && rpcData) {
+                    associes = rpcData.map(function(m) {
+                        return { first_name: m.first_name, last_name: m.last_name };
+                    });
+                }
+            } catch (e) {
+                console.error('[CABINET] RPC associes error:', e);
             }
             
-            // Add each member to doctors array
-            cabinetMembers.forEach(function(m) {
+            // Fallback si la RPC n'est pas encore installee : nom fige du cabinet
+            if (!associes.length && cabinet.name) {
+                associes = [{ first_name: cabinet.name, last_name: '' }];
+            }
+            
+            // Add each associe to doctors array
+            associes.forEach(function(m) {
                 doctors.push({
                     id: cabinet.id,
                     first_name: m.first_name,
@@ -11560,7 +11567,8 @@ function adminCabinetLabel(c) { return c._designation || c.name || c.address || 
 
 function adminUserCabinetLabel(u) {
     const cab = u.cabinet_id && adminCache.cabinets.find(c => c.id === u.cabinet_id);
-    return cab ? adminCabinetLabel(cab) : (u.cabinet_address || 'Sans cabinet');
+    if (cab) return adminCabinetLabel(cab) + (cab.address ? ' — ' + cab.address : '');
+    return (u.cabinet_address || 'Sans cabinet');
 }
 
 function adminFmtDate(iso) {
@@ -11719,7 +11727,7 @@ function renderAdminCabinets() {
             c,
             name: adminCabinetLabel(c).toLowerCase(),
             address: (c.address || '').toLowerCase(),
-            installes: members.filter(u => u.role === 'medecin_installe').length,
+            installes: members.filter(u => u.role === 'medecin_installe' || u.role === 'admin').length,
             secretaires: members.filter(u => u.role === 'secretaire').length,
             total: members.length,
             created_at: c.created_at || ''
