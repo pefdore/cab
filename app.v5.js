@@ -8359,37 +8359,28 @@ function renderTransactionsList() {
     if (!container && !containerModal) return;
     
     const depenseCategories = [
-        { value: 'charges', label: '🏠 Local & charges' },
-        { value: 'masse_salariale', label: '👥 Salaires & personnel' },
-        { value: 'urssaf', label: '🩺 Cotisations sociales (CARPIMKO, ASV)' },
-        { value: 'impots', label: '🏛️ Impôts & taxes' },
-        { value: 'logiciel', label: '💻 Logiciels & télétransmission' },
-        { value: 'services', label: '🔌 Services & abonnements (eau, élec, tel, internet)' },
-        { value: 'consommables', label: '🧪 Consommables & matériel médical' },
-        { value: 'fournitures', label: '📎 Fournitures & petit équipement' },
+        { value: 'masse_salariale', label: '👥 Personnel : salaires, secrétariat, ménage' },
+        { value: 'urssaf', label: '🧾 Charges sociales sur salaires (URSSAF, retraite)' },
+        { value: 'charges', label: '🏠 Local : loyer & charges (élec, eau, chauffage)' },
+        { value: 'impots', label: '🏛️ Impôts & taxes (foncière, CFE, TEOM)' },
+        { value: 'logiciel', label: '💻 Informatique : logiciels, télétransmission, maintenance' },
+        { value: 'services', label: '🔌 Abonnements : téléphone, internet, divers' },
+        { value: 'consommables', label: '🧪 Consommables & fournitures médicales' },
+        { value: 'fournitures', label: '📎 Fournitures bureau & petit matériel' },
         { value: 'materiel', label: '🛠️ Matériel & équipement (investissement)' },
-        { value: 'communication', label: '📣 Communication, site & formation' },
-        { value: 'deplacements', label: '🚗 Déplacements & véhicule' },
-        { value: 'assurance', label: '🛡️ Assurances (RC, local, auto)' },
-        { value: 'comptabilite', label: '🧮 Comptabilité, expert & juridique' },
-        { value: 'scm', label: '🏢 Frais de structure SCM / SCP' },
-        { value: 'banque', label: '🏦 Frais bancaires & financement' },
-        { value: 'remboursement_credit', label: '💳 Crédits & emprunts' },
-        { value: 'reception', label: '🥂 Réception & représentation' },
+        { value: 'comptabilite', label: '🧮 Expert-comptable, juridique, administratif' },
+        { value: 'assurance', label: '🛡️ Assurances (RC pro, local, matériel)' },
+        { value: 'banque', label: '🏦 Frais bancaires' },
+        { value: 'remboursement_credit', label: '💳 Crédits, emprunts & leasing' },
+        { value: 'reception', label: '🥂 Réception & divers' },
         { value: 'autres_depenses', label: '❓ Autres dépenses' }
     ];
     
     const recetteCategories = [
-        { value: 'honoraires', label: '💉 Honoraires consultations & actes' },
-        { value: 'honoraires_chirurgie', label: '🔪 Honoraires chirurgie (CCAM, IBODE)' },
-        { value: 'secteur2_depassements', label: '➕ Secteur 2 & dépassements' },
-        { value: 'gardes_urgences', label: '🚨 Gardes, astreintes & urgences' },
-        { value: 'remplacements', label: '🔁 Remplacements & vacations' },
-        { value: 'participation_associe', label: '🤝 Participation associé (quote-part)' },
-        { value: 'retrocessions', label: '↩️ Rétrocessions (IDE, kiné…)' },
-        { value: 'remboursements', label: '💰 Remboursements (URSSAF, assurance)' },
-        { value: 'produits_financiers', label: '📈 Produits financiers' },
-        { value: 'vente_materiel', label: '📦 Vente de matériel' },
+        { value: 'participation_associe', label: '🤝 Cotisation / quote-part des associés' },
+        { value: 'participation_ponctuelle', label: '💸 Participation ponctuelle des associés' },
+        { value: 'remboursements', label: '💰 Remboursements (URSSAF, assurance, organisme)' },
+        { value: 'produits_financiers', label: '📈 Produits financiers (intérêts)' },
         { value: 'autres', label: '❓ Autres recettes' }
     ];
     
@@ -11441,28 +11432,31 @@ window.getImportedMonths = getImportedMonths;
 // ===== Sous-catégories usuelles d'une SCM médicale =====
 const SCM_SOUS_CATEGORIES = {
     depense: [
-        'Loyer cabinet', 'Charges locatives (copropriété)', 'Électricité', 'Eau', 'Gaz', 'Chauffage',
-        'Assurance RC professionnelle', 'Assurance local', 'Assurance voiture', 'Mutuelle / prévoyance',
-        'Honoraires comptable', 'Honoraires expert-comptable', 'Frais SCM (quote-part)', 'Frais SCP / répartition',
-        'Cotisations URSSAIL / CARPIMKO', 'Retraite complémentaire', 'Prévoyance ASV',
-        'Masse salariale (salaires)', 'Primes et bonus', 'Vacations secrétaire',
-        'Logiciel de gestion', 'Télétransmission (Santé cloud, Carte Vitale)', 'Abonnement internet', 'Téléphonie mobile / fixe',
-        'Fournitures bureau', 'Petit matériel médical', 'Consommables médicaux', 'Blouses / tenues',
-        'Nettoyage / prestataire ménage', 'Maintenance matériel', 'Location / leasing matériel',
-        'Essence / carburant', 'Péages / parking', 'Déplacements professionnels', 'Frais de formation / congrès',
-        'Publicité / communication', 'Site internet', 'Frais postaux', 'Timbres / affranchissement',
-        'Frais bancaires', 'Intérêts emprunt', 'Remboursement capital emprunt', 'Crédit-bail',
-        'Impôts / taxes', 'Taxe foncière', 'Taxe ordure ménagère (TEOM)', 'CFE',
-        'Réception / représentation', 'Cadeaux patients / partenaires', 'Frais de notaire / juridiques'
+        // Personnel
+        'Salaire secrétaire(s)', 'Salaire femme de ménage', 'Salaire autre personnel', 'Prime / bonus personnel',
+        'Vacations remplacement secrétariat', 'Indemnité kilométrique personnel',
+        'URSSAF salaires', 'Retraite complémentaire salariés', 'Mutuelle salariés', 'Prévoyance personnel', 'Médecine du travail',
+        // Local
+        'Loyer cabinet', 'Charges copropriété', 'Électricité', 'Eau', 'Chauffage / gaz',
+        'Taxe foncière', 'TEOM (ordures)', 'CFE', 'Entretien / réparations local', 'Travaux & aménagements',
+        // Informatique & abonnements
+        'Logiciel de gestion', 'Maintenance informatique', 'Télétransmission', 'Site internet / hébergement',
+        'Abonnement internet', 'Téléphone fixe', 'Téléphone mobile', 'Carte Vitale / Ségur', 'Consommables informatiques',
+        // Fournisseurs & fournitures
+        'Fournitures bureau', 'Consommables médicaux', 'Petit matériel médical', 'Uniformes / blouses',
+        'Nettoyage / produits d\'entretien', 'Literie / linge cabinet',
+        // Services & pros
+        'Honoraires expert-comptable', 'Honoraires avocat / juridique', 'Comptabilité / paie',
+        'Assurance RC professionnelle', 'Assurance local', 'Assurance matériel', 'Assurance homme-clé',
+        // Banque & financement
+        'Frais bancaires', 'Intérêts emprunt', 'Remboursement capital emprunt', 'Leasing matériel',
+        // Divers
+        'Réception & représentation', 'Formation du personnel', 'Publicité / communication', 'Frais postaux', 'Divers'
     ],
     recette: [
-        'Honoraires CPAM (secteur 1)', 'Honoraires secteur 2 / dépassements', 'Honoraires ALD / exonerations',
-        'Paiements directs patients (chèque, CB)', 'Espèces encaissées', 'Tiers payant mutuelle',
-        'Participation associé (quote-part)', 'Quote-part SCM', 'Répartition résultats SCM',
-        'Virement Dr (part associé)', 'Indemnités IBODE / gardes', 'Vacations / remplacements',
-        'Indemnité urgence', 'Recettes expertises', 'Séances kiné / IDE (rétrocessions)',
-        'Produits financiers (intérêts)', 'Remboursement URSSAF', 'Remboursement assurance',
-        'Aides / subventions', 'Vente matériel', 'Indemnité maladie / maternité'
+        'Cotisation mensuelle associés (quote-part)', 'Cotisation Dr — quote-part', 'Participation ponctuelle associés',
+        'Régularisation cotisations', 'Remboursement URSSAF / CARSAT', 'Remboursement assurance',
+        'Aide / subvention', 'Produits financiers (intérêts)', 'Vente matériel du cabinet', 'Indemnité (litige, retard)', 'Divers recettes'
     ]
 };
 
