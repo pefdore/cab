@@ -133,7 +133,10 @@ window.renderReleveReview = function() {
                 </div>
                 <div class="review-field grow">
                     <label>Sous-catégorie ${sousCatSuggestion ? `<button class="review-sug-btn" onclick="event.stopPropagation(); applyReviewSuggestion(${index})">✨ ${reviewEscapeHtml(sousCatSuggestion)}</button>` : ''}</label>
-                    <input type="text" value="${reviewEscapeHtml(tr.sous_categorie || '')}" placeholder="${sousCatSuggestion ? 'Suggéré : ' + reviewEscapeHtml(sousCatSuggestion) : 'Sous-catégorie libre…'}" onchange="reviewUpdate(${index}, 'sous_categorie', this.value)">
+                    <input type="text" list="review-souscat-list" value="${reviewEscapeHtml(tr.sous_categorie || '')}" placeholder="${sousCatSuggestion ? 'Suggéré : ' + reviewEscapeHtml(sousCatSuggestion) : 'Sous-catégorie libre…'}" onchange="reviewUpdate(${index}, 'sous_categorie', this.value)">
+                    <datalist id="review-souscat-list">
+                        ${(typeof SCM_SOUS_CATEGORIES !== 'undefined' ? SCM_SOUS_CATEGORIES[isDepense ? 'depense' : 'recette'] : []).map(sc => `<option value="${reviewEscapeHtml(sc)}">`).join('')}
+                    </datalist>
                 </div>
                 <div class="review-field grow">
                     <label>Commentaire</label>
