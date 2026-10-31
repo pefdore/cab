@@ -72,22 +72,27 @@ window.renderReleveReview = function() {
 
     // --- Liste des lignes ---
     const depenseCategories = [
-        { value: 'charges', label: 'Local & charges' }, { value: 'masse_salariale', label: 'Salaires & personnel' },
-        { value: 'urssaf', label: 'Cotisations sociales' }, { value: 'impots', label: 'Impôts & taxes' },
-        { value: 'logiciel', label: 'Logiciels & télétransmission' }, { value: 'services', label: 'Services & abonnements' },
-        { value: 'consommables', label: 'Consommables & matériel médical' }, { value: 'fournitures', label: 'Fournitures & petit équipement' },
-        { value: 'materiel', label: 'Matériel & équipement' }, { value: 'communication', label: 'Communication, site & formation' },
-        { value: 'deplacements', label: 'Déplacements & véhicule' }, { value: 'assurance', label: 'Assurances' },
-        { value: 'comptabilite', label: 'Comptabilité & juridique' }, { value: 'scm', label: 'Frais de structure SCM / SCP' },
-        { value: 'banque', label: 'Frais bancaires' }, { value: 'remboursement_credit', label: 'Crédits & emprunts' },
-        { value: 'reception', label: 'Réception & représentation' }, { value: 'autres_depenses', label: 'Autres dépenses' }
+        { value: 'masse_salariale', label: 'Personnel : salaires, secrétariat, ménage' },
+        { value: 'urssaf', label: 'Charges sociales sur salaires' },
+        { value: 'charges', label: 'Local : loyer & charges' },
+        { value: 'impots', label: 'Impôts & taxes' },
+        { value: 'logiciel', label: 'Informatique : logiciels, maintenance' },
+        { value: 'services', label: 'Abonnements : tél, internet, divers' },
+        { value: 'consommables', label: 'Consommables & fournitures médicales' },
+        { value: 'fournitures', label: 'Fournitures bureau & petit matériel' },
+        { value: 'materiel', label: 'Matériel & équipement' },
+        { value: 'comptabilite', label: 'Expert-comptable, juridique' },
+        { value: 'assurance', label: 'Assurances' },
+        { value: 'banque', label: 'Frais bancaires' },
+        { value: 'remboursement_credit', label: 'Crédits, emprunts & leasing' },
+        { value: 'reception', label: 'Réception & divers' },
+        { value: 'autres_depenses', label: 'Autres dépenses' }
     ];
     const recetteCategories = [
-        { value: 'honoraires', label: 'Honoraires consultations & actes' }, { value: 'honoraires_chirurgie', label: 'Honoraires chirurgie (CCAM, IBODE)' },
-        { value: 'secteur2_depassements', label: 'Secteur 2 & dépassements' }, { value: 'gardes_urgences', label: 'Gardes & urgences' },
-        { value: 'remplacements', label: 'Remplacements & vacations' }, { value: 'participation_associe', label: 'Participation associé' },
-        { value: 'retrocessions', label: 'Rétrocessions' }, { value: 'remboursements', label: 'Remboursements' },
-        { value: 'produits_financiers', label: 'Produits financiers' }, { value: 'vente_materiel', label: 'Vente de matériel' },
+        { value: 'participation_associe', label: 'Cotisation / quote-part des associés' },
+        { value: 'participation_ponctuelle', label: 'Participation ponctuelle des associés' },
+        { value: 'remboursements', label: 'Remboursements (URSSAF, assurance)' },
+        { value: 'produits_financiers', label: 'Produits financiers (intérêts)' },
         { value: 'autres', label: 'Autres recettes' }
     ];
 
