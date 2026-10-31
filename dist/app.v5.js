@@ -7877,6 +7877,9 @@ async function handleRelevéUpload(event) {
         if (loadingZone) loadingZone.style.display = 'none';
         if (analysisZone) analysisZone.style.display = 'block';
         
+        // Nouvelle experience : vue plein ecran de revue ligne par ligne
+        if (typeof openReleveReview === 'function') openReleveReview();
+        
     } catch (error) {
         console.error('[RELEVÉ] Error:', error);
         alert('Erreur lors de l\'analyse: ' + error.message);
@@ -8350,25 +8353,38 @@ function renderTransactionsList() {
     if (!container && !containerModal) return;
     
     const depenseCategories = [
-        { value: 'masse_salariale', label: 'Masse salariale' },
-        { value: 'urssaf', label: 'URSSAF & cotisations' },
-        { value: 'logiciel', label: 'Logiciels & télétransmission' },
-        { value: 'services', label: 'Services & abonnements' },
-        { value: 'charges', label: 'Loyers, énergie & taxes' },
-        { value: 'consommables', label: 'Consommables médicaux' },
-        { value: 'fournitures', label: 'Fournitures bureau' },
-        { value: 'materiel', label: 'Matériel & équipement' },
-        { value: 'communication', label: 'Communication & formation' },
-        { value: 'reception', label: 'Réception & représentation' },
-        { value: 'remboursement_credit', label: 'Crédits & emprunts' }
+        { value: 'charges', label: '🏠 Local & charges' },
+        { value: 'masse_salariale', label: '👥 Salaires & personnel' },
+        { value: 'urssaf', label: '🩺 Cotisations sociales (CARPIMKO, ASV)' },
+        { value: 'impots', label: '🏛️ Impôts & taxes' },
+        { value: 'logiciel', label: '💻 Logiciels & télétransmission' },
+        { value: 'services', label: '🔌 Services & abonnements (eau, élec, tel, internet)' },
+        { value: 'consommables', label: '🧪 Consommables & matériel médical' },
+        { value: 'fournitures', label: '📎 Fournitures & petit équipement' },
+        { value: 'materiel', label: '🛠️ Matériel & équipement (investissement)' },
+        { value: 'communication', label: '📣 Communication, site & formation' },
+        { value: 'deplacements', label: '🚗 Déplacements & véhicule' },
+        { value: 'assurance', label: '🛡️ Assurances (RC, local, auto)' },
+        { value: 'comptabilite', label: '🧮 Comptabilité, expert & juridique' },
+        { value: 'scm', label: '🏢 Frais de structure SCM / SCP' },
+        { value: 'banque', label: '🏦 Frais bancaires & financement' },
+        { value: 'remboursement_credit', label: '💳 Crédits & emprunts' },
+        { value: 'reception', label: '🥂 Réception & représentation' },
+        { value: 'autres_depenses', label: '❓ Autres dépenses' }
     ];
     
     const recetteCategories = [
-        { value: 'honoraires', label: 'Honoraires' },
-        { value: 'participation_associe', label: 'Participation associé' },
-        { value: 'remboursements', label: 'Remboursements' },
-        { value: 'produits_financiers', label: 'Produits financiers' },
-        { value: 'autres', label: 'Autres recettes' }
+        { value: 'honoraires', label: '💉 Honoraires consultations & actes' },
+        { value: 'honoraires_chirurgie', label: '🔪 Honoraires chirurgie (CCAM, IBODE)' },
+        { value: 'secteur2_depassements', label: '➕ Secteur 2 & dépassements' },
+        { value: 'gardes_urgences', label: '🚨 Gardes, astreintes & urgences' },
+        { value: 'remplacements', label: '🔁 Remplacements & vacations' },
+        { value: 'participation_associe', label: '🤝 Participation associé (quote-part)' },
+        { value: 'retrocessions', label: '↩️ Rétrocessions (IDE, kiné…)' },
+        { value: 'remboursements', label: '💰 Remboursements (URSSAF, assurance)' },
+        { value: 'produits_financiers', label: '📈 Produits financiers' },
+        { value: 'vente_materiel', label: '📦 Vente de matériel' },
+        { value: 'autres', label: '❓ Autres recettes' }
     ];
     
     const html = pendingTransactions.length === 0 

@@ -11074,3 +11074,50 @@ select.admin-search { min-width: 170px; }
     border-color: #ef4444 !important;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
+
+/* ===== Vue de revue d'import (plein écran) ===== */
+.review-line {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: white;
+}
+.review-line:hover { border-color: var(--color-primary); }
+.review-line.current {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    cursor: default;
+}
+.review-line.confirmed { opacity: 0.55; background: rgba(16,185,129,0.06); }
+.review-line.rejected { opacity: 0.4; background: rgba(239,68,68,0.05); text-decoration: line-through; }
+.review-line.dup { border-left: 3px solid #f59e0b; }
+.review-line-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.review-badge {
+    font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+}
+.review-badge.debit { background: rgba(239,68,68,0.12); color: #ef4444; }
+.review-badge.credit { background: rgba(16,185,129,0.12); color: #10b981; }
+.review-amount { font-weight: 700; font-size: 0.9rem; }
+.review-amount.debit { color: #ef4444; }
+.review-amount.credit { color: #10b981; }
+.review-date { font-size: 0.72rem; color: var(--color-text-secondary); }
+.review-libelle { font-size: 0.82rem; margin-top: 4px; color: var(--color-text); }
+.review-state { font-size: 0.65rem; font-weight: 700; padding: 1px 7px; border-radius: 8px; }
+.review-state.ok { background: rgba(16,185,129,0.15); color: #059669; }
+.review-state.ko { background: rgba(239,68,68,0.15); color: #ef4444; }
+.review-state.warn { background: rgba(245,158,11,0.15); color: #b45309; }
+.review-state.cur { background: rgba(59,130,246,0.15); color: #2563eb; }
+.review-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-top: 10px; }
+.review-field label { font-size: 0.65rem; color: var(--color-text-secondary); display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+.review-field select, .review-field input {
+    width: 100%; box-sizing: border-box; padding: 7px 8px; border-radius: 6px;
+    border: 1px solid var(--color-border); font-size: 0.8rem; background: white;
+}
+.review-sug-btn {
+    font-size: 0.62rem; border: 1px solid var(--color-primary); color: var(--color-primary);
+    background: rgba(59,130,246,0.08); border-radius: 8px; padding: 1px 6px; cursor: pointer;
+    margin-left: 6px; text-transform: none; letter-spacing: 0;
+}
