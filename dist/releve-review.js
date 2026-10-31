@@ -150,7 +150,7 @@ window.applyReviewSuggestion = applyReviewSuggestion;
 
 // Ajoute une ligne non detectee automatiquement (saisie manuelle dans la revue)
 window.reviewAddLine = function() {
-    pendingTransactions.push({
+    const newLine = {
         date: new Date().toISOString().split('T')[0],
         description: 'Ligne ajoutée manuellement',
         amount: 0,
@@ -160,8 +160,15 @@ window.reviewAddLine = function() {
         comment: '',
         confirmed: false,
         manual: true
-    });
-    window._reviewState.current = pendingTransactions.length - 1;
+    };
+    // inserer a la suite de la derniere ligne traitee (validee ou rejettee),
+    // pas en fin de liste
+    let insertAt = pendingTransactions.length;
+    for (let i = pendingTransactions.length - 1; i >= 0; i--) {
+        if (pendingTransactions[i].confirmed || pendingTransactions[i].rejected) { insertAt = i + 1; break; }
+    }
+    pendingTransactions.splice(insertAt, 0, newLine);
+    window._reviewState.current = insertAt;
     renderReleveReview();
     updatePendingCount();
 };
@@ -275,32 +282,41 @@ function findReviewLineRect(t, pageData) {
         if (!byLine[it._line]) byLine[it._line] = [];
         byLine[it._line].push(it);
     });
+    // TOUJOURS matcher par date + montant (comme le crop qui marche bien) :
+    // l'index _line du parser est decale par les lignes vides -> surlignage trop bas
     let line = null;
-    if (t._line != null && byLine[t._line]) line = t._line;
-    if (line == null) {
-        // matching montant + date (comme releveCropLineDataUrl)
+    {
         const normAmount = (str) => String(str).replace(/[\s\u00a0]/g, '').replace(',', '.');
         const amountKey = Math.abs(t.amount).toFixed(2);
         const dParts = (t.date || '').split('-');
-        const dateVariants = dParts.length === 3 ? [dParts[2] + '/' + dParts[1]] : [];
+        const dateVariants = dParts.length === 3 ? [dParts[2] + '/' + dParts[1], dParts[2] + '-' + dParts[1]] : [];
+        let best = null, bestScore = 0;
         for (const [ln, items] of Object.entries(byLine)) {
             const joined = items.map(i => i.str).join(' ').toLowerCase();
             const flat = joined.replace(/[\s\u00a0]/g, '');
             const hasAmount = flat.includes(normAmount(amountKey)) || flat.includes(amountKey.replace('.', ','));
             const hasDate = dateVariants.some(v => joined.includes(v.toLowerCase()));
-            if (hasAmount && hasDate) { line = parseInt(ln, 10); break; }
+            const hasDesc = t.description && joined.includes(t.description.toLowerCase().split(' ').filter(w => w.length > 3)[0] || '\u0000');
+            let score = 0;
+            if (hasAmount) score += 2;
+            if (hasDate) score += 2;
+            if (hasDesc) score += 1;
+            if (score > bestScore) { bestScore = score; best = parseInt(ln, 10); }
+            if (hasAmount && hasDate && hasDesc) break;
         }
+        if (bestScore >= 2) line = best;
     }
     if (line == null || !byLine[line]) return null;
     const items = byLine[line];
-    const yMid = (Math.min(...items.map(i => i.y)) + Math.max(...items.map(i => i.y))) / 2;
+    const xs = items.map(i => i.x), ys = items.map(i => i.y);
+    const yMid = (Math.min(...ys) + Math.max(...ys)) / 2;
     const sameRow = pageData.itemRects.filter(it => Math.abs(it.y - yMid) < 22);
-    const xs = sameRow.map(i => i.x), x1s = sameRow.map(i => i.x + (i.w || 0));
-    const ys = sameRow.length ? sameRow.map(i => i.y) : items.map(i => i.y);
-    const x0 = Math.max(0, Math.min(...xs) - 15);
-    const x1 = Math.min(pageData.pageWidth, Math.max(...x1s) + 15);
-    const y0 = Math.max(0, Math.min(...ys) - 12);
-    const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 20);
+    const rowXs = sameRow.map(i => i.x);
+    const rowX1s = sameRow.map(i => i.x + (i.w || 0));
+    const x0 = Math.max(0, Math.min(...rowXs) - 15);
+    const x1 = Math.min(pageData.pageWidth, Math.max(...rowX1s) + 15);
+    const y0 = Math.max(0, Math.min(...ys) - 14);
+    const y1 = Math.min(pageData.pageHeight, Math.max(...ys) + 26);
     return {
         x: x0 / pageData.pageWidth,
         y: y0 / pageData.pageHeight,
