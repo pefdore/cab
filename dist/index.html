@@ -313,6 +313,13 @@ window.attemptLogin = function() {
                     </button>
                 </div>
                 <div class="modal-body" id="releveUploadBody" style="padding: 20px;">
+                    <div id="review-resume-banner" style="display:none; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.4); border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:0.8rem;">
+                        <strong>⏸ Un import est en cours</strong> — vous pouvez le reprendre là où vous l'aviez laissé.
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <button class="action-btn primary" style="padding:6px 14px;" onclick="resumeSavedReview()">▶ Reprendre l'import</button>
+                            <button class="action-btn" style="padding:6px 14px;" onclick="clearSavedReview(); document.getElementById('review-resume-banner').style.display='none';">Abandonner</button>
+                        </div>
+                    </div>
                     <p style="text-align: center; margin-bottom: 20px; color: var(--color-text-secondary); font-size: 0.9rem;">Sélectionnez un fichier ou prenez une photo de votre relevé bancaire</p>
                     <input type="file" id="releveFileInputGlobal" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleRelevéUpload(event)">
                     <input type="file" id="releveCameraInputGlobal" accept="image/*" capture="environment" style="display:none" onchange="handleRelevéUpload(event)">
@@ -3841,7 +3848,7 @@ window.attemptLogin = function() {
             case 'releve':
               switchView('cabinet');
               setTimeout(() => {
-                document.getElementById('releve-upload-modal').style.display = 'flex';
+                document.getElementById('releve-upload-modal').style.display = 'flex'; if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
               }, 300);
               break;
             case 'contrat':
@@ -3880,6 +3887,13 @@ window.attemptLogin = function() {
       };
 
 
+      window.refreshReviewResumeBanner = function() {
+        const banner = document.getElementById('review-resume-banner');
+        if (!banner) return;
+        if (typeof hasSavedReview === 'function') {
+          banner.style.display = hasSavedReview() ? 'block' : 'none';
+        }
+      };
       window.renderReleveThumbs = function() {
         const el = document.getElementById('releveThumbs');
         if (!el) return;

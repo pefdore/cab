@@ -46,12 +46,28 @@ window.renderReleveReview = function() {
     // --- Bandeau PDF : rendu de la page courante avec surlignage de la ligne ---
     renderReviewPdf(t);
 
-    // --- Compteur ---
+    // --- Compteur + estimation temps restant ---
     const done = pendingTransactions.filter(x => x.confirmed || x.rejected).length;
     const total = pendingTransactions.length;
     const counter = document.getElementById('review-counter');
     if (counter) {
-        counter.innerHTML = `<strong>${done}</strong> / ${total} traitées · ligne <strong>${cur + 1}</strong> en cours`;
+        // rythme reel : temps moyen entre validations (memoire de session)
+        if (!window._reviewTiming) window._reviewTiming = { stamps: [] };
+        const remaining = total - done;
+        let etaTxt = '';
+        if (window._reviewTiming.stamps.length >= 2 && remaining > 0) {
+            const stamps = window._reviewTiming.stamps.slice(-10);
+            let sum = 0;
+            for (let i = 1; i < stamps.length; i++) sum += stamps[i] - stamps[i - 1];
+            const avgSec = (sum / (stamps.length - 1)) / 1000;
+            const eta = Math.max(5, Math.round(avgSec * remaining));
+            etaTxt = eta > 90 ? ` · ~${Math.round(eta / 60)} min restantes` : ` · ~${eta} s restantes`;
+        } else if (remaining > 0) {
+            // estimation par defaut : ~8 s par ligne
+            const eta = remaining * 8;
+            etaTxt = eta > 90 ? ` · ~${Math.round(eta / 60)} min restantes` : ` · ~${eta} s restantes`;
+        }
+        counter.innerHTML = `<strong>${done}</strong> / ${total} traitées · ligne <strong>${cur + 1}</strong> en cours${etaTxt}`;
     }
 
     // --- Liste des lignes ---
@@ -185,6 +201,8 @@ window.reviewValidate = function() {
     const tr = pendingTransactions[cur];
     if (!tr) return;
     tr.confirmed = true;
+    stampValidation();
+    saveReviewProgress();
     advanceReview();
 };
 
@@ -194,6 +212,8 @@ window.reviewReject = function() {
     const tr = pendingTransactions[cur];
     if (!tr) return;
     tr.rejected = true;
+    stampValidation();
+    saveReviewProgress();
     advanceReview();
 };
 
@@ -414,3 +434,84 @@ window.reviewUpdateAmount = reviewUpdateAmount;
         }
     }
 })();
+
+
+// ===== Reprise d'import : sauvegarde et chargement de l'etat de revue =====
+const REVIEW_STORAGE_KEY = 'releve_review_progress_v1';
+
+function stampValidation() {
+    if (!window._reviewTiming) window._reviewTiming = { stamps: [] };
+    window._reviewTiming.stamps.push(Date.now());
+}
+
+function saveReviewProgress() {
+    try {
+        localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify({
+            savedAt: Date.now(),
+            fileName: window._releveCurrentFile?.name || null,
+            current: window._reviewState.current,
+            transactions: pendingTransactions.map(t => ({
+                date: t.date, description: t.description, amount: t.amount, type: t.type,
+                category: t.category, sous_categorie: t.sous_categorie || '',
+                comment: t.comment || '',
+                confirmed: !!t.confirmed, rejected: !!t.rejected,
+                duplicate: !!t.duplicate, manual: !!t.manual,
+                _page: t._page, _line: t._line
+            }))
+        }));
+    } catch (e) {
+        console.error('[REVIEW] save progress:', e);
+    }
+}
+
+window.hasSavedReview = function() {
+    try {
+        const raw = localStorage.getItem(REVIEW_STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        const txs = data.transactions || [];
+        // une revue est reprise uniquement s'il reste des lignes non traitees
+        return txs.some(t => !t.confirmed && !t.rejected);
+    } catch (e) { return false; }
+};
+
+window.resumeSavedReview = function() {
+    try {
+        const raw = localStorage.getItem(REVIEW_STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        pendingTransactions = (data.transactions || []).map(t => ({ ...t }));
+        window._reviewState.current = Math.min(data.current || 0, pendingTransactions.length - 1);
+        // les references PDF (pages, extraits) sont rechargees depuis l'archive si possible
+        window._releveReviewResumed = true;
+        openReleveReview();
+        if (typeof showToast === 'function') {
+            const done = pendingTransactions.filter(t => t.confirmed || t.rejected).length;
+            showToast(`Reprise : ${done}/${pendingTransactions.length} lignes déjà traitées`);
+        }
+        return true;
+    } catch (e) {
+        console.error('[REVIEW] resume:', e);
+        return false;
+    }
+};
+
+window.clearSavedReview = function() {
+    localStorage.removeItem(REVIEW_STORAGE_KEY);
+};
+
+// sauvegarde aussi a chaque changement de ligne courante
+const _origSetReviewCurrent = window.setReviewCurrent;
+window.setReviewCurrent = function(index) {
+    window._reviewState.current = index;
+    saveReviewProgress();
+    renderReleveReview();
+};
+
+// nettoyer la sauvegarde quand tout est enregistre
+const _origSaveAll = window.saveAllReviewed;
+window.saveAllReviewed = async function() {
+    const result = await _origSaveAll();
+    clearSavedReview();
+    return result;
+};
