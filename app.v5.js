@@ -826,6 +826,28 @@ window.updateToggleButton = updateToggleButton;
 
 // Address autocomplete for cabinet registration
 let addressTimeout = null;
+let addressSelectedFromSuggestions = false;
+
+function normalizeAddress(a) {
+    return String(a || '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/,/g, ' ')
+        .replace(/-/g, ' ')
+        .replace(/\b\d{5}\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function addressesMatch(a, b) {
+    const na = normalizeAddress(a), nb = normalizeAddress(b);
+    if (!na || !nb) return false;
+    return na === nb || na.includes(nb) || nb.includes(na);
+}
+window.normalizeAddress = normalizeAddress;
+window.addressesMatch = addressesMatch;
+window.isAddressValidated = function() { return addressSelectedFromSuggestions; };
+window.setAddressValidated = function(v) { addressSelectedFromSuggestions = !!v; };
 
 window.initAddressAutocomplete = function() {
   var addressInput = document.getElementById('register-cabinet-address');
@@ -833,6 +855,7 @@ window.initAddressAutocomplete = function() {
   
   addressInput.addEventListener('input', function() {
     clearTimeout(addressTimeout);
+    addressSelectedFromSuggestions = false;
     var value = this.value.trim();
     
     if (value.length < 3) {
@@ -892,6 +915,7 @@ window.selectAddress = function(address) {
     input.value = address;
     hideAddressSuggestions();
   }
+  addressSelectedFromSuggestions = true;
   
   // Check if this address already exists for medecin/secretaire
   checkAddressOnSelect(address);
@@ -940,6 +964,20 @@ window.handleRegisterSubmit = async function() {
     
     console.log('[REGISTER] Role:', role, 'Address:', cabinetAddress);
     
+    // L'adresse doit avoir ete choisie dans les propositions de l'autocomplete
+    // (api-adresse.data.gouv.fr) : une adresse saisie librement, meme correcte,
+    // cree des cabinets introuvables par les inscrits suivants.
+    if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire') && !addressSelectedFromSuggestions) {
+        if (addressInput) {
+            addressInput.focus();
+            addressInput.classList.add('input-error');
+            setTimeout(() => addressInput.classList.remove('input-error'), 1500);
+        }
+        searchAddresses(cabinetAddress);
+        alert('Veuillez choisir l\u2019adresse dans les propositions qui s\u2019affichent sous le champ (issue de la base officielle des adresses). Une adresse saisie librement, m\u00eame exacte, emp\u00eache les futurs inscrits de trouver votre cabinet.');
+        return;
+    }
+    
     // Check if address already exists for medecin/secretaire
     if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
         console.log('[REGISTER] Checking for existing cabinet at address...');
@@ -969,12 +1007,10 @@ async function checkAddressExists(address) {
         
         if (!cabinets) return [];
         
-        // Filter by address
-        const addressTrimmed = address.trim().toLowerCase();
+        // Filter by address (normalized matching: format-insensitive)
         const matchingCabinets = cabinets.filter(function(c) {
             if (!c.address) return false;
-            const cabAddr = c.address.toLowerCase();
-            return cabAddr.includes(addressTrimmed) || addressTrimmed.includes(cabAddr);
+            return addressesMatch(c.address, address);
         });
         
         console.log('[CABINET] Matching cabinets:', matchingCabinets);
@@ -11702,7 +11738,10 @@ function renderAdminCabinets() {
     body.innerHTML = rows.length ? rows.map(x =>
         '<tr>' +
         '<td><strong>' + adminEsc(adminCabinetLabel(x.c)) + '</strong></td>' +
-        '<td>' + adminEsc(x.c.address || '\u2014') + '</td>' +
+        '<td>' + adminEsc(x.c.address || '\u2014') +
+            ' <button class="action-btn" onclick="adminEditCabinetAddress(\'' + x.c.id + '\')" title="Corriger l\u2019adresse">✎</button>' +
+            (x.total > 0 ? ' <button class="action-btn" onclick="adminMergeCabinet(\'' + x.c.id + '\')" title="Fusionner les membres de ce cabinet dans un autre">Fusionner</button>' : '') +
+        '</td>' +
         '<td>' + x.installes + '</td>' +
         '<td>' + x.secretaires + '</td>' +
         '<td>' + x.total + '</td>' +
@@ -11792,6 +11831,60 @@ async function adminChangeRole(userId, newRole) {
     }
 }
 window.adminChangeRole = adminChangeRole;
+
+async function adminEditCabinetAddress(cabinetId) {
+    const c = adminCache.cabinets.find(x => x.id === cabinetId);
+    if (!c) return;
+    const current = c.address || '';
+    const input = prompt('Adresse du cabinet (collez ici l\u2019adresse exacte au format de la base officielle, ex. \u00ab 12 Rue de la R\u00e9publique 53000 Laval \u00bb) :\n\nAstuce : cherchez l\u2019adresse sur api-adresse.data.gouv.fr et copiez le libell\u00e9 complet.', current);
+    if (input === null) return;
+    const newAddress = input.trim();
+    if (!newAddress || newAddress === current) return;
+    try {
+        const { error } = await supabaseClient.from('cabinets').update({ address: newAddress }).eq('id', cabinetId);
+        if (error) throw error;
+        c.address = newAddress;
+        adminCache.users.filter(u => u.cabinet_id === cabinetId).forEach(u => { u.cabinet_address = newAddress; });
+        delete cabinetLabelCache[cabinetId];
+        showToast('Adresse du cabinet mise \u00e0 jour', 'success');
+        renderAdminAll();
+    } catch (e) {
+        console.error('[ADMIN] editCabinetAddress:', e);
+        showToast('Erreur : ' + (e.message || e), 'error');
+    }
+}
+window.adminEditCabinetAddress = adminEditCabinetAddress;
+
+async function adminMergeCabinet(fromCabinetId) {
+    const from = adminCache.cabinets.find(x => x.id === fromCabinetId);
+    if (!from) return;
+    const others = adminCache.cabinets.filter(x => x.id !== fromCabinetId);
+    if (!others.length) { showToast('Aucun autre cabinet disponible', 'info'); return; }
+    const list = others.map((c, i) => (i + 1) + '. ' + adminCabinetLabel(c) + ' — ' + (c.address || 'sans adresse')).join('\n');
+    const pick = prompt('Fusionner tous les membres de \u00ab ' + adminCabinetLabel(from) + ' \u00bb dans quel cabinet ?\n\n' + list + '\n\nEntrez le num\u00e9ro :');
+    if (!pick) return;
+    const idx = parseInt(pick, 10) - 1;
+    const target = others[idx];
+    if (!target) { showToast('Num\u00e9ro invalide', 'error'); return; }
+    const members = adminCache.users.filter(u => u.cabinet_id === fromCabinetId);
+    if (!members.length) { showToast('Ce cabinet n\u2019a aucun membre', 'info'); return; }
+    if (!confirm('D\u00e9placer ' + members.length + ' membre(s) de \u00ab ' + adminCabinetLabel(from) + ' \u00bb vers \u00ab ' + adminCabinetLabel(target) + ' \u00bb ?')) return;
+    try {
+        for (const m of members) {
+            const { error } = await supabaseClient.from('profiles').update({ cabinet_id: target.id }).eq('id', m.id);
+            if (error) throw error;
+        }
+        delete cabinetLabelCache[fromCabinetId];
+        delete cabinetLabelCache[target.id];
+        reunionMyCabinet = null;
+        showToast(members.length + ' membre(s) d\u00e9plac\u00e9(s)', 'success');
+        await loadAdminData();
+    } catch (e) {
+        console.error('[ADMIN] mergeCabinet:', e);
+        showToast('Erreur : ' + (e.message || e), 'error');
+    }
+}
+window.adminMergeCabinet = adminMergeCabinet;
 
 async function adminAttachUser(userId, cabinetId) {
     const u = adminCache.users.find(x => x.id === userId);
