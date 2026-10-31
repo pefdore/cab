@@ -529,7 +529,9 @@ window.saveAllReviewed = async function() {
 function showSousCatChips(index, query, isDepense) {
     const chips = document.getElementById(`review-souscat-chips-${index}`);
     if (!chips) return;
-    const pool = (typeof SCM_SOUS_CATEGORIES !== 'undefined' ? SCM_SOUS_CATEGORIES[isDepense ? 'depense' : 'recette'] : []);
+    const tr = pendingTransactions[index];
+    const cat = tr?.category || (isDepense ? 'autres_depenses' : 'autres');
+    const pool = (typeof SCM_SOUS_CATEGORIES !== 'undefined' && SCM_SOUS_CATEGORIES[cat]) ? SCM_SOUS_CATEGORIES[cat] : [];
     const learned = (typeof getSousCatSuggestions === 'function') ? getSousCatSuggestions(pendingTransactions[index]?.description, isDepense) : [];
     const all = [...new Set([...learned, ...pool])];
     const q = (query || '').toLowerCase().trim();
