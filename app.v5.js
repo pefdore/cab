@@ -8131,9 +8131,10 @@ function t_detectColumnSides(pageData) {
     if (pageData._columnSides) return pageData._columnSides;
     let creditX = null, debitX = null;
 
-    // Varietes d'en-tetes de colonnes selon les banques
-    const isCreditHeader = (low) => /^crédits?|credit$/.test(low) || /^crédits?$/i.test(low) || /^credit$/i.test(low);
-    const isDebitHeader = (low) => /^débits?|debit$/.test(low) || /^débits?$/i.test(low) || /^debit$/i.test(low);
+    // Variantes d'en-tetes de colonnes selon les banques francaises :
+    // CMB/ Credit Mutuel : "DEBIT" puis "CREDIT" ; SG : "DEBIT" "CREDIT" ; CA : "MONTANT DEBIT" "MONTANT CREDIT"...
+    const isCreditHeader = (low) => /^crédits?$/i.test(low) || /^credit$/i.test(low) || /^montant\s*crédit$/i.test(low) || /^crédits?\s*\(\u20ac\)$/i.test(low) || /^valeur\s*crédit$/i.test(low);
+    const isDebitHeader = (low) => /^débits?$/i.test(low) || /^debit$/i.test(low) || /^montant\s*débit$/i.test(low) || /^débits?\s*\(\u20ac\)$/i.test(low) || /^valeur\s*débit$/i.test(low);
 
     for (const it of pageData.itemRects) {
         const low = (it.str || '').trim().toLowerCase();
@@ -8378,15 +8379,8 @@ function renderTransactionsList() {
         const selectedCategory = t.category || (isDepense ? 'services' : 'autres');
         const isConfirmed = t.confirmed === true;
         
-        const magicSuggestion = findSimilarDescription(t.description);
-        const suggestionHtml = magicSuggestion ? `
-            <div class="magic-suggestion" onclick="applyMagicSuggestion(${index}, '${magicSuggestion.description.replace(/'/g, "\\'")}', '${magicSuggestion.category}', ${magicSuggestion.amount})">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-                </svg>
-                <span>Suggestion: <strong>${magicSuggestion.description}</strong></span>
-            </div>
-        ` : '';
+        const sousCatSuggestion = suggestSousCategorie(t.description, isDepense);
+        const sousCatPlaceholder = sousCatSuggestion ? `Suggestion : ${sousCatSuggestion}` : 'Ex : frais SCM mensuel, EDF octobre…';
         
         return `
             <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.rejected ? 'opacity: 0.45; border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);' : (t.duplicate ? 'border-left: 3px solid #f59e0b;' : '')}">
@@ -8401,7 +8395,6 @@ function renderTransactionsList() {
                         <button class="action-btn" style="padding:2px 8px; font-size:0.68rem; ${!t.rejected ? 'background:#10b981; color:white;' : ''}" onclick="setTransactionRejected(${index}, false)">Valider quand même</button>
                     </div>
                 </div>` : ''}
-                ${suggestionHtml}
                 <div class="transaction-row">
                     <div class="transaction-field">
                         <label>Date</label>
@@ -8425,10 +8418,14 @@ function renderTransactionsList() {
                 </div>
                 <div class="transaction-row">
                     <div class="transaction-field transaction-field-desc">
-                        <label>Sous-catégorie (libre, pour renommer clairement)</label>
-                        <input type="text" class="trans-souscat" value="${t.sous_categorie || ''}" placeholder="Ex : frais SCM mensuel, EDF octobre…" onchange="updateTransaction(${index}, 'sous_categorie', this.value)" ${isConfirmed ? 'disabled' : ''} list="trans-souscat-list-${index}">
+                        <label>Sous-catégorie</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="text" class="trans-souscat" value="${t.sous_categorie || ''}" placeholder="${sousCatPlaceholder}" onchange="updateTransaction(${index}, 'sous_categorie', this.value)" ${isConfirmed ? 'disabled' : ''} list="trans-souscat-list-${index}" style="flex:1;">
+                            ${sousCatSuggestion && !t.sous_categorie ? `<button class="action-btn" style="padding:2px 8px; font-size:0.68rem; white-space:nowrap;" onclick="applySousCatSuggestion(${index})" title="Appliquer la suggestion">✨ ${sousCatSuggestion.length > 18 ? sousCatSuggestion.slice(0,18)+'…' : sousCatSuggestion}</button>` : ''}
+                        </div>
                         <datalist id="trans-souscat-list-${index}">
-                            ${(window._learnedSousCats || []).map(sc => `<option value="${String(sc).replace(/"/g, '&quot;')}">`).join('')}
+                            ${getSousCatSuggestions(t.description, isDepense).map(sc => `<option value="${String(sc).replace(/"/g, '&quot;')}">`).join('')}
+                            ${SCM_SOUS_CATEGORIES[isDepense ? 'depense' : 'recette'].map(sc => `<option value="${sc}">`).join('')}
                         </datalist>
                     </div>
                 </div>
@@ -11416,6 +11413,98 @@ async function getImportedMonths() {
 }
 window.recordReleveImport = recordReleveImport;
 window.getImportedMonths = getImportedMonths;
+
+
+// ===== Sous-catégories usuelles d'une SCM médicale =====
+const SCM_SOUS_CATEGORIES = {
+    depense: [
+        'Loyer cabinet', 'Charges locatives (copropriété)', 'Électricité', 'Eau', 'Gaz', 'Chauffage',
+        'Assurance RC professionnelle', 'Assurance local', 'Assurance voiture', 'Mutuelle / prévoyance',
+        'Honoraires comptable', 'Honoraires expert-comptable', 'Frais SCM (quote-part)', 'Frais SCP / répartition',
+        'Cotisations URSSAIL / CARPIMKO', 'Retraite complémentaire', 'Prévoyance ASV',
+        'Masse salariale (salaires)', 'Primes et bonus', 'Vacations secrétaire',
+        'Logiciel de gestion', 'Télétransmission (Santé cloud, Carte Vitale)', 'Abonnement internet', 'Téléphonie mobile / fixe',
+        'Fournitures bureau', 'Petit matériel médical', 'Consommables médicaux', 'Blouses / tenues',
+        'Nettoyage / prestataire ménage', 'Maintenance matériel', 'Location / leasing matériel',
+        'Essence / carburant', 'Péages / parking', 'Déplacements professionnels', 'Frais de formation / congrès',
+        'Publicité / communication', 'Site internet', 'Frais postaux', 'Timbres / affranchissement',
+        'Frais bancaires', 'Intérêts emprunt', 'Remboursement capital emprunt', 'Crédit-bail',
+        'Impôts / taxes', 'Taxe foncière', 'Taxe ordure ménagère (TEOM)', 'CFE',
+        'Réception / représentation', 'Cadeaux patients / partenaires', 'Frais de notaire / juridiques'
+    ],
+    recette: [
+        'Honoraires CPAM (secteur 1)', 'Honoraires secteur 2 / dépassements', 'Honoraires ALD / exonerations',
+        'Paiements directs patients (chèque, CB)', 'Espèces encaissées', 'Tiers payant mutuelle',
+        'Participation associé (quote-part)', 'Quote-part SCM', 'Répartition résultats SCM',
+        'Virement Dr (part associé)', 'Indemnités IBODE / gardes', 'Vacations / remplacements',
+        'Indemnité urgence', 'Recettes expertises', 'Séances kiné / IDE (rétrocessions)',
+        'Produits financiers (intérêts)', 'Remboursement URSSAF', 'Remboursement assurance',
+        'Aides / subventions', 'Vente matériel', 'Indemnité maladie / maternité'
+    ]
+};
+
+// Suggestions de sous-categorie par similarite avec l'historique :
+// une ligne du releve ressemble a une ligne deja enregistree -> on propose la sous-categorie utilisee la fois d'avant
+function normalizeLibelle(str) {
+    return String(str || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]/g, ' ')
+        .replace(/\b\d{2,}[.,]\d{2}\b/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function suggestSousCategorie(description, isDepense) {
+    const norm = normalizeLibelle(description);
+    if (!norm || norm.length < 4) return null;
+    const pool = isDepense ? cabinetDepenses : cabinetRecettes;
+    const words = norm.split(' ').filter(w => w.length > 2);
+    let best = null, bestScore = 0;
+    for (const e of (pool || [])) {
+        if (!e.sous_categorie) continue;
+        const eNorm = normalizeLibelle(e.releve_libelle || e.description);
+        if (!eNorm) continue;
+        // score de similarite : mots communs / longueur
+        const eWords = new Set(eNorm.split(' ').filter(w => w.length > 2));
+        let common = 0;
+        for (const w of words) if (eWords.has(w)) common++;
+        const score = common / Math.max(words.length, 1);
+        if (score > bestScore && score >= 0.5) {
+            bestScore = score;
+            best = e.sous_categorie;
+        }
+    }
+    return best;
+}
+
+// Toutes les sous-categories proches (pour la datalist)
+function getSousCatSuggestions(description, isDepense) {
+    const pool = isDepense ? cabinetDepenses : cabinetRecettes;
+    const norm = normalizeLibelle(description);
+    const seen = new Set();
+    const result = [];
+    for (const e of (pool || [])) {
+        if (!e.sous_categorie || seen.has(e.sous_categorie)) continue;
+        const eNorm = normalizeLibelle(e.releve_libelle || e.description);
+        if (norm && eNorm && (eNorm.includes(norm) || norm.includes(eNorm))) {
+            seen.add(e.sous_categorie);
+            result.push(e.sous_categorie);
+        }
+    }
+    return result.slice(0, 5);
+}
+
+function applySousCatSuggestion(index) {
+    const t = pendingTransactions[index];
+    if (!t) return;
+    const sug = suggestSousCategorie(t.description, t.type === 'dépense' || t.amount < 0);
+    if (sug) {
+        t.sous_categorie = sug;
+        renderTransactionsList();
+    }
+}
+window.applySousCatSuggestion = applySousCatSuggestion;
 
 function showTransactionOnPdf(index) {
     const t = pendingTransactions[index];
