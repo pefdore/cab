@@ -7865,6 +7865,11 @@ async function handleRelevéUpload(event) {
             }
         }
         
+        const useReviewView = typeof openReleveReview === 'function';
+        if (useReviewView) {
+            document.getElementById('releve-review-view').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
         renderTransactionsList();
         updatePendingCount();
         if (typeof renderReleveThumbs === 'function') renderReleveThumbs();
@@ -7878,7 +7883,7 @@ async function handleRelevéUpload(event) {
         if (analysisZone) analysisZone.style.display = 'block';
         
         // Nouvelle experience : vue plein ecran de revue ligne par ligne
-        if (typeof openReleveReview === 'function') openReleveReview();
+        if (useReviewView) openReleveReview();
         
     } catch (error) {
         console.error('[RELEVÉ] Error:', error);
@@ -8485,7 +8490,8 @@ function renderTransactionsList() {
     
     if (container) container.innerHTML = html;
     if (containerModal) containerModal.innerHTML = html;
-    if (typeof attachTransactionPreview === 'function') {
+    const reviewOpen = document.getElementById('releve-review-view') && document.getElementById('releve-review-view').style.display === 'block';
+    if (!reviewOpen && typeof attachTransactionPreview === 'function') {
         pendingTransactions.forEach((t, i) => {
             if (!t.confirmed) attachTransactionPreview(i);
         });
