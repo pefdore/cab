@@ -211,6 +211,8 @@ async function secDecideRequest(requestId, approve) {
                 .update({ cabinet_id: cabinetId })
                 .eq('id', requesterId);
         }
+        if (typeof cabinetLabelCache !== 'undefined') delete cabinetLabelCache[cabinetId];
+        if (typeof reunionMyCabinet !== 'undefined') reunionMyCabinet = null;
 
         if (typeof showToast === 'function') {
             showToast(approve ? 'Acc\u00e8s cabinet accord\u00e9 au secr\u00e9taire' : 'Demande refus\u00e9e', 'success');
