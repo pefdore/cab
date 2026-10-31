@@ -8354,33 +8354,34 @@ function parseRelevéLocalement(text) {
 }
 
 const SCM_SOUS_CATEGORIES = {
-    depense: [
-        // Personnel
-        'Salaire secrétaire(s)', 'Salaire femme de ménage', 'Salaire autre personnel', 'Prime / bonus personnel',
-        'Vacations remplacement secrétariat', 'Indemnité kilométrique personnel',
-        'URSSAF salaires', 'Retraite complémentaire salariés', 'Mutuelle salariés', 'Prévoyance personnel', 'Médecine du travail',
-        // Local
-        'Loyer cabinet', 'Charges copropriété', 'Électricité', 'Eau', 'Chauffage / gaz',
-        'Taxe foncière', 'TEOM (ordures)', 'CFE', 'Entretien / réparations local', 'Travaux & aménagements',
-        // Informatique & abonnements
-        'Logiciel de gestion', 'Maintenance informatique', 'Télétransmission', 'Site internet / hébergement',
-        'Abonnement internet', 'Téléphone fixe', 'Téléphone mobile', 'Carte Vitale / Ségur', 'Consommables informatiques',
-        // Fournisseurs & fournitures
-        'Fournitures bureau', 'Consommables médicaux', 'Petit matériel médical', 'Uniformes / blouses',
-        'Nettoyage / produits d\'entretien', 'Literie / linge cabinet',
-        // Services & pros
-        'Honoraires expert-comptable', 'Honoraires avocat / juridique', 'Comptabilité / paie',
-        'Assurance RC professionnelle', 'Assurance local', 'Assurance matériel', 'Assurance homme-clé',
-        // Banque & financement
-        'Frais bancaires', 'Intérêts emprunt', 'Remboursement capital emprunt', 'Leasing matériel',
-        // Divers
-        'Réception & représentation', 'Formation du personnel', 'Publicité / communication', 'Frais postaux', 'Divers'
-    ],
-    recette: [
-        'Cotisation mensuelle associés (quote-part)', 'Cotisation Dr — quote-part', 'Participation ponctuelle associés',
-        'Régularisation cotisations', 'Remboursement URSSAF / CARSAT', 'Remboursement assurance',
-        'Aide / subvention', 'Produits financiers (intérêts)', 'Vente matériel du cabinet', 'Indemnité (litige, retard)', 'Divers recettes'
-    ]
+    // cle = valeur de categorie, sous-categories correspondantes
+    masse_salariale: ['Salaire secrétaire(s)', 'Salaire femme de ménage', 'Salaire autre personnel',
+        'Prime / bonus personnel', 'Vacations remplacement secrétariat', 'Indemnité kilométrique personnel'],
+    urssaf: ['URSSAF salaires', 'Retraite complémentaire salariés', 'Mutuelle salariés',
+        'Prévoyance personnel', 'Médecine du travail'],
+    charges: ['Loyer cabinet', 'Charges copropriété', 'Électricité', 'Eau', 'Chauffage / gaz',
+        'Entretien / réparations local', 'Travaux & aménagements'],
+    impots: ['Taxe foncière', 'TEOM (ordures)', 'CFE', 'Impôt sur les sociétés', 'Taxe divers'],
+    logiciel: ['Logiciel de gestion', 'Maintenance informatique', 'Télétransmission',
+        'Site internet / hébergement', 'Consommables informatiques', 'Matériel informatique'],
+    services: ['Abonnement internet', 'Téléphone fixe', 'Téléphone mobile', 'Abonnement divers'],
+    consommables: ['Consommables médicaux', 'Petit matériel médical', 'Uniformes / blouses',
+        'Nettoyage / produits d\'entretien', 'Literie / linge cabinet'],
+    fournitures: ['Fournitures bureau', 'Fournitures administratives', 'Petit équipement bureau'],
+    materiel: ['Matériel médical (investissement)', 'Mobilier cabinet', 'Informatique (investissement)', 'Travaux d\'aménagement'],
+    comptabilite: ['Honoraires expert-comptable', 'Honoraires avocat / juridique', 'Comptabilité / paie', 'Greffe / formalités'],
+    assurance: ['Assurance RC professionnelle', 'Assurance local', 'Assurance matériel', 'Assurance homme-clé'],
+    banque: ['Frais de tenue de compte', 'Frais de transaction', 'Intérêts agios'],
+    remboursement_credit: ['Intérêts emprunt', 'Remboursement capital emprunt', 'Leasing matériel', 'Crédit-bail'],
+    reception: ['Réception & représentation', 'Formation du personnel', 'Publicité / communication', 'Frais postaux', 'Divers'],
+    autres_depenses: ['Divers'],
+    // recettes
+    participation_associe: ['Cotisation mensuelle associés (quote-part)', 'Cotisation Dr — quote-part',
+        'Régularisation cotisations'],
+    participation_ponctuelle: ['Participation ponctuelle associés', 'Appel de fonds exceptionnel'],
+    remboursements: ['Remboursement URSSAF / CARSAT', 'Remboursement assurance', 'Remboursement organisme'],
+    produits_financiers: ['Intérêts compte', 'Produits placement'],
+    autres: ['Divers recettes']
 };
 function renderTransactionsList() {
     const container = document.getElementById('transactionsList');
@@ -8467,7 +8468,7 @@ function renderTransactionsList() {
                         </div>
                         <datalist id="trans-souscat-list-${index}">
                             ${getSousCatSuggestions(t.description, isDepense).map(sc => `<option value="${String(sc).replace(/"/g, '&quot;')}">`).join('')}
-                            ${SCM_SOUS_CATEGORIES[isDepense ? 'depense' : 'recette'].map(sc => `<option value="${sc}">`).join('')}
+                            ${(SCM_SOUS_CATEGORIES[selectedCategory] || []).map(sc => `<option value="${String(sc).replace(/"/g, '&quot;')}">`).join('')}
                         </datalist>
                     </div>
                 </div>
@@ -11473,7 +11474,7 @@ function normalizeLibelle(str) {
         .trim();
 }
 
-function suggestSousCategorie(description, isDepense) {
+function suggestSousCategorie(description, isDepense, category) {
     const norm = normalizeLibelle(description);
     if (!norm || norm.length < 4) return null;
     const pool = isDepense ? cabinetDepenses : cabinetRecettes;
@@ -11481,6 +11482,7 @@ function suggestSousCategorie(description, isDepense) {
     let best = null, bestScore = 0;
     for (const e of (pool || [])) {
         if (!e.sous_categorie) continue;
+        if (category && e.category && e.category !== category) continue;
         const eNorm = normalizeLibelle(e.releve_libelle || e.description);
         if (!eNorm) continue;
         // score de similarite : mots communs / longueur
