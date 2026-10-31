@@ -10153,9 +10153,31 @@ async function reunionLoadMyCabinet() {
     return reunionMyCabinet;
 }
 
-function reunionCabinetLabel(cab) {
+const cabinetLabelCache = {};
+
+function cabinetDesignation(members, fallback) {
+    const associes = (members || []).filter(m => m.role === 'medecin_installe' || m.role === 'admin');
+    const names = associes.map(m => {
+        const nom = (m.last_name || '').trim() || (m.first_name || '').trim();
+        return nom ? 'Dr ' + reunionEsc(nom.toUpperCase()) : null;
+    }).filter(Boolean);
+    if (!names.length) return fallback || null;
+    return 'Cabinet ' + names.join(', ');
+}
+
+async function reunionCabinetLabel(cab) {
     if (!cab || cab.none) return null;
-    return cab.name || cab.address || 'Cabinet';
+    const fallback = cab.name || cab.address || 'Cabinet';
+    if (!cab.id) return fallback;
+    if (cabinetLabelCache[cab.id] !== undefined) return cabinetLabelCache[cab.id];
+    try {
+        const members = await reunionMembers(cab.id);
+        const label = cabinetDesignation(members, fallback) || fallback;
+        cabinetLabelCache[cab.id] = label;
+        return label;
+    } catch (e) {
+        return fallback;
+    }
 }
 
 function reunionRoleLabel(role) {
@@ -10333,7 +10355,7 @@ async function reunionRenderCabinetBanner() {
     const banner = document.getElementById('reunionCabinetBanner');
     if (!banner) return;
     const cab = await reunionLoadMyCabinet();
-    const label = reunionCabinetLabel(cab);
+    const label = await reunionCabinetLabel(cab);
     if (!label) {
         banner.innerHTML = '<div class="odj-empty">⚠️ Aucun cabinet associé à votre profil : les réunions de cabinet ne sont pas disponibles. Associez votre compte à un cabinet (Paramètres > Profil > Mon cabinet).</div>';
     } else {
@@ -10345,7 +10367,7 @@ async function renderProfileCabinetBox() {
     const boxes = document.querySelectorAll('#profileCabinetBox');
     if (!boxes.length || !supabaseClient || !currentUser) return;
     const cab = await reunionLoadMyCabinet();
-    const label = reunionCabinetLabel(cab);
+    const label = await reunionCabinetLabel(cab);
     let html;
     if (!label) {
         html = '<div class="odj-empty">Aucun cabinet associé. Les modules partagés du cabinet (réunions, ordres du jour, comptabilité) ne sont pas disponibles.</div>';
@@ -11407,6 +11429,10 @@ async function loadAdminData() {
         adminCache.cabinets = cabinetsRes.data || [];
         adminCache.users = profilesRes.data || [];
         adminCache.requests = requestsRes.data || [];
+        adminCache.cabinets.forEach(c => {
+            const members = adminCache.users.filter(u => u.cabinet_id === c.id);
+            c._designation = cabinetDesignation(members, c.name || c.address) || (c.name || c.address || 'Sans nom');
+        });
         renderAdminAll();
     } catch (e) {
         console.error('[ADMIN] loadAdminData error:', e);
@@ -11494,7 +11520,7 @@ function adminRoleLabel(role) {
     return role || '\u2014';
 }
 
-function adminCabinetLabel(c) { return c.name || c.address || 'Sans nom'; }
+function adminCabinetLabel(c) { return c._designation || c.name || c.address || 'Sans nom'; }
 
 function adminUserCabinetLabel(u) {
     const cab = u.cabinet_id && adminCache.cabinets.find(c => c.id === u.cabinet_id);
@@ -11777,6 +11803,8 @@ async function adminAttachUser(userId, cabinetId) {
         const { error } = await supabaseClient.from('profiles').update({ cabinet_id: cabinetId }).eq('id', userId);
         if (error) throw error;
         u.cabinet_id = cabinetId;
+        delete cabinetLabelCache[cabinetId];
+        reunionMyCabinet = null;
         showToast('Utilisateur rattach\u00e9 au cabinet', 'success');
         renderAdminAll();
     } catch (e) {
@@ -11793,7 +11821,9 @@ async function adminDetachUser(userId) {
     try {
         const { error } = await supabaseClient.from('profiles').update({ cabinet_id: null }).eq('id', userId);
         if (error) throw error;
+        delete cabinetLabelCache[u.cabinet_id];
         u.cabinet_id = null;
+        reunionMyCabinet = null;
         showToast('Utilisateur d\u00e9tach\u00e9 du cabinet', 'success');
         renderAdminAll();
     } catch (e) {
@@ -11878,6 +11908,8 @@ async function adminDecideRequest(requestId, approve) {
                 .update({ cabinet_id: req.cabinet_id })
                 .eq('id', req.requester_id);
             if (pErr) console.error('[ADMIN] rattachement profil:', pErr);
+            delete cabinetLabelCache[req.cabinet_id];
+            reunionMyCabinet = null;
         }
 
         showToast(approve ? 'Demande approuv\u00e9e : ' + (req.requester_name || 'utilisateur') + ' rattach\u00e9(e)' : 'Demande refus\u00e9e', approve ? 'success' : 'info');
