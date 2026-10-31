@@ -7832,6 +7832,13 @@ async function handleRelevéUpload(event) {
         pendingTransactions = transactions.map(t => {
             const isDepense = t.type === 'dépense' || t.amount < 0;
             const learned = bestLearnedCategory(t.description, isDepense);
+            if (learned && t.sous_categorie && t.sous_categorie.trim()) {
+                if (!window._learnedSousCats) window._learnedSousCats = [];
+                if (!window._learnedSousCats.includes(t.sous_categorie.trim())) {
+                    window._learnedSousCats.push(t.sous_categorie.trim());
+                    if (window._learnedSousCats.length > 50) window._learnedSousCats.shift();
+                }
+            }
             const out = { ...t, confirmed: false };
             if (learned && out.category !== learned.category) {
                 console.log('[RELEVÉ] Apprentissage appliqué:', t.description, '->', learned.category);
@@ -8262,8 +8269,21 @@ function parseRelevéLocalement(text) {
                             const v = cleanAmount(creditItem.str);
                             if (v !== null) amount = Math.abs(v);
                         } else if (debitItem && creditItem) {
-                            const v = cleanAmount((creditItem.x > debitItem.x ? creditItem : debitItem).str);
-                            if (v !== null) amount = (creditItem.x > debitItem.x) ? Math.abs(v) : -Math.abs(v);
+                            // Ne JAMAIS decider par position (le sens des colonnes varie selon les banques :
+                            // CMB = debit a gauche, d'autres = inverse). On prend l'item le plus proche
+                            // de sa propre colonne (distance relative la plus faible).
+                            const dDebit = Math.abs(centerXOf(debitItem) - sides.debitX);
+                            const dCredit = Math.abs(centerXOf(creditItem) - sides.creditX);
+                            const wDebit = dDebit / colTol;
+                            const wCredit = dCredit / colTol;
+                            if (wCredit < wDebit * 0.6) {
+                                const v = cleanAmount(creditItem.str);
+                                if (v !== null) amount = Math.abs(v);
+                            } else if (wDebit < wCredit * 0.6) {
+                                const v = cleanAmount(debitItem.str);
+                                if (v !== null) amount = -Math.abs(v);
+                            }
+                            // Sinon : ambiguite reelle, on garde le fallback (plus gros montant)
                         }
                     } else if (sides && (sides.creditX !== null || sides.debitX !== null)) {
                         const refX = sides.creditX !== null ? sides.creditX : sides.debitX;
@@ -8394,15 +8414,29 @@ function renderTransactionsList() {
                 </div>
                 <div class="transaction-row">
                     <div class="transaction-field transaction-field-desc">
-                        <label>Description</label>
+                        <label>Libellé du relevé</label>
                         <div class="autocomplete-wrapper">
-                            <input type="text" class="trans-description" value="${t.description || ''}" placeholder="Description" oninput="handleTransactionAutocomplete(${index}, this.value)" onchange="updateTransaction(${index}, 'description', this.value)" ${isConfirmed ? 'disabled' : ''}>
-                            <div id="trans-autocomplete-${index}" class="autocomplete-dropdown"></div>
+                            <input type="text" class="trans-description" value="${t.description || ''}" readonly style="background:var(--color-bg-secondary,#f5f5f7); opacity:0.75;" title="Libellé du relevé — non modifiable">
                         </div>
                     </div>
                     <button class="btn-icon" onclick="showTransactionOnPdf(${index})" title="Voir la ligne sur le PDF" style="color: var(--color-primary);">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
+                </div>
+                <div class="transaction-row">
+                    <div class="transaction-field transaction-field-desc">
+                        <label>Sous-catégorie (libre, pour renommer clairement)</label>
+                        <input type="text" class="trans-souscat" value="${t.sous_categorie || ''}" placeholder="Ex : frais SCM mensuel, EDF octobre…" onchange="updateTransaction(${index}, 'sous_categorie', this.value)" ${isConfirmed ? 'disabled' : ''} list="trans-souscat-list-${index}">
+                        <datalist id="trans-souscat-list-${index}">
+                            ${(window._learnedSousCats || []).map(sc => `<option value="${String(sc).replace(/"/g, '&quot;')}">`).join('')}
+                        </datalist>
+                    </div>
+                </div>
+                <div class="transaction-row">
+                    <div class="transaction-field transaction-field-desc">
+                        <label>Commentaire</label>
+                        <input type="text" class="trans-comment" value="${t.comment || ''}" placeholder="＋ commentaire libre sur cette ligne…" onchange="updateTransaction(${index}, 'comment', this.value)" ${isConfirmed ? 'disabled' : ''}>
+                    </div>
                 </div>
                 <div class="transaction-row">
                     <div class="transaction-field">
@@ -8770,8 +8804,10 @@ async function confirmAllTransactions() {
             return isDepense;
         }).map(t => ({
             user_id: currentUser.id,
-            description: t.description,
+            description: t.sous_categorie && t.sous_categorie.trim() ? t.sous_categorie.trim() : t.description,
             releve_libelle: t.description,
+            sous_categorie: t.sous_categorie || null,
+            note: t.comment || null,
             amount: Math.abs(parseFloat(t.amount) || 0),
             category: t.category || 'services',
             date: t.date || new Date().toISOString().split('T')[0]
@@ -8783,8 +8819,10 @@ async function confirmAllTransactions() {
             return isRecette;
         }).map(t => ({
             user_id: currentUser.id,
-            description: t.description,
+            description: t.sous_categorie && t.sous_categorie.trim() ? t.sous_categorie.trim() : t.description,
             releve_libelle: t.description,
+            sous_categorie: t.sous_categorie || null,
+            note: t.comment || null,
             amount: Math.abs(parseFloat(t.amount) || 0),
             category: t.category || 'autres',
             date: t.date || new Date().toISOString().split('T')[0]

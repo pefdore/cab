@@ -21,3 +21,5 @@ ALTER TABLE cabinet_depenses ADD COLUMN IF NOT EXISTS releve_libelle TEXT;
 ALTER TABLE cabinet_depenses ADD COLUMN IF NOT EXISTS note TEXT;
 ALTER TABLE cabinet_recettes ADD COLUMN IF NOT EXISTS releve_libelle TEXT;
 ALTER TABLE cabinet_recettes ADD COLUMN IF NOT EXISTS note TEXT;
+ALTER TABLE cabinet_depenses ADD COLUMN IF NOT EXISTS sous_categorie TEXT;
+ALTER TABLE cabinet_recettes ADD COLUMN IF NOT EXISTS sous_categorie TEXT;
