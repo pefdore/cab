@@ -969,12 +969,16 @@ window.handleRegisterSubmit = async function() {
     // cree des cabinets introuvables par les inscrits suivants.
     if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire') && !addressSelectedFromSuggestions) {
         if (addressInput) {
-            addressInput.focus();
             addressInput.classList.add('input-error');
             setTimeout(() => addressInput.classList.remove('input-error'), 1500);
         }
+        alert('Veuillez choisir l\u2019adresse dans les propositions (base officielle des adresses) qui vont s\u2019afficher sous le champ. Une adresse saisie librement, m\u00eame exacte, emp\u00eache les futurs inscrits de trouver votre cabinet.');
+        // APRES l'alerte : le blur du champ a deja programme le masquage des
+        // suggestions (200ms, executes pendant l'alerte bloquante). On relance
+        // la recherche maintenant : ses resultats s'afficheront apres ce
+        // masquage, sinon l'utilisateur ne voyait jamais les propositions.
+        if (addressInput) addressInput.focus();
         searchAddresses(cabinetAddress);
-        alert('Veuillez choisir l\u2019adresse dans les propositions qui s\u2019affichent sous le champ (issue de la base officielle des adresses). Une adresse saisie librement, m\u00eame exacte, emp\u00eache les futurs inscrits de trouver votre cabinet.');
         return;
     }
     
