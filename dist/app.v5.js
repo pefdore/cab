@@ -7865,9 +7865,10 @@ async function handleRelevéUpload(event) {
             }
         }
         
-        const useReviewView = typeof openReleveReview === 'function';
+        const reviewViewEl = document.getElementById('releve-review-view');
+        const useReviewView = typeof openReleveReview === 'function' && !!reviewViewEl;
         if (useReviewView) {
-            document.getElementById('releve-review-view').style.display = 'block';
+            reviewViewEl.style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
         renderTransactionsList();

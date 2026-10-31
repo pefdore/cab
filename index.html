@@ -272,6 +272,26 @@ window.attemptLogin = function() {
                 </div>
             </div>
         </div>
+        <!-- Vue plein écran : revue d'import de relevé -->
+        <div id="releve-review-view" style="display:none; position:fixed; inset:0; z-index:9998; background:var(--color-bg, #f8fafc); overflow-y:auto;">
+            <div style="position:sticky; top:0; z-index:10; background:var(--color-bg, white); border-bottom:1px solid var(--color-border); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button class="action-btn" onclick="closeReleveReview()">← Retour</button>
+                    <strong style="font-size:0.95rem;">Revue du relevé</strong>
+                    <span id="review-counter" style="font-size:0.78rem; color:var(--color-text-secondary);"></span>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="action-btn" style="background:#ef4444; color:white;" onclick="reviewReject()">✕ Rejeter la ligne</button>
+                    <button class="action-btn" style="background:#10b981; color:white;" onclick="reviewValidate()">✓ Valider et continuer</button>
+                    <button class="action-btn primary" onclick="saveAllReviewed()">Enregistrer tout</button>
+                </div>
+            </div>
+            <div id="review-pdf-zone" style="height:30vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#e2e8f0; overflow:hidden; padding:8px;"></div>
+            <div style="max-width:860px; margin:0 auto; padding:14px 16px 60px;">
+                <div id="review-lines-list"></div>
+            </div>
+        </div>
+
         <!-- Relevé Upload Modal (standalone) -->
         <div id="releve-upload-modal" class="modal-overlay" style="display: none; z-index: 10000;">
             <div class="modal-card" style="max-width: 540px; width: 95%; max-height: 85vh; overflow-y: auto;">
