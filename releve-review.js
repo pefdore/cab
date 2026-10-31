@@ -133,10 +133,10 @@ window.renderReleveReview = function() {
                 </div>
                 <div class="review-field grow">
                     <label>Sous-catégorie ${sousCatSuggestion ? `<button class="review-sug-btn" onclick="event.stopPropagation(); applyReviewSuggestion(${index})">✨ ${reviewEscapeHtml(sousCatSuggestion)}</button>` : ''}</label>
-                    <input type="text" list="review-souscat-list" value="${reviewEscapeHtml(tr.sous_categorie || '')}" placeholder="${sousCatSuggestion ? 'Suggéré : ' + reviewEscapeHtml(sousCatSuggestion) : 'Sous-catégorie libre…'}" onchange="reviewUpdate(${index}, 'sous_categorie', this.value)">
-                    <datalist id="review-souscat-list">
-                        ${(typeof SCM_SOUS_CATEGORIES !== 'undefined' ? SCM_SOUS_CATEGORIES[isDepense ? 'depense' : 'recette'] : []).map(sc => `<option value="${reviewEscapeHtml(sc)}">`).join('')}
-                    </datalist>
+                    <div style="position:relative;">
+                        <input type="text" id="review-souscat-input-${index}" value="${reviewEscapeHtml(tr.sous_categorie || '')}" placeholder="${sousCatSuggestion ? 'Suggéré : ' + reviewEscapeHtml(sousCatSuggestion) : 'Sous-catégorie libre…'}" onchange="reviewUpdate(${index}, 'sous_categorie', this.value)" oninput="showSousCatChips(${index}, this.value, ${isDepense})" onfocus="showSousCatChips(${index}, this.value, ${isDepense})" autocomplete="off">
+                        <div id="review-souscat-chips-${index}" class="souscat-chips" style="display:none;"></div>
+                    </div>
                 </div>
                 <div class="review-field grow">
                     <label>Commentaire</label>
@@ -523,3 +523,40 @@ window.saveAllReviewed = async function() {
     clearSavedReview();
     return result;
 };
+
+
+// ===== Puces de sous-categories (fiable sur mobile, contrairement aux datalist) =====
+function showSousCatChips(index, query, isDepense) {
+    const chips = document.getElementById(`review-souscat-chips-${index}`);
+    if (!chips) return;
+    const pool = (typeof SCM_SOUS_CATEGORIES !== 'undefined' ? SCM_SOUS_CATEGORIES[isDepense ? 'depense' : 'recette'] : []);
+    const learned = (typeof getSousCatSuggestions === 'function') ? getSousCatSuggestions(pendingTransactions[index]?.description, isDepense) : [];
+    const all = [...new Set([...learned, ...pool])];
+    const q = (query || '').toLowerCase().trim();
+    const filtered = q ? all.filter(sc => sc.toLowerCase().includes(q)) : all;
+    if (!filtered.length) { chips.style.display = 'none'; return; }
+    chips.innerHTML = filtered.slice(0, 12).map(sc =>
+        `<button type="button" class="souscat-chip" onclick="event.stopPropagation(); pickSousCatChip(${index}, ${JSON.stringify(sc).replace(/"/g, '&quot;')})">${reviewEscapeHtml(sc)}</button>`
+    ).join('');
+    chips.style.display = 'flex';
+}
+window.showSousCatChips = showSousCatChips;
+
+function pickSousCatChip(index, sc) {
+    const tr = pendingTransactions[index];
+    if (!tr) return;
+    tr.sous_categorie = sc;
+    const input = document.getElementById(`review-souscat-input-${index}`);
+    if (input) input.value = sc;
+    const chips = document.getElementById(`review-souscat-chips-${index}`);
+    if (chips) chips.style.display = 'none';
+    saveReviewProgress();
+}
+window.pickSousCatChip = pickSousCatChip;
+
+// fermer les puces au clic ailleurs
+document.addEventListener('click', (e) => {
+    if (!e.target.classList || !e.target.classList.contains('souscat-chip')) {
+        document.querySelectorAll('.souscat-chips').forEach(el => el.style.display = 'none');
+    }
+});
