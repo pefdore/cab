@@ -15,3 +15,15 @@ DROP POLICY IF EXISTS "Admins gerent tous les profils" ON profiles;
 CREATE POLICY "Admins gerent tous les profils" ON profiles
     FOR UPDATE USING (public.is_admin())
     WITH CHECK (public.is_admin());
+
+-- ============================================================
+-- POLICY UPDATE POUR L'ADMIN SUR cabinets
+-- ============================================================
+-- Permet au role admin de corriger l'adresse d'un cabinet
+-- (bouton ✎ dans le module Administration).
+
+DROP POLICY IF EXISTS "Admins gerent tous les cabinets" ON cabinets;
+
+CREATE POLICY "Admins gerent tous les cabinets" ON cabinets
+    FOR UPDATE USING (public.is_admin())
+    WITH CHECK (public.is_admin());
