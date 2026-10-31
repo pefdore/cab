@@ -7126,6 +7126,17 @@ async function saveDepense() {
         return;
     }
     
+    const mDate = document.getElementById('add-depenseDate')?.value || new Date().toISOString().split('T')[0];
+    const mAmount = parseFloat(document.getElementById('add-depenseAmount')?.value);
+    const mMatch = mAmount ? findImportedMatch(mDate, mAmount, true) : null;
+    if (mMatch) {
+        const ok = confirm(`⚠️ Une ligne importée du relevé correspond déjà à ce mouvement :\n\n« ${mMatch.releve_libelle} » · ${mMatch.date} · ${Number(mMatch.amount).toFixed(2)}€\n\nUn mouvement provenant du relevé bancaire existe déjà pour cette date et ce montant. Les mouvements passés par le compte doivent être importés via le relevé, pas saisis manuellement.\n\nOK = Annuler la saisie manuelle\nAnnuler = Créer quand même (si vraiment absent du relevé)`);
+        if (ok) {
+            if (typeof closeManualMovementModal === 'function') closeManualMovementModal();
+            return;
+        }
+    }
+    
     if (!currentUser || !currentUser.id) {
         alert('Vous devez être connecté pour enregistrer une dépense');
         return;
@@ -7172,6 +7183,17 @@ async function saveRecette() {
     if (window._editingRecetteId) {
         await updateRecette(window._editingRecetteId);
         return;
+    }
+    
+    const rDate = document.getElementById('add-recetteDate')?.value || new Date().toISOString().split('T')[0];
+    const rAmount = parseFloat(document.getElementById('add-recetteAmount')?.value);
+    const rMatch = rAmount ? findImportedMatch(rDate, rAmount, false) : null;
+    if (rMatch) {
+        const ok = confirm(`⚠️ Une ligne importée du relevé correspond déjà à ce mouvement :\n\n« ${rMatch.releve_libelle} » · ${rMatch.date} · ${Number(rMatch.amount).toFixed(2)}€\n\nUn mouvement provenant du relevé bancaire existe déjà pour cette date et ce montant. Les mouvements passés par le compte doivent être importés via le relevé, pas saisis manuellement.\n\nOK = Annuler la saisie manuelle\nAnnuler = Créer quand même (si vraiment absent du relevé)`);
+        if (ok) {
+            if (typeof closeManualMovementModal === 'function') closeManualMovementModal();
+            return;
+        }
     }
     
     if (!currentUser || !currentUser.id) {
@@ -8740,6 +8762,7 @@ async function confirmAllTransactions() {
         document.getElementById('releveAnalysisZone').style.display = 'none';
         
         saveRelevePdfToStorage(depenses, recettes);
+        recordReleveImport(depenses, recettes);
         
         await loadCabinetData();
         renderCabinetHistory();
@@ -11176,6 +11199,18 @@ function normalizeDescCompare(str) {
         .trim();
 }
 
+
+// Une saisie manuelle doit etre rattachee a une ligne importee si elle existe (meme date + montant)
+function findImportedMatch(date, amount, isDepense) {
+    const pool = isDepense ? cabinetDepenses : cabinetRecettes;
+    return (pool || []).find(e =>
+        e.releve_libelle &&
+        (e.date || '').slice(0, 10) === (date || '').slice(0, 10) &&
+        Math.abs((Number(e.amount) || 0) - Math.abs(amount)) < 0.005
+    ) || null;
+}
+window.findImportedMatch = findImportedMatch;
+
 function findExistingDuplicate(t) {
     const isDepense = t.type === 'dépense' || t.amount < 0;
     const pool = isDepense ? cabinetDepenses : cabinetRecettes;
@@ -11241,6 +11276,57 @@ async function viewRelevePdf(monthKey) {
     }
 }
 window.viewRelevePdf = viewRelevePdf;
+
+
+// Trace l'import confirme : c'est CECI qui valide un mois (pas la presence de mouvements)
+async function recordReleveImport(depenses, recettes) {
+    try {
+        if (!supabaseClient || !currentUser?.id) return;
+        const all = [...(depenses || []), ...(recettes || [])];
+        const months = [...new Set(all.map(t => (t.date || '').slice(0, 7)))].filter(Boolean);
+        if (!months.length) return;
+        for (const m of months) {
+            await supabaseClient.from('releve_imports').insert({
+                user_id: currentUser.id,
+                cabinet_id: (await getCabinetId()) || null,
+                month: m,
+                file_name: window._releveCurrentFile?.name || null,
+                transactions_count: all.filter(t => (t.date || '').slice(0, 7) === m).length
+            });
+        }
+        window._releveImportedMonths = null; // invalide le cache
+        console.log('[RELEVÉ] Import enregistré:', months.join(', '));
+    } catch (e) {
+        console.error('[RELEVÉ] recordReleveImport:', e);
+    }
+}
+
+async function getCabinetId() {
+    try {
+        const { data } = await supabaseClient.from('profiles').select('cabinet_id').eq('id', currentUser.id).single();
+        return data?.cabinet_id || null;
+    } catch (e) { return null; }
+}
+
+// Mois valides par import confirme (cache)
+async function getImportedMonths() {
+    if (window._releveImportedMonths) return window._releveImportedMonths;
+    try {
+        const { data, error } = await supabaseClient
+            .from('releve_imports')
+            .select('month')
+            .eq('user_id', currentUser.id);
+        if (error) throw error;
+        const set = new Set((data || []).map(r => r.month));
+        window._releveImportedMonths = set;
+        return set;
+    } catch (e) {
+        console.error('[RELEVÉ] getImportedMonths:', e);
+        return new Set();
+    }
+}
+window.recordReleveImport = recordReleveImport;
+window.getImportedMonths = getImportedMonths;
 
 function showTransactionOnPdf(index) {
     const t = pendingTransactions[index];

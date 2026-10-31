@@ -9,13 +9,22 @@ function remindersMonthKey(d) {
 }
 
 function remindersMonthHasData(mKey) {
-    const inMonth = (list) => (list || []).some(e => {
-        const k = (e.date || '').slice(0, 7);
-        return k === mKey;
-    });
-    return inMonth(typeof cabinetDepenses !== 'undefined' ? cabinetDepenses : []) ||
-           inMonth(typeof cabinetRecettes !== 'undefined' ? cabinetRecettes : []);
+    // Un mois est valide UNIQUEMENT par un import de releve confirme
+    try {
+        const months = window._releveImportedMonthsCache;
+        if (months && months.has) return months.has(mKey);
+    } catch (e) {}
+    return false;
 }
+
+// Charge les mois valides par import puis rafraichit l'affichage
+async function remindersLoadImportedMonths() {
+    if (typeof getImportedMonths !== 'function') return;
+    const set = await getImportedMonths();
+    window._releveImportedMonthsCache = set;
+    renderReminders();
+}
+window.remindersLoadImportedMonths = remindersLoadImportedMonths;
 
 function remindersMissingMonths() {
     return remindersYearMonths().filter(m => !m.imported);
@@ -30,11 +39,12 @@ function remindersYearMonths() {
         const mKey = remindersMonthKey(d).slice(0, 7);
         const depCount = (typeof cabinetDepenses !== 'undefined' ? cabinetDepenses : []).filter(e => (e.date || '').slice(0, 7) === mKey).length;
         const recCount = (typeof cabinetRecettes !== 'undefined' ? cabinetRecettes : []).filter(e => (e.date || '').slice(0, 7) === mKey).length;
+        const importedSet = window._releveImportedMonthsCache;
         months.push({
             key: mKey,
             label: REMINDER_MONTHS[d.getMonth()] + ' ' + d.getFullYear(),
             short: REMINDER_MONTHS[d.getMonth()],
-            imported: (depCount + recCount) > 0,
+            imported: !!(importedSet && importedSet.has && importedSet.has(mKey)),
             movements: depCount + recCount
         });
     }
@@ -42,6 +52,9 @@ function remindersYearMonths() {
 }
 
 function renderReminders() {
+    if (!window._releveImportedMonthsCache && typeof getImportedMonths === 'function') {
+        remindersLoadImportedMonths();
+    }
     const missing = remindersMissingMonths();
     const recent = missing.slice(0, 3);
 

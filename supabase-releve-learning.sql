@@ -83,3 +83,24 @@ ALTER TABLE cabinet_recettes
     ADD COLUMN IF NOT EXISTS releve_libelle TEXT;
 ALTER TABLE cabinet_recettes
     ADD COLUMN IF NOT EXISTS note TEXT;
+
+-- Historique des relevés importés : un mois n'est validé QUE par un import confirmé
+CREATE TABLE IF NOT EXISTS releve_imports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    cabinet_id UUID REFERENCES cabinets(id) ON DELETE SET NULL,
+    month TEXT NOT NULL,
+    file_name TEXT,
+    transactions_count INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE releve_imports ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Lecture de ses imports de releves" ON releve_imports;
+CREATE POLICY "Lecture de ses imports de releves" ON releve_imports
+    FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Insert de ses imports de releves" ON releve_imports;
+CREATE POLICY "Insert de ses imports de releves" ON releve_imports
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Delete de ses imports de releves" ON releve_imports;
+CREATE POLICY "Delete de ses imports de releves" ON releve_imports
+    FOR DELETE USING (auth.uid() = user_id);
