@@ -8123,11 +8123,29 @@ function t_detectColumnSides(pageData) {
     if (!pageData || !pageData.itemRects) return null;
     if (pageData._columnSides) return pageData._columnSides;
     let creditX = null, debitX = null;
+
+    // Varietes d'en-tetes de colonnes selon les banques
+    const isCreditHeader = (low) => /^crédits?|credit$/.test(low) || /^crédits?$/i.test(low) || /^credit$/i.test(low);
+    const isDebitHeader = (low) => /^débits?|debit$/.test(low) || /^débits?$/i.test(low) || /^debit$/i.test(low);
+
     for (const it of pageData.itemRects) {
-        const low = (it.str || '').toLowerCase();
-        if (/crédit|credit/.test(low) && !/carte/.test(low) && creditX === null) creditX = it.x;
-        if (/débit|debit/.test(low) && !/prélèvement/.test(low) && debitX === null) debitX = it.x;
+        const low = (it.str || '').trim().toLowerCase();
+        if (isCreditHeader(low) && creditX === null) creditX = it.x;
+        if (isDebitHeader(low) && debitX === null) debitX = it.x;
     }
+
+    // Si introuvable sur cette page, chercher sur les autres pages du même relevé
+    if (creditX === null || debitX === null) {
+        for (const pd of (window.relevePageThumbs || [])) {
+            if (pd === pageData || !pd.itemRects || pd._columnSides) continue;
+            t_detectColumnSides(pd);
+            const sides = pd._columnSides;
+            if (sides && creditX === null) creditX = sides.creditX;
+            if (sides && debitX === null) debitX = sides.debitX;
+            if (creditX !== null && debitX !== null) break;
+        }
+    }
+
     pageData._columnSides = { creditX, debitX };
     return pageData._columnSides;
 }
@@ -8226,18 +8244,36 @@ function parseRelevéLocalement(text) {
                 const leftmost = moneyItems.reduce((a, b) => b.x < a.x ? b : a);
                 const pageW = pageData.pageWidth || 600;
                 if (rightmost.x - leftmost.x > pageW * 0.18) {
-                    let picked = cleanAmount(rightmost.str);
-                    if (picked !== null) {
-                        const sides = t_detectColumnSides(pageData);
-                        if (sides && sides.creditX !== null && sides.debitX !== null) {
-                            const mid = (sides.creditX + sides.debitX) / 2;
-                            if (Math.abs(rightmost.x - sides.creditX) < Math.abs(rightmost.x - sides.debitX)) {
-                                picked = Math.abs(picked);
-                            } else {
-                                picked = -Math.abs(picked);
-                            }
+                    const sides = t_detectColumnSides(pageData);
+                    if (sides && sides.creditX !== null && sides.debitX !== null) {
+                        // Le montant de la transaction = l'item situe dans la colonne debit OU credit
+                        // (et non le solde qui est plus a droite)
+                        const debitItem = moneyItems.filter(it => Math.abs(it.x - sides.debitX) < pageW * 0.12)
+                            .sort((a, b) => Math.abs(a.x - sides.debitX) - Math.abs(b.x - sides.debitX))[0];
+                        const creditItem = moneyItems.filter(it => Math.abs(it.x - sides.creditX) < pageW * 0.12)
+                            .sort((a, b) => Math.abs(a.x - sides.creditX) - Math.abs(b.x - sides.creditX))[0];
+                        if (debitItem && !creditItem) {
+                            const v = cleanAmount(debitItem.str);
+                            if (v !== null) amount = -Math.abs(v);
+                        } else if (creditItem && !debitItem) {
+                            const v = cleanAmount(creditItem.str);
+                            if (v !== null) amount = Math.abs(v);
+                        } else if (debitItem && creditItem) {
+                            // Les deux colonnes remplies : solde intermediaire ? on privilegie la colonne
+                            // correspondant au dernier montant de la ligne (celui avant le solde)
+                            const v = cleanAmount((creditItem.x > debitItem.x ? creditItem : debitItem).str);
+                            if (v !== null) amount = (creditItem.x > debitItem.x) ? Math.abs(v) : -Math.abs(v);
                         }
-                        amount = picked;
+                    } else if (sides && (sides.creditX !== null || sides.debitX !== null)) {
+                        // Une seule colonne identifiee : le montant doit y etre
+                        const refX = sides.creditX !== null ? sides.creditX : sides.debitX;
+                        const isCreditCol = sides.creditX !== null;
+                        const best = moneyItems.filter(it => Math.abs(it.x - refX) < pageW * 0.12)
+                            .sort((a, b) => Math.abs(a.x - refX) - Math.abs(b.x - refX))[0];
+                        if (best) {
+                            const v = cleanAmount(best.str);
+                            if (v !== null) amount = isCreditCol ? Math.abs(v) : -Math.abs(v);
+                        }
                     }
                     if (amount === undefined || amount === null) amount = amounts.sort((a, b) => Math.abs(b) - Math.abs(a))[0];
                 }
@@ -8245,6 +8281,17 @@ function parseRelevéLocalement(text) {
         }
         if (amount === undefined || amount === null) {
             amount = amounts.sort((a, b) => Math.abs(b) - Math.abs(a))[0];
+        }
+
+        // Heuristique par libelle quand les colonnes debit/credit sont introuvables :
+        // un libelle d'entree ne peut pas etre une depense (et reciproquement)
+        const descLow = (lineWoDates || '').toLowerCase();
+        const creditKeywords = /virement (re\u00e7u|emis par|de la part|recu)|remise de ch\u00e8que|versement esp\u00e8ce|paiement re\u00e7u|honoraires|reglement client|remboursement (urssaf|cpam|impot|tva|frais)/;
+        const debitKeywords = /paiement carte|prel\u00e8vement|pr\u00e8l\u00e8vement|achat carte|cb .{0,20}\d|facture|loyer|abonnement|salaire|virement emis|virement \u00e9mis|frais bancaires|commission|impot|taxe|urssaf|cotisation|cheque \u00e9mis|chèque émis/;
+        if (amount > 0 && debitKeywords.test(descLow) && !creditKeywords.test(descLow)) {
+            amount = -Math.abs(amount);
+        } else if (amount < 0 && creditKeywords.test(descLow) && !debitKeywords.test(descLow)) {
+            amount = Math.abs(amount);
         }
 
         const description = lineWoDates
@@ -8323,6 +8370,10 @@ function renderTransactionsList() {
         
         return `
             <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.rejected ? 'opacity: 0.45; border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);' : (t.duplicate ? 'border-left: 3px solid #f59e0b;' : '')}">
+                <div style="display:inline-flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <span style="font-size:0.65rem; font-weight:700; padding:2px 8px; border-radius:10px; ${isDepense ? 'background:rgba(239,68,68,0.12); color:#ef4444;' : 'background:rgba(16,185,129,0.12); color:#10b981;'}">${isDepense ? '▼ DÉBIT' : '▲ CRÉDIT'}</span>
+                    <span style="font-size:0.85rem; font-weight:700; ${isDepense ? 'color:#ef4444;' : 'color:#10b981;'}">${isDepense ? '-' : '+'}${Math.abs(t.amount).toFixed(2)}€</span>
+                </div>
                 ${t.duplicate ? `<div style="padding:6px 8px; margin-bottom:6px; border-radius:6px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35);">
                     <div style="font-size:0.72rem; color:#ef4444; font-weight:600; margin-bottom:4px;">⚠️ Doublon détecté — déjà en base (même date, montant, libellé). Le relevé fait foi.</div>
                     <div style="display:flex; gap:6px;">
