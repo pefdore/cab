@@ -278,17 +278,86 @@ function advanceReview() {
 }
 window.advanceReview = advanceReview;
 
-// Enregistre toutes les lignes validees (reutilise confirmAllTransactions)
+// Enregistre les lignes validees de la revue (sans passer par confirmAllTransactions
+// qui exclut les lignes 'confirmed' - semantique differente du modal)
 window.saveAllReviewed = async function() {
     const hasValid = pendingTransactions.some(t => t.confirmed && !t.rejected);
     if (!hasValid) {
-        alert('Aucune ligne validée.');
+        alert('Aucune ligne validée. Validez au moins une ligne avant d\'enregistrer.');
         return;
     }
-    document.getElementById('releve-review-view').style.display = 'none';
-    document.body.style.overflow = '';
-    if (typeof confirmAllTransactions === 'function') {
-        await confirmAllTransactions();
+    if (!window.currentUser?.id) {
+        alert('Vous devez être connecté.');
+        return;
+    }
+
+    // construire les enregistrements depuis les lignes validees (confirmed = valide dans la revue)
+    const depenses = pendingTransactions
+        .filter(t => t.confirmed && !t.rejected && (t.type === 'dépense' || t.amount < 0))
+        .map(t => ({
+            user_id: window.currentUser.id,
+            description: (t.sous_categorie && t.sous_categorie.trim()) ? t.sous_categorie.trim() : t.description,
+            releve_libelle: t.description,
+            sous_categorie: t.sous_categorie || null,
+            note: t.comment || null,
+            amount: Math.abs(parseFloat(t.amount) || 0),
+            category: t.category || 'autres_depenses',
+            date: t.date || new Date().toISOString().split('T')[0]
+        }));
+    const recettes = pendingTransactions
+        .filter(t => t.confirmed && !t.rejected && (t.type === 'recette' || t.amount >= 0))
+        .map(t => ({
+            user_id: window.currentUser.id,
+            description: (t.sous_categorie && t.sous_categorie.trim()) ? t.sous_categorie.trim() : t.description,
+            releve_libelle: t.description,
+            sous_categorie: t.sous_categorie || null,
+            note: t.comment || null,
+            amount: Math.abs(parseFloat(t.amount) || 0),
+            category: t.category || 'autres',
+            date: t.date || new Date().toISOString().split('T')[0]
+        }));
+
+    const btn = event?.target;
+    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+
+    try {
+        if (depenses.length) {
+            const { error } = await window.supabaseClient.from('cabinet_depenses').insert(depenses);
+            if (error) throw error;
+        }
+        if (recettes.length) {
+            const { error } = await window.supabaseClient.from('cabinet_recettes').insert(recettes);
+            if (error) throw error;
+        }
+
+        // trace de l'import (valide le mois) + archivage PDF + apprentissage
+        if (typeof recordReleveImport === 'function') recordReleveImport(depenses, recettes);
+        if (typeof saveRelevePdfToStorage === 'function') saveRelevePdfToStorage(depenses, recettes);
+        if (typeof learnReleveCategorisation === 'function') {
+            learnReleveCategorisation([
+                ...depenses.map(d => ({ description: d.releve_libelle, category: d.category, type: 'dépense', amount: -1 })),
+                ...recettes.map(r => ({ description: r.releve_libelle, category: r.category, type: 'recette', amount: 1 }))
+            ]);
+        }
+
+        clearSavedReview();
+        pendingTransactions = [];
+        document.getElementById('releve-review-view').style.display = 'none';
+        document.getElementById('releve-upload-modal').style.display = 'none';
+        document.body.style.overflow = '';
+
+        await loadCabinetData();
+        renderCabinetHistory();
+        renderComptaSummary();
+        if (typeof renderFluxView === 'function') renderFluxView();
+        if (typeof renderReminders === 'function') renderReminders();
+
+        alert(`${depenses.length + recettes.length} ligne(s) enregistrée(s) avec succès`);
+    } catch (error) {
+        console.error('[REVIEW] Save error:', error);
+        alert('Erreur lors de l\'enregistrement : ' + error.message);
+    } finally {
+        if (btn) { btn.disabled = false; }
     }
 };
 
