@@ -8221,7 +8221,13 @@ function parseRelevéLocalement(text) {
             dateStr = `${y}-${String(parseInt(dateFr[2], 10)).padStart(2, '0')}-${String(parseInt(dateFr[1], 10)).padStart(2, '0')}`;
             currentYear = parseInt(y, 10);
         } else if (dateShort && parseInt(dateShort[1], 10) <= 31 && parseInt(dateShort[2], 10) >= 1 && parseInt(dateShort[2], 10) <= 12) {
-            dateStr = `${currentYear}-${String(parseInt(dateShort[2], 10)).padStart(2, '0')}-${String(parseInt(dateShort[1], 10)).padStart(2, '0')}`;
+            let y = currentYear;
+            const nowM = new Date().getMonth() + 1;
+            const lineM = parseInt(dateShort[2], 10);
+            // un relevé ne peut pas contenir un mois futur : si le mois dépasse le mois courant
+            // (ex. "12/12" lu en octobre), c'est l'année précédente
+            if (lineM > nowM) y = y - 1;
+            dateStr = `${y}-${String(lineM).padStart(2, '0')}-${String(parseInt(dateShort[1], 10)).padStart(2, '0')}`;
         }
 
         if (HEADER_PATTERNS.some(rx => rx.test(line))) {
@@ -8943,6 +8949,12 @@ async function confirmSingleTransaction(index) {
         learnReleveCategorisation([{ description: record.description, category: record.category, type: isDepense ? 'dépense' : 'recette', amount: isDepense ? -1 : 1 }]);
         
         updatePendingCount();
+        
+        // recharger les donnees et rafraichir les vues (flux, checklist, dashboard)
+        await loadCabinetData();
+        renderComptaSummary();
+        if (typeof renderFluxView === 'function') renderFluxView();
+        if (typeof renderReminders === 'function') renderReminders();
     } catch (error) {
         console.error('[RELEVÉ] Save single error:', error);
         alert('Erreur lors de l\'enregistrement: ' + error.message);
