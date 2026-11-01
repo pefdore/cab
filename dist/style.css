@@ -11155,3 +11155,61 @@ select.admin-search { min-width: 170px; }
     color: var(--color-primary);
     background: rgba(59,130,246,0.08);
 }
+
+/* ===== Barre d'action de la vue de revue (responsive) ===== */
+.review-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--color-bg, white);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.review-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.review-title { font-size: 0.92rem; white-space: nowrap; }
+.review-counter { font-size: 0.72rem; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.review-topbar-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.review-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: white;
+    color: var(--color-text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.review-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.review-btn.danger { background: #ef4444; border-color: #ef4444; color: white; }
+.review-btn.success { background: #10b981; border-color: #10b981; color: white; }
+.review-btn.primary { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+.review-btn.primary:hover { opacity: 0.9; }
+
+@media (max-width: 640px) {
+    .review-topbar { padding: 6px 8px; }
+    .review-title { font-size: 0.85rem; }
+    .review-counter { font-size: 0.65rem; max-width: 40vw; }
+    .review-btn { padding: 8px 10px; font-size: 0.9rem; }
+    .review-btn span { display: none; }  /* icônes seules sur mobile */
+    .review-topbar-actions { gap: 5px; }
+}
