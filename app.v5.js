@@ -6199,7 +6199,7 @@ async function generatePDF() {
         y2 += 9;
 
         const W = [26, 20, 46, 22, 32, 34];
-        const ehHeaders = ['Services', 'Nombre', 'Actes', 'Prix', 'Total', ''];
+        const ehHeaders = ['Services', 'Nombre', 'Actes', 'Prix', 'Total', 'Total service'];
         doc.setFontSize(7.5);
         ehHeaders.forEach((h, i) => {
             doc.rect(cumSum(W, i), y2, W[i], 6, 'S');
@@ -6218,13 +6218,14 @@ async function generatePDF() {
                 const c = (e.cotation || 'G').toUpperCase().trim();
                 byCot[c] = (byCot[c] || 0) + 1;
             });
+            let totalSvc = 0;
             let premier = true;
             Object.keys(byCot).forEach(cot => {
                 const n = byCot[cot];
                 const libelle = EHPAD_LIBELLES[cot] || cot;
                 const prix = tarif(cot);
                 const montantLigne = n * prix;
-                totalEhpad += montantLigne;
+                totalSvc += montantLigne;
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7.5);
                 doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
@@ -6241,6 +6242,20 @@ async function generatePDF() {
                 premier = false;
                 y2 += RH;
             });
+            // ligne dediee du total du service
+            totalEhpad += totalSvc;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
+            doc.rect(cumSum(W, 1), y2, W[1], RH, 'S');
+            doc.rect(cumSum(W, 2), y2, W[2], RH, 'S');
+            doc.text('Total ' + svc.label, cumSum(W, 2) + W[2] / 2, y2 + 3.8, { align: 'center' });
+            doc.rect(cumSum(W, 3), y2, W[3], RH, 'S');
+            doc.rect(cumSum(W, 4), y2, W[4], RH, 'S');
+            doc.rect(cumSum(W, 5), y2, W[5], RH, 'S');
+            doc.text(fmt(totalSvc), cumSum(W, 5) + W[5] / 2, y2 + 3.8, { align: 'center' });
+            y2 += RH;
+            doc.setFont('helvetica', 'normal');
         });
 
         doc.setFont('helvetica', 'bold');

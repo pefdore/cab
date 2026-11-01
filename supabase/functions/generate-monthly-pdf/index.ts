@@ -275,7 +275,7 @@ function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: strin
 
   y += 9
   const W = [26, 20, 46, 22, 32, 34]
-  const headers = ['Services', 'Nombre', 'Actes', 'Prix', 'Total', '']
+  const headers = ['Services', 'Nombre', 'Actes', 'Prix', 'Total', 'Total service']
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7.5)
   headers.forEach((h, i) => {
@@ -298,13 +298,14 @@ function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: strin
       byCotation[cot] = (byCotation[cot] || 0) + 1
     })
     const cotationsSvc = Object.keys(byCotation)
+    let totalSvc = 0
     let premier = true
     for (const cot of cotationsSvc) {
       const n = byCotation[cot]
       const libelle = EHPAD_ACTES_LIBELLES[cot] || cot
       const prix = tarif(cot)
       const montantLigne = n * prix
-      totalEhpad += montantLigne
+      totalSvc += montantLigne
       const x0 = cumSum(W, 0), x1 = cumSum(W, 1), x2 = cumSum(W, 2), x3 = cumSum(W, 3), x4 = cumSum(W, 4), x5 = cumSum(W, 5)
       // colonne Services (nom du service sur la premiere ligne de son bloc)
       doc.rect(x0, y, W[0], RH, 'S')
@@ -317,11 +318,26 @@ function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: strin
       doc.rect(x3, y, W[3], RH, 'S'); doc.text(fmt(prix), x3 + W[3] / 2, y + 3.8, { align: 'center' })
       // colonne Total de la ligne
       doc.rect(x4, y, W[4], RH, 'S'); doc.text(fmt(montantLigne), x4 + W[4] / 2, y + 3.8, { align: 'center' })
-      // colonne vide (l'ancienne colonne total par service est abandonnee)
+      // colonne Total service (remplie sur la ligne dediee en fin de bloc)
       doc.rect(x5, y, W[5], RH, 'S')
       premier = false
       y += RH
     }
+    // ligne dediee du total du service (sans nombre ni acte)
+    totalEhpad += totalSvc
+    const x0 = cumSum(W, 0), x2 = cumSum(W, 2), x5 = cumSum(W, 5)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(7.5)
+    doc.rect(x0, y, W[0], RH, 'S')
+    doc.rect(cumSum(W, 1), y, W[1], RH, 'S')
+    doc.rect(x2, y, W[2], RH, 'S')
+    doc.text('Total ' + svc.label, x2 + W[2] / 2, y + 3.8, { align: 'center' })
+    doc.rect(cumSum(W, 3), y, W[3], RH, 'S')
+    doc.rect(cumSum(W, 4), y, W[4], RH, 'S')
+    doc.rect(x5, y, W[5], RH, 'S')
+    doc.text(fmt(totalSvc), x5 + W[5] / 2, y + 3.8, { align: 'center' })
+    y += RH
+    doc.setFont('helvetica', 'normal')
   }
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
