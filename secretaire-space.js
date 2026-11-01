@@ -146,26 +146,32 @@ function secNeedsCabinetApproval(profile) {
 }
 
 async function secRenderJoinRequestsBanner() {
-    const wrap = document.getElementById('secJoinRequestsBanner');
-    if (!wrap) return;
     const requests = await secLoadJoinRequests();
+    const wrap = document.getElementById('secJoinRequestsBanner');
 
-    // Badge de notification sur le menu Cabinet (desktop + mobile)
+    // Badge de notification sur le menu Parametres (desktop + mobile)
     const badge = document.getElementById('secNavBadge');
     const badgeMobile = document.getElementById('secNavBadgeMobile');
-    [badge, badgeMobile].forEach(b => {
-        if (!b) return;
+    const cardBadges = document.querySelectorAll('#settingsIntegrationsBadge');
+    const cardValues = document.querySelectorAll('#menuIntegrationsValue');
+    const setBadge = b => {
         if (requests.length > 0) {
             b.textContent = requests.length;
             b.style.display = 'flex';
         } else {
             b.style.display = 'none';
         }
-    });
+    };
+    [badge, badgeMobile].forEach(b => { if (b) setBadge(b); });
+    cardBadges.forEach(setBadge);
+    cardValues.forEach(el => { el.textContent = requests.length > 0 ? requests.length + ' demande' + (requests.length > 1 ? 's' : '') + ' en attente' : 'Aucune demande'; });
 
-    if (!requests.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+    if (!wrap) return;
+    const emptyEl = document.getElementById('secIntegrationsEmpty');
+    if (!requests.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; if (emptyEl) emptyEl.style.display = 'block'; return; }
 
     wrap.style.display = 'block';
+    if (emptyEl) emptyEl.style.display = 'none';
     wrap.innerHTML =
         '<h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L11.6 1.6a1.5 1.5 0 0 1 2.63 0l1.31 2.26 2.55.38a1.5 1.5 0 0 1 .83 2.56l-1.85 1.8.44 2.54a1.5 1.5 0 0 1-2.17 1.58L12 11.6l-2.29 1.2a1.5 1.5 0 0 1-2.17-1.58l.44-2.54-1.85-1.8a1.5 1.5 0 0 1 .83-2.56l2.55-.38z"/></svg> Demandes d\'acc\u00e8s en attente</h3>' +
         '<p class="sec-banner-desc">Ces secr\u00e9taires demandent \u00e0 rejoindre l\'espace cabinet. Approuvez pour leur donner acc\u00e8s.</p>' +
@@ -407,10 +413,10 @@ function secApplySecretarySpace() {
     // La secretaire garde : profil, preferences (theme), donnees.
     // Lui retirer : PDF & documents (logo, signature, IBAN, modeles),
     // cotations, passages, IA, zone dangereuse.
-    document.querySelectorAll('[data-settings-page="pdf"], [data-settings-page="cotation"]').forEach(el => {
+    document.querySelectorAll('[data-settings-page="pdf"], [data-settings-page="cotation"], [data-settings-page="integrations"]').forEach(el => {
         el.style.display = 'none';
     });
-    const medPages = ['settings-page-pdf', 'settings-page-cotation'];
+    const medPages = ['settings-page-pdf', 'settings-page-cotation', 'settings-page-integrations'];
     medPages.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
