@@ -1249,57 +1249,88 @@ const COTATIONS = {
 // Cabinet accounting categories
 const CABINET_CATEGORIES = {
     'masse_salariale': {
-        label: 'Masse salariale',
-        sous: ['Secrétaire(s) salaire net', 'Secrétaire(s) prime net', 'Femme de ménage salaire net', 'ASV/ADA salaire net', 'Indemnités kilométriques', 'Tickets restaurant', 'Primes exceptionnelles']
+        label: 'Personnel : salaires, secrétariat, ménage',
+        sous: ['Salaire secrétaire(s)', 'Salaire femme de ménage', 'Salaire autre personnel', 'Prime / bonus personnel', 'Vacations remplacement secrétariat', 'Indemnité kilométrique personnel', 'Tickets restaurant']
     },
     'urssaf': {
-        label: 'URSSAF',
-        sous: ['Cotisations URSSAF', 'Cotisations retraite', 'Prévoyance', 'Mutuelle salariés', 'Formation professionnelle', 'Taxe sur les salaires', 'Médecine du travail', 'Cogérance']
-    },
-    'logiciel': {
-        label: 'Logiciels & Télétransmission',
-        sous: ['Axisanté', 'CGM', 'AxiMessage', 'Vidal', 'Télétransmission', 'KelDoc', 'DOCTOLIB', 'Logiciel de gestion', 'Hébergement cloud', 'Signature électronique', 'Sauvegarde de données', 'Maintenance informatique']
-    },
-    'services': {
-        label: 'Services & Abonnements',
-        sous: ['Téléphonie mobile', 'Téléphonie fixe', 'Internet FAI', 'Séché healthcare', 'Destruction DASRI', 'Comptable', 'Expert-comptable', 'Avocat', 'Gestion déchets', 'Sécurité/onet', 'Nettoyage blouses/serviettes', 'Affranchissement/La Poste', 'Banque frais', 'Leasing location']
+        label: 'Charges sociales sur salaires',
+        sous: ['URSSAF salaires', 'Retraite complémentaire salariés', 'Mutuelle salariés', 'Prévoyance personnel', 'Médecine du travail', 'Taxe sur les salaires']
     },
     'charges': {
-        label: 'Loyers, énergie & taxes',
-        sous: ['Loyer', 'Charges de copropriété', 'Electricité', 'Gaz', 'Eau', 'Assurance multirisque', 'Assurance RC pro', 'CFE', 'Taxe foncière', 'Taxe d\'enlèvement ordures', 'DGFIP']
+        label: 'Local : loyer & charges',
+        sous: ['Loyer cabinet', 'Charges copropriété', 'Électricité', 'Eau', 'Chauffage / gaz', 'Entretien / réparations local', 'Travaux & aménagements', 'Assurance multirisque local']
+    },
+    'impots': {
+        label: 'Impôts & taxes',
+        sous: ['Taxe foncière', 'TEOM (ordures)', 'CFE', 'Impôt sur les sociétés', 'DGFIP']
+    },
+    'logiciel': {
+        label: 'Informatique : logiciels, télétransmission, maintenance',
+        sous: ['Logiciel de gestion', 'Télétransmission', 'Maintenance informatique', 'Site internet / hébergement', 'Consommables informatiques', 'Matériel informatique', 'Sauvegarde de données', 'Signature électronique']
+    },
+    'services': {
+        label: 'Abonnements & services : tél, internet, divers',
+        sous: ['Téléphone fixe', 'Téléphone mobile', 'Abonnement internet', 'Nettoyage blouses / linge', 'Destruction DASRI', 'Affranchissement / La Poste', 'Sécurité', 'Divers services']
     },
     'consommables': {
-        label: 'Consommables médicaux',
-        sous: ['Gants', 'Masques', 'Compresses', 'Sutures', 'Désinfection', 'Azote', 'Drap d\'examen', 'SHA gel hydroalcoolique', 'Sérum physiologique', 'Pharmacie petit matériel', 'Test rapide diagnostic (TROD)', 'Vaccins', 'Matériel injection/perfusion', 'Consommable ECG', 'Couches protection table']
+        label: 'Consommables & fournitures médicales',
+        sous: ['Consommables médicaux', 'Petit matériel médical', 'Uniformes / blouses', 'Nettoyage / produits d\'entretien', 'Literie / linge cabinet', 'Pharmacie petit matériel']
     },
     'fournitures': {
-        label: 'Fournitures bureau',
-        sous: ['Papier impression', 'Ramettes', 'Cartouches encre', 'Stylos/bureautique', 'Enveloppes', 'Fournitures diverses', 'Petit matériel de bureau', 'Café/accueil patients']
+        label: 'Fournitures bureau & petit matériel',
+        sous: ['Fournitures bureau', 'Fournitures administratives', 'Petit équipement bureau', 'Café / accueil patients']
     },
     'materiel': {
-        label: 'Matériel & Équipement',
-        sous: ['Lecteur carte vitale', 'Ordinateur', 'Écran', 'Imprimante', 'Électrocardiographe', 'Tensiomètre', 'Otoscope/Ophtalmoscope', 'Mobilier médical', 'Dermatographe', 'Matériel de soins']
+        label: 'Matériel & équipement (investissement)',
+        sous: ['Matériel médical (investissement)', 'Mobilier cabinet', 'Informatique (investissement)', 'Lecteur carte vitale', 'Électrocardiographe', 'Travaux d\'aménagement']
     },
-    'communication': {
-        label: 'Communication',
-        sous: ['Site web cabinet', 'Plaquette/Flyers', 'Enseigne', 'Référencement', 'Formation congrès', 'Adhésion syndicat/UMESP', 'Abonnement revues médicales']
+    'comptabilite': {
+        label: 'Expert-comptable, juridique, administratif',
+        sous: ['Honoraires expert-comptable', 'Honoraires avocat / juridique', 'Comptabilité / paie', 'Greffe / formalités']
     },
-    'reception': {
-        label: 'Réception & Représentation',
-        sous: ['Repas professionnels', 'Cadeaux patients/associés', 'Réunion équipe', 'Événement cabinet']
+    'assurance': {
+        label: 'Assurances (RC pro, local, matériel)',
+        sous: ['Assurance RC professionnelle', 'Assurance local', 'Assurance matériel', 'Assurance homme-clé']
+    },
+    'banque': {
+        label: 'Frais bancaires',
+        sous: ['Frais de tenue de compte', 'Frais de transaction', 'Intérêts agios']
     },
     'remboursement_credit': {
-        label: 'Crédits & Emprunts',
-        sous: ['Remboursement emprunt principal', 'Intérêts emprunt', 'Assurance emprunteur', 'Découvert bancaire']
+        label: 'Crédits, emprunts & leasing',
+        sous: ['Intérêts emprunt', 'Remboursement capital emprunt', 'Leasing matériel', 'Crédit-bail']
+    },
+    'reception': {
+        label: 'Réception & divers',
+        sous: ['Réception & représentation', 'Formation du personnel', 'Publicité / communication', 'Repas professionnels', 'Événement cabinet']
+    },
+    'autres_depenses': {
+        label: 'Autres dépenses',
+        sous: ['Divers']
     }
 };
 
 const RECETTE_CATEGORIES = {
-    'honoraires': { label: 'Honoraires', sous: ['Consultations', 'Visites', 'Actes techniques', 'Vaccination', 'Téléconsultation', 'Honoraires tiers payant'] },
-    'participation_associe': { label: 'Participation associé', sous: ['Apport associé', 'Quote-part exercise', 'Transfert de gestion'] },
-    'remboursements': { label: 'Remboursements', sous: ['CPAM/Ameli', 'Mutuelles', 'Assurance', 'Aides URSSAF', 'Crédit d\'impôt', 'Subvention', 'Indemnité CPAM/mask'] },
-    'produits_financiers': { label: 'Produits financiers', sous: ['Intérêts bancaires', 'Placement', 'Escompte'] },
-    'autres': { label: 'Autres recettes', sous: ['Location salle', 'Vente matériel', 'Dons', 'Recettes diverses'] }
+    'participation_associe': {
+        label: 'Cotisation / quote-part des associés',
+        sous: ['Cotisation mensuelle associés (quote-part)', 'Cotisation Dr — quote-part', 'Régularisation cotisations']
+    },
+    'participation_ponctuelle': {
+        label: 'Participation ponctuelle des associés',
+        sous: ['Participation ponctuelle associés', 'Appel de fonds exceptionnel']
+    },
+    'remboursements': {
+        label: 'Remboursements (URSSAF, assurance, organisme)',
+        sous: ['Remboursement URSSAF / CARSAT', 'Remboursement assurance', 'Remboursement organisme', 'Aide / subvention']
+    },
+    'produits_financiers': {
+        label: 'Produits financiers (intérêts)',
+        sous: ['Intérêts compte', 'Produits placement']
+    },
+    'autres': {
+        label: 'Autres recettes',
+        sous: ['Vente matériel du cabinet', 'Indemnité (litige, retard)', 'Divers recettes']
+    }
 };
 
 const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
@@ -7237,12 +7268,35 @@ async function saveRecette() {
     if (typeof closeManualMovementModal === 'function') closeManualMovementModal();
 }
 
+
+// Adapte le modal de saisie au contexte : modification d'une ligne importee vs ajout manuel
+function adaptManualMovementModal(type, item) {
+    const titleEl = document.getElementById('manual-movement-title');
+    const warnEl = document.getElementById('manual-movement-warning');
+    const libelleEl = document.getElementById('manual-movement-libelle');
+    if (!titleEl || !warnEl) return;
+    if (item && (item.releve_libelle || window._editingDepenseId || window._editingRecetteId)) {
+        titleEl.textContent = 'Modifier le mouvement';
+        warnEl.innerHTML = 'Le libellé du relevé est <strong>verrouillé</strong> (il doit correspondre au relevé papier). Vous pouvez ajuster la catégorie, la sous-catégorie, le montant et la date.';
+        if (libelleEl && item.releve_libelle) {
+            libelleEl.style.display = 'block';
+            libelleEl.textContent = '📄 Relevé : ' + item.releve_libelle;
+        }
+    } else {
+        titleEl.textContent = 'Saisie manuelle';
+        warnEl.innerHTML = "⚠️ À réserver aux mouvements <strong>absents du relevé bancaire</strong> (paiement espèces, chèque personnel, prélèvement non bancaire…). Tout ce qui figure sur le relevé doit passer par l'import du relevé.";
+        if (libelleEl) libelleEl.style.display = 'none';
+    }
+}
+window.adaptManualMovementModal = adaptManualMovementModal;
+
 function editDepense(id) {
     const depense = cabinetDepenses.find(d => d.id === id);
     if (!depense) return;
     
     if (typeof openManualMovementModal === 'function') openManualMovementModal();
     switchAddDepenseRecette('depense');
+    adaptManualMovementModal('depense', depense);
     
     document.getElementById('add-depenseDescription').value = depense.releve_libelle || depense.description || '';
     const descInput = document.getElementById('add-depenseDescription');
@@ -7317,6 +7371,7 @@ function editRecette(id) {
     
     if (typeof openManualMovementModal === 'function') openManualMovementModal();
     switchAddDepenseRecette('recette');
+    adaptManualMovementModal('recette', recette);
     
     document.getElementById('add-recetteDescription').value = recette.releve_libelle || recette.description || '';
     const rdescInput = document.getElementById('add-recetteDescription');
