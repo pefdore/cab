@@ -1471,7 +1471,8 @@ function switchHistoryMode(mode) {
 window.switchHistoryMode = switchHistoryMode;
 
 function switchAddDepenseRecette(type) {
-    var btns = document.querySelectorAll('.depense-recette-toggle .switch-btn');
+    // nouveau modal (mm-switch-btn) + ancien toggle (switch-btn) pour compatibilite
+    var btns = document.querySelectorAll('.mm-switch-btn, .depense-recette-toggle .switch-btn');
     for (var i = 0; i < btns.length; i++) {
         if (btns[i].dataset.type === type) {
             btns[i].classList.add('active');
@@ -1489,6 +1490,13 @@ function switchAddDepenseRecette(type) {
     } else {
         if (depenseForm) depenseForm.style.display = 'none';
         if (recetteForm) recetteForm.style.display = 'block';
+    }
+    
+    // badge dynamique coherent avec la vue de revue
+    var badge = document.getElementById('mm-type-badge');
+    if (badge) {
+        badge.className = 'review-badge ' + (type === 'depense' ? 'debit' : 'credit');
+        badge.textContent = type === 'depense' ? '\u25bc D\u00c9BIT' : '\u25b2 CR\u00c9DIT';
     }
 }
 

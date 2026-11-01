@@ -11434,3 +11434,36 @@ select.admin-search { min-width: 170px; }
     .mm-header { padding: 12px 14px 10px; }
     .mm-body { padding: 12px 14px 14px; }
 }
+
+/* ===== Cohérence modal de mouvement <-> vue de revue ===== */
+.mm-header-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+/* reutilisation du badge de la vue de revue */
+#manual-movement-modal .review-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+#manual-movement-modal .review-badge.debit { background: rgba(239,68,68,0.12); color: #ef4444; }
+#manual-movement-modal .review-badge.credit { background: rgba(16,185,129,0.12); color: #10b981; }
+
+/* transitions douces du switch */
+.mm-switch-btn { transition: all 0.18s ease; }
+
+/* champ montant plus expressif : symbole euro + couleur du type */
+.mm-amount-field { position: relative; }
+.mm-amount-field::after {
+    content: '€';
+    position: absolute;
+    right: 34px;
+    bottom: 11px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    pointer-events: none;
+}
