@@ -4247,6 +4247,7 @@ const SETTINGS_PAGES = {
     'cotation': { title: 'Cotations', subtitle: 'Vos clés de cotation et montants' },
     'pdf': { title: 'PDF & Documents', subtitle: 'Logo, signature et options du PDF' },
     'preferences': { title: 'Préférences', subtitle: 'Thème, cotation hors cabinet et notifications' },
+    'integrations': { title: 'Intégrations', subtitle: 'Validation des demandes d\'accès des nouveaux membres du cabinet' },
     'donnees': { title: 'Données', subtitle: 'Compteur, export et suppression de vos données' }
 };
 
@@ -4303,6 +4304,8 @@ async function openSettingsPage(pageName) {
         loadNotifPrefs();
         loadUiPrefs();
         await loadOpenRouterKey();
+    } else if (pageName === 'integrations') {
+        if (typeof secRenderJoinRequestsBanner === 'function') secRenderJoinRequestsBanner();
     } else if (pageName === 'googlesheets') {
         loadGoogleSheetsSettings();
     } else if (pageName === 'donnees') {
@@ -5000,7 +5003,6 @@ function switchView(viewName) {
     } else if (viewName === 'cabinet') {
         loadCabinetData();
         if (typeof secApplySecretarySpace === 'function') secApplySecretarySpace();
-        if (typeof secRenderJoinRequestsBanner === 'function') secRenderJoinRequestsBanner();
     } else if (viewName === 'flux') {
         loadCabinetData().then(() => {
             if (typeof renderFluxView === 'function') renderFluxView();
