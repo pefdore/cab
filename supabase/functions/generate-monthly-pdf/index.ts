@@ -275,7 +275,7 @@ function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: strin
 
   y += 9
   const W = [26, 20, 46, 22, 32, 34]
-  const headers = ['Services', 'Nombre', 'Actes', 'Prix', 'Montant par actes', 'Total par service']
+  const headers = ['Services', 'Nombre', 'Actes', 'Prix', 'Total', '']
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7.5)
   headers.forEach((h, i) => {
@@ -285,36 +285,40 @@ function tableauEhpad(doc: any, y: number, passages: Passage[], moisLabel: strin
   y += 6
   doc.setFont('helvetica', 'normal')
 
-  const RH = 4.7
+  const RH = 5.5
   let totalEhpad = 0
 
   for (const svc of EHPAD_SERVICES) {
     const svcPassages = passages.filter(p => svc.match.includes(normalize(p.location)))
     if (svcPassages.length === 0) continue
+    // Recenser les cotations REELLEMENT presentes (y compris hors liste habituelle)
     const byCotation: Record<string, number> = {}
     svcPassages.forEach(p => {
       const cot = (p.cotation || 'G').toUpperCase().trim()
       byCotation[cot] = (byCotation[cot] || 0) + 1
     })
-    const totalSvc = Object.entries(byCotation).reduce((s, [cot, n]) => s + n * tarif(cot), 0)
-    totalEhpad += totalSvc
-
+    const cotationsSvc = Object.keys(byCotation)
     let premier = true
-    let dejaAffiches = new Set<string>()
-    for (const acte of EHPAD_ACTES) {
-      if (dejaAffiches.has(EHPAD_ACTES_LIBELLES[acte])) continue
-      dejaAffiches.add(EHPAD_ACTES_LIBELLES[acte])
-      const n = byCotation[acte] || 0
-      const montant = n * tarif(acte)
+    for (const cot of cotationsSvc) {
+      const n = byCotation[cot]
+      const libelle = EHPAD_ACTES_LIBELLES[cot] || cot
+      const prix = tarif(cot)
+      const montantLigne = n * prix
+      totalEhpad += montantLigne
       const x0 = cumSum(W, 0), x1 = cumSum(W, 1), x2 = cumSum(W, 2), x3 = cumSum(W, 3), x4 = cumSum(W, 4), x5 = cumSum(W, 5)
+      // colonne Services (nom du service sur la premiere ligne de son bloc)
       doc.rect(x0, y, W[0], RH, 'S')
-      if (premier) doc.text(svc.label, x0 + W[0] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x1, y, W[1], RH, 'S'); doc.text(String(n), x1 + W[1] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x2, y, W[2], RH, 'S'); doc.text(EHPAD_ACTES_LIBELLES[acte], x2 + W[2] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x3, y, W[3], RH, 'S'); doc.text(fmt(tarif(acte)), x3 + W[3] / 2, y + 3.5, { align: 'center' })
-      doc.rect(x4, y, W[4], RH, 'S'); doc.text(fmt(montant), x4 + W[4] / 2, y + 3.5, { align: 'center' })
+      if (premier) doc.text(svc.label, x0 + W[0] / 2, y + 3.8, { align: 'center' })
+      // colonne Nombre
+      doc.rect(x1, y, W[1], RH, 'S'); doc.text(String(n), x1 + W[1] / 2, y + 3.8, { align: 'center' })
+      // colonne Actes (cotation telle que saisie, meme inconnue)
+      doc.rect(x2, y, W[2], RH, 'S'); doc.text(libelle, x2 + W[2] / 2, y + 3.8, { align: 'center' })
+      // colonne Prix
+      doc.rect(x3, y, W[3], RH, 'S'); doc.text(fmt(prix), x3 + W[3] / 2, y + 3.8, { align: 'center' })
+      // colonne Total de la ligne
+      doc.rect(x4, y, W[4], RH, 'S'); doc.text(fmt(montantLigne), x4 + W[4] / 2, y + 3.8, { align: 'center' })
+      // colonne vide (l'ancienne colonne total par service est abandonnee)
       doc.rect(x5, y, W[5], RH, 'S')
-      if (premier) doc.text(fmt(totalSvc), x5 + W[5] / 2, y + 3.5, { align: 'center' })
       premier = false
       y += RH
     }
