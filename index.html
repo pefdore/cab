@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-Pw5iGAjb.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-MvfrWAtD.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -3008,49 +3008,85 @@ window.attemptLogin = function() {
         <!-- FAB - Floating Action Button -->
         <!-- Saisie manuelle (dépense / entrée hors relevé bancaire) -->
         <div id="manual-movement-modal" class="modal-overlay" style="display:none; z-index: 10000;">
-            <div class="modal-card" style="max-width: 520px; width: 95%; max-height: 88vh; overflow-y: auto;">
-                <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--color-border);">
-                    <div>
-                        <h3 id="manual-movement-title" style="margin: 0; font-size: 1.05rem;">Saisie manuelle</h3>
-                        <p id="manual-movement-warning" style="margin: 3px 0 0; font-size: 0.75rem; color: #b45309;">⚠️ À réserver aux mouvements <strong>absents du relevé bancaire</strong> (paiement espèces, chèque personnel, prélèvement non bancaire…). Tout ce qui figure sur le relevé doit passer par l'import du relevé.</p>
-                        <p id="manual-movement-libelle" style="display:none; margin: 6px 0 0; font-size: 0.78rem; color: var(--color-text-secondary); background: var(--color-bg-secondary, #f5f5f7); padding: 6px 10px; border-radius: 6px;"></p>
+            <div class="modal-card mm-card">
+                <div class="mm-header">
+                    <div class="mm-header-top">
+                        <div class="mm-type-switch">
+                            <button class="mm-switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')"><span class="mm-ico">▼</span> Dépense</button>
+                            <button class="mm-switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')"><span class="mm-ico">▲</span> Entrée / recette</button>
+                        </div>
+                        <button class="mm-close" onclick="closeManualMovementModal()">✕</button>
                     </div>
-                    <button class="modal-close" onclick="closeManualMovementModal()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
+                    <h3 id="manual-movement-title" style="margin: 8px 0 0; font-size: 1rem;">Saisie manuelle</h3>
+                    <p id="manual-movement-warning" class="mm-warning">⚠️ À réserver aux mouvements <strong>absents du relevé bancaire</strong> (espèces, chèque personnel…). Tout ce qui figure sur le relevé doit passer par l'import du relevé.</p>
+                    <p id="manual-movement-libelle" style="display:none;" class="mm-releve-tag">📄 <span></span></p>
                 </div>
-                <div class="modal-body" style="padding: 20px;">
-                    <div class="depense-recette-toggle">
-                        <button class="switch-btn active" data-type="depense" onclick="switchAddDepenseRecette('depense')">Dépense</button>
-                        <button class="switch-btn" data-type="recette" onclick="switchAddDepenseRecette('recette')">Entrée / recette</button>
-                    </div>
-                    <div id="add-depense-form" style="margin-top: 12px;">
+                <div class="mm-body">
+                    <div id="add-depense-form">
                         <div class="mm-form">
-                            <select id="add-depenseCategory" class="form-input">
-                                <option value="">Catégorie…</option>
-                            </select>
-                            <select id="add-depenseSousCategorie" class="form-input">
-                                <option value="">Sous-catégorie…</option>
-                            </select>
-                            <input type="date" id="add-depenseDate" class="form-input">
-                            <input type="text" id="add-depenseDescription" class="form-input" placeholder="Description" autocomplete="off">
-                            <div id="add-depense-autocomplete" class="autocomplete-dropdown" style="display:none;"></div>
-                            <input type="number" step="0.01" id="add-depenseAmount" class="form-input" placeholder="Montant (€)">
-                            <button class="action-btn primary" id="add-saveDepenseBtn" onclick="saveDepense()">Enregistrer la dépense</button>
+                            <div class="mm-row">
+                                <div class="mm-field">
+                                    <label>Date</label>
+                                    <input type="date" id="add-depenseDate" class="form-input">
+                                </div>
+                                <div class="mm-field mm-amount-field">
+                                    <label>Montant (€)</label>
+                                    <input type="number" step="0.01" id="add-depenseAmount" class="form-input mm-amount-input" placeholder="0,00">
+                                </div>
+                            </div>
+                            <div class="mm-field">
+                                <label>Description</label>
+                                <input type="text" id="add-depenseDescription" class="form-input" placeholder="Ex : participation mars, achat matériel…" autocomplete="off">
+                                <div id="add-depense-autocomplete" class="autocomplete-dropdown" style="display:none;"></div>
+                            </div>
+                            <div class="mm-row">
+                                <div class="mm-field">
+                                    <label>Catégorie</label>
+                                    <select id="add-depenseCategory" class="form-input">
+                                        <option value="">Choisir…</option>
+                                    </select>
+                                </div>
+                                <div class="mm-field">
+                                    <label>Sous-catégorie</label>
+                                    <select id="add-depenseSousCategorie" class="form-input">
+                                        <option value="">Choisir…</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="mm-save-btn" id="add-saveDepenseBtn" onclick="saveDepense()">✓ Enregistrer la dépense</button>
                         </div>
                     </div>
-                    <div id="add-recette-form" style="display:none; margin-top: 12px;">
+                    <div id="add-recette-form" style="display:none;">
                         <div class="mm-form">
-                            <select id="add-recetteCategory" class="form-input">
-                                <option value="">Catégorie…</option>
-                            </select>
-                            <select id="add-recetteSousCategorie" class="form-input">
-                                <option value="">Sous-catégorie…</option>
-                            </select>
-                            <input type="date" id="add-recetteDate" class="form-input">
-                            <input type="text" id="add-recetteDescription" class="form-input" placeholder="Description">
-                            <input type="number" step="0.01" id="add-recetteAmount" class="form-input" placeholder="Montant (€)">
-                            <button class="action-btn primary" id="add-saveRecetteBtn" onclick="saveRecette()">Enregistrer la recette</button>
+                            <div class="mm-row">
+                                <div class="mm-field">
+                                    <label>Date</label>
+                                    <input type="date" id="add-recetteDate" class="form-input">
+                                </div>
+                                <div class="mm-field mm-amount-field">
+                                    <label>Montant (€)</label>
+                                    <input type="number" step="0.01" id="add-recetteAmount" class="form-input mm-amount-input" placeholder="0,00">
+                                </div>
+                            </div>
+                            <div class="mm-field">
+                                <label>Description</label>
+                                <input type="text" id="add-recetteDescription" class="form-input" placeholder="Ex : quote-part Dr X…">
+                            </div>
+                            <div class="mm-row">
+                                <div class="mm-field">
+                                    <label>Catégorie</label>
+                                    <select id="add-recetteCategory" class="form-input">
+                                        <option value="">Choisir…</option>
+                                    </select>
+                                </div>
+                                <div class="mm-field">
+                                    <label>Sous-catégorie</label>
+                                    <select id="add-recetteSousCategorie" class="form-input">
+                                        <option value="">Choisir…</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="mm-save-btn success" id="add-saveRecetteBtn" onclick="saveRecette()">✓ Enregistrer l'entrée</button>
                         </div>
                     </div>
                 </div>

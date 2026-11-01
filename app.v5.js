@@ -7280,7 +7280,7 @@ function adaptManualMovementModal(type, item) {
         warnEl.innerHTML = 'Le libellé du relevé est <strong>verrouillé</strong> (il doit correspondre au relevé papier). Vous pouvez ajuster la catégorie, la sous-catégorie, le montant et la date.';
         if (libelleEl && item.releve_libelle) {
             libelleEl.style.display = 'block';
-            libelleEl.textContent = '📄 Relevé : ' + item.releve_libelle;
+            libelleEl.querySelector('span').textContent = item.releve_libelle;
         }
     } else {
         titleEl.textContent = 'Saisie manuelle';
