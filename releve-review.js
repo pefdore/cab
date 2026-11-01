@@ -33,8 +33,21 @@ window.closeReleveReview = function() {
     const v = document.getElementById('releve-review-view');
     if (v) v.style.display = 'none';
     document.body.style.overflow = '';
+    // sauvegarder la progression AVANT de quitter
+    const remaining = pendingTransactions.filter(t => !t.confirmed && !t.rejected).length;
+    if (remaining > 0) {
+        saveReviewProgress();
+        const done = pendingTransactions.length - remaining;
+        if (typeof showToast === 'function') {
+            showToast(`⏸ Progression sauvegardée (${done}/${pendingTransactions.length}) — cliquez sur « Reprendre l'import » pour continuer`);
+        }
+    }
     // retour au modal d'import classique pour finaliser
-    document.getElementById('releve-upload-modal').style.display = 'flex';
+    const uploadModal = document.getElementById('releve-upload-modal');
+    if (uploadModal) {
+        uploadModal.style.display = 'flex';
+        if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
+    }
     if (typeof renderTransactionsList === 'function') renderTransactionsList();
     updatePendingCount();
 };
@@ -506,15 +519,19 @@ window.hasSavedReview = function() {
     } catch (e) { return false; }
 };
 
-window.resumeSavedReview = function() {
+window.resumeSavedReview = async function() {
     try {
         const raw = localStorage.getItem(REVIEW_STORAGE_KEY);
         if (!raw) return false;
         const data = JSON.parse(raw);
         pendingTransactions = (data.transactions || []).map(t => ({ ...t }));
         window._reviewState.current = Math.min(data.current || 0, pendingTransactions.length - 1);
-        // les references PDF (pages, extraits) sont rechargees depuis l'archive si possible
+        document.getElementById('releve-upload-modal').style.display = 'none';
         window._releveReviewResumed = true;
+
+        // tenter de recharger le PDF depuis l'archive Supabase (bucket releves)
+        await restoreReviewPdfFromArchive(data);
+
         openReleveReview();
         if (typeof showToast === 'function') {
             const done = pendingTransactions.filter(t => t.confirmed || t.rejected).length;
@@ -526,6 +543,60 @@ window.resumeSavedReview = function() {
         return false;
     }
 };
+
+// recharge le PDF archive pour restaurer l'aperçu bandeau
+async function restoreReviewPdfFromArchive(data) {
+    try {
+        if (!window.supabaseClient || !window.currentUser?.id) return;
+        const months = [...new Set((data.transactions || []).map(t => (t.date || '').slice(0, 7)))].filter(Boolean).sort();
+        if (!months.length) return;
+        const { data: urlData, error } = await window.supabaseClient.storage
+            .from('releves')
+            .createSignedUrl(window.currentUser.id + '/' + months[0] + '.pdf', 3600);
+        if (error || !urlData?.signedUrl) return;
+        const resp = await fetch(urlData.signedUrl);
+        const blob = await resp.blob();
+        window._releveCurrentFile = new File([blob], data.fileName || months[0] + '.pdf', { type: 'application/pdf' });
+        window._relevePdfBytes = blob;
+        // recharger les pages PDF (thumb + itemRects) via pdf.js
+        if (typeof pdfjsLib === 'undefined' || !window.pdfjsLib) return;
+        const pdfjsLib = window.pdfjsLib;
+        const arrayBuffer = await blob.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        window._releveCurrentPdf = pdf;
+        window.relevePageThumbs = [];
+        for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 30); pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const thumbViewport = page.getViewport({ scale: 0.35 });
+            const thumbCanvas = document.createElement('canvas');
+            const thumbCtx = thumbCanvas.getContext('2d');
+            thumbCanvas.height = thumbViewport.height;
+            thumbCanvas.width = thumbViewport.width;
+            await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
+            const textContent = await page.getTextContent();
+            const itemRects = [];
+            let lineNo = 0;
+            for (const it of textContent.items) {
+                if (!it.str || !it.str.trim() || !it.transform) continue;
+                if (it.hasEOL) lineNo++;
+                const tx = page.getViewport({ scale: 1 }).convertToViewportPoint(it.transform[4], it.transform[5]);
+                itemRects.push({ str: it.str, x: tx[0], y: tx[1], w: (it.width || 0), h: (it.height || 10), _line: lineNo });
+            }
+            window.relevePageThumbs.push({
+                page: pageNum,
+                thumb: thumbCanvas.toDataURL('image/jpeg', 0.7),
+                text: '',
+                itemRects,
+                pageHeight: page.getViewport({ scale: 1 }).height,
+                pageWidth: page.getViewport({ scale: 1 }).width
+            });
+        }
+        console.log('[REVIEW] PDF restaure depuis l\'archive:', months[0]);
+    } catch (e) {
+        console.error('[REVIEW] restore pdf:', e);
+    }
+}
+window.restoreReviewPdfFromArchive = restoreReviewPdfFromArchive;
 
 window.clearSavedReview = function() {
     localStorage.removeItem(REVIEW_STORAGE_KEY);
