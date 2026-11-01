@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-DzgibGAX.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-uj9vDfle.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -274,17 +274,17 @@ window.attemptLogin = function() {
         </div>
         <!-- Vue plein écran : revue d'import de relevé -->
         <div id="releve-review-view" style="display:none; position:fixed; inset:0; z-index:9998; background:var(--color-bg, #f8fafc); overflow-y:auto;">
-            <div style="position:sticky; top:0; z-index:10; background:var(--color-bg, white); border-bottom:1px solid var(--color-border); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <button class="action-btn" onclick="closeReleveReview()">← Retour</button>
-                    <strong style="font-size:0.95rem;">Revue du relevé</strong>
-                    <span id="review-counter" style="font-size:0.78rem; color:var(--color-text-secondary);"></span>
+            <div class="review-topbar">
+                <div class="review-topbar-left">
+                    <button class="review-btn" onclick="closeReleveReview()" title="Retour">←</button>
+                    <strong class="review-title">Revue du relevé</strong>
+                    <span id="review-counter" class="review-counter"></span>
                 </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <button class="action-btn" style="background:#ef4444; color:white;" onclick="reviewReject()">✕ Rejeter la ligne</button>
-                    <button class="action-btn" style="background:#10b981; color:white;" onclick="reviewValidate()">✓ Valider et continuer</button>
-                    <button class="action-btn" onclick="reviewAddLine()" title="Ajouter une ligne non détectée sur le PDF">＋ Ligne manquante</button>
-                    <button class="action-btn primary" onclick="saveAllReviewed()">Enregistrer tout</button>
+                <div class="review-topbar-actions">
+                    <button class="review-btn" onclick="reviewAddLine()" title="Ajouter une ligne non détectée sur le PDF">＋<span>Ligne manquante</span></button>
+                    <button class="review-btn danger" onclick="reviewReject()" title="Rejeter la ligne (doublon)">✕<span>Rejeter</span></button>
+                    <button class="review-btn success" onclick="reviewValidate()" title="Valider et continuer">✓<span>Valider</span></button>
+                    <button class="review-btn primary" onclick="saveAllReviewed()" title="Enregistrer tout">💾<span>Enregistrer</span></button>
                 </div>
             </div>
             <div id="review-pdf-zone" style="height:35vh; overflow-y:auto; background:#e2e8f0; padding:10px; text-align:center; border-bottom:2px solid var(--color-border);"></div>
