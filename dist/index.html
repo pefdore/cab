@@ -3011,8 +3011,9 @@ window.attemptLogin = function() {
             <div class="modal-card" style="max-width: 520px; width: 95%; max-height: 88vh; overflow-y: auto;">
                 <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--color-border);">
                     <div>
-                        <h3 style="margin: 0; font-size: 1.05rem;">Saisie manuelle</h3>
-                        <p style="margin: 3px 0 0; font-size: 0.75rem; color: #b45309;">⚠️ À réserver aux mouvements <strong>absents du relevé bancaire</strong> (paiement espèces, chèque personnel, prélèvement non bancaire…). Tout ce qui figure sur le relevé doit passer par l'import du relevé.</p>
+                        <h3 id="manual-movement-title" style="margin: 0; font-size: 1.05rem;">Saisie manuelle</h3>
+                        <p id="manual-movement-warning" style="margin: 3px 0 0; font-size: 0.75rem; color: #b45309;">⚠️ À réserver aux mouvements <strong>absents du relevé bancaire</strong> (paiement espèces, chèque personnel, prélèvement non bancaire…). Tout ce qui figure sur le relevé doit passer par l'import du relevé.</p>
+                        <p id="manual-movement-libelle" style="display:none; margin: 6px 0 0; font-size: 0.78rem; color: var(--color-text-secondary); background: var(--color-bg-secondary, #f5f5f7); padding: 6px 10px; border-radius: 6px;"></p>
                     </div>
                     <button class="modal-close" onclick="closeManualMovementModal()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -3818,6 +3819,7 @@ window.attemptLogin = function() {
         m.style.display = 'flex';
         if (typeof fluxInitCategorySelects === 'function') fluxInitCategorySelects();
         if (typeof switchAddDepenseRecette === 'function') switchAddDepenseRecette('depense');
+        if (typeof adaptManualMovementModal === 'function') adaptManualMovementModal('depense', null);
         const d = document.getElementById('add-depenseDate');
         if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
       };
