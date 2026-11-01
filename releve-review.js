@@ -317,7 +317,8 @@ window.saveAllReviewed = async function() {
             date: t.date || new Date().toISOString().split('T')[0]
         }));
 
-    const btn = event?.target;
+    let btn = null;
+    try { btn = (typeof event !== 'undefined' && event?.target) ? event.target : null; } catch (e) { btn = null; }
     if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
 
     try {
