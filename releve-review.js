@@ -101,7 +101,16 @@ window.renderReleveReview = function() {
         { value: 'autres', label: 'Autres recettes' }
     ];
 
-    listEl.innerHTML = pendingTransactions.map((tr, index) => {
+    // lignes traitees masquees par defaut (option de revoir)
+    const showDone = window._reviewShowDone === true;
+    const visible = pendingTransactions
+        .map((tr, index) => ({ tr, index }))
+        .filter(({ tr }) => showDone || (!tr.confirmed && !tr.rejected));
+    const doneCount = pendingTransactions.filter(tr => tr.confirmed || tr.rejected).length;
+
+    listEl.innerHTML = `
+    ${doneCount > 0 ? `<button class="review-btn" style="margin-bottom:8px; font-size:0.72rem;" onclick="toggleReviewShowDone()">${showDone ? '▲ Masquer les lignes traitées' : `▼ Voir les ${doneCount} ligne${doneCount > 1 ? 's' : ''} traitée${doneCount > 1 ? 's' : ''}`}</button>` : ''}
+    ` + visible.map(({ tr, index }) => {
         const isDepense = tr.type === 'dépense' || tr.amount < 0;
         const categories = isDepense ? depenseCategories : recetteCategories;
         const selectedCategory = tr.category || (isDepense ? 'services' : 'autres');
@@ -572,4 +581,9 @@ window.hideReviewDisclaimer = function() {
     const disclaimer = document.getElementById('review-disclaimer');
     if (disclaimer) disclaimer.style.display = 'none';
     try { sessionStorage.setItem('reviewDisclaimerHidden', '1'); } catch (e) {}
+};
+
+window.toggleReviewShowDone = function() {
+    window._reviewShowDone = !window._reviewShowDone;
+    renderReleveReview();
 };
