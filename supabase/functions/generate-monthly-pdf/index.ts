@@ -199,14 +199,14 @@ function memoire(doc: any, montant: number, y: number, dateStr: string, doctorNa
   }
 }
 
-function tableauMedecine(doc: any, y: number, passages: Passage[]): { total: number, retenue: number, verser: number, y: number } {
+function tableauMedecine(doc: any, y: number, passages: Passage[], moisLabel: string): { total: number, retenue: number, verser: number, y: number } {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   const libMois = 'ETAT DES SOMMES DUES POUR LE MOIS DE '
   doc.text(libMois, MARGE, y + 6)
   const wLib = doc.getTextWidth(libMois)
   doc.setFont('helvetica', 'underline')
-  doc.text('{{MOIS}}', MARGE + wLib + 2, y + 6)
+  doc.text(moisLabel, MARGE + wLib + 2, y + 6)
 
   y += 10
   const col = [28, 58, 30, 58]
