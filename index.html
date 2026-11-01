@@ -3017,7 +3017,10 @@ window.attemptLogin = function() {
                         </div>
                         <button class="mm-close" onclick="closeManualMovementModal()">✕</button>
                     </div>
-                    <h3 id="manual-movement-title" style="margin: 8px 0 0; font-size: 1rem;">Saisie manuelle</h3>
+                    <div class="mm-header-info">
+                        <h3 id="manual-movement-title" style="margin: 0; font-size: 1rem;">Saisie manuelle</h3>
+                        <span id="mm-type-badge" class="review-badge debit">▼ DÉBIT</span>
+                    </div>
                     <p id="manual-movement-warning" class="mm-warning">⚠️ À réserver aux mouvements <strong>absents du relevé bancaire</strong> (espèces, chèque personnel…). Tout ce qui figure sur le relevé doit passer par l'import du relevé.</p>
                     <p id="manual-movement-libelle" style="display:none;" class="mm-releve-tag">📄 <span></span></p>
                 </div>
