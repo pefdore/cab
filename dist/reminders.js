@@ -70,6 +70,31 @@ function renderReminders() {
         }
     });
 
+    // Banniere de reprise d'import en cours
+    const resumeZone = document.getElementById('flux-releve-resume');
+    if (resumeZone) {
+        if (typeof hasSavedReview === 'function' && hasSavedReview()) {
+            const raw = localStorage.getItem('releve_review_progress_v1');
+            let fileName = '';
+            try {
+                const d = JSON.parse(raw);
+                fileName = d.fileName ? ' — ' + d.fileName : '';
+            } catch (e) {}
+            resumeZone.innerHTML = `
+                <div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.4); border-radius:10px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                    <span style="font-size:0.8rem;">⏸ <strong>Import de relevé en cours${fileName ? ' — ' + fileName : ''}</strong> — les lignes validées seront enregistrées à la fin de la revue.</span>
+                    <span style="display:flex; gap:8px;">
+                        <button class="action-btn primary" style="padding:6px 14px; font-size:0.78rem;" onclick="resumeSavedReview()">▶ Reprendre</button>
+                        <button class="action-btn" style="padding:6px 14px; font-size:0.78rem;" onclick="clearSavedReview(); renderReminders();">Abandonner</button>
+                    </span>
+                </div>`;
+            resumeZone.style.display = 'block';
+        } else {
+            resumeZone.innerHTML = '';
+            resumeZone.style.display = 'none';
+        }
+    }
+
     // Checklist annuelle dans la vue Flux (pliee par defaut)
     const holder = document.getElementById('flux-reminders');
     if (!holder) return;
