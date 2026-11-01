@@ -15,6 +15,11 @@ window.openReleveReview = function() {
     if (!pendingTransactions.length) return;
     const view = document.getElementById('releve-review-view');
     if (!view) return;
+    const disclaimer = document.getElementById('review-disclaimer');
+    if (disclaimer) {
+        const hidden = sessionStorage.getItem('reviewDisclaimerHidden') === '1';
+        disclaimer.style.display = hidden ? 'none' : 'flex';
+    }
     window._reviewState.current = pendingTransactions.findIndex(t => !t.confirmed && !t.rejected);
     if (window._reviewState.current < 0) window._reviewState.current = 0;
     document.getElementById('releve-upload-modal').style.display = 'none';
@@ -562,3 +567,9 @@ document.addEventListener('click', (e) => {
         document.querySelectorAll('.souscat-chips').forEach(el => el.style.display = 'none');
     }
 });
+
+window.hideReviewDisclaimer = function() {
+    const disclaimer = document.getElementById('review-disclaimer');
+    if (disclaimer) disclaimer.style.display = 'none';
+    try { sessionStorage.setItem('reviewDisclaimerHidden', '1'); } catch (e) {}
+};

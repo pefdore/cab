@@ -276,16 +276,20 @@ window.attemptLogin = function() {
         <div id="releve-review-view" style="display:none; position:fixed; inset:0; z-index:9998; background:var(--color-bg, #f8fafc); overflow-y:auto;">
             <div class="review-topbar">
                 <div class="review-topbar-left">
-                    <button class="review-btn" onclick="closeReleveReview()" title="Retour">←</button>
+                    <button class="review-btn" onclick="closeReleveReview()" title="Retour">←<span>Retour</span></button>
                     <strong class="review-title">Revue du relevé</strong>
                     <span id="review-counter" class="review-counter"></span>
                 </div>
                 <div class="review-topbar-actions">
-                    <button class="review-btn" onclick="reviewAddLine()" title="Ajouter une ligne non détectée sur le PDF">＋<span>Ligne manquante</span></button>
+                    <button class="review-btn" onclick="reviewAddLine()" title="Ajouter une ligne non détectée sur le PDF">＋<span>Ligne manq.</span></button>
                     <button class="review-btn danger" onclick="reviewReject()" title="Rejeter la ligne (doublon)">✕<span>Rejeter</span></button>
                     <button class="review-btn success" onclick="reviewValidate()" title="Valider et continuer">✓<span>Valider</span></button>
                     <button class="review-btn primary" onclick="saveAllReviewed()" title="Enregistrer tout">💾<span>Enregistrer</span></button>
                 </div>
+            </div>
+            <div id="review-disclaimer" class="review-disclaimer" style="display:none;">
+                <span>⚠️ <strong>Lecture automatique :</strong> des erreurs de débit/crédit, de montant ou de catégorie peuvent subsister — vérifiez chaque ligne avec le PDF surligné avant de valider.</span>
+                <button class="review-disclaimer-close" onclick="hideReviewDisclaimer()" title="Ne plus afficher">✕</button>
             </div>
             <div id="review-pdf-zone" style="height:35vh; overflow-y:auto; background:#e2e8f0; padding:10px; text-align:center; border-bottom:2px solid var(--color-border);"></div>
             <div style="max-width:860px; margin:0 auto; padding:14px 16px 60px;">

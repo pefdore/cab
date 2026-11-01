@@ -11213,3 +11213,35 @@ select.admin-search { min-width: 170px; }
     .review-btn span { display: none; }  /* icônes seules sur mobile */
     .review-topbar-actions { gap: 5px; }
 }
+
+/* ===== Disclaimer lecture automatique ===== */
+.review-disclaimer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: rgba(245,158,11,0.12);
+    border-bottom: 1px solid rgba(245,158,11,0.35);
+    color: #b45309;
+    font-size: 0.72rem;
+    padding: 6px 12px;
+    line-height: 1.35;
+}
+.review-disclaimer-close {
+    background: none;
+    border: none;
+    color: #b45309;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.review-disclaimer-close:hover { background: rgba(245,158,11,0.2); }
+
+/* libelles courts visibles aussi sur mobile */
+@media (max-width: 640px) {
+    .review-btn { font-size: 0.72rem; gap: 4px; padding: 8px 9px; }
+    .review-btn span { display: inline; font-size: 0.68rem; }
+    .review-title { display: none; }  /* le titre laisse la place aux boutons */
+}
