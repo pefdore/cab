@@ -51,28 +51,37 @@ window.renderReleveReview = function() {
     // --- Bandeau PDF : rendu de la page courante avec surlignage de la ligne ---
     renderReviewPdf(t);
 
-    // --- Compteur + estimation temps restant ---
+    // --- Bloc progression + estimation temps restant ---
     const done = pendingTransactions.filter(x => x.confirmed || x.rejected).length;
     const total = pendingTransactions.length;
     const counter = document.getElementById('review-counter');
     if (counter) {
-        // rythme reel : temps moyen entre validations (memoire de session)
         if (!window._reviewTiming) window._reviewTiming = { stamps: [] };
         const remaining = total - done;
-        let etaTxt = '';
+        let etaSec = null;
         if (window._reviewTiming.stamps.length >= 2 && remaining > 0) {
             const stamps = window._reviewTiming.stamps.slice(-10);
             let sum = 0;
             for (let i = 1; i < stamps.length; i++) sum += stamps[i] - stamps[i - 1];
             const avgSec = (sum / (stamps.length - 1)) / 1000;
-            const eta = Math.max(5, Math.round(avgSec * remaining));
-            etaTxt = eta > 90 ? ` · ~${Math.round(eta / 60)} min restantes` : ` · ~${eta} s restantes`;
+            etaSec = Math.max(5, Math.round(avgSec * remaining));
         } else if (remaining > 0) {
-            // estimation par defaut : ~8 s par ligne
-            const eta = remaining * 8;
-            etaTxt = eta > 90 ? ` · ~${Math.round(eta / 60)} min restantes` : ` · ~${eta} s restantes`;
+            etaSec = remaining * 8;
         }
-        counter.innerHTML = `<strong>${done}</strong> / ${total} traitées · ligne <strong>${cur + 1}</strong> en cours${etaTxt}`;
+        let etaHtml = '';
+        if (remaining > 0 && etaSec !== null) {
+            etaHtml = etaSec >= 60
+                ? `<span class="review-eta"><span class="review-eta-num">~${Math.max(1, Math.round(etaSec / 60))}</span> min restantes</span>`
+                : `<span class="review-eta"><span class="review-eta-num">~${etaSec}</span> s restantes</span>`;
+        } else {
+            etaHtml = `<span class="review-eta done">✓ Terminé !</span>`;
+        }
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        counter.innerHTML = `${etaHtml}
+            <span class="review-progress-wrap">
+                <span class="review-progress-bar"><span class="review-progress-fill" style="width:${pct}%;"></span></span>
+                <span class="review-progress-txt"><strong>${done}</strong>/${total} · ${pct}%</span>
+            </span>`;
     }
 
     // --- Liste des lignes ---

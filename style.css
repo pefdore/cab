@@ -11245,3 +11245,48 @@ select.admin-search { min-width: 170px; }
     .review-btn span { display: inline; font-size: 0.68rem; }
     .review-title { display: none; }  /* le titre laisse la place aux boutons */
 }
+
+/* ===== Progression + temps restant (vue de revue) ===== */
+.review-counter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.review-eta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.3);
+    color: #2563eb;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+.review-eta-num { font-size: 0.92rem; font-weight: 800; }
+.review-eta.done { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #059669; }
+.review-progress-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+.review-progress-bar {
+    width: 90px;
+    height: 8px;
+    background: var(--color-bg-secondary, #e5e7eb);
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.review-progress-fill {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #2563eb);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+.review-progress-txt { font-size: 0.7rem; color: var(--color-text-secondary); white-space: nowrap; }
