@@ -12501,3 +12501,15 @@ body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }
     gap: 8px;
     align-items: flex-start;
 }
+
+/* chip etendue quand la checklist est ouverte */
+#flux-reminders .module-card.flux-chip-card:has(#releve-checklist-body[data-open="1"]) {
+    border-radius: var(--md-radius-xl) !important;
+    width: 100%;
+    display: block;
+}
+#flux-recon-pending .module-card:has(#recon-pending-body:not([style*="none"])) {
+    border-radius: var(--md-radius-xl) !important;
+    width: 100%;
+    display: block;
+}
