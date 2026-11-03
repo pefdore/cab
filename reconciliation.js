@@ -165,7 +165,7 @@ window.renderReconPending = function() {
     container.innerHTML = `
         <div class="module-card" style="border-left: 3px solid #f59e0b;">
             <div onclick="toggleReconPending()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
-                <h3 style="margin:0; color:#b45309; font-size:0.88rem;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
+                <h3 style="margin:0; color:#b45309; font-size:0.82rem;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
                 <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼'}</span>
             </div>
             <div id="recon-pending-body" style="display:${open ? 'block' : 'none'}; margin-top:8px;">

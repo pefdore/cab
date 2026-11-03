@@ -12465,3 +12465,39 @@ body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }
 
 /* ---- Sélection MD3 (tint primaire léger) ---- */
 ::selection { background: rgba(79,70,229,0.18); }
+
+/* ═════ Chips compactes : checklist + rapprochement fusionnés en tête ═════ */
+#flux-reminders .module-card.flux-chip-card,
+#flux-recon-pending .module-card.flux-chip-card {
+    border-radius: var(--radius-full) !important;
+    padding: 8px 16px !important;
+    background: var(--md-surface-high) !important;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    box-shadow: var(--elev-1) !important;
+    transition: transform 0.25s var(--md-spring), box-shadow 0.2s ease;
+}
+#flux-reminders .module-card.flux-chip-card:hover,
+#flux-recon-pending .module-card.flux-chip-card:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: var(--elev-2) !important;
+}
+#flux-recon-pending .module-card.flux-chip-card {
+    border-left: 3px solid #f59e0b !important;
+}
+/* le corps detaille s'etend sous la chip quand deplie */
+#flux-reminders .module-card.flux-chip-card[style*="display"],
+#flux-reminders .flux-chip-card.depliee,
+#flux-recon-pending .flux-chip-card.depliee {
+    border-radius: var(--md-radius-xl) !important;
+    width: 100%;
+}
+#flux-recon-pending > div,
+#flux-reminders > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+}
