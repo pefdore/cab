@@ -12017,3 +12017,189 @@ input.form-input, select.form-input, .form-input {
     .flux-hero-balance { align-items: flex-start; }
     .flux-hero-top { flex-direction: column; gap: 10px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MATERIAL DESIGN 3 — EXPRESSIVE (couche finale, remplace le hero)
+   Surfaces tonales, grandes formes, ressorts élastiques.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+    --md-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --md-spring-soft: cubic-bezier(0.25, 1.2, 0.5, 1);
+    --md-radius-xl: 20px;
+    --md-radius-2xl: 28px;
+    --md-surface: var(--color-bg);
+    --md-surface-low: var(--color-bg-subtle);
+    --md-surface-high: var(--color-bg-elevated);
+    --md-primary: #4f46e5;
+    --md-primary-container: #e8e6ff;
+    --md-on-primary-container: #2a1f9e;
+    --md-tertiary-container: #ffd9e8;
+}
+
+/* ---- HERO : surfaces tonales, zéro dégradé ---- */
+.flux-hero {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 0 6px 0 !important;
+    border-radius: 0 !important;
+    color: var(--color-text) !important;
+    overflow: visible !important;
+}
+.flux-hero::before { display: none !important; }
+
+.flux-hero-top {
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+/* Sélecteur de mois : pilule tonale MD3 */
+.flux-hero-month {
+    background: var(--md-surface-high) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    border-radius: var(--radius-full) !important;
+    padding: 6px !important;
+    box-shadow: var(--elev-1) !important;
+    backdrop-filter: none !important;
+    animation: md-pop 0.55s var(--md-spring) both;
+}
+.fhero-month-label strong {
+    color: var(--color-text) !important;
+    font-size: 1.02rem !important;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+.fhero-month-label span { color: var(--color-text-tertiary) !important; }
+.fhero-arrow {
+    background: var(--color-bg-muted) !important;
+    color: var(--color-text) !important;
+    border-radius: var(--radius-full);
+    font-size: 1.15rem !important;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease;
+}
+.fhero-arrow:hover { background: var(--md-primary-container) !important; color: var(--md-on-primary-container) !important; }
+.fhero-arrow:active { transform: scale(0.88); }
+
+/* Solde : display MD3 sur surface tonale claire */
+.flux-hero-balance {
+    align-items: flex-start !important;
+    background: var(--md-surface-low);
+    border-radius: var(--md-radius-2xl);
+    padding: 10px 20px 12px;
+    animation: md-pop 0.55s var(--md-spring) 0.05s both;
+}
+.fhero-balance-label { color: var(--color-text-secondary) !important; }
+.fhero-balance-value {
+    color: var(--md-primary) !important;
+    font-size: clamp(1.7rem, 4.5vw, 2.3rem) !important;
+    font-weight: 800 !important;
+    text-shadow: none !important;
+    letter-spacing: -0.035em;
+}
+.fhero-balance-value.neg { color: #d93036 !important; }
+.fhero-trend { color: var(--color-text-secondary) !important; }
+.fhero-trend.up { color: #0d8a5f !important; }
+.fhero-trend.down { color: #d93036 !important; }
+
+/* KPI : cartes tonales très arrondies */
+.flux-hero-kpis { gap: 10px; }
+.fhero-kpi {
+    background: var(--md-surface-high) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    border-radius: var(--md-radius-xl) !important;
+    backdrop-filter: none !important;
+    box-shadow: var(--elev-1);
+    padding: 14px 16px !important;
+    transition: transform 0.3s var(--md-spring), box-shadow 0.2s ease;
+    animation: md-pop 0.55s var(--md-spring) both;
+}
+.fhero-kpi:nth-child(1) { animation-delay: 0.08s; }
+.fhero-kpi:nth-child(2) { animation-delay: 0.14s; }
+.fhero-kpi:nth-child(3) { animation-delay: 0.20s; }
+.fhero-kpi:nth-child(4) { animation-delay: 0.26s; }
+.fhero-kpi:hover { transform: translateY(-3px) scale(1.015); box-shadow: var(--elev-2); }
+.fhero-kpi:active { transform: scale(0.97); }
+.fhero-kpi-icon { border-radius: var(--radius-full) !important; }
+.fhero-kpi.income .fhero-kpi-icon { background: #d7f5e9 !important; color: #0d8a5f !important; }
+.fhero-kpi.expense .fhero-kpi-icon { background: #fde3e3 !important; color: #d93036 !important; }
+.fhero-kpi.year .fhero-kpi-icon { background: var(--md-primary-container) !important; color: var(--md-on-primary-container) !important; }
+.fhero-kpi-label { color: var(--color-text-secondary) !important; }
+.fhero-kpi-value { color: var(--color-text) !important; }
+
+/* Mini-graphe : tuile tonale, barres en pilules avec ressort */
+.fhero-chart {
+    background: var(--md-surface-low) !important;
+    border: none !important;
+    border-radius: var(--md-radius-xl) !important;
+    backdrop-filter: none !important;
+    height: 64px !important;
+    padding: 10px 12px !important;
+}
+.fchart-bar {
+    border-radius: var(--radius-full) !important;
+    transition: height 0.6s var(--md-spring), transform 0.25s var(--md-spring), filter 0.15s ease;
+    animation: md-bar-in 0.7s var(--md-spring) both;
+}
+.fchart-bar:nth-child(odd) { animation-delay: 0.05s; }
+.fchart-bar.pos { background: #34d399 !important; box-shadow: none !important; }
+.fchart-bar.neg { background: #fb8a8a !important; box-shadow: none !important; }
+.fchart-bar:hover { transform: scaleY(1.12); filter: brightness(1.1); }
+
+.flux-hero-sub { margin: 12px 0 var(--space-4) !important; }
+
+/* ---- MD3 Expressive : le reste de la page ---- */
+.module-card {
+    border-radius: var(--md-radius-xl) !important;
+    transition: transform 0.3s var(--md-spring), box-shadow 0.25s ease !important;
+}
+.flux-row {
+    border-radius: 16px !important;
+    animation: md-pop 0.5s var(--md-spring) both;
+}
+.flux-row:hover { transform: translateY(-2px) !important; }
+.flux-row:active { transform: scale(0.985) !important; }
+.flux-row-main .category,
+.depense-item .category {
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    transition: transform 0.25s var(--md-spring);
+}
+.flux-row:hover .category { transform: scale(1.04); }
+.review-btn, .action-btn {
+    border-radius: var(--radius-full) !important;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease !important;
+}
+.review-btn:active, .action-btn:active { transform: scale(0.93) !important; }
+.fab-btn {
+    border-radius: var(--radius-full) !important;
+    box-shadow: var(--elev-2) !important;
+    transition: transform 0.3s var(--md-spring) !important;
+}
+.fab-btn:hover { transform: scale(1.06) !important; }
+.fab-btn:active { transform: scale(0.92) !important; }
+
+/* ---- Animations MD3 ---- */
+@keyframes md-pop {
+    0% { opacity: 0; transform: translateY(16px) scale(0.94); }
+    60% { opacity: 1; transform: translateY(-4px) scale(1.012); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes md-bar-in {
+    0% { height: 2px; opacity: 0; }
+    70% { opacity: 1; }
+    100% { opacity: 1; }
+}
+
+[data-theme="dark"] .flux-hero-balance { background: var(--md-surface-low); }
+[data-theme="dark"] .fhero-kpi { background: var(--color-bg-subtle) !important; }
+[data-theme="dark"] .fhero-kpi.income .fhero-kpi-icon { background: rgba(16,185,129,0.18) !important; color: #6ee7b7 !important; }
+[data-theme="dark"] .fhero-kpi.expense .fhero-kpi-icon { background: rgba(239,68,68,0.18) !important; color: #fca5a5 !important; }
+
+@media (max-width: 760px) {
+    .flux-hero-balance { padding: 8px 14px 10px; border-radius: var(--md-radius-xl); }
+    .flux-hero-top { margin-bottom: 10px; }
+}
