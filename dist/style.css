@@ -12203,3 +12203,130 @@ input.form-input, select.form-input, .form-input {
     .flux-hero-balance { padding: 8px 14px 10px; border-radius: var(--md-radius-xl); }
     .flux-hero-top { margin-bottom: 10px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE FLUX — habillage MD3 Expressive complet
+   ═══════════════════════════════════════════════════════════════ */
+.md-page { display: flex; flex-direction: column; gap: 14px; }
+
+/* Headline MD3 : grande typo display */
+.md-section-head { padding: 6px 4px 2px; }
+.md-headline {
+    font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    margin: 0 0 4px;
+    color: var(--color-text);
+}
+.md-headline-sub {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+    max-width: 640px;
+}
+
+/* Cartes de section MD3 */
+.md-card {
+    border-radius: var(--md-radius-2xl) !important;
+    padding: 18px 20px !important;
+    background: var(--md-surface-high) !important;
+    animation: md-pop 0.55s var(--md-spring) both;
+}
+.md-card-head { margin-bottom: 6px; }
+.md-card h3 {
+    font-size: 1.02rem !important;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 12px;
+}
+.md-card-head h3 { margin-bottom: 12px; }
+
+/* Cartes JS (checklist + rapprochement) : meme grammaire */
+#flux-reminders .module-card,
+#flux-recon-pending .module-card {
+    border-radius: var(--md-radius-2xl) !important;
+    border-left: none !important;
+    padding: 16px 18px !important;
+    background: var(--md-surface-high) !important;
+    animation: md-pop 0.55s var(--md-spring) both;
+}
+#flux-reminders .module-card h3,
+#flux-recon-pending .module-card h3 { font-size: 0.95rem !important; }
+
+/* Bandeau de reprise : tonal */
+#flux-releve-resume > div {
+    border-radius: var(--md-radius-2xl) !important;
+    border: none !important;
+    background: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container);
+    animation: md-pop 0.55s var(--md-spring) both;
+}
+#flux-releve-resume strong { color: var(--md-on-primary-container) !important; }
+
+/* Jours : légendes MD3 */
+.flux-day {
+    border-top: none !important;
+    padding-top: 0 !important;
+    margin-bottom: 16px;
+}
+.flux-day-header {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 7px;
+    background: var(--md-surface-low);
+    border-radius: var(--radius-full);
+    padding: 5px 14px !important;
+    color: var(--color-text-secondary) !important;
+    margin-bottom: 10px;
+    letter-spacing: 0.04em;
+}
+.flux-day-header::before {
+    width: 8px; height: 8px;
+    background: var(--md-primary);
+    opacity: 1 !important;
+}
+
+/* Lignes : surface tonale basse, hover tonal haut */
+.flux-row {
+    background: var(--md-surface-low) !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 18px !important;
+    padding: 14px 16px !important;
+    margin-bottom: 8px;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+.flux-row:hover {
+    background: var(--md-surface-high) !important;
+    transform: translateY(-2px) scale(1.005);
+    box-shadow: var(--elev-1) !important;
+}
+.flux-row:active { transform: scale(0.98) !important; }
+
+/* Récap catégorie + mois : lignes tonales MD3 */
+#flux-category-summary > *,
+#flux-months-summary > * {
+    border-radius: 14px !important;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+.flux-month-row {
+    background: var(--md-surface-low) !important;
+    border-radius: 14px !important;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease;
+    cursor: pointer;
+}
+.flux-month-row:hover { background: var(--md-primary-container) !important; transform: scale(1.01); }
+.flux-month-row.current { background: var(--md-primary-container) !important; }
+
+/* FAB MD3 */
+.fab-btn, .fab-main {
+    transition: transform 0.35s var(--md-spring), box-shadow 0.25s ease !important;
+}
+.fab-btn:hover, .fab-main:hover { transform: translateY(-3px) scale(1.05); }
+.fab-btn:active, .fab-main:active { transform: scale(0.9); }
+
+@media (max-width: 640px) {
+    .md-card { padding: 14px !important; border-radius: 20px !important; }
+    .md-headline { font-size: 1.45rem; }
+}
