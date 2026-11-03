@@ -12330,3 +12330,30 @@ input.form-input, select.form-input, .form-input {
     .md-card { padding: 14px !important; border-radius: 20px !important; }
     .md-headline { font-size: 1.45rem; }
 }
+
+
+/* ═════ ANIMATIONS : une seule fois a l'activation de la vue ═════
+   Les re-rendus (checklist, sync, sauvegarde) ne rejouent plus md-pop :
+   le body est arme 900ms au changement de vue uniquement. */
+.flux-row, .md-card,
+#flux-reminders .module-card, #flux-recon-pending .module-card,
+#flux-releve-resume > div, .fhero-kpi, .flux-hero-month, .flux-hero-balance,
+#flux-category-summary > *, #flux-months-summary > * {
+    animation: none !important;
+}
+body.md-armed .flux-row,
+body.md-armed .md-card,
+body.md-armed #flux-reminders .module-card,
+body.md-armed #flux-recon-pending .module-card,
+body.md-armed #flux-releve-resume > div,
+body.md-armed .fhero-kpi,
+body.md-armed .flux-hero-month,
+body.md-armed .flux-hero-balance,
+body.md-armed #flux-category-summary > *,
+body.md-armed #flux-months-summary > * {
+    animation: md-pop 0.55s var(--md-spring) both !important;
+}
+body.md-armed .fhero-kpi:nth-child(1) { animation-delay: 0.08s !important; }
+body.md-armed .fhero-kpi:nth-child(2) { animation-delay: 0.14s !important; }
+body.md-armed .fhero-kpi:nth-child(3) { animation-delay: 0.20s !important; }
+body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }

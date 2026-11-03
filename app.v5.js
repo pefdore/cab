@@ -4895,7 +4895,16 @@ document.getElementById('deleteAllData')?.addEventListener('click', async (e) =>
     if (ok) setTimeout(() => location.reload(), 1200);
 });
 
+// Arme les animations d'entree MD3 pendant 900ms (uniquement au changement de vue,
+// jamais lors des re-rendus de donnees -> plus de cartes qui sautent)
+function mdArmAnimations() {
+    document.body.classList.add('md-armed');
+    clearTimeout(window._mdArmTimer);
+    window._mdArmTimer = setTimeout(() => document.body.classList.remove('md-armed'), 900);
+}
+
 function switchView(viewName) {
+    mdArmAnimations();
     try { sessionStorage.setItem('cab_current_view', viewName); } catch (e) {}
     if (viewName !== 'settings') {
         const overlay = document.querySelector('.settings-page-overlay');
