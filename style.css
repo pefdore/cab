@@ -12357,3 +12357,111 @@ body.md-armed .fhero-kpi:nth-child(1) { animation-delay: 0.08s !important; }
 body.md-armed .fhero-kpi:nth-child(2) { animation-delay: 0.14s !important; }
 body.md-armed .fhero-kpi:nth-child(3) { animation-delay: 0.20s !important; }
 body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIT MD3 EXPRESSIVE — conformité de chaque composante
+   Icon buttons circulaires, états par state-layer tonal,
+   récap catégories/mois en rangées tonales, note en champ MD3.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ---- Icon buttons : circulaires + state-layer tonal (spec MD3) ---- */
+.icon-btn-28 {
+    border-radius: var(--radius-full) !important;
+    background: transparent !important;
+    transition: background 0.2s ease, transform 0.25s var(--md-spring);
+}
+.icon-btn-28:hover {
+    background: rgba(79,70,229,0.10) !important;  /* hover state layer 10% */
+    color: var(--md-primary) !important;
+    transform: scale(1.08);
+}
+.icon-btn-28:active {
+    background: rgba(79,70,229,0.16) !important;  /* pressed state layer */
+    transform: scale(0.90);
+}
+.icon-btn-28.danger:hover { background: rgba(217,48,54,0.12) !important; color: #d93036 !important; }
+.icon-btn-28.active { background: var(--md-primary-container) !important; color: var(--md-on-primary-container) !important; }
+
+/* ---- Note inline : champ texte MD3 (soulignement focus) ---- */
+.flux-note {
+    border-radius: 6px;
+    padding: 1px 6px !important;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.flux-note:hover { background: rgba(79,70,229,0.06); }
+.flux-note:focus {
+    background: var(--md-surface-high);
+    box-shadow: 0 0 0 2px rgba(79,70,229,0.35);
+    white-space: normal;
+}
+
+/* ---- Récap par catégorie : rangées tonales MD3 ---- */
+.flux-cat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--md-surface-low);
+    margin-bottom: 6px;
+    transition: background 0.15s ease;
+    font-variant-numeric: tabular-nums;
+}
+.flux-cat-row:hover { background: var(--md-surface-high); }
+.flux-cat-row .category { margin: 0; }
+.flux-cat-amounts { display: flex; gap: 10px; font-weight: 700; font-size: 0.82rem; }
+
+/* ---- Mois par mois : label gras + montants tabulaires ---- */
+.flux-month-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px !important;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+}
+.flux-month-label { font-weight: 600; color: var(--color-text); }
+.flux-month-row.current .flux-month-label { font-weight: 800; }
+
+/* ---- Vide : état vide MD3 (centré, discret, icône) ---- */
+.no-entries {
+    text-align: center;
+    padding: 26px 16px;
+    color: var(--color-text-tertiary);
+    font-size: 0.82rem;
+    background: var(--md-surface-low);
+    border-radius: var(--md-radius-xl);
+    margin: 6px 0;
+}
+.no-entries::before {
+    content: "◌";
+    display: block;
+    font-size: 1.6rem;
+    margin-bottom: 6px;
+    opacity: 0.4;
+}
+
+/* ---- Checklist : pastilles de mois MD3 (jour générées) ---- */
+#flux-reminders .month-chip,
+#flux-reminders [class*="reminder-month"] {
+    border-radius: var(--radius-full) !important;
+}
+
+/* ---- FAB : vérification MD3 (déjà rond, on affine l'état) ---- */
+.fab-main {
+    transition: transform 0.35s var(--md-spring), box-shadow 0.25s ease !important;
+}
+.fab-main:active { transform: scale(0.88) !important; }
+.fab-menu-item {
+    border-radius: 14px !important;
+    transition: transform 0.25s var(--md-spring) !important;
+}
+.fab-menu-item:hover { transform: translateX(2px) scale(1.02) !important; }
+
+/* ---- Scroll discrète dans les listes ---- */
+#flux-daily-list::-webkit-scrollbar { width: 8px; }
+#flux-daily-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 8px; }
+
+/* ---- Sélection MD3 (tint primaire léger) ---- */
+::selection { background: rgba(79,70,229,0.18); }
