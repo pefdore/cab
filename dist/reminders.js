@@ -109,7 +109,7 @@ function renderReminders() {
     const headerTxt = pendingCount > 0
         ? `${pendingCount} relevé${pendingCount > 1 ? 's' : ''} en attente d'import`
         : `Tous les relevés ${new Date().getFullYear()} sont importés ✅`;
-    holder.innerHTML = `
+    const __checklistHtml = `
         <div class="module-card flux-chip-card" style="border-left: 3px solid var(--color-primary);">
             <div onclick="toggleReleveChecklist()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
                 <h3 style="margin:0; color:${headerColor}; font-size:0.82rem;">📅 ${headerTxt}</h3>
@@ -133,6 +133,10 @@ function renderReminders() {
             </div>
             </div>
         </div>`;
+    // DIFF : ne pas reecrire le DOM si le contenu est identique -> zero clignotement
+    if (window.__lastChecklistHtml === __checklistHtml) return;
+    window.__lastChecklistHtml = __checklistHtml;
+    holder.innerHTML = __checklistHtml;
 }
 
 window.renderReminders = renderReminders;

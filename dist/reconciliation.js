@@ -158,12 +158,13 @@ window.renderReconPending = function() {
     if (!container) return;
     const pending = reconUnmatchedDepenses();
     if (pending.length === 0) {
+        window.__lastReconHtml = '';
         container.innerHTML = '';
         return;
     }
     const open = window._reconListOpen === true;
-    container.innerHTML = `
-        <div class="module-card" style="border-left: 3px solid #f59e0b;">
+    const __reconHtml = `
+        <div class="module-card flux-chip-card" style="border-left: 3px solid #f59e0b;">
             <div onclick="toggleReconPending()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
                 <h3 style="margin:0; color:#b45309; font-size:0.82rem;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
                 <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼'}</span>
@@ -185,6 +186,10 @@ window.renderReconPending = function() {
             ${pending.length > 8 ? `<div style="font-size:0.75rem; color:var(--color-text-secondary); padding:4px 2px;">+ ${pending.length - 8} autre(s)…</div>` : ''}
             </div>
         </div>`;
+    // DIFF : ne pas reecrire le DOM si identique -> zero clignotement
+    if (window.__lastReconHtml === __reconHtml) return;
+    window.__lastReconHtml = __reconHtml;
+    container.innerHTML = __reconHtml;
 };
 
 // Debounce du rendu du panneau de rapprochement
