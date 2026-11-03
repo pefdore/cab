@@ -23,3 +23,5 @@ ALTER TABLE cabinet_recettes ADD COLUMN IF NOT EXISTS releve_libelle TEXT;
 ALTER TABLE cabinet_recettes ADD COLUMN IF NOT EXISTS note TEXT;
 ALTER TABLE cabinet_depenses ADD COLUMN IF NOT EXISTS sous_categorie TEXT;
 ALTER TABLE cabinet_recettes ADD COLUMN IF NOT EXISTS sous_categorie TEXT;
+-- Nettoyage : supprimer les traces d'import erronees (moins de 2 lignes reelles)
+DELETE FROM releve_imports WHERE transactions_count < 2;

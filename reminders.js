@@ -34,7 +34,10 @@ function remindersMissingMonths() {
 function remindersYearMonths() {
     const now = new Date();
     const months = [];
-    for (let m = 0; m <= now.getMonth(); m++) {
+    // le relevé du mois COURANT n'existe pas encore (il sort en début de mois suivant) :
+    // on n'attend que les mois écoulés (janvier -> mois précédent)
+    const lastExpected = now.getMonth() - 1;
+    for (let m = 0; m <= Math.max(0, lastExpected); m++) {
         const d = new Date(now.getFullYear(), m, 1);
         const mKey = remindersMonthKey(d).slice(0, 7);
         const depCount = (typeof cabinetDepenses !== 'undefined' ? cabinetDepenses : []).filter(e => (e.date || '').slice(0, 7) === mKey).length;

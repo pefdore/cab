@@ -8235,6 +8235,7 @@ function parseRelevéLocalement(text) {
     const lines = (text || '').split(/\r?\n/);
     const transactions = [];
     let currentYear = new Date().getFullYear();
+    let sawExplicitYear = false;
     let sawFirstDate = false;
     let currentPage = 1;
     let currentLineIdx = 0;
@@ -8278,18 +8279,21 @@ function parseRelevéLocalement(text) {
         if (dateIso) {
             dateStr = dateIso[0];
             currentYear = parseInt(dateIso[1], 10);
+            sawExplicitYear = true;
         } else if (dateFr) {
             let y = dateFr[3];
             if (y.length === 2) y = '20' + y;
             dateStr = `${y}-${String(parseInt(dateFr[2], 10)).padStart(2, '0')}-${String(parseInt(dateFr[1], 10)).padStart(2, '0')}`;
             currentYear = parseInt(y, 10);
+            sawExplicitYear = true;
         } else if (dateShort && parseInt(dateShort[1], 10) <= 31 && parseInt(dateShort[2], 10) >= 1 && parseInt(dateShort[2], 10) <= 12) {
             let y = currentYear;
             const nowM = new Date().getMonth() + 1;
             const lineM = parseInt(dateShort[2], 10);
             // un relevé ne peut pas contenir un mois futur : si le mois dépasse le mois courant
-            // (ex. "12/12" lu en octobre), c'est l'année précédente
-            if (lineM > nowM) y = y - 1;
+            // (ex. "12/12" lu en octobre), c'est l'année précédente.
+            // MAIS si le relevé porte une année explicite (en-tête), elle fait foi.
+            if (!sawExplicitYear && lineM > nowM) y = y - 1;
             dateStr = `${y}-${String(lineM).padStart(2, '0')}-${String(parseInt(dateShort[1], 10)).padStart(2, '0')}`;
         }
 
@@ -11491,12 +11495,16 @@ async function recordReleveImport(depenses, recettes) {
         const months = [...new Set(all.map(t => (t.date || '').slice(0, 7)))].filter(Boolean);
         if (!months.length) return;
         for (const m of months) {
+            const count = all.filter(t => (t.date || '').slice(0, 7) === m).length;
+            // un mois n'est valide que par un import reel (au moins 2 lignes),
+            // pas par une ligne manuelle isolee datee du jour
+            if (count < 2) continue;
             await supabaseClient.from('releve_imports').insert({
                 user_id: currentUser.id,
                 cabinet_id: (await getCabinetId()) || null,
                 month: m,
                 file_name: window._releveCurrentFile?.name || null,
-                transactions_count: all.filter(t => (t.date || '').slice(0, 7) === m).length
+                transactions_count: count
             });
         }
         window._releveImportedMonths = null; // invalide le cache
