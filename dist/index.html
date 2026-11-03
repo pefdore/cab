@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-CzZWZNDG.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-D8J2LFJK.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -464,14 +464,14 @@ window.attemptLogin = function() {
                         <polyline points="9 22 9 12 15 12 15 22"/>
                     </svg>
                     Cabinet
-                    <span id="secNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#f59e0b; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
                 </a>
-                <a href="#" class="nav-item" data-view="settings">
+                <a href="#" class="nav-item" data-view="settings" style="position:relative;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                     </svg>
                     Paramètres
+                    <span id="secNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#f59e0b; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
                 </a>
             </nav>
             <div class="user-section">
@@ -1378,6 +1378,22 @@ window.attemptLogin = function() {
                             <path d="M9 18l6-6-6-6"/>
                         </svg>
                     </button>
+                    <button type="button" class="settings-card" data-settings-page="integrations" id="settingsCardIntegrations" onclick="openSettingsPage('integrations')" style="position:relative;">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Intégrations</h3>
+                            <p>Demandes d'accès des nouveaux membres du cabinet</p>
+                            <span class="settings-card-value" id="menuIntegrationsValue"></span>
+                        </div>
+                        <span id="settingsIntegrationsBadge" style="display:none; position:absolute; top:12px; right:48px; background:#f59e0b; color:white; font-size:0.65rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; align-items:center; justify-content:center; padding:0 5px;">0</span>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
                     <button type="button" class="settings-card" data-settings-page="donnees" onclick="openSettingsPage('donnees')">
                         <div class="settings-card-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -1689,6 +1705,14 @@ window.attemptLogin = function() {
                         </div>
                     </div>
                 </div>
+                                <!-- Intégrations Page -->
+                <div id="settings-page-integrations" class="settings-page" style="display: none;">
+                    <div id="secJoinRequestsBanner" class="sec-join-banner" style="display:none;"></div>
+                    <div class="settings-section" id="secIntegrationsEmpty" style="display:none;">
+                        <h3>Aucune demande en attente</h3>
+                        <p class="settings-desc">Les demandes d'accès des nouveaux membres (secrétaires, médecins) apparaîtront ici. Vous recevrez une notification dans la barre de navigation.</p>
+                    </div>
+                </div>
                                 <!-- Données Page -->
                 <div id="settings-page-donnees" class="settings-page" style="display: none;">
                     <div class="settings-section">
@@ -1779,9 +1803,6 @@ window.attemptLogin = function() {
                         </div>
                     </div>
                 </div>
-
-                <!-- Bandeau : demandes d'acces secretaire en attente (medecins associes) -->
-                <div id="secJoinRequestsBanner" class="sec-join-banner" style="display:none;"></div>
 
                 <div class="cabinet-tabs">
                     <button class="cabinet-tab active" data-tab="secretariat">
@@ -3460,14 +3481,14 @@ window.attemptLogin = function() {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
-                <span style="position:relative;">Cabinet<span id="secNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#f59e0b; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
+                <span>Cabinet</span>
             </a>
-            <a href="#" class="mobile-nav-item" data-view="settings">
+            <a href="#" class="mobile-nav-item" data-view="settings" style="position:relative;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
-                <span>Paramètres</span>
+                <span style="position:relative;">Paramètres<span id="secNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#f59e0b; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
         </nav>
     </div>
@@ -3506,7 +3527,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=2026110115000" defer></script>
+    <script src="app.v5.js?v=202611011100" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
     <script src="urgence.js?v=2026110115000" defer></script>
@@ -5139,34 +5160,44 @@ window.attemptLogin = function() {
           y2 += 13;
           const W = [26, 20, 46, 22, 32, 34];
           doc.setFontSize(7.5);
-          ['Services', 'Nombre', 'Actes', 'Prix', 'Montant par actes', 'Total par service'].forEach((h, i) => { doc.rect(cumSum(W, i), y2, W[i], 6, 'S'); doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y2 + 4, { align: 'center' }); });
+          ['Services', 'Nombre', 'Actes', 'Prix', 'Total', 'Total service'].forEach((h, i) => { doc.rect(cumSum(W, i), y2, W[i], 6, 'S'); doc.text(doc.splitTextToSize(h, W[i] - 1), cumSum(W, i) + W[i] / 2, y2 + 4, { align: 'center' }); });
           y2 += 6;
-          let totalEhpad = 0; const RH = 4.7;
+          let totalEhpad = 0; const RH = 5.5;
           EHPAD_SERVICES.forEach(svc => {
             const sv = ehpad.filter(e => svc.match.includes(norm(e.location)));
             if (!sv.length) return;
             const by = {};
             sv.forEach(e => { const c = (e.cotation || 'G').toUpperCase().trim(); by[c] = (by[c] || 0) + 1; });
-            const ts = Object.entries(by).reduce((s, [c, n]) => s + n * tarif(c), 0);
-            totalEhpad += ts;
-            let premier = true; const vus = {};
-            EHPAD_ACTES.forEach(a => {
-              if (vus[EHPAD_LIBELLES[a]]) return;
-              vus[EHPAD_LIBELLES[a]] = true;
-              const n = by[a] || 0; const m = n * tarif(a);
-              doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+            let ts = 0;
+            let premier = true;
+            Object.keys(by).forEach(cot => {
+              const n = by[cot];
+              const prix = tarif(cot);
+              const m = n * prix;
+              ts += m;
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(7.5);
               doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
-              if (premier) doc.text(svc.label, cumSum(W, 0) + W[0] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 1), y2, W[1], RH, 'S'); doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 2), y2, W[2], RH, 'S'); doc.text(EHPAD_LIBELLES[a] || a, cumSum(W, 2) + W[2] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 3), y2, W[3], RH, 'S'); doc.text(fmt(tarif(a)), cumSum(W, 3) + W[3] / 2, y2 + 3.5, { align: 'center' });
-              doc.rect(cumSum(W, 4), y2, W[4], RH, 'S'); doc.text(fmt(m), cumSum(W, 4) + W[4] / 2, y2 + 3.5, { align: 'center' });
+              if (premier) doc.text(svc.label, cumSum(W, 0) + W[0] / 2, y2 + 3.8, { align: 'center' });
+              doc.rect(cumSum(W, 1), y2, W[1], RH, 'S'); doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.8, { align: 'center' });
+              doc.rect(cumSum(W, 2), y2, W[2], RH, 'S'); doc.text(EHPAD_LIBELLES[cot] || cot, cumSum(W, 2) + W[2] / 2, y2 + 3.8, { align: 'center' });
+              doc.rect(cumSum(W, 3), y2, W[3], RH, 'S'); doc.text(fmt(prix), cumSum(W, 3) + W[3] / 2, y2 + 3.8, { align: 'center' });
+              doc.rect(cumSum(W, 4), y2, W[4], RH, 'S'); doc.text(fmt(m), cumSum(W, 4) + W[4] / 2, y2 + 3.8, { align: 'center' });
               doc.rect(cumSum(W, 5), y2, W[5], RH, 'S');
-              if (premier) doc.text(fmt(ts), cumSum(W, 5) + W[5] / 2, y2 + 3.5, { align: 'center' });
               premier = false; y2 += RH;
             });
+            totalEhpad += ts;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
+            doc.rect(cumSum(W, 1), y2, W[1], RH, 'S');
+            doc.rect(cumSum(W, 2), y2, W[2], RH, 'S'); doc.text('Total ' + svc.label, cumSum(W, 2) + W[2] / 2, y2 + 3.8, { align: 'center' });
+            doc.rect(cumSum(W, 3), y2, W[3], RH, 'S');
+            doc.rect(cumSum(W, 4), y2, W[4], RH, 'S');
+            doc.rect(cumSum(W, 5), y2, W[5], RH, 'S'); doc.text(fmt(ts), cumSum(W, 5) + W[5] / 2, y2 + 3.8, { align: 'center' });
+            y2 += RH;
+            doc.setFont('helvetica', 'normal');
           });
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
           doc.text('MONTANT TOTAL :', 154, y2 + 8, { align: 'right' });
           doc.text(fmt(totalEhpad), 192, y2 + 8, { align: 'right' });
           memoire(totalEhpad, y2 + 16);

@@ -4247,6 +4247,7 @@ const SETTINGS_PAGES = {
     'cotation': { title: 'Cotations', subtitle: 'Vos clés de cotation et montants' },
     'pdf': { title: 'PDF & Documents', subtitle: 'Logo, signature et options du PDF' },
     'preferences': { title: 'Préférences', subtitle: 'Thème, cotation hors cabinet et notifications' },
+    'integrations': { title: 'Intégrations', subtitle: 'Validation des demandes d\'accès des nouveaux membres du cabinet' },
     'donnees': { title: 'Données', subtitle: 'Compteur, export et suppression de vos données' }
 };
 
@@ -4303,6 +4304,8 @@ async function openSettingsPage(pageName) {
         loadNotifPrefs();
         loadUiPrefs();
         await loadOpenRouterKey();
+    } else if (pageName === 'integrations') {
+        if (typeof secRenderJoinRequestsBanner === 'function') secRenderJoinRequestsBanner();
     } else if (pageName === 'googlesheets') {
         loadGoogleSheetsSettings();
     } else if (pageName === 'donnees') {
@@ -5000,7 +5003,6 @@ function switchView(viewName) {
     } else if (viewName === 'cabinet') {
         loadCabinetData();
         if (typeof secApplySecretarySpace === 'function') secApplySecretarySpace();
-        if (typeof secRenderJoinRequestsBanner === 'function') secRenderJoinRequestsBanner();
     } else if (viewName === 'flux') {
         loadCabinetData().then(() => {
             if (typeof renderFluxView === 'function') renderFluxView();
@@ -6197,7 +6199,7 @@ async function generatePDF() {
         y2 += 9;
 
         const W = [26, 20, 46, 22, 32, 34];
-        const ehHeaders = ['Services', 'Nombre', 'Actes', 'Prix', 'Montant par actes', 'Total par service'];
+        const ehHeaders = ['Services', 'Nombre', 'Actes', 'Prix', 'Total', 'Total service'];
         doc.setFontSize(7.5);
         ehHeaders.forEach((h, i) => {
             doc.rect(cumSum(W, i), y2, W[i], 6, 'S');
@@ -6206,41 +6208,54 @@ async function generatePDF() {
         y2 += 6;
 
         let totalEhpad = 0;
-        const RH = 4.7;
+        const RH = 5.5;
         EHPAD_SERVICES.forEach(svc => {
             const svcEntries = ehpadEntries.filter(e => svc.match.includes(norm(e.location)));
             if (svcEntries.length === 0) return;
+            // Recenser les cotations REELLEMENT presentes (y compris hors liste habituelle)
             const byCot = {};
             svcEntries.forEach(e => {
                 const c = (e.cotation || 'G').toUpperCase().trim();
                 byCot[c] = (byCot[c] || 0) + 1;
             });
-            const totalSvc = Object.entries(byCot).reduce((s, [c, n]) => s + n * tarif(c), 0);
-            totalEhpad += totalSvc;
+            let totalSvc = 0;
             let premier = true;
-            const vus = {};
-            EHPAD_ACTES.forEach(acte => {
-                if (vus[EHPAD_LIBELLES[acte]]) return;
-                vus[EHPAD_LIBELLES[acte]] = true;
-                const n = byCot[acte] || 0;
-                const montant = n * tarif(acte);
+            Object.keys(byCot).forEach(cot => {
+                const n = byCot[cot];
+                const libelle = EHPAD_LIBELLES[cot] || cot;
+                const prix = tarif(cot);
+                const montantLigne = n * prix;
+                totalSvc += montantLigne;
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7.5);
                 doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
-                if (premier) doc.text(svc.label, cumSum(W, 0) + W[0] / 2, y2 + 3.5, { align: 'center' });
+                if (premier) doc.text(svc.label, cumSum(W, 0) + W[0] / 2, y2 + 3.8, { align: 'center' });
                 doc.rect(cumSum(W, 1), y2, W[1], RH, 'S');
-                doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.5, { align: 'center' });
+                doc.text(String(n), cumSum(W, 1) + W[1] / 2, y2 + 3.8, { align: 'center' });
                 doc.rect(cumSum(W, 2), y2, W[2], RH, 'S');
-                doc.text(EHPAD_LIBELLES[acte], cumSum(W, 2) + W[2] / 2, y2 + 3.5, { align: 'center' });
+                doc.text(libelle, cumSum(W, 2) + W[2] / 2, y2 + 3.8, { align: 'center' });
                 doc.rect(cumSum(W, 3), y2, W[3], RH, 'S');
-                doc.text(fmt(tarif(acte)), cumSum(W, 3) + W[3] / 2, y2 + 3.5, { align: 'center' });
+                doc.text(fmt(prix), cumSum(W, 3) + W[3] / 2, y2 + 3.8, { align: 'center' });
                 doc.rect(cumSum(W, 4), y2, W[4], RH, 'S');
-                doc.text(fmt(montant), cumSum(W, 4) + W[4] / 2, y2 + 3.5, { align: 'center' });
+                doc.text(fmt(montantLigne), cumSum(W, 4) + W[4] / 2, y2 + 3.8, { align: 'center' });
                 doc.rect(cumSum(W, 5), y2, W[5], RH, 'S');
-                if (premier) doc.text(fmt(totalSvc), cumSum(W, 5) + W[5] / 2, y2 + 3.5, { align: 'center' });
                 premier = false;
                 y2 += RH;
             });
+            // ligne dediee du total du service
+            totalEhpad += totalSvc;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.rect(cumSum(W, 0), y2, W[0], RH, 'S');
+            doc.rect(cumSum(W, 1), y2, W[1], RH, 'S');
+            doc.rect(cumSum(W, 2), y2, W[2], RH, 'S');
+            doc.text('Total ' + svc.label, cumSum(W, 2) + W[2] / 2, y2 + 3.8, { align: 'center' });
+            doc.rect(cumSum(W, 3), y2, W[3], RH, 'S');
+            doc.rect(cumSum(W, 4), y2, W[4], RH, 'S');
+            doc.rect(cumSum(W, 5), y2, W[5], RH, 'S');
+            doc.text(fmt(totalSvc), cumSum(W, 5) + W[5] / 2, y2 + 3.8, { align: 'center' });
+            y2 += RH;
+            doc.setFont('helvetica', 'normal');
         });
 
         doc.setFont('helvetica', 'bold');
