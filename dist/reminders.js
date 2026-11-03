@@ -138,6 +138,17 @@ function renderReminders() {
 window.renderReminders = renderReminders;
 window.remindersMissingMonths = remindersMissingMonths;
 
+// Debounce : les multiples declencheurs (chargement, sync, import) ne font
+// qu'UN rendu -> plus de clignotement des cartes
+(function() {
+    const realRenderReminders = renderReminders;
+    let timer = null;
+    window.renderReminders = function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => { realRenderReminders(); }, 150);
+    };
+})();
+
 window.toggleReleveChecklist = function() {
     window._releveListOpen = !window._releveListOpen;
     renderReminders();

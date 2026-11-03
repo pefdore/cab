@@ -187,6 +187,16 @@ window.renderReconPending = function() {
         </div>`;
 };
 
+// Debounce du rendu du panneau de rapprochement
+(function() {
+    const real = window.renderReconPending;
+    let timer = null;
+    window.renderReconPending = function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => { real(); }, 150);
+    };
+})();
+
 window.toggleReconPending = function() {
     window._reconListOpen = !window._reconListOpen;
     if (typeof renderReconPending === 'function') renderReconPending();
