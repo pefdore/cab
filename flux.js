@@ -96,6 +96,65 @@ function renderFluxView() {
         mLblEl.textContent = mName.charAt(0) + mName.slice(1).toLowerCase();
     }
 
+    // ===== HERO : solde en vedette + KPI + tendance + mini-graphe =====
+    const fmt = (n) => (n < 0 ? '-' : '+') + Math.abs(n).toFixed(2).replace('.', ',') + ' €';
+    const heroMonth = document.getElementById('flux-month-label-hero');
+    const heroYear = document.getElementById('flux-year-label-hero');
+    const heroBal = document.getElementById('flux-total-balance-hero');
+    const heroRec = document.getElementById('flux-total-recettes-hero');
+    const heroDep = document.getElementById('flux-total-depenses-hero');
+    const heroYearBal = document.getElementById('flux-year-balance-hero');
+    const heroYearLbl = document.getElementById('flux-year-label-hero2');
+    if (heroMonth) heroMonth.textContent = FLUX_MONTH_NAMES[fluxCurrentMonth.getMonth()];
+    if (heroYear) heroYear.textContent = String(fluxCurrentMonth.getFullYear());
+    if (heroYearLbl) heroYearLbl.textContent = String(yearNow);
+    if (heroRec) heroRec.textContent = totalRecettes.toFixed(2).replace('.', ',') + ' €';
+    if (heroDep) heroDep.textContent = totalDepenses.toFixed(2).replace('.', ',') + ' €';
+    if (heroYearBal) heroYearBal.textContent = (yRec - yDep).toFixed(2).replace('.', ',') + ' €';
+    if (heroBal) {
+        const bal = totalRecettes - totalDepenses;
+        heroBal.textContent = fmt(bal);
+        heroBal.classList.toggle('neg', bal < 0);
+    }
+
+    // tendance vs mois precedent
+    const prev = new Date(fluxCurrentMonth.getFullYear(), fluxCurrentMonth.getMonth() - 1, 1);
+    const pDep = cabinetDepenses.filter(d => fluxSameMonth(d, prev)).reduce((s, d) => s + d.amount, 0);
+    const pRec = cabinetRecettes.filter(r => fluxSameMonth(r, prev)).reduce((s, r) => s + r.amount, 0);
+    const trendEl = document.getElementById('flux-hero-trend');
+    if (trendEl) {
+        const pBal = pRec - pDep;
+        const cBal = totalRecettes - totalDepenses;
+        if (pDep + pRec === 0) {
+            trendEl.textContent = '';
+        } else {
+            const diff = cBal - pBal;
+            trendEl.textContent = (diff >= 0 ? '▲ +' : '▼ ') + Math.abs(diff).toFixed(0) + ' € vs mois précédent';
+            trendEl.className = 'fhero-trend ' + (diff >= 0 ? 'up' : 'down');
+        }
+    }
+
+    // mini-graphe : flux net par jour du mois (barres)
+    const chartEl = document.getElementById('flux-hero-chart');
+    if (chartEl) {
+        const daysInMonth = new Date(fluxCurrentMonth.getFullYear(), fluxCurrentMonth.getMonth() + 1, 0).getDate();
+        const netByDay = new Array(daysInMonth).fill(0);
+        monthDepenses.forEach(d => {
+            const day = parseInt((d.date || '').slice(8, 10), 10);
+            if (day >= 1 && day <= daysInMonth) netByDay[day - 1] -= d.amount;
+        });
+        monthRecettes.forEach(r => {
+            const day = parseInt((r.date || '').slice(8, 10), 10);
+            if (day >= 1 && day <= daysInMonth) netByDay[day - 1] += r.amount;
+        });
+        const maxAbs = Math.max(...netByDay.map(Math.abs), 1);
+        chartEl.innerHTML = netByDay.map((v, i) => {
+            if (v === 0) return '<i class="fchart-bar zero"></i>';
+            const h = Math.max(8, Math.round(Math.abs(v) / maxAbs * 100));
+            return '<i class="fchart-bar ' + (v > 0 ? 'pos' : 'neg') + '" style="--h:' + h + '%" title="' + (i + 1) + ' : ' + fmt(v) + '"></i>';
+        }).join('');
+    }
+
     // Jour par jour, groupé par catégorie
     const byDay = {};
     monthDepenses.forEach(d => {

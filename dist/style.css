@@ -11838,3 +11838,182 @@ input.form-input, select.form-input, .form-input {
 @media (min-width: 900px) {
     .flux-totals { position: sticky; top: 12px; z-index: 5; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FLUX HERO — pièce maîtresse du dashboard
+   Dégradé profond, solde en vedette, KPI verre, graphe quotidien.
+   ═══════════════════════════════════════════════════════════════ */
+.flux-hero {
+    position: relative;
+    border-radius: var(--radius-l);
+    background: linear-gradient(135deg, #312e81 0%, #4f46e5 55%, #6366f1 100%);
+    box-shadow: 0 12px 32px rgba(79,70,229,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+    padding: 22px 24px;
+    margin-bottom: 10px;
+    color: #fff;
+    overflow: hidden;
+}
+.flux-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(600px 200px at 85% -10%, rgba(255,255,255,0.22), transparent 60%),
+        radial-gradient(400px 160px at -10% 110%, rgba(129,140,248,0.35), transparent 60%);
+    pointer-events: none;
+}
+.flux-hero > * { position: relative; }
+
+.flux-hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+.flux-hero-month {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: var(--radius-full);
+    padding: 5px;
+    backdrop-filter: blur(4px);
+}
+.fhero-month-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.15;
+    min-width: 88px;
+}
+.fhero-month-label strong { font-size: 0.95rem; font-weight: 700; }
+.fhero-month-label span { font-size: 0.68rem; opacity: 0.75; font-variant-numeric: tabular-nums; }
+.fhero-arrow {
+    width: 34px; height: 34px;
+    border-radius: var(--radius-full);
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    display: flex; align-items: center; justify-content: center;
+}
+.fhero-arrow:hover { background: rgba(255,255,255,0.28); }
+.fhero-arrow:active { transform: scale(0.94); }
+
+.flux-hero-balance { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.fhero-balance-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    font-weight: 700;
+    opacity: 0.75;
+}
+.fhero-balance-value {
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+    color: #a7f3d0;
+    text-shadow: 0 2px 12px rgba(16,185,129,0.35);
+}
+.fhero-balance-value.neg {
+    color: #fecaca;
+    text-shadow: 0 2px 12px rgba(239,68,68,0.35);
+}
+.fhero-trend { font-size: 0.72rem; font-weight: 600; opacity: 0.9; }
+.fhero-trend.up { color: #a7f3d0; }
+.fhero-trend.down { color: #fecaca; }
+
+.flux-hero-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.4fr);
+    gap: 10px;
+}
+.fhero-kpi {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-m);
+    padding: 12px 14px;
+    backdrop-filter: blur(6px);
+}
+.fhero-kpi-icon {
+    width: 34px; height: 34px;
+    border-radius: var(--radius-s);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+.fhero-kpi.income .fhero-kpi-icon { background: rgba(16,185,129,0.25); color: #a7f3d0; }
+.fhero-kpi.expense .fhero-kpi-icon { background: rgba(239,68,68,0.25); color: #fecaca; }
+.fhero-kpi.year .fhero-kpi-icon { background: rgba(255,255,255,0.18); color: #fff; }
+.fhero-kpi-label {
+    display: block;
+    font-size: 0.64rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 700;
+    opacity: 0.8;
+}
+.fhero-kpi-label em { font-style: normal; opacity: 0.8; }
+.fhero-kpi-value {
+    display: block;
+    font-size: 1.02rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-top: 1px;
+}
+
+/* mini-graphe : flux net par jour */
+.fhero-chart {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 58px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-m);
+    padding: 8px 10px;
+    backdrop-filter: blur(6px);
+    overflow: hidden;
+}
+.fchart-bar {
+    flex: 1;
+    height: var(--h, 40%);
+    min-width: 2px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.25);
+    transition: height 0.3s ease;
+}
+.fchart-bar.pos { background: #34d399; box-shadow: 0 0 6px rgba(52,211,153,0.5); }
+.fchart-bar.neg { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.5); }
+.fchart-bar.zero { height: 3px; opacity: 0.35; }
+.fchart-bar:hover { filter: brightness(1.25); }
+
+.flux-hero-sub {
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    margin: 10px 0 var(--space-4);
+}
+
+[data-theme="dark"] .flux-hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4338ca 100%);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.10);
+}
+
+@media (max-width: 760px) {
+    .flux-hero { padding: 16px; border-radius: var(--radius-m); }
+    .flux-hero-kpis { grid-template-columns: 1fr 1fr; }
+    .fhero-chart { grid-column: 1 / -1; }
+    .flux-hero-balance { align-items: flex-start; }
+    .flux-hero-top { flex-direction: column; gap: 10px; }
+}

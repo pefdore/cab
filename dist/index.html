@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-hhUN89yO.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-C3462uXf.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1129,26 +1129,51 @@ window.attemptLogin = function() {
 
             <!-- Flux View -->
             <section id="view-flux" class="view">
-                <h2>Flux</h2>
-                <p class="urgence-page-desc">Flux des entrées et des dépenses du cabinet, jour par jour et mois par mois, classés par catégorie. Le dashboard s'alimente automatiquement de ces données.</p>
-
-                <!-- Synthèse compacte : 1 ligne = année + mois -->
-                <div class="flux-totals">
-                    <div class="flux-totals-grid">
-                        <div class="ft-cell ft-head"></div>
-                        <div class="ft-cell ft-head income">Ent.</div>
-                        <div class="ft-cell ft-head expense">Dép.</div>
-                        <div class="ft-cell ft-head balance">Solde</div>
-                        <div class="ft-cell ft-label"><strong id="flux-year-label"></strong></div>
-                        <div class="ft-cell income"><strong id="flux-year-recettes">0€</strong></div>
-                        <div class="ft-cell expense"><strong id="flux-year-depenses">0€</strong></div>
-                        <div class="ft-cell balance"><strong id="flux-year-balance">0€</strong></div>
-                        <div class="ft-cell ft-label"><strong id="flux-month-label"></strong></div>
-                        <div class="ft-cell income"><strong id="flux-total-recettes">0€</strong></div>
-                        <div class="ft-cell expense"><strong id="flux-total-depenses">0€</strong></div>
-                        <div class="ft-cell balance"><strong id="flux-total-balance">0€</strong></div>
+                <!-- ═══ HERO FLUX : solde en vedette, KPI, graphe du mois ═══ -->
+                <div class="flux-hero">
+                    <div class="flux-hero-top">
+                        <div class="flux-hero-month">
+                            <button class="fhero-arrow" onclick="fluxChangeMonth(-1)" aria-label="Mois précédent">‹</button>
+                            <div class="fhero-month-label">
+                                <strong id="flux-month-label-hero">—</strong>
+                                <span id="flux-year-label-hero"></span>
+                            </div>
+                            <button class="fhero-arrow" onclick="fluxChangeMonth(1)" aria-label="Mois suivant">›</button>
+                        </div>
+                        <div class="flux-hero-balance">
+                            <span class="fhero-balance-label">Solde du mois</span>
+                            <strong id="flux-total-balance-hero" class="fhero-balance-value">+0,00 €</strong>
+                            <span id="flux-hero-trend" class="fhero-trend"></span>
+                        </div>
+                    </div>
+                    <div class="flux-hero-kpis">
+                        <div class="fhero-kpi income">
+                            <span class="fhero-kpi-icon">▲</span>
+                            <div>
+                                <span class="fhero-kpi-label">Entrées</span>
+                                <strong id="flux-total-recettes-hero" class="fhero-kpi-value">0 €</strong>
+                            </div>
+                        </div>
+                        <div class="fhero-kpi expense">
+                            <span class="fhero-kpi-icon">▼</span>
+                            <div>
+                                <span class="fhero-kpi-label">Dépenses</span>
+                                <strong id="flux-total-depenses-hero" class="fhero-kpi-value">0 €</strong>
+                            </div>
+                        </div>
+                        <div class="fhero-kpi year">
+                            <span class="fhero-kpi-icon">∑</span>
+                            <div>
+                                <span class="fhero-kpi-label">Bilan <em id="flux-year-label-hero2"></em></span>
+                                <strong id="flux-year-balance-hero" class="fhero-kpi-value">0 €</strong>
+                            </div>
+                        </div>
+                        <div class="fhero-chart" id="flux-hero-chart" title="Flux net de chaque jour du mois"></div>
                     </div>
                 </div>
+                <p class="flux-hero-sub">Flux des entrées et des dépenses du cabinet, jour par jour, classés par catégorie. Le dashboard s'alimente automatiquement de ces données.</p>
+
+<span id="flux-year-recettes" hidden></span><span id="flux-year-depenses" hidden></span><span id="flux-year-balance" hidden></span><span id="flux-year-label" hidden></span><span id="flux-month-label" hidden></span><span id="flux-total-recettes" hidden></span><span id="flux-total-depenses" hidden></span><span id="flux-total-balance" hidden></span>
 
                 <!-- Reprise d'import en cours -->
                 <div id="flux-releve-resume" style="display:none;"></div>
