@@ -907,21 +907,22 @@ window.attemptLogin = function() {
                 <!-- ═══ HERO FLUX : solde en vedette, KPI, graphe du mois ═══ -->
                 <span id="flux-year-recettes" hidden></span><span id="flux-year-depenses" hidden></span><span id="flux-year-balance" hidden></span><span id="flux-year-label" hidden></span><span id="flux-month-label" hidden></span><span id="flux-total-recettes" hidden></span><span id="flux-total-depenses" hidden></span><span id="flux-total-balance" hidden></span>
 
-                <!-- Reprise d'import en cours -->
-                <div id="flux-releve-resume" style="display:none;"></div>
-
-                <!-- Rappels relevés -->
-                <div id="flux-reminders"></div>
-
-                <!-- Rapprochement commandes -->
-                <div id="flux-recon-pending"></div>
-
                 <!-- ═══ Corps de page MD3 ═══ -->
                 <div class="md-page">
                     <div class="md-section-head">
                         <h2 class="md-headline">Flux du cabinet</h2>
                         <p class="md-headline-sub">Chaque mouvement validé depuis les relevés importés. Le dashboard s'alimente automatiquement de ces données.</p>
                     </div>
+
+                    <!-- Reprise d'import en cours -->
+                    <div id="flux-releve-resume" style="display:none;"></div>
+
+                    <!-- Rappels relevés -->
+                    <div id="flux-reminders"></div>
+
+                    <!-- Rapprochement commandes -->
+                    <div id="flux-recon-pending"></div>
+
 <div class="flux-hero">
                     <div class="flux-hero-top">
                         <div class="flux-hero-month">
@@ -953,25 +954,9 @@ window.attemptLogin = function() {
                                 <strong id="flux-total-depenses-hero" class="fhero-kpi-value">0 €</strong>
                             </div>
                         </div>
-                        <div class="fhero-kpi year">
-                            <span class="fhero-kpi-icon">∑</span>
-                            <div>
-                                <span class="fhero-kpi-label">Bilan <em id="flux-year-label-hero2"></em></span>
-                                <strong id="flux-year-balance-hero" class="fhero-kpi-value">0 €</strong>
-                            </div>
-                        </div>
                         <div class="fhero-chart" id="flux-hero-chart" title="Flux net de chaque jour du mois"></div>
                     </div>
                 </div>
-
-                    <!-- Reprise d'import en cours -->
-                    <div id="flux-releve-resume" style="display:none;"></div>
-
-                    <!-- Rappels relevés -->
-                    <div id="flux-reminders"></div>
-
-                    <!-- Rapprochement commandes -->
-                    <div id="flux-recon-pending"></div>
 
                     <!-- Jour par jour -->
                     <div class="module-card md-card">

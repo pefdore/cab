@@ -12670,3 +12670,88 @@ body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }
     width: 100%;
     display: block;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE INTÉGRAL — page Flux (correctifs ciblés)
+   ═══════════════════════════════════════════════════════════════ */
+/* Page : largeur condensée et centrée */
+.md-page { max-width: 920px; }
+
+/* KPI : jamais de débordement — valeurs élastiques */
+.flux-hero-kpis {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+    gap: 8px !important;
+}
+.fhero-kpi {
+    min-width: 0 !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+}
+.fhero-kpi > div { min-width: 0; flex: 1; }
+.fhero-kpi-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fhero-kpi-value {
+    font-size: clamp(0.92rem, 2.6vw, 1.05rem) !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block !important;
+}
+.fhero-kpi-icon { width: 30px; height: 30px; font-size: 0.72rem; flex-shrink: 0; }
+
+/* Solde : taille élastique, jamais coupé */
+.fhero-balance-value {
+    font-size: clamp(1.5rem, 6vw, 2.2rem) !important;
+    white-space: nowrap;
+}
+.flux-hero-balance { max-width: 100%; overflow: hidden; }
+
+/* Mini-graphe : pleine largeur disponible, hauteur élastique */
+.fhero-chart { min-width: 0; }
+
+/* Checklist dépliée : tuiles de mois responsive (pas de nom sous le sablier) */
+#releve-checklist-body [style*="grid-template-columns"] {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)) !important;
+    gap: 6px !important;
+}
+#releve-checklist-body > div[style*="grid-template-columns"] > div {
+    flex-wrap: wrap !important;
+    padding: 6px 8px !important;
+    gap: 4px !important;
+}
+#releve-checklist-body span,
+#releve-checklist-body button {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+#releve-checklist-body button { flex-shrink: 0; }
+
+/* Cartes de mouvement : condensées */
+.flux-row {
+    padding: 10px 13px !important;
+    margin-bottom: 6px !important;
+    gap: 10px !important;
+}
+.flux-row-side .amount {
+    font-size: 0.92rem !important;
+    min-width: 0 !important;
+    white-space: nowrap;
+}
+.flux-row-side { gap: 6px !important; }
+.flux-row-main .description { font-size: 0.84rem; }
+.icon-btn-28 { width: 30px; height: 30px; font-size: 0.8rem; }
+.flux-day { margin-bottom: 12px !important; }
+.flux-day-header { padding: 3px 12px 3px !important; margin-bottom: 7px !important; font-size: 0.66rem !important; }
+.md-card { padding: 14px 16px !important; }
+
+/* Très petits écrans : montant + icônes sur la ligne, libellé complet */
+@media (max-width: 480px) {
+    .flux-row { flex-wrap: wrap; }
+    .flux-row-main { flex: 1 1 100%; order: 1; }
+    .flux-row-side { flex: 1 1 100%; order: 2; justify-content: space-between; }
+    .fhero-arrow { width: 30px; height: 30px; font-size: 1rem; }
+    .flux-hero-month { gap: 6px !important; }
+    .fhero-month-label { min-width: 64px; }
+}
