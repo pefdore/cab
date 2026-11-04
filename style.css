@@ -13052,3 +13052,27 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .fhero-month-label { min-width: 52px; }
     .fhero-month-label strong { font-size: 0.82rem !important; }
 }
+
+/* ═══ Cohérence MD3 : chips identiques + barre du mois pleine largeur ═══ */
+/* Les deux chips : MEME forme tonale, zero liseré gauche (la couleur vit dans l'icône) */
+#flux-reminders .module-card.flux-chip-card,
+#flux-recon-pending .module-card.flux-chip-card {
+    border-left: none !important;
+    background: var(--md-surface-high) !important;
+    box-shadow: var(--elev-1) !important;
+}
+/* sémantique par pastille d'icône, comme les KPI MD3 */
+#flux-reminders .flux-chip-card h3::first-letter { /* emoji déjà présent */ }
+
+/* Barre du mois : pleine largeur, alignée avec les chips et les cartes */
+.flux-hero-month {
+    width: 100% !important;
+    justify-content: space-between;
+    border-radius: var(--radius-full) !important;
+    padding: 4px 6px !important;
+}
+.fhero-month-label { flex: 1; }
+.flux-hero-top { flex-direction: column !important; gap: 8px !important; }
+.flux-hero-balance { align-self: stretch !important; display: flex; align-items: center; justify-content: space-between; padding: 8px 16px !important; }
+.fhero-balance-label { align-self: center; margin-right: auto; }
+.fhero-trend { align-self: center; margin-left: 12px; }
