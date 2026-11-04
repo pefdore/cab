@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medix.io — Le pilotage de l'activité médicale, enfin simple</title>
+<meta name="description" content="Medix.io est la plateforme tout-en-un des médecins libéraux : cotation CCN, suivi d'activité en temps réel, gestion de cabinet, urgences, remplacements et secrétariat.">
+<link rel="icon" href="icon-192.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7FAF9;
+  --bg-soft:#EEF5F3;
+  --ink:#0B1F1A;
+  --ink-2:#3D524C;
+  --ink-3:#6A817B;
+  --accent:#0E9F7E;
+  --accent-deep:#087457;
+  --accent-soft:#DCF2EC;
+  --line:#E2ECE8;
+  --card:#FFFFFF;
+  --radius:20px;
+  --shadow:0 1px 2px rgba(11,31,26,.04),0 12px 32px -12px rgba(11,31,26,.12);
+  --shadow-lg:0 24px 64px -24px rgba(8,116,87,.28);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.6}
+h1,h2,h3,.display{font-family:'Fraunces',Georgia,serif;font-weight:500;letter-spacing:-.02em;line-height:1.12}
+a{color:inherit;text-decoration:none}
+img,svg{display:block;max-width:100%}
+.container{max-width:1140px;margin:0 auto;padding:0 24px}
+section{padding:96px 0}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);background:var(--accent-soft);border:1px solid rgba(14,159,126,.25);padding:6px 14px;border-radius:999px;margin-bottom:20px}
+.kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
+.lead{font-size:1.125rem;color:var(--ink-2);max-width:640px}
+.center{text-align:center}
+.center .lead{margin:0 auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:1rem;padding:14px 28px;border-radius:999px;border:none;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+.btn-primary{background:var(--ink);color:#fff;box-shadow:var(--shadow)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent-deep);transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--ink-3)}
+.btn svg{width:18px;height:18px}
+
+/* HEADER */
+.header{position:sticky;top:0;z-index:50;background:rgba(247,250,249,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:72px}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;letter-spacing:-.02em}
+.logo-mark{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#0BC2A0);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px rgba(14,159,126,.5)}
+.logo-mark svg{width:20px;height:20px}
+.nav-links{display:flex;gap:32px;font-size:.94rem;font-weight:500;color:var(--ink-2)}
+.nav-links a:hover{color:var(--ink)}
+.header-cta{display:flex;align-items:center;gap:12px}
+.header-cta .btn{padding:11px 22px;font-size:.92rem}
+.login-link{font-weight:600;font-size:.92rem;color:var(--ink-2)}
+.login-link:hover{color:var(--ink)}
+.burger{display:none;background:none;border:none;cursor:pointer;padding:8px}
+.burger svg{width:24px;height:24px;stroke:var(--ink)}
+.mobile-menu{display:none;flex-direction:column;gap:4px;padding:16px 24px 24px;border-top:1px solid var(--line);background:var(--bg)}
+.mobile-menu a{padding:12px 4px;font-weight:500;color:var(--ink-2);border-bottom:1px solid var(--line)}
+.mobile-menu .btn{margin-top:12px}
+.mobile-menu.open{display:flex}
+
+/* HERO */
+.hero{padding:88px 0 72px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;top:-260px;right:-160px;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(14,159,126,.14),transparent 62%);pointer-events:none}
+.hero::after{content:"";position:absolute;top:120px;left:-220px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(11,207,160,.10),transparent 60%);pointer-events:none}
+.hero-inner{position:relative;z-index:1;max-width:820px}
+.hero-badge{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);border-radius:999px;padding:7px 16px 7px 8px;font-size:.85rem;font-weight:500;color:var(--ink-2);margin-bottom:28px}
+.hero-badge strong{background:var(--accent-soft);color:var(--accent-deep);font-weight:700;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+.hero h1{font-size:clamp(2.6rem,5.6vw,4.2rem);margin-bottom:22px}
+.hero h1 em{font-style:italic;color:var(--accent-deep)}
+.hero .lead{font-size:1.22rem;margin-bottom:36px;max-width:620px}
+.hero-actions{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:20px}
+.hero-note{font-size:.86rem;color:var(--ink-3);display:flex;align-items:center;gap:8px}
+.hero-note svg{width:15px;height:15px;color:var(--accent)}
+
+/* HERO MOCK */
+.mock{margin-top:72px;background:linear-gradient(180deg,#FFFFFF,#F3F9F7);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow-lg);overflow:hidden;position:relative;z-index:1}
+.mock-bar{display:flex;align-items:center;gap:8px;padding:14px 20px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.7)}
+.mock-dot{width:11px;height:11px;border-radius:50%}
+.mock-dot:nth-child(1){background:#FCA5A5}.mock-dot:nth-child(2){background:#FCD34D}.mock-dot:nth-child(3){background:#86EFAC}
+.mock-body{display:grid;grid-template-columns:220px 1fr;min-height:420px}
+.mock-side{border-right:1px solid var(--line);padding:22px 18px;display:flex;flex-direction:column;gap:6px;background:rgba(247,250,249,.6)}
+.mock-side a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:.86rem;font-weight:500;color:var(--ink-2)}
+.mock-side a.active{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.mock-side svg{width:16px;height:16px}
+.mock-main{padding:28px;display:flex;flex-direction:column;gap:20px}
+.mock-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.stat-card .s-label{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.stat-card .s-value{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:600;letter-spacing:-.02em}
+.stat-card .s-delta{font-size:.78rem;font-weight:600;margin-top:2px}
+.up{color:var(--accent-deep)}.down{color:#C2410C}
+.mock-chart{flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);min-height:190px;display:flex;align-items:flex-end;gap:10px}
+.mock-chart .bar{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#2BD4AE,var(--accent));opacity:.9}
+.mock-chart .bar:nth-child(3){background:linear-gradient(180deg,#0E9F7E,#087457)}
+
+/* LOGOS */
+.trust{padding:40px 0 24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}
+.trust p{text-align:center;font-size:.8rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:24px}
+.trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:20px 56px;align-items:center}
+.trust-item{display:flex;align-items:center;gap:9px;font-weight:600;font-size:.92rem;color:var(--ink-2)}
+.trust-item svg{width:19px;height:19px;color:var(--accent)}
+
+/* FEATURES ALT (indy style) */
+.feature{padding:104px 0}
+.feature:nth-of-type(even){background:#fff}
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.feature-grid.reverse .f-media{order:2}
+.f-copy h3{font-size:clamp(1.7rem,3vw,2.3rem);margin-bottom:16px}
+.f-copy p{color:var(--ink-2);margin-bottom:26px;font-size:1.02rem}
+.f-list{list-style:none;display:flex;flex-direction:column;gap:14px}
+.f-list li{display:flex;gap:12px;align-items:flex-start;font-size:.98rem;color:var(--ink-2)}
+.f-list svg{width:20px;height:20px;flex-shrink:0;color:var(--accent);margin-top:2px}
+.f-list strong{color:var(--ink)}
+.f-media{position:relative}
+.f-card{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-lg);padding:28px}
+.f-card.alt-bg{background:var(--ink);color:#fff;border-color:var(--ink)}
+.f-card .fc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.f-card .fc-title{font-weight:700;font-size:.95rem;display:flex;gap:10px;align-items:center}
+.f-card .fc-title svg{width:18px;height:18px;color:var(--accent)}
+.fc-chip{font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent-deep);padding:4px 10px;border-radius:999px}
+.f-card.alt-bg .fc-chip{background:rgba(43,212,174,.18);color:#5EE7C4}
+.fc-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.f-card.alt-bg .fc-row{border-color:rgba(255,255,255,.12)}
+.fc-row:last-child{border-bottom:none}
+.fc-row .muted{color:var(--ink-3)}
+.f-card.alt-bg .muted{color:#9DB8B0}
+.fc-row .val{font-weight:600}
+.fc-progress{margin-top:18px}
+.fc-progress .track{height:8px;border-radius:99px;background:var(--bg-soft);overflow:hidden}
+.f-card.alt-bg .track{background:rgba(255,255,255,.12)}
+.fc-progress .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#2BD4AE)}
+.fc-progress .legends{display:flex;justify-content:space-between;font-size:.75rem;color:var(--ink-3);margin-top:8px}
+.f-card.alt-bg .legends{color:#9DB8B0}
+.fc-blob{position:absolute;z-index:-1;border-radius:50%;filter:blur(2px)}
+.blob-a{width:220px;height:220px;background:rgba(14,159,126,.14);top:-60px;left:-70px}
+.blob-b{width:260px;height:260px;background:rgba(11,207,160,.10);bottom:-80px;right:-60px}
+
+/* STEPS */
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
+.step-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:32px 28px;box-shadow:var(--shadow);position:relative}
+.step-num{font-family:'Fraunces',serif;font-size:3rem;font-weight:300;color:var(--accent);opacity:.5;line-height:1;margin-bottom:16px}
+.step-card h3{font-size:1.25rem;margin-bottom:10px}
+.step-card p{font-size:.95rem;color:var(--ink-2)}
+
+/* TESTIMONIALS */
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
+.testi-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:18px}
+.testi-card .stars{display:flex;gap:3px}
+.testi-card .stars svg{width:16px;height:16px;color:#F5B301}
+.testi-card blockquote{font-size:.98rem;color:var(--ink-2);flex:1}
+.testi-card blockquote strong{color:var(--ink)}
+.testi-author{display:flex;align-items:center;gap:12px}
+.testi-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0}
+.testi-author .ta-name{font-weight:600;font-size:.9rem}
+.testi-author .ta-role{font-size:.8rem;color:var(--ink-3)}
+
+/* FAQ */
+.faq-wrap{max-width:760px;margin:48px auto 0;display:flex;flex-direction:column;gap:12px}
+.faq-item{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:box-shadow .2s}
+.faq-item[open]{box-shadow:var(--shadow)}
+.faq-item summary{list-style:none;cursor:pointer;padding:20px 24px;font-weight:600;font-size:1rem;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary svg{width:18px;height:18px;flex-shrink:0;color:var(--accent);transition:transform .2s}
+.faq-item[open] summary svg{transform:rotate(45deg)}
+.faq-item .faq-body{padding:0 24px 22px;color:var(--ink-2);font-size:.95rem}
+
+/* CTA */
+.cta{position:relative;overflow:hidden;background:var(--ink);border-radius:32px;padding:88px 40px;text-align:center;color:#fff}
+.cta::before{content:"";position:absolute;top:-180px;left:50%;transform:translateX(-50%);width:720px;height:400px;background:radial-gradient(ellipse,rgba(14,159,126,.35),transparent 65%);pointer-events:none}
+.cta h2{color:#fff;position:relative}
+.cta p{position:relative;color:#B9D2CB;max-width:540px;margin:0 auto 36px;font-size:1.08rem}
+.cta .btn-accent{position:relative;background:var(--accent);padding:16px 36px;font-size:1.05rem}
+.cta .btn-accent:hover{background:#12C79E}
+
+/* FOOTER */
+.footer{background:var(--ink);color:#9DB8B0;margin-top:0;padding:72px 0 32px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.1)}
+.footer .logo{color:#fff}
+.footer .logo-mark{background:rgba(14,159,126,.25)}
+.footer-tag{margin-top:18px;font-size:.92rem;max-width:300px}
+.footer h4{color:#fff;font-size:.85rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
+.footer ul{list-style:none;display:flex;flex-direction:column;gap:12px;font-size:.92rem}
+.footer ul a:hover{color:#fff}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:28px;font-size:.82rem;flex-wrap:wrap}
+.footer-bottom .links{display:flex;gap:24px}
+
+@media (max-width:900px){
+  .nav-links{display:none}
+  .burger{display:block}
+  .header-cta .btn-primary{display:none}
+  .feature-grid{grid-template-columns:1fr;gap:44px}
+  .feature-grid.reverse .f-media{order:0}
+  .steps-grid,.testi-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:36px}
+  .mock-body{grid-template-columns:1fr}
+  .mock-side{display:none}
+  .mock-stats{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){
+  section,.feature{padding:64px 0}
+  .mock-stats{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr}
+  .cta{padding:64px 24px;border-radius:24px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container header-inner">
+    <a class="logo" href="#">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </span>
+      Medix<span style="color:var(--accent)">.io</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features">Fonctionnalités</a>
+      <a href="#how">Comment ça marche</a>
+      <a href="#testimonials">Avis</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="header-cta">
+      <a class="login-link" href="index.html">Se connecter</a>
+      <a class="btn btn-primary" href="index.html">Essayer gratuitement</a>
+      <button class="burger" id="burgerBtn" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+  <nav class="mobile-menu" id="mobileMenu">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#how">Comment ça marche</a>
+    <a href="#testimonials">Avis</a>
+    <a href="#faq">FAQ</a>
+    <a class="btn btn-accent" href="index.html">Essayer gratuitement</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-badge"><strong>Nouveau</strong> Cotations CCN vérifiées en temps réel, à la seconde.</div>
+      <h1>Le pilotage de l'activité médicale, <em>enfin simple.</em></h1>
+      <p class="lead">Medix.io réunit dans une seule plateforme la cotation de vos actes, le suivi de votre activité en temps réel, la gestion complète de votre cabinet et l'organisation de vos remplacements.</p>
+      <div class="hero-actions">
+        <a class="btn btn-accent" href="index.html">
+          Démarrer gratuitement
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="#how">Voir comment ça marche</a>
+      </div>
+      <p class="hero-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+        Sans engagement · Données chiffrées &amp; hébergées en Europe
+      </p>
+    </div>
+
+    <!-- App mock -->
+    <div class="mock" role="img" aria-label="Aperçu du tableau de bord Medix.io">
+      <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></div>
+      <div class="mock-body">
+        <div class="mock-side">
+          <a class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Flux</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Documents</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Urgence</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Cabinet</a>
+        </div>
+        <div class="mock-main">
+          <div class="mock-stats">
+            <div class="stat-card"><div class="s-label">Actes cotés</div><div class="s-value">1 248</div><div class="s-delta up">▲ +12 % ce mois</div></div>
+            <div class="stat-card"><div class="s-label">Taux CCN optimal</div><div class="s-value">96,4 %</div><div class="s-delta up">▲ +2,1 pts</div></div>
+            <div class="stat-card"><div class="s-label">Recettes du mois</div><div class="s-value">9 320 €</div><div class="s-delta down">▼ −3 % vs m-1</div></div>
+          </div>
+          <div class="mock-chart" aria-hidden="true">
+            <div class="bar" style="height:38%"></div>
+            <div class="bar" style="height:55%"></div>
+            <div class="bar" style="height:82%"></div>
+            <div class="bar" style="height:47%"></div>
+            <div class="bar" style="height:66%"></div>
+            <div class="bar" style="height:58%"></div>
+            <div class="bar" style="height:90%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<div class="trust">
+  <div class="container">
+    <p>Conçu pour les professionnels de santé</p>
+    <div class="trust-row">
+      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Cotation CCN conforme</span>
+      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Données chiffrées, hébergées en Europe</span>
+      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Multi-profils : médecins, remplaçants, secrétaires</span>
+      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Disponible 24/7, web &amp; mobile</span>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURE 1 : Cotation -->
+<div class="feature" id="features">
+  <div class="container feature-grid">
+    <div class="f-copy">
+      <span class="kicker">Cotation</span>
+      <h3>Cotez chaque acte avec la certitude d'être juste.</h3>
+      <p>Une base de cotations CCN et d'avis SNITEM toujours à jour, pour tarifer vos actes en confiance et sécuriser vos relevés.</p>
+      <ul class="f-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Base CCN + avis intégrée</strong>, mise à jour en continu.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Réconciliation automatique</strong> de vos relevés d'assurance maladie.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Apprentissage de vos habitudes</strong> : les relevés deviennent de plus en plus justes.</span></li>
+      </ul>
+    </div>
+    <div class="f-media">
+      <div class="fc-blob blob-a"></div>
+      <div class="f-card">
+        <div class="fc-head">
+          <span class="fc-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Cotation — Octobre</span>
+          <span class="fc-chip">CCN ✓</span>
+        </div>
+        <div class="fc-row"><span class="muted">AIS2 — Avis médical</span><span class="val">24 × 22,50 €</span></div>
+        <div class="fc-row"><span class="muted">DPT — Déplacement</span><span class="val">8 × 7,20 €</span></div>
+        <div class="fc-row"><span class="muted">FSV — Forfait semaine</span><span class="val">4 × 18,00 €</span></div>
+        <div class="fc-row"><span class="muted">Total coté</span><span class="val">823,20 €</span></div>
+        <div class="fc-progress">
+          <div class="track"><div class="fill" style="width:96%"></div></div>
+          <div class="legends"><span>Conformité relevé</span><span>96,4 %</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURE 2 : Flux -->
+<div class="feature">
+  <div class="container feature-grid reverse">
+    <div class="f-copy">
+      <span class="kicker">Flux d'activité</span>
+      <h3>Votre activité en temps réel, sans tableur.</h3>
+      <p>Le dashboard Medix.io agrège vos actes, vos recettes et vos déplacements dans des graphiques vivants. Fini les feuilles de calcul : vous savez, chaque jour, où vous en êtes.</p>
+      <ul class="f-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Statistiques du jour, de la semaine, du mois</strong> en un coup d'œil.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Historique complet</strong> et export PDF de vos relevés.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Rappels intelligents</strong> pour ne plus jamais oublier un acte ou un document.</span></li>
+      </ul>
+    </div>
+    <div class="f-media">
+      <div class="fc-blob blob-b"></div>
+      <div class="f-card alt-bg">
+        <div class="fc-head">
+          <span class="fc-title" style="color:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Flux — Semaine 42</span>
+          <span class="fc-chip">Live</span>
+        </div>
+        <div class="fc-row"><span class="muted">Lundi</span><span class="val">18 actes · 342 €</span></div>
+        <div class="fc-row"><span class="muted">Mardi</span><span class="val">21 actes · 405 €</span></div>
+        <div class="fc-row"><span class="muted">Mercredi</span><span class="val">16 actes · 298 €</span></div>
+        <div class="fc-row"><span class="muted">Jeudi</span><span class="val">24 actes · 486 €</span></div>
+        <div class="fc-progress">
+          <div class="track"><div class="fill" style="width:78%"></div></div>
+          <div class="legends"><span>Objectif mensuel</span><span>78 %</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURE 3 : Cabinet -->
+<div class="feature">
+  <div class="container feature-grid">
+    <div class="f-copy">
+      <span class="kicker">Gestion de cabinet</span>
+      <h3>Finances, stocks, RH : tout votre cabinet au même endroit.</h3>
+      <p>Medix.io centralise la compta de cabinet, la gestion des stocks, l'organisation des réunions et même une analyse IA de vos finances. Votre secrétariat dispose de son propre espace, avec des permissions fines.</p>
+      <ul class="f-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Dépenses &amp; recettes</strong> catégorisées, avec export comptable mensuel automatisé.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Stocks, remplacements, réunions</strong> gérés en équipe.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Espace secrétariat dédié</strong> et validation des nouveaux membres du cabinet.</span></li>
+      </ul>
+    </div>
+    <div class="f-media">
+      <div class="fc-blob blob-a"></div>
+      <div class="f-card">
+        <div class="fc-head">
+          <span class="fc-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>Cabinet — Vue d'ensemble</span>
+          <span class="fc-chip">4 onglets</span>
+        </div>
+        <div class="fc-row"><span class="muted">Finances · résultat net</span><span class="val">+ 12 % vs m-1</span></div>
+        <div class="fc-row"><span class="muted">RH · remplacements planifiés</span><span class="val">3</span></div>
+        <div class="fc-row"><span class="muted">Ops · alertes stock</span><span class="val">2 produits</span></div>
+        <div class="fc-row"><span class="muted">IA · analyse financière</span><span class="val">Disponible</span></div>
+        <div class="fc-progress">
+          <div class="track"><div class="fill" style="width:64%"></div></div>
+          <div class="legends"><span>Budget consommé</span><span>64 %</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURE 4 : Urgence -->
+<div class="feature">
+  <div class="container feature-grid reverse">
+    <div class="f-copy">
+      <span class="kicker">Salle d'urgence</span>
+      <h3>Les demandes urgentes traitées en priorité, sans stress.</h3>
+      <p>Une file d'urgence dédiée pour réagir immédiatement : demandes de garde, remplacements de dernière minute, documents à valider. Vous êtes notifié, vous décidez, c'est traité.</p>
+      <ul class="f-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Notifications en temps réel</strong> avec badges de priorité.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Offres de remplacement</strong> publiées, candidatures suivies, tarifs négociés.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Commandes urgentes</strong> tracées de la demande à la livraison.</span></li>
+      </ul>
+    </div>
+    <div class="f-media">
+      <div class="fc-blob blob-b"></div>
+      <div class="f-card alt-bg">
+        <div class="fc-head">
+          <span class="fc-title" style="color:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Salle d'urgence</span>
+          <span class="fc-chip">3 en attente</span>
+        </div>
+        <div class="fc-row"><span class="muted">Remplacement — samedi</span><span class="val">Candidature reçue</span></div>
+        <div class="fc-row"><span class="muted">Garde — hôpital</span><span class="val">À confirmer</span></div>
+        <div class="fc-row"><span class="muted">Commande sérum</span><span class="val">Expédiée</span></div>
+        <div class="fc-row"><span class="muted">Document à valider</span><span class="val">Relevé 09/24</span></div>
+        <div class="fc-progress">
+          <div class="track"><div class="fill" style="width:52%"></div></div>
+          <div class="legends"><span>File traitée aujourd'hui</span><span>52 %</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="background:#fff">
+  <div class="container center">
+    <span class="kicker">Comment ça marche</span>
+    <h2>Opérationnel en moins de 5 minutes.</h2>
+    <p class="lead">Pas d'installation, pas de formation : Medix.io fonctionne dans votre navigateur, sur ordinateur comme sur mobile.</p>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <h3>Créez votre compte</h3>
+        <p>Inscription en quelques clics. Invitez ensuite vos secrétaires et remplaçants dans votre cabinet avec des permissions adaptées.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <h3>Cotez et suivez</h3>
+        <p>Enregistrez vos actes avec la base CCN intégrée. Votre dashboard et vos relevés se construisent automatiquement.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <h3>Pilotez votre cabinet</h3>
+        <p>Finances, stocks, urgences, remplacements : tout est là, à jour, et exportable en PDF quand vous en avez besoin.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="container center">
+    <span class="kicker">Avis</span>
+    <h2>Ils pilotent leur activité avec Medix.io.</h2>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div>
+        <blockquote>« Avant, je cotais mes actes sur un tableur et je passais des heures à reconcilier mes relevés. Avec Medix.io, <strong>tout est automatique</strong>. Je gagne au moins deux heures par semaine. »</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#0E9F7E,#2BD4AE)">SL</div>
+          <div><div class="ta-name">Dr Sophie L.</div><div class="ta-role">Médecin généraliste, Lyon</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div>
+        <blockquote>« La salle d'urgence et les offres de remplacement ont changé mon organisation. Je trouve mes remplaçants <strong>sans un seul coup de fil</strong>. »</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#0B6E8C,#22A2C4)">TM</div>
+          <div><div class="ta-name">Dr Thomas M.</div><div class="ta-role">Médecin conventionné, Nantes</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div>
+        <blockquote>« En tant que secrétaire, j'ai enfin un espace clair avec <strong>juste les outils dont j'ai besoin</strong>. Les stocks, les documents, les tâches : tout est simple. »</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)">CD</div>
+          <div><div class="ta-name">Claire D.</div><div class="ta-role">Secrétaire médicale, Bordeaux</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" style="background:#fff">
+  <div class="container center">
+    <span class="kicker">FAQ</span>
+    <h2>Questions fréquentes</h2>
+    <div class="faq-wrap">
+      <details class="faq-item">
+        <summary>Medix.io est-il conforme pour la cotation CCN ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-body">Oui. La base de cotations s'appuie sur la CCN des médecins et les avis publiés, et est mise à jour en continu. Chaque acte est vérifié, et la réconciliation automatique de vos relevés vous signale tout écart.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Mes données sont-elles sécurisées ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-body">Vos données sont chiffrées, hébergées en Europe, et chaque membre du cabinet n'accède qu'à ce qui lui est permis grâce à des politiques d'accès strictes au niveau de la base. Vous gardez le contrôle total sur les membres de votre cabinet.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Puis-je inviter ma secrétaire ou mes remplaçants ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-body">Oui. Chaque cabinet peut inviter ses secrétaires dans un espace dédié, publier des offres de remplacement et suivre les candidatures. Les nouveaux membres sont validés par le médecin responsable du cabinet.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Faut-il installer une application ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-body">Non. Medix.io est une application web qui fonctionne sur votre navigateur, sur ordinateur, tablette et mobile. Vous pouvez aussi l'ajouter à votre écran d'accueil comme une application.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Comment sont gérées la comptabilité et les documents ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-body">Dépenses, recettes et relevés sont centralisés, catégorisés et exportables en PDF. Un export comptable automatisé peut même être envoyé chaque début de mois à l'adresse de votre choix.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding-top:0">
+  <div class="container">
+    <div class="cta">
+      <h2>Prêt à reprendre le contrôle de votre activité&nbsp;?</h2>
+      <p>Rejoignez les médecins qui cotent, suivent et pilotent leur cabinet sans tableur. Gratuit pour démarrer, sans engagement.</p>
+      <a class="btn btn-accent" href="index.html">
+        Créer mon compte Medix.io
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="logo" href="#">
+          <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+          Medix<span style="color:#2BD4AE">.io</span>
+        </a>
+        <p class="footer-tag">La plateforme tout-en-un du médecin libéral : cotation, activité, cabinet et remplacements.</p>
+      </div>
+      <div>
+        <h4>Produit</h4>
+        <ul>
+          <li><a href="#features">Fonctionnalités</a></li>
+          <li><a href="#how">Comment ça marche</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Profils</h4>
+        <ul>
+          <li><a href="#">Médecins libéraux</a></li>
+          <li><a href="#">Remplaçants</a></li>
+          <li><a href="#">Secrétariats</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Légal</h4>
+        <ul>
+          <li><a href="#">Mentions légales</a></li>
+          <li><a href="#">Confidentialité</a></li>
+          <li><a href="#">CGU</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Medix.io — Tous droits réservés.</span>
+      <div class="links">
+        <a href="#">Données chiffrées · Hébergées en Europe</a>
+        <a href="#">Contact : contact@medix.io</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('burgerBtn').addEventListener('click', function(){
+  document.getElementById('mobileMenu').classList.toggle('open');
+});
+document.querySelectorAll('#mobileMenu a').forEach(function(a){
+  a.addEventListener('click', function(){
+    document.getElementById('mobileMenu').classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>

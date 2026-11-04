@@ -12806,6 +12806,7 @@ body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }
 #flux-recon-pending .module-card:has(#recon-pending-body:not([style*="none"])) {
     flex: 1 1 100% !important;
     width: auto !important;
+}
 /* ═════════════════════════════════════════════════════════════════════
    PAGE DASHBOARD CABINET — habillage MD3 Expressive
    Bandeau santé aéré, cartes tonales à grands rayons, entrées

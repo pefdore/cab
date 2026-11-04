@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réparation — Cab</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#0f172a; color:#e2e8f0; margin:0; padding:24px; max-width:640px; margin-inline:auto; }
+  h1 { font-size:1.4rem; } h2 { font-size:1.05rem; margin-top:28px; }
+  button { background:#3b82f6; color:#fff; border:0; border-radius:10px; padding:14px 20px; font-size:1rem; font-weight:600; cursor:pointer; width:100%; margin-top:10px; }
+  button.secondary { background:#334155; }
+  button:disabled { opacity:.5; cursor:default; }
+  .card { background:#1e293b; border-radius:12px; padding:16px; margin-top:12px; }
+  .ok { color:#4ade80; } .ko { color:#f87171; } .muted { color:#94a3b8; }
+  pre { background:#0b1220; padding:10px; border-radius:8px; overflow-x:auto; font-size:.8rem; white-space:pre-wrap; word-break:break-all; }
+  a { color:#60a5fa; }
+</style>
+</head>
+<body>
+<h1>🛠️ Réparation de l'application</h1>
+<p class="muted">Cette page neutralise le vieux cache qui bloque les mises à jour, puis vérifie tes données.</p>
+
+<button id="fixBtn">1 · Réparer maintenant (vider cache + service worker)</button>
+<div id="fixOut" class="card" style="display:none"></div>
+
+<h2>2 · Diagnostic de ton compte</h2>
+<div id="diag" class="card">Chargement…</div>
+
+<p><a href="index.html">→ Retour à l'application</a></p>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://wlpbnxnvctlmhndqvvim.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndscGJueG52Y3RsbWhuZHF2dmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NjgxMTAsImV4cCI6MjA5MjU0NDExMH0.ob6hctrkA7dTzKLUGG4Ymt1iemcgDnbsCtBwgBZPHoM';
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+document.getElementById('fixBtn').addEventListener('click', async () => {
+  const out = document.getElementById('fixOut');
+  out.style.display = 'block';
+  const lines = [];
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) { await r.unregister(); lines.push('✅ Service worker désinstallé'); }
+      if (!regs.length) lines.push('ℹ️ Aucun service worker actif');
+    }
+    const keys = await caches.keys();
+    for (const k of keys) { await caches.delete(k); }
+    lines.push('✅ Caches purgés (' + keys.length + ')');
+    lines.push('✅ Terminé. Clique sur « Retour à l\'application » puis recharge la page (F5).');
+    out.innerHTML = lines.join('<br>');
+  } catch (e) {
+    out.innerHTML = '<span class="ko">Erreur : ' + esc(e.message || e) + '</span>';
+  }
+});
+
+(async function diagnose() {
+  const box = document.getElementById('diag');
+  try {
+    if (typeof supabase === 'undefined') { box.innerHTML = '<span class="ko">Librairie Supabase non chargée (connexion ?)</span>'; return; }
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      box.innerHTML = 'Non connecté sur cette page. <a href="index.html">Connecte-toi</a>, puis reviens ici.';
+      return;
+    }
+    const uid = session.user.id;
+    const email = session.user.email || '';
+    let html = '<b>Connecté :</b> ' + esc(email) + '<br><span class="muted">' + uid + '</span>';
+
+    const { data: prof, error: pErr } = await sb.from('profiles').select('*').eq('id', uid).single();
+    html += '<br><br><b>Table profiles :</b> ';
+    if (pErr) html += '<span class="ko">' + esc(pErr.message) + '</span>';
+    else if (!prof) html += '<span class="ko">aucune ligne !</span>';
+    else {
+      const ok = prof.first_name && prof.last_name;
+      html += '<span class="' + (ok ? 'ok' : 'ko') + '">' + esc((prof.first_name||'') + ' ' + (prof.last_name||'')) + '</span>' +
+        ' · rôle : <b>' + esc(prof.role || '—') + '</b>' +
+        ' · cabinet : <span class="muted">' + esc(prof.cabinet_id || 'aucun') + '</span>';
+      if (!ok) html += '<br><span class="ko">⚠️ Nom/prénom vides en base : réinscris-les dans l\'onglet Profil.</span>';
+    }
+
+    const { data: up } = await sb.from('user_profiles').select('*').eq('user_id', uid).maybeSingle();
+    html += '<br><br><b>Table user_profiles (ancienne) :</b> ';
+    if (!up) html += '<span class="muted">aucune ligne (normal)</span>';
+    else html += 'nom : ' + esc((up.first_name||'') + ' ' + (up.last_name||'')) + ' · rôle : ' + esc(up.role || '—') +
+      ' · cabinet : <span class="muted">' + esc(up.cabinet_id || 'aucun') + '</span>' +
+      '<br><span class="muted">Si cette ligne est vide/incohérente, elle est ignorée par la version corrigée.</span>';
+
+    const { data: reqs } = await sb.from('cabinet_join_requests').select('id, status, requester_name, requester_email').eq('status', 'pending');
+    html += '<br><br><b>Demandes en attente visibles :</b> ' + (reqs ? reqs.length : '?');
+    if (reqs && reqs.length) {
+      html += '<pre>' + reqs.map(r => esc(r.requester_name) + ' — ' + esc(r.requester_email)).join('\n') + '</pre>';
+    } else {
+      html += '<br><span class="muted">Soit il n\'y en a aucune, soit la sécurité RLS les bloque (politique SQL à vérifier dans Supabase).</span>';
+    }
+    box.innerHTML = html;
+  } catch (e) {
+    box.innerHTML = '<span class="ko">Erreur diagnostic : ' + esc(e.message || e) + '</span>';
+  }
+})();
+</script>
+</body>
+</html>
