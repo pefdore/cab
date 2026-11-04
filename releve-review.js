@@ -357,11 +357,15 @@ window.saveAllReviewed = async function() {
 
         alert(`${depenses.length + recettes.length} ligne(s) enregistrée(s) avec succès`);
 
-        // La banque edite parfois 2 releves par mois : proposer l'import du second
+        // La banque edite parfois plusieurs releves par mois :
+        // demander (Oui / Non) s'il y a un autre PDF pour ce mois-la
         const monthsSet = [...new Set([...depenses, ...recettes].map(t => (t.date || '').slice(0, 7)))].filter(Boolean);
-        if (monthsSet.length) {
-            setTimeout(() => {
-                if (confirm(`Relevé de ${monthsSet.join(', ')} enregistré.\n\nAvez-vous un DEUXIÈME relevé pour ce mois-ci à intégrer ?\n\nOK = Oui, je l'importe maintenant\nAnnuler = Non, ce mois est complet`)) {
+        const monthKey = window._releveTargetMonth || monthsSet[0] || null;
+        window._releveTargetMonth = null;
+        if (monthKey) {
+            setTimeout(async () => {
+                const another = await askAnotherReleve(monthKey);
+                if (another) {
                     const uploadModal = document.getElementById('releve-upload-modal');
                     if (uploadModal) {
                         uploadModal.style.display = 'flex';
@@ -552,6 +556,40 @@ function reviewUpdateAmount(index, value) {
 }
 window.reviewUpdateAmount = reviewUpdateAmount;
 
+
+// Dialogue Oui / Non : un autre PDF pour ce mois ?
+function releveMonthLabel(monthKey) {
+    const [y, m] = (monthKey || '').split('-');
+    const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const idx = parseInt(m, 10) - 1;
+    if (!y || isNaN(idx) || !months[idx]) return monthKey;
+    return months[idx] + ' ' + y;
+}
+
+function askAnotherReleve(monthKey) {
+    return new Promise(resolve => {
+        const label = releveMonthLabel(monthKey);
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(15,15,30,0.45); z-index:11000; display:flex; align-items:center; justify-content:center; padding:20px;';
+        overlay.innerHTML = `
+            <div class="modal-card" style="max-width:400px; width:100%; padding:26px 24px; text-align:center;">
+                <div style="width:48px; height:48px; margin:0 auto 12px; background:var(--md-primary-container, #e8e6ff); color:var(--md-on-primary-container, #2a1f9e); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">✓</div>
+                <h3 style="margin:0 0 8px; font-size:1.08rem; font-weight:800; letter-spacing:-0.02em;">Relevé de ${reviewEscapeHtml(label)} enregistré</h3>
+                <p style="margin:0 0 18px; font-size:0.85rem; color:var(--color-text-secondary); line-height:1.45;">Avez-vous un autre PDF pour ${reviewEscapeHtml(label)} à intégrer ?</p>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" id="ask-another-oui" class="btn-primary" style="flex:1; padding:12px; border:none; border-radius:999px; cursor:pointer;">Oui, importer</button>
+                    <button type="button" id="ask-another-non" class="btn-secondary" style="flex:1; padding:12px; border-radius:999px; cursor:pointer;">Non</button>
+                </div>
+            </div>`;
+        const close = (val) => { overlay.remove(); resolve(val); };
+        overlay.querySelector('#ask-another-oui').onclick = () => close(true);
+        overlay.querySelector('#ask-another-non').onclick = () => close(false);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+        document.body.appendChild(overlay);
+    });
+}
+window.askAnotherReleve = askAnotherReleve;
 
 // ===== Pinch-to-zoom du PDF dans le bandeau =====
 (function initReviewPdfZoom() {
