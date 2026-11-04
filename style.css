@@ -13175,3 +13175,171 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 }
 /* le recap categories : aligne visuellement avec les mouvements */
 #flux-category-summary .flux-cat-row { padding: 6px 10px !important; margin-bottom: 4px !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VUE DE REVUE DE RELEVÉ — habillage MD3 Expressive
+   (plein écran : bandeau PDF + liste de lignes)
+   ═══════════════════════════════════════════════════════════════════════════ */
+#releve-review-view { background: var(--md-surface); }
+
+/* Topbar : surface haute, pilules plein rond */
+.review-topbar {
+    background: var(--md-surface-high) !important;
+    border-bottom: none !important;
+    box-shadow: var(--elev-1) !important;
+    padding: 10px 16px;
+}
+.review-title {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+.review-btn {
+    background: var(--md-surface-low);
+    border: none !important;
+    border-radius: var(--radius-full) !important;
+    padding: 9px 14px;
+    box-shadow: none;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease, box-shadow 0.15s ease;
+}
+.review-btn:hover {
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container) !important;
+    box-shadow: var(--elev-1);
+}
+.review-btn.primary { background: var(--md-primary); color: white !important; }
+.review-btn.primary:hover { background: var(--md-primary); opacity: 0.92; }
+.review-btn.success { background: #10b981; color: white !important; }
+.review-btn.success:hover { background: #10b981; opacity: 0.92; }
+.review-btn.danger { background: #ef4444; color: white !important; }
+.review-btn.danger:hover { background: #ef4444; opacity: 0.92; }
+
+/* Disclaimer : bandeau tonal ambre, sans bordure dure */
+.review-disclaimer {
+    background: rgba(245,158,11,0.14);
+    border-bottom: none;
+    color: #b45309;
+    padding: 8px 16px;
+}
+[data-theme="dark"] .review-disclaimer { background: rgba(245,158,11,0.10); color: #fbbf24; }
+
+/* Bandeau PDF : surface basse, pages en pilules */
+#review-pdf-zone, .review-pdf-zone {
+    height: 35vh;
+    overflow-y: auto;
+    text-align: center;
+    background: var(--md-surface-low) !important;
+    border-bottom: none !important;
+    padding: 12px 12px 16px !important;
+}
+.review-pdf-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.review-pdf-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--md-surface-high);
+    border-radius: var(--radius-full);
+    padding: 3px 6px;
+    box-shadow: var(--elev-1);
+}
+.review-pdf-nav-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--color-text);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.25s var(--md-spring);
+}
+.review-pdf-nav-btn:hover:not(:disabled) { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.review-pdf-nav-btn:active:not(:disabled) { transform: scale(0.9); }
+.review-pdf-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.review-pdf-page-label {
+    font-size: var(--text-caption);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    padding: 0 4px;
+    font-variant-numeric: tabular-nums;
+}
+.review-pdf-page-label strong { font-size: 0.9rem; color: var(--color-text); }
+.review-pdf-follow {
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    font-size: var(--text-caption);
+    font-weight: 700;
+    padding: 7px 14px;
+    cursor: pointer;
+    box-shadow: var(--elev-1);
+    transition: transform 0.25s var(--md-spring);
+}
+.review-pdf-follow:active { transform: scale(0.94); }
+.review-pdf-hint {
+    font-size: var(--text-caption);
+    color: var(--color-text-tertiary);
+    width: 100%;
+    text-align: center;
+}
+@media (min-width: 761px) {
+    .review-pdf-hint { width: auto; }
+}
+#review-pdf-img { border-radius: var(--radius-m) !important; box-shadow: var(--elev-2) !important; }
+
+/* Lignes : surfaces tonales, hover élevé, ligne courante en anneau primaire */
+.review-line {
+    background: var(--md-surface-low);
+    border: none !important;
+    border-radius: 18px !important;
+    padding: 14px 16px !important;
+    margin-bottom: 8px;
+    box-shadow: none;
+    animation: md-pop 0.4s var(--md-spring) both;
+    transition: background 0.15s ease, transform 0.25s var(--md-spring), box-shadow 0.15s ease;
+}
+.review-line:hover {
+    background: var(--md-surface-high);
+    transform: translateY(-2px);
+    box-shadow: var(--elev-1);
+}
+.review-line.current {
+    background: var(--md-surface-high);
+    box-shadow: 0 0 0 2px var(--md-primary), var(--elev-2) !important;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+.review-line.confirmed { opacity: 0.55; background: rgba(16,185,129,0.07); }
+.review-line.rejected { opacity: 0.4; background: rgba(239,68,68,0.05); text-decoration: line-through; }
+.review-line.dup { border-left: 4px solid #f59e0b !important; }
+.review-libelle { font-size: var(--text-body); }
+.review-badge { border-radius: var(--radius-full); padding: 3px 10px; }
+.review-state { border-radius: var(--radius-full); padding: 2px 9px; }
+.review-field select, .review-field input { border-radius: var(--radius-s); background: var(--md-surface-high); border-color: var(--color-border-subtle); }
+.review-field select:focus, .review-field input:focus {
+    outline: none;
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+}
+.review-sug-btn {
+    border-radius: var(--radius-full);
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    border: none;
+    padding: 2px 9px;
+}
+.souscat-chips { border-radius: var(--radius-m); box-shadow: var(--elev-2); background: var(--md-surface-high); border-color: var(--color-border-subtle); }
+.souscat-chip { border-radius: var(--radius-full); background: var(--md-surface-low); border-color: var(--color-border-subtle); }
+.souscat-chip:hover { background: var(--md-primary-container); color: var(--md-on-primary-container); border-color: transparent; }
