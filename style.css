@@ -13001,3 +13001,54 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
         grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)) !important;
     }
 }
+
+/* ═════ Condensation : espace mort réduit, chips pleine largeur ═════ */
+/* Page : inter-sections resserrées */
+.md-page { gap: 10px !important; }
+.md-section-head { padding: 0 0 0 !important; margin: -4px 0 -2px; }
+.md-headline { font-size: clamp(1.2rem, 3vw, 1.7rem) !important; margin-bottom: 2px !important; }
+.md-headline-sub { font-size: 0.76rem !important; }
+
+/* Chips : desktop = pleine largeur partagée */
+@media (min-width: 761px) {
+    .flux-chips-row { width: 100%; }
+    .flux-chips-row > div { flex: 1 1 0 !important; }
+    .flux-chips-row > div > .module-card { width: 100% !important; }
+}
+/* Mobile : serres au maximum */
+.flux-chips-row { gap: 4px !important; }
+.flux-chip-card {
+    padding: 5px 12px !important;
+    gap: 6px !important;
+}
+.flux-chip-card h3 { font-size: 0.74rem !important; }
+#flux-reminders .module-card.flux-chip-card,
+#flux-recon-pending .module-card.flux-chip-card { margin: 0 !important; }
+
+/* Hero : compact */
+.flux-hero-top { margin-bottom: 8px !important; gap: 8px !important; }
+.flux-hero-balance { padding: 6px 14px 8px !important; }
+.fhero-balance-value { font-size: clamp(1.35rem, 5vw, 1.9rem) !important; }
+.fhero-balance-label { font-size: 0.62rem !important; }
+.fhero-trend { font-size: 0.64rem !important; }
+.fhero-kpi { padding: 8px 12px !important; }
+.fhero-kpi-icon { width: 26px; height: 26px; font-size: 0.65rem; }
+.fhero-kpi-value { font-size: 0.92rem !important; }
+.fhero-kpi-label { font-size: 0.58rem !important; }
+.fhero-chart { height: 44px !important; padding: 6px 8px !important; }
+.flux-hero-kpis { gap: 6px !important; }
+
+/* Cartes de section : moins d'air */
+.md-card { padding: 12px 14px !important; }
+.md-card h3 { margin: 0 0 8px !important; font-size: 0.92rem !important; }
+
+/* Resume banner compact */
+#flux-releve-resume > div { padding: 8px 12px !important; font-size: 0.75rem !important; }
+
+@media (max-width: 760px) {
+    .flux-chip-card h3 { font-size: 0.7rem !important; }
+    .flux-hero-month { padding: 3px !important; }
+    .fhero-arrow { width: 26px; height: 26px; font-size: 0.95rem; }
+    .fhero-month-label { min-width: 52px; }
+    .fhero-month-label strong { font-size: 0.82rem !important; }
+}
