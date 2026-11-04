@@ -10147,6 +10147,12 @@ async function cabLoadRh(alertes) {
         const taux = total > 0 ? Math.round((answered / total) * 100) : 0;
         cabSet('cabAppelsManques', String(missed), missed > 0 ? 'var(--color-danger)' : 'var(--color-text)');
         cabSet('cabTauxReponse', total > 0 ? taux + '%' : '-');
+        const stdPill = document.getElementById('cabStdPill');
+        if (stdPill) {
+            if (total === 0) { stdPill.textContent = 'Aucune donnée'; stdPill.className = 'cab-tile-pill warn'; }
+            else if (taux >= 80) { stdPill.textContent = 'Efficace ✓'; stdPill.className = 'cab-tile-pill ok'; }
+            else { stdPill.textContent = taux + '% à améliorer'; stdPill.className = 'cab-tile-pill danger'; }
+        }
         if (total > 0 && taux < 80) alertes.push({ level: 'warn', domain: 'equipe', text: `Taux de réponse du standard à ${taux}% sur 30 jours` });
 
         const chartEl = document.getElementById('cabStandardChart');
@@ -10220,6 +10226,8 @@ function cabLoadStocks(alertes) {
             cabSet('cabStocksSousSeuil', '0');
             cabSet('cabStocksExpires', '0');
             cabSet('cabDernierPointage', 'Jamais');
+            const pill0 = document.getElementById('cabStockPill');
+            if (pill0) { pill0.textContent = 'Non suivi'; pill0.className = 'cab-tile-pill warn'; }
             const el = document.getElementById('cabStocksAlerte');
             if (el) el.innerHTML = '<p class="cab-empty">Aucun stock salle d\'urgence enregistré</p>';
             return;
@@ -10236,6 +10244,13 @@ function cabLoadStocks(alertes) {
         cabSet('cabStocksExpires', String(expires.length), expires.length > 0 ? 'var(--color-danger)' : 'var(--color-text)');
         cabSet('cabDernierPointage', data.lastPointage ? cabFmtDate(data.lastPointage) : 'Jamais',
             (!data.lastPointage || new Date(data.lastPointage) < new Date(today.getTime() - 7 * 24 * 3600 * 1000)) ? 'var(--color-warning)' : 'var(--color-text)');
+
+        const stockPill = document.getElementById('cabStockPill');
+        if (stockPill) {
+            const nbStock = sousSeuil.length + expires.length;
+            stockPill.textContent = nbStock === 0 ? 'Efficient ✓' : nbStock + ' à traiter';
+            stockPill.className = 'cab-tile-pill ' + (sousSeuil.length > 0 ? 'danger' : nbStock > 0 ? 'warn' : 'ok');
+        }
 
         sousSeuil.slice(0, 3).forEach(p => alertes.push({ level: 'danger', domain: 'activite', text: `Stock sous le seuil : ${cabEsc(p.name)} (${p.quantity}/${p.minQuantity})` }));
         expires.slice(0, 2).forEach(p => alertes.push({ level: 'danger', domain: 'activite', text: `Produit périmé ou proche : ${cabEsc(p.name)}` }));

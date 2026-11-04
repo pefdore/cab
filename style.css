@@ -11468,6 +11468,163 @@ select.admin-search { min-width: 170px; }
     pointer-events: none;
 }
 
+/* ===== DASHBOARD CABINET : VUE D'ENSEMBLE ===== */
+.cab-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.cab-kpi-mini {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.cab-kpi-label {
+    font-size: 0.6875rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cab-kpi-value {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+.cab-kpi-mini .cabinet-stat-trend { font-size: 0.6875rem; }
+
+.cab-org-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.cab-org-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    min-width: 0;
+}
+.cab-org-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.cab-org-head h3 {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+.cab-org-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.cab-org-stat {
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.cab-org-stat-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+.cab-org-stat-label {
+    font-size: 0.6875rem;
+    color: var(--color-text-tertiary);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cab-org-subtitle {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary);
+    margin: 14px 0 8px;
+}
+.cab-standard-chart { height: 110px; }
+.cab-alertes-section { margin-top: 4px; }
+
+/* Analyse IA repliée */
+.cab-ia-details {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+}
+.cab-ia-details summary {
+    cursor: pointer;
+    padding: 16px 20px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    user-select: none;
+}
+.cab-ia-details summary::-webkit-details-marker { display: none; }
+.cab-ia-details summary::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--color-text-tertiary);
+    border-bottom: 2px solid var(--color-text-tertiary);
+    transform: rotate(-45deg);
+    transition: transform var(--transition-base);
+    flex-shrink: 0;
+    align-self: center;
+}
+.cab-ia-details[open] summary::before { transform: rotate(45deg); }
+.cab-ia-details summary:hover { color: var(--color-primary); }
+.cab-ia-hint {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+    text-transform: none;
+    letter-spacing: 0;
+}
+.cab-ia-details .llm-analysis-section { padding: 0 20px 20px; }
+
+@media (max-width: 1024px) {
+    .cab-kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    .cab-org-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+    .cab-kpi-strip { grid-template-columns: repeat(2, 1fr); }
+}
+
+
 /* ═══════════════════════════════════════════════════════════════
    DESIGN SYSTEM — couche d'unification « Cab OS » (MD3-inspired)
    5 rayons, 3 élévations, 4 échelles typo, surfaces tonales.
