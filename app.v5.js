@@ -4941,6 +4941,8 @@ function switchView(viewName) {
         view.classList.toggle('active', view.id === `view-${viewName}`);
     });
 
+    window.scrollTo({ top: 0 });
+
     const pageTitles = {
         'dashboard': 'Dashboard',
         'flux': 'Flux',
