@@ -13163,3 +13163,15 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .fhero-balance-value { font-size: 1.35rem !important; }
     .fhero-chart { grid-column: 1 / -1; }
 }
+
+/* Sous-sections dans la carte Mouvements */
+.md-subsection-label {
+    font-size: var(--text-caption);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--color-text-tertiary);
+    margin: 4px 0 6px;
+}
+/* le recap categories : aligne visuellement avec les mouvements */
+#flux-category-summary .flux-cat-row { padding: 6px 10px !important; margin-bottom: 4px !important; }
