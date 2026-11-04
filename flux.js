@@ -312,6 +312,17 @@ function fluxInitCategorySelects() {
     if (typeof handleDepenseAutocomplete === 'function') handleDepenseAutocomplete();
 }
 
+// Debounce externe : les mises a jour en rafale (chargement + sync + import)
+// ne declenchent qu'un seul rendu de la vue
+(function() {
+    const real = renderFluxView;
+    let timer = null;
+    window.renderFluxView = function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => { real(); }, 150);
+    };
+})();
+
 window.fluxChangeMonth = fluxChangeMonth;
 window.fluxSelectMonth = fluxSelectMonth;
 window.renderFluxView = renderFluxView;

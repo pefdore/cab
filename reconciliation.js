@@ -158,14 +158,15 @@ window.renderReconPending = function() {
     if (!container) return;
     const pending = reconUnmatchedDepenses();
     if (pending.length === 0) {
+        window.__lastReconHtml = '';
         container.innerHTML = '';
         return;
     }
     const open = window._reconListOpen === true;
-    container.innerHTML = `
-        <div class="module-card" style="border-left: 3px solid #f59e0b;">
+    const __reconHtml = `
+        <div class="module-card flux-chip-card" style="border-left: 3px solid #f59e0b;">
             <div onclick="toggleReconPending()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
-                <h3 style="margin:0; color:#b45309; font-size:0.88rem;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
+                <h3 style="margin:0; color:#b45309; font-size:0.82rem;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
                 <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼'}</span>
             </div>
             <div id="recon-pending-body" style="display:${open ? 'block' : 'none'}; margin-top:8px;">
@@ -185,7 +186,21 @@ window.renderReconPending = function() {
             ${pending.length > 8 ? `<div style="font-size:0.75rem; color:var(--color-text-secondary); padding:4px 2px;">+ ${pending.length - 8} autre(s)…</div>` : ''}
             </div>
         </div>`;
+    // DIFF : ne pas reecrire le DOM si identique -> zero clignotement
+    if (window.__lastReconHtml === __reconHtml) return;
+    window.__lastReconHtml = __reconHtml;
+    container.innerHTML = __reconHtml;
 };
+
+// Debounce du rendu du panneau de rapprochement
+(function() {
+    const real = window.renderReconPending;
+    let timer = null;
+    window.renderReconPending = function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => { real(); }, 150);
+    };
+})();
 
 window.toggleReconPending = function() {
     window._reconListOpen = !window._reconListOpen;

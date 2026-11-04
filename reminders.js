@@ -109,13 +109,13 @@ function renderReminders() {
     const headerTxt = pendingCount > 0
         ? `${pendingCount} relevé${pendingCount > 1 ? 's' : ''} en attente d'import`
         : `Tous les relevés ${new Date().getFullYear()} sont importés ✅`;
-    holder.innerHTML = `
-        <div class="module-card" style="border-left: 3px solid var(--color-primary);">
+    const __checklistHtml = `
+        <div class="module-card flux-chip-card" style="border-left: 3px solid var(--color-primary);">
             <div onclick="toggleReleveChecklist()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
-                <h3 style="margin:0; color:${headerColor}; font-size:0.88rem;">📅 ${headerTxt}</h3>
+                <h3 style="margin:0; color:${headerColor}; font-size:0.82rem;">📅 ${headerTxt}</h3>
                 <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼ ' + okCount + '/' + all.length}</span>
             </div>
-            <div id="releve-checklist-body" style="display:${open ? 'block' : 'none'}; margin-top:12px;">
+            <div id="releve-checklist-body" style="display:${open ? 'block' : 'none'}; margin-top:12px;" data-open="${open ? '1' : ''}">
             <p class="module-desc">Relevés de compte de l'année en cours. Les mois en vert sont importés, pas besoin de les refaire. Les mois en attente attendent leur relevé.</p>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;">
                 ${all.map(m => m.imported ? `
@@ -133,10 +133,25 @@ function renderReminders() {
             </div>
             </div>
         </div>`;
+    // DIFF : ne pas reecrire le DOM si le contenu est identique -> zero clignotement
+    if (window.__lastChecklistHtml === __checklistHtml) return;
+    window.__lastChecklistHtml = __checklistHtml;
+    holder.innerHTML = __checklistHtml;
 }
 
 window.renderReminders = renderReminders;
 window.remindersMissingMonths = remindersMissingMonths;
+
+// Debounce : les multiples declencheurs (chargement, sync, import) ne font
+// qu'UN rendu -> plus de clignotement des cartes
+(function() {
+    const realRenderReminders = renderReminders;
+    let timer = null;
+    window.renderReminders = function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => { realRenderReminders(); }, 150);
+    };
+})();
 
 window.toggleReleveChecklist = function() {
     window._releveListOpen = !window._releveListOpen;

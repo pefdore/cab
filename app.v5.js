@@ -4904,7 +4904,10 @@ function mdArmAnimations() {
 }
 
 function switchView(viewName) {
-    mdArmAnimations();
+    if (window._currentViewName !== viewName) {
+        window._currentViewName = viewName;
+        mdArmAnimations();
+    }
     try { sessionStorage.setItem('cab_current_view', viewName); } catch (e) {}
     if (viewName !== 'settings') {
         const overlay = document.querySelector('.settings-page-overlay');
