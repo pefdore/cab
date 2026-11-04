@@ -12809,28 +12809,33 @@ body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }
 }
 /* ═════════════════════════════════════════════════════════════════════
    PAGE DASHBOARD CABINET — habillage MD3 Expressive
-   Bandeau santé aéré, cartes tonales à grands rayons, entrées
-   élastiques en cascade (md-pop / md-bar-in, springs MD3).
+   Conforme aux règles MD3 : surfaces tonales (surface containers),
+   grands rayons, chips normées + state-layers, typo expressive,
+   motion spring en cascade, responsive intégral (tablette/mobile).
    ═════════════════════════════════════════════════════════════════════ */
 
 /* ---- Bandeau santé : une ligne claire et aérée, sans halo ---- */
 #cabinet-dashboard .cab-health-wrap {
     background: var(--md-surface-high, var(--color-bg-elevated));
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--md-radius-2xl, 24px);
+    border: 1px solid transparent;
+    border-radius: var(--md-radius-2xl, 28px);
     box-shadow: var(--elev-1);
-    padding: 18px 24px;
-    margin-bottom: 22px;
+    padding: 20px 26px;
+    margin-bottom: 18px;
     position: relative;
     overflow: hidden;
-    transition: box-shadow 0.25s ease, transform 0.3s var(--md-spring, ease);
+    transition: box-shadow 0.25s ease;
 }
 #cabinet-dashboard .cab-health-wrap::before,
 #cabinet-dashboard .cab-health-wrap::after { content: none; }
-#cabinet-dashboard .cab-health-wrap:hover { box-shadow: var(--elev-2); }
 #cabinet-dashboard .cab-health-status { gap: 16px; }
 #cabinet-dashboard .cab-health-overline { margin-bottom: 3px; }
-#cabinet-dashboard .cab-health-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+#cabinet-dashboard .cab-health-title {
+    font-size: clamp(1.15rem, 2.6vw, 1.35rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+}
 #cabinet-dashboard .cab-health-sub { margin-top: 2px; }
 #cabinet-dashboard .cab-health-pulse,
 #cabinet-dashboard .cab-health-dot {
@@ -12840,77 +12845,210 @@ body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }
     flex-shrink: 0;
     background: var(--color-success);
     position: relative;
+    margin: 0 2px;
 }
 #cabinet-dashboard .cab-health-wrap[data-status="warn"] .cab-health-pulse,
 #cabinet-dashboard .cab-health-dot.warn { background: var(--color-warning); }
 #cabinet-dashboard .cab-health-wrap[data-status="danger"] .cab-health-pulse,
 #cabinet-dashboard .cab-health-dot.danger { background: var(--color-danger); }
 #cabinet-dashboard .cab-health-dot.ok { background: var(--color-success); }
-#cabinet-dashboard .cab-health-pulse::after,
-#cabinet-dashboard .cab-health-dot::after {
+#cabinet-dashboard .cab-health-wrap[data-status="danger"] .cab-health-pulse::after {
     content: '';
     position: absolute;
     inset: -4px;
     border-radius: inherit;
-    background: currentColor;
-    opacity: 0;
-}
-#cabinet-dashboard .cab-health-wrap[data-status="danger"] .cab-health-pulse::after {
     background: var(--color-danger);
+    opacity: 0.35;
     animation: cabPulse 1.6s ease-in-out infinite;
 }
 
-/* ---- Cartes : grands rayons, surface haute, ombre douce ---- */
+/* ---- Surfaces : cartes = surface containers MD3, pas de bordure ---- */
 #cabinet-dashboard .stat-card,
 #cabinet-dashboard .chart-card,
 #cabinet-dashboard .cab-org-card,
 #cabinet-dashboard .cab-kpi-mini,
-#cabinet-dashboard .cab-ia-details {
-    border-radius: var(--md-radius-2xl, 24px);
-    border: 1px solid var(--color-border-subtle);
+#cabinet-dashboard .cab-ia-details,
+#cabinet-dashboard .cab-alertes-section {
+    background: var(--md-surface-high, var(--color-bg-elevated));
+    border: 1px solid transparent;
+    border-radius: var(--md-radius-2xl, 28px);
     box-shadow: var(--elev-1);
     transition: transform 0.3s var(--md-spring, ease), box-shadow 0.25s ease;
 }
-#cabinet-dashboard .stat-card:hover,
-#cabinet-dashboard .chart-card:hover,
-#cabinet-dashboard .cab-org-card:hover,
-#cabinet-dashboard .cab-kpi-mini:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--elev-2);
+#cabinet-dashboard .cab-kpi-mini {
+    border-radius: var(--md-radius-xl, 20px);
+    box-shadow: none;
+    background: var(--md-surface-low, var(--color-bg-subtle));
+    padding: 14px 16px;
 }
-#cabinet-dashboard .cab-kpi-mini:hover { transform: scale(1.03); }
-#cabinet-dashboard .stat-icon { border-radius: var(--md-radius-xl, 18px); }
-#cabinet-dashboard .cab-org-stat { border-radius: var(--md-radius-xl, 18px); }
-#cabinet-dashboard .cab-org-subtitle { margin-top: 18px; }
+#cabinet-dashboard .chart-card { padding: 22px 24px; }
+#cabinet-dashboard .chart-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+}
+@media (hover: hover) {
+    #cabinet-dashboard .stat-card:hover,
+    #cabinet-dashboard .chart-card:hover,
+    #cabinet-dashboard .cab-org-card:hover {
+        box-shadow: var(--elev-2);
+        transform: translateY(-3px);
+    }
+    #cabinet-dashboard .cab-kpi-mini:hover {
+        transform: scale(1.03);
+        background: var(--color-primary-subtle);
+    }
+    #cabinet-dashboard .stat-card:hover .stat-icon {
+        transform: scale(1.08) rotate(-4deg);
+    }
+}
 
-/* ---- Pastilles : chips MD3 tonales, feedback élastique ---- */
-#cabinet-dashboard .cab-tile-pill {
+/* ---- Typo expressive : valeurs display, libellés overline ---- */
+#cabinet-dashboard .stat-value {
+    font-size: clamp(1.25rem, 2.6vw, 1.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+#cabinet-dashboard .stat-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-tertiary);
+    margin-top: 3px;
+}
+#cabinet-dashboard .stat-icon {
+    border-radius: 16px;
+    transition: transform 0.3s var(--md-spring, ease);
+}
+#cabinet-dashboard .cab-kpi-value {
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+#cabinet-dashboard .cab-org-stat-value {
+    font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+#cabinet-dashboard .cab-org-head h3 {
+    font-size: 1.0625rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+/* ---- Trends : chips tonales MD3 ---- */
+#cabinet-dashboard .compta-trend,
+#cabinet-dashboard .cabinet-stat-trend {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 4px 10px;
     border-radius: var(--radius-full, 999px);
+    background: var(--md-surface-low, var(--color-bg-subtle));
+    color: var(--color-text-secondary);
+    margin-top: 6px;
+}
+#cabinet-dashboard .compta-trend.up,
+#cabinet-dashboard .cabinet-stat-trend.up { background: var(--color-success-bg); color: var(--color-success); }
+#cabinet-dashboard .compta-trend.down,
+#cabinet-dashboard .cabinet-stat-trend.down { background: var(--color-danger-bg); color: var(--color-danger); }
+
+/* ---- Chips / pastilles : specs MD3 (28dp, tonal, state-layer) ---- */
+#cabinet-dashboard .cab-tile-pill {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: var(--radius-full, 999px);
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.01em;
-    transition: transform 0.25s var(--md-spring, ease), background 0.15s ease;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s var(--md-spring, ease), filter 0.15s ease;
 }
 #cabinet-dashboard .cab-tile-pill:active { transform: scale(0.92); }
+#cabinet-dashboard .cab-badge { border-radius: var(--radius-full, 999px); }
 
-/* ---- Histogrammes : barres élastiques ---- */
-#cabinet-dashboard .bar-chart .bar {
+/* ---- Histogrammes : barres élastiques, scroll horizontal garanti ---- */
+#cabinet-dashboard .chart-card .bar-chart {
+    height: clamp(130px, 22vw, 180px);
+    gap: 6px;
+    overflow: visible;
+}
+#cabinet-dashboard .chart-card .bar {
+    border-radius: 6px 6px 2px 2px;
+    min-height: 3px;
     transition: height 0.6s var(--md-spring, ease), filter 0.15s ease;
-    border-radius: 6px 6px 0 0;
 }
-#cabinet-dashboard .bar-chart .bar:hover { filter: brightness(1.12); }
-#cabinet-dashboard .bar-chart .bar-group:hover .bar { filter: brightness(1.08); }
-#cabinet-dashboard .donut-chart {
-    transition: transform 0.35s var(--md-spring, ease);
+#cabinet-dashboard .chart-card .bar-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    margin-top: 6px;
+    text-transform: capitalize;
+    white-space: nowrap;
 }
-#cabinet-dashboard .donut-wrapper:hover .donut-chart { transform: scale(1.04) rotate(2deg); }
+@media (hover: hover) {
+    #cabinet-dashboard .bar-chart .bar:hover { filter: brightness(1.15) saturate(1.1); }
+    #cabinet-dashboard .donut-wrapper:hover .donut-chart { transform: scale(1.04) rotate(2deg); }
+}
+#cabinet-dashboard .donut-chart { transition: transform 0.35s var(--md-spring, ease); }
+#cabinet-dashboard .donut-wrapper { flex-wrap: wrap; gap: 16px; }
+#cabinet-dashboard .chart-legend { flex-wrap: wrap; gap: 6px 12px; margin-bottom: 10px; }
+#cabinet-dashboard .top-cat-item { border-radius: 10px; transition: background 0.15s ease; }
+#cabinet-dashboard .top-cat-item:hover { background: var(--md-surface-low, var(--color-bg-subtle)); }
 
-/* ---- Analyse IA : summary chip MD3 ---- */
+/* ---- Cartes organisation : stats tonales en tuiles ---- */
+#cabinet-dashboard .cab-org-card { padding: 22px 24px; }
+#cabinet-dashboard .cab-org-stats { gap: 12px; }
+#cabinet-dashboard .cab-org-stat {
+    background: var(--md-surface-low, var(--color-bg-subtle));
+    border-radius: var(--md-radius-xl, 20px);
+    padding: 12px 14px;
+    transition: background 0.2s ease;
+}
+#cabinet-dashboard .cab-org-subtitle {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin: 18px 0 8px;
+}
+#cabinet-dashboard .cab-mini-item { border-radius: 12px; }
+#cabinet-dashboard .cab-standard-chart { height: clamp(90px, 16vw, 120px); }
+
+/* ---- Alertes : rangées tonales arrondies ---- */
+#cabinet-dashboard .cab-alertes-section { padding: 22px 24px; }
+#cabinet-dashboard .cab-alerte {
+    border-radius: 14px;
+    transition: background 0.15s ease, transform 0.25s var(--md-spring, ease);
+}
+#cabinet-dashboard .cab-alerte:hover { background: var(--md-surface-low, var(--color-bg-subtle)); }
+
+/* ---- Analyse IA : summary chip MD3 avec state-layer ---- */
+.cab-ia-details { overflow: hidden; }
 .cab-ia-details summary {
-    border-radius: var(--md-radius-2xl, 24px);
+    border-radius: var(--md-radius-2xl, 28px);
+    padding: 18px 24px;
+    position: relative;
     transition: background 0.2s ease, color 0.2s ease;
 }
-.cab-ia-details summary:hover { background: var(--md-surface-low, var(--color-bg-subtle)); }
-.cab-ia-details[open] summary { border-bottom: 1px solid var(--color-border-subtle); }
+.cab-ia-details summary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+.cab-ia-details summary:hover::after { opacity: 0.04; }
+.cab-ia-details[open] summary { border-radius: var(--md-radius-xl, 20px) var(--md-radius-xl, 20px) 0 0; border-bottom: 1px solid var(--color-border-subtle); }
+.cab-ia-details .llm-analysis-section { padding: 16px 24px 22px; }
 
 /* ---- Entrées élastiques en cascade (armées 900ms au changement de vue) ---- */
 #cabinet-dashboard .cab-health-wrap,
@@ -12944,6 +13082,59 @@ body.md-armed #cabinet-dashboard .cab-org-card { animation: md-pop 0.55s var(--m
 body.md-armed #cabinet-dashboard .cab-org-card:nth-child(2) { animation-delay: 0.55s !important; }
 body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s var(--md-spring) 0.62s both !important; }
 
+/* ---- RESPONSIVE : tablette ---- */
+@media (max-width: 1024px) {
+    #cabinet-dashboard .cab-kpi-strip { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    #cabinet-dashboard .cab-org-grid { grid-template-columns: 1fr; }
+    #cabinet-dashboard .chart-card { padding: 18px 20px; }
+}
+
+/* ---- RESPONSIVE : mobile ---- */
+@media (max-width: 768px) {
+    #cabinet-dashboard .cab-health-wrap { padding: 16px 18px; }
+    #cabinet-dashboard .cab-health-status { gap: 12px; }
+    #cabinet-dashboard .cab-health-overline { font-size: 0.625rem; }
+    #cabinet-dashboard .cab-health-sub { font-size: 0.8125rem; }
+    #cabinet-dashboard .stats-grid { gap: 12px; }
+    #cabinet-dashboard .stat-card { padding: 16px; gap: 12px; }
+    #cabinet-dashboard .stat-icon { width: 42px; height: 42px; border-radius: 14px; }
+    #cabinet-dashboard .stat-icon svg { width: 20px; height: 20px; }
+    #cabinet-dashboard .cab-kpi-strip { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    #cabinet-dashboard .cab-kpi-mini { padding: 12px; }
+    #cabinet-dashboard .charts-grid { gap: 12px; }
+    #cabinet-dashboard .chart-card { padding: 16px; border-radius: var(--md-radius-xl, 20px); }
+    #cabinet-dashboard .cab-org-card { padding: 16px; border-radius: var(--md-radius-xl, 20px); }
+    #cabinet-dashboard .cab-alertes-section { padding: 16px; border-radius: var(--md-radius-xl, 20px); }
+    #cabinet-dashboard .cab-org-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    #cabinet-dashboard .cab-org-stat { padding: 10px 12px; }
+    #cabinet-dashboard .donut-wrapper { flex-direction: column; text-align: center; }
+    #cabinet-dashboard .donut-chart { width: 140px; height: 140px; }
+    #cabinet-dashboard .donut-chart::after { width: 78px; height: 78px; }
+    #cabinet-dashboard .cab-ia-details summary { padding: 14px 16px; font-size: 0.875rem; }
+    #cabinet-dashboard .cab-ia-details .llm-analysis-section { padding: 12px 16px 18px; }
+}
+
+/* ---- RESPONSIVE : histogrammes — scroll horizontal au lieu de l'écrasement ---- */
+@media (max-width: 640px) {
+    #cabinet-dashboard .chart-card .bar-chart {
+        overflow-x: auto;
+        overflow-y: hidden;
+        min-width: 0;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+    }
+    #cabinet-dashboard .chart-card .bar-chart .bar-group { min-width: 34px; }
+    #cabinet-dashboard .chart-card .bar-label { font-size: 0.5625rem; }
+}
+
+/* ---- RESPONSIVE : très petits écrans ---- */
+@media (max-width: 420px) {
+    #cabinet-dashboard .stats-grid { grid-template-columns: 1fr; }
+    #cabinet-dashboard .cab-kpi-strip { grid-template-columns: 1fr 1fr; }
+    #cabinet-dashboard .cab-org-stats { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---- Accessibilité motion ---- */
 @media (prefers-reduced-motion: reduce) {
     #cabinet-dashboard *,
     body.md-armed #cabinet-dashboard * {
