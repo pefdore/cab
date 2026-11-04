@@ -1,10 +1,10 @@
-const CACHE_NAME = 'cotation-v202611011100';
+const CACHE_NAME = 'cotation-v202611051000';
 const ASSETS = [
   '/',
   '/index.html',
-  '/app.v5.js?v=202611011100',
+  '/app.v5.js?v=202611051000',
   '/secretariat.js?v=2026103024000',
-  '/secretaire-space.js?v=2026103024000',
+  '/secretaire-space.js?v=202611051000',
   '/urgence.js?v=2026103024000',
   '/urgence-orders.js?v=2026103024000',
   '/style.css?v=202611011100',
