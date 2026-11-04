@@ -4221,6 +4221,8 @@ function showOverlaySettingsPage(overlay, pageName) {
         loadOpenRouterKey();
     } else if (pageName === 'cotation') {
         renderSettingsCotationList();
+    } else if (pageName === 'integrations') {
+        if (typeof secRenderJoinRequestsBanner === 'function') secRenderJoinRequestsBanner();
     } else if (pageName === 'donnees') {
         loadDataCounters();
     }

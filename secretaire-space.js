@@ -147,7 +147,6 @@ function secNeedsCabinetApproval(profile) {
 
 async function secRenderJoinRequestsBanner() {
     const requests = await secLoadJoinRequests();
-    const wrap = document.getElementById('secJoinRequestsBanner');
 
     // Badge de notification sur le menu Parametres (desktop + mobile)
     const badge = document.getElementById('secNavBadge');
@@ -166,13 +165,21 @@ async function secRenderJoinRequestsBanner() {
     cardBadges.forEach(setBadge);
     cardValues.forEach(el => { el.textContent = requests.length > 0 ? requests.length + ' demande' + (requests.length > 1 ? 's' : '') + ' en attente' : 'Aucune demande'; });
 
-    if (!wrap) return;
-    const emptyEl = document.getElementById('secIntegrationsEmpty');
-    if (!requests.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; if (emptyEl) emptyEl.style.display = 'block'; return; }
+    // Le menu Parametres mobile ouvre un overlay qui clone #view-settings :
+    // plusieurs elements peuvent alors partager l'id secJoinRequestsBanner
+    // (original cache + copie visible dans l'overlay). On rend dans TOUS les
+    // conteneurs pour que la liste affichee se rafraichisse instantanement
+    // apres une validation/refus, sans rechargement de page.
+    const wraps = Array.from(document.querySelectorAll('#secJoinRequestsBanner'));
+    if (!wraps.length) return;
+    const emptyEls = Array.from(document.querySelectorAll('#secIntegrationsEmpty'));
+    if (!requests.length) {
+        wraps.forEach(w => { w.style.display = 'none'; w.innerHTML = ''; });
+        emptyEls.forEach(el => { el.style.display = 'block'; });
+        return;
+    }
 
-    wrap.style.display = 'block';
-    if (emptyEl) emptyEl.style.display = 'none';
-    wrap.innerHTML =
+    const bannerHtml =
         '<h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L11.6 1.6a1.5 1.5 0 0 1 2.63 0l1.31 2.26 2.55.38a1.5 1.5 0 0 1 .83 2.56l-1.85 1.8.44 2.54a1.5 1.5 0 0 1-2.17 1.58L12 11.6l-2.29 1.2a1.5 1.5 0 0 1-2.17-1.58l.44-2.54-1.85-1.8a1.5 1.5 0 0 1 .83-2.56l2.55-.38z"/></svg> Demandes d\'acc\u00e8s en attente</h3>' +
         '<p class="sec-banner-desc">Ces secr\u00e9taires demandent \u00e0 rejoindre l\'espace cabinet. Approuvez pour leur donner acc\u00e8s.</p>' +
         requests.map(r =>
@@ -188,6 +195,8 @@ async function secRenderJoinRequestsBanner() {
                 '</div>' +
             '</div>'
         ).join('');
+    wraps.forEach(w => { w.style.display = 'block'; w.innerHTML = bannerHtml; });
+    emptyEls.forEach(el => { el.style.display = 'none'; });
 }
 
 async function secDecideRequest(requestId, approve) {
@@ -223,7 +232,7 @@ async function secDecideRequest(requestId, approve) {
         if (typeof showToast === 'function') {
             showToast(approve ? 'Acc\u00e8s cabinet accord\u00e9 au secr\u00e9taire' : 'Demande refus\u00e9e', 'success');
         }
-        secRenderJoinRequestsBanner();
+        await secRenderJoinRequestsBanner();
     } catch (e) {
         console.error('[SEC-SPACE] decideRequest:', e);
         if (typeof showToast === 'function') showToast('Erreur lors de la validation : ' + e.message, 'error');
@@ -328,8 +337,8 @@ function secResetUiOnLogout() {
     if (secSpace) secSpace.style.display = 'none';
     const banner = document.getElementById('secPendingApprovalBanner');
     if (banner) banner.style.display = 'none';
-    const joinBanner = document.getElementById('secJoinRequestsBanner');
-    if (joinBanner) { joinBanner.style.display = 'none'; joinBanner.innerHTML = ''; }
+    document.querySelectorAll('#secJoinRequestsBanner').forEach(b => { b.style.display = 'none'; b.innerHTML = ''; });
+    document.querySelectorAll('#secIntegrationsEmpty').forEach(el => { el.style.display = 'none'; });
     ['secNavBadge', 'secNavBadgeMobile'].forEach(id => {
         const b = document.getElementById(id);
         if (b) b.style.display = 'none';
