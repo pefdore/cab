@@ -959,16 +959,14 @@ window.attemptLogin = function() {
                     </div>
                 </div>
 
-                    <!-- Récap par catégorie -->
-                    <div class="module-card md-card">
-                        <h3>Par catégorie — <span id="fluxCatMonthLabel"></span></h3>
-                        <div id="flux-category-summary"></div>
-
-                    <!-- Jour par jour -->
+                    <!-- Mouvements : categories + jour par jour en UNE carte -->
                     <div class="module-card md-card">
                         <div class="md-card-head">
                             <h3>Mouvements de <span id="fluxCurrentMonth"></span></h3>
                         </div>
+                        <div class="md-subsection-label">Par catégorie — <span id="fluxCatMonthLabel"></span></div>
+                        <div id="flux-category-summary"></div>
+                        <div class="md-subsection-label" style="margin-top:12px;">Jour par jour</div>
                         <div id="flux-daily-list"></div>
                     </div>
 
