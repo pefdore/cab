@@ -20,7 +20,11 @@ function fluxSameMonth(d, ref) {
 function fluxCategoryLabel(category, isDepense) {
     const map = isDepense ? CABINET_CATEGORIES : RECETTE_CATEGORIES;
     const cat = map[category];
-    return cat ? cat.label : (category || (isDepense ? 'Dépense' : 'Recette'));
+    if (cat) return cat.label;
+    if (!category) return isDepense ? 'Dépense' : 'Recette';
+    // categories historiques : affichage selon la nouvelle nomenclature
+    if (!isDepense) return 'Cotisation associé';
+    return 'Dépense';
 }
 
 function fluxEscapeHtml(str) {

@@ -135,7 +135,8 @@ window.renderReleveReview = function() {
     ` + visible.map(({ tr, index }) => {
         const isDepense = tr.type === 'dépense' || tr.amount < 0;
         const categories = isDepense ? depenseCategories : recetteCategories;
-        const selectedCategory = tr.category || (isDepense ? 'services' : 'autres');
+        const _normCat = (typeof normalizeFluxCategory === 'function') ? normalizeFluxCategory(tr.category, isDepense) : (tr.category || (isDepense ? 'autres_depenses' : 'autres'));
+        const selectedCategory = _normCat;
         const isCurrent = index === cur;
         const isDone = tr.confirmed || tr.rejected;
         const sousCatSuggestion = (typeof suggestSousCategorie === 'function') ? suggestSousCategorie(tr.description, isDepense) : null;
@@ -301,7 +302,7 @@ window.saveAllReviewed = async function() {
             sous_categorie: t.sous_categorie || null,
             note: t.comment || null,
             amount: Math.abs(parseFloat(t.amount) || 0),
-            category: t.category || 'autres_depenses',
+            category: (typeof normalizeFluxCategory === 'function') ? normalizeFluxCategory(t.category, true) : (t.category || 'autres_depenses'),
             date: t.date || new Date().toISOString().split('T')[0]
         }));
     const recettes = pendingTransactions
@@ -313,7 +314,7 @@ window.saveAllReviewed = async function() {
             sous_categorie: t.sous_categorie || null,
             note: t.comment || null,
             amount: Math.abs(parseFloat(t.amount) || 0),
-            category: t.category || 'autres',
+            category: (typeof normalizeFluxCategory === 'function') ? normalizeFluxCategory(t.category, false) : (t.category || 'autres'),
             date: t.date || new Date().toISOString().split('T')[0]
         }));
 
@@ -354,6 +355,20 @@ window.saveAllReviewed = async function() {
         if (typeof renderReminders === 'function') renderReminders();
 
         alert(`${depenses.length + recettes.length} ligne(s) enregistrée(s) avec succès`);
+
+        // La banque edite parfois 2 releves par mois : proposer l'import du second
+        const monthsSet = [...new Set([...depenses, ...recettes].map(t => (t.date || '').slice(0, 7)))].filter(Boolean);
+        if (monthsSet.length) {
+            setTimeout(() => {
+                if (confirm(`Relevé de ${monthsSet.join(', ')} enregistré.\n\nAvez-vous un DEUXIÈME relevé pour ce mois-ci à intégrer ?\n\nOK = Oui, je l'importe maintenant\nAnnuler = Non, ce mois est complet`)) {
+                    const uploadModal = document.getElementById('releve-upload-modal');
+                    if (uploadModal) {
+                        uploadModal.style.display = 'flex';
+                        if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
+                    }
+                }
+            }, 400);
+        }
     } catch (error) {
         console.error('[REVIEW] Save error:', error);
         alert('Erreur lors de l\'enregistrement : ' + error.message);

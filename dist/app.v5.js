@@ -7348,7 +7348,7 @@ function editDepense(id) {
         }
     }
     document.getElementById('add-depenseAmount').value = depense.amount;
-    document.getElementById('add-depenseCategory').value = depense.category;
+    document.getElementById('add-depenseCategory').value = (typeof normalizeFluxCategory === 'function') ? normalizeFluxCategory(depense.category, true) : depense.category;
     document.getElementById('add-depenseDate').value = depense.date;
     
     window._editingDepenseId = id;
@@ -7373,9 +7373,10 @@ async function updateDepense(id) {
         return;
     }
     
+    const catNorm = (typeof normalizeFluxCategory === 'function') ? normalizeFluxCategory(category, true) : category;
     const { error } = await supabaseClient
         .from('cabinet_depenses')
-        .update({ description, amount, category, date })
+        .update({ description, amount, category: catNorm, date })
         .eq('id', id);
     
     if (error) {
@@ -7423,7 +7424,7 @@ function editRecette(id) {
         }
     }
     document.getElementById('add-recetteAmount').value = recette.amount;
-    document.getElementById('add-recetteCategory').value = recette.category;
+    document.getElementById('add-recetteCategory').value = (typeof normalizeFluxCategory === 'function') ? normalizeFluxCategory(recette.category, false) : recette.category;
     document.getElementById('add-recetteDate').value = recette.date;
     
     window._editingRecetteId = id;
@@ -8212,12 +8213,33 @@ const RELEVE_KEYWORDS = {
     'honoraires': ['honoraire', 'consultation', 'visite', 'teleconsultation', 'virement recu', 'cb', 'carte', 'cheque'],
 };
 
+
+// Normalise les categories historiques vers la nomenclature cabinet SCM
+function normalizeFluxCategory(cat, isDepense) {
+    if (isDepense) {
+        const depOk = ['masse_salariale','urssaf','charges','impots','logiciel','services','consommables','fournitures','materiel','comptabilite','assurance','banque','remboursement_credit','reception','autres_depenses'];
+        return depOk.includes(cat) ? cat : 'autres_depenses';
+    }
+    // recettes : sur le compte du cabinet, les anciennes categories medecin
+    // (honoraires, secteur2, gardes...) sont des cotisations d'associes
+    if (cat === 'honoraires' || cat === 'honoraires_chirurgie' || cat === 'secteur2_depassements' ||
+        cat === 'gardes_urgences' || cat === 'remplacements' || cat === 'retrocessions') {
+        return 'participation_associe';
+    }
+    const recOk = ['participation_associe','participation_ponctuelle','remboursements','produits_financiers','autres'];
+    return recOk.includes(cat) ? cat : 'autres';
+}
+window.normalizeFluxCategory = normalizeFluxCategory;
+
 function fluxDetectCategory(description, isDepense) {
     const lower = (description || '').toLowerCase();
-    for (const [key, words] of Object.entries(RELEVE_KEYWORDS)) {
-        if (words.some(w => lower.includes(w))) return key;
+    if (!isDepense && /virement|sepa|cotisation|participation|quote/.test(lower)) {
+        return 'participation_associe';
     }
-    return isDepense ? 'services' : 'honoraires';
+    for (const [key, words] of Object.entries(RELEVE_KEYWORDS)) {
+        if (words.some(w => lower.includes(w))) return normalizeFluxCategory(key, isDepense);
+    }
+    return isDepense ? 'autres_depenses' : 'participation_associe';
 }
 
 
@@ -8863,6 +8885,7 @@ async function loadReleveLearning(force) {
 }
 
 function bestLearnedCategory(description, isDepense) {
+    const _norm = (c) => normalizeFluxCategory(c, isDepense);
     const norm = normalizeReleveLibelle(description);
     if (!norm) return null;
     const rows = releveLearningCache || [];
@@ -8882,7 +8905,7 @@ function bestLearnedCategory(description, isDepense) {
             if (score > bestScore) { bestScore = score; best = row; }
         }
     }
-    return best ? { category: best.category, score: bestScore } : null;
+    return best ? { category: normalizeFluxCategory(best.category, isDepense), score: bestScore } : null;
 }
 
 async function learnReleveCategorisation(transactions) {
@@ -11505,6 +11528,31 @@ async function saveRelevePdfToStorage(depenses, recettes) {
             return;
         }
         console.log('[RELEVÉ] PDF archivé:', fileName);
+
+        // Enregistrement dans l'onglet Documents (bucket public + table documents)
+        try {
+            const docFileName = 'releve_' + monthKeys[0] + '_' + Date.now() + '.pdf';
+            const up = await supabaseClient.storage.from('documents').upload(docFileName, blob);
+            if (!up.error) {
+                const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(docFileName);
+                await supabaseClient.from('documents').insert({
+                    user_id: currentUser.id,
+                    file_name: (window._releveCurrentFile?.name) || ('Releve_' + monthKeys[0] + '.pdf'),
+                    file_url: urlData.publicUrl,
+                    category: 'Comptabilité - Relevé bancaire',
+                    description: 'Relevé bancaire importé (' + monthKeys[0] + ')',
+                    doc_date: monthKeys[0] + '-01',
+                    annotation: null,
+                    doc_type: 'cabinet'
+                });
+                console.log('[RELEVÉ] PDF enregistré dans Documents');
+            } else {
+                console.error('[RELEVÉ] Documents upload:', up.error.message);
+            }
+        } catch (docErr) {
+            console.error('[RELEVÉ] Documents:', docErr);
+        }
+
         if (typeof renderReminders === 'function') renderReminders();
     } catch (e) {
         console.error('[RELEVÉ] saveRelevePdfToStorage:', e);
