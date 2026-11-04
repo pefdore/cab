@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-DKtPSrD7.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-Bo1DtkUF.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -917,6 +917,8 @@ window.attemptLogin = function() {
                     <!-- Reprise d'import en cours -->
                     <div id="flux-releve-resume" style="display:none;"></div>
 
+                    <div class="flux-todo-wrap">
+                    <div class="flux-todo-head">À faire</div>
                     <div class="flux-chips-row">
                         <!-- Rappels relevés -->
                         <div id="flux-reminders"></div>
@@ -924,33 +926,30 @@ window.attemptLogin = function() {
                         <!-- Rapprochement commandes -->
                         <div id="flux-recon-pending"></div>
                     </div>
+                    </div>
 
 <div class="flux-hero">
-                    <div class="flux-hero-top">
-                        <div class="flux-hero-month">
-                            <button class="fhero-arrow" onclick="fluxChangeMonth(-1)" aria-label="Mois précédent">‹</button>
-                            <div class="fhero-month-label">
-                                <strong id="flux-month-label-hero">—</strong>
-                                <span id="flux-year-label-hero"></span>
-                            </div>
-                            <button class="fhero-arrow" onclick="fluxChangeMonth(1)" aria-label="Mois suivant">›</button>
+                    <div class="flux-hero-month">
+                        <button class="fhero-arrow" onclick="fluxChangeMonth(-1)" aria-label="Mois précédent">‹</button>
+                        <div class="fhero-month-label">
+                            <strong id="flux-month-label-hero">—</strong>
+                            <span id="flux-year-label-hero"></span>
                         </div>
-                        <div class="flux-hero-balance">
+                        <button class="fhero-arrow" onclick="fluxChangeMonth(1)" aria-label="Mois suivant">›</button>
+                    </div>
+                    <div class="flux-hero-grid">
+                        <div class="fhero-balance">
                             <span class="fhero-balance-label">Solde du mois</span>
                             <strong id="flux-total-balance-hero" class="fhero-balance-value">+0,00 €</strong>
                             <span id="flux-hero-trend" class="fhero-trend"></span>
                         </div>
-                    </div>
-                    <div class="flux-hero-kpis">
                         <div class="fhero-kpi income">
-                            <span class="fhero-kpi-icon">▲</span>
                             <div>
                                 <span class="fhero-kpi-label">Entrées</span>
                                 <strong id="flux-total-recettes-hero" class="fhero-kpi-value">0 €</strong>
                             </div>
                         </div>
                         <div class="fhero-kpi expense">
-                            <span class="fhero-kpi-icon">▼</span>
                             <div>
                                 <span class="fhero-kpi-label">Dépenses</span>
                                 <strong id="flux-total-depenses-hero" class="fhero-kpi-value">0 €</strong>

@@ -109,6 +109,11 @@ function renderReminders() {
     const headerTxt = pendingCount > 0
         ? `${pendingCount} relevé${pendingCount > 1 ? 's' : ''} en attente d'import`
         : `Tous les relevés ${new Date().getFullYear()} sont importés ✅`;
+    // quand tout est fait, le module À FAIRE n'existe plus
+    if (pendingCount === 0) {
+        if (window.__lastChecklistHtml !== '') { window.__lastChecklistHtml = ''; holder.innerHTML = ''; }
+        return;
+    }
     const __checklistHtml = `
         <div class="module-card flux-chip-card" style="border-left: 3px solid var(--color-primary);">
             <div onclick="toggleReleveChecklist()" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:8px;">
