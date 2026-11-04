@@ -12951,3 +12951,53 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
         transition: none !important;
     }
 }
+
+/* ═══ Correction responsive : pleine largeur ordi + chips collées + mois une ligne ═══ */
+/* 1. Desktop : pleine largeur de page */
+.md-page { max-width: none !important; }
+
+/* 2. Mobile/desktop : les DEUX chips cote a cote (conteneurs inline) */
+.flux-chips-row > div {
+    display: inline-flex !important;
+    flex-direction: column;
+    margin: 0 !important;
+    gap: 0;
+}
+.flux-chips-row { gap: 6px; align-items: flex-start; }
+
+/* 3. Tuiles de mois : une seule ligne forcee, nom en ellipsis */
+#releve-checklist-body [style*="grid-template-columns"] {
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)) !important;
+}
+#releve-checklist-body [style*="grid-template-columns"] > div {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: 4px !important;
+    padding: 5px 7px !important;
+    min-width: 0;
+}
+#releve-checklist-body [style*="grid-template-columns"] > div > span:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap !important;
+    font-size: 0.76rem !important;
+}
+#releve-checklist-body [style*="grid-template-columns"] > div > span:last-child {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+#releve-checklist-body button {
+    padding: 2px 6px !important;
+    font-size: 0.62rem !important;
+    flex-shrink: 0;
+}
+#releve-checklist-body span[style*="0.68rem"] { font-size: 0.62rem !important; }
+
+@media (max-width: 520px) {
+    #releve-checklist-body [style*="grid-template-columns"] {
+        grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)) !important;
+    }
+}
