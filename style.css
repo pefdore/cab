@@ -13076,3 +13076,90 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 .flux-hero-balance { align-self: stretch !important; display: flex; align-items: center; justify-content: space-between; padding: 8px 16px !important; }
 .fhero-balance-label { align-self: center; margin-right: auto; }
 .fhero-trend { align-self: center; margin-left: 12px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ARCHITECTURE DE L'INFORMATION — module mois unifié + section À FAIRE
+   ═══════════════════════════════════════════════════════════════ */
+/* Le module mois : UNE carte clairement identifiée */
+.flux-hero {
+    background: var(--md-surface-high) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    border-radius: var(--md-radius-2xl) !important;
+    box-shadow: var(--elev-1) !important;
+    padding: 12px !important;
+    color: var(--color-text) !important;
+}
+.flux-hero-month {
+    background: var(--md-surface-low) !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin-bottom: 8px;
+}
+.fhero-arrow { background: var(--md-surface-high) !important; border: 1px solid var(--color-border-subtle); color: var(--color-text) !important; }
+.fhero-month-label strong { color: var(--color-text) !important; }
+.fhero-month-label span { color: var(--color-text-tertiary) !important; }
+
+/* Grille unifiée : solde | entrées | dépenses | graphe — même famille visuelle */
+.flux-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: 6px;
+    align-items: stretch;
+}
+.fhero-balance {
+    background: var(--md-surface-low);
+    border-radius: var(--md-radius-xl);
+    padding: 8px 14px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start !important;
+    gap: 1px;
+    min-width: 0;
+}
+.fhero-balance-value {
+    color: var(--color-text) !important;
+    font-size: clamp(1.25rem, 3.6vw, 1.7rem) !important;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+.fhero-kpi {
+    background: var(--md-surface-low) !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: var(--md-radius-xl) !important;
+    padding: 8px 12px !important;
+    min-width: 0;
+    justify-content: flex-start;
+}
+.fhero-kpi-value { color: var(--color-text) !important; }
+.fhero-kpi.income .fhero-kpi-value { color: #0d8a5f !important; }
+.fhero-kpi.expense .fhero-kpi-value { color: #d93036 !important; }
+.fhero-chart {
+    background: var(--md-surface-low) !important;
+    border-radius: var(--md-radius-xl) !important;
+    height: auto !important;
+    min-height: 52px;
+}
+
+/* Section À FAIRE : légende MD3, n'existe que s'il y a des choses à faire */
+.flux-todo-head {
+    display: none;
+    font-size: var(--text-caption);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: var(--color-text-tertiary);
+    padding: 2px 4px 0;
+}
+.flux-todo-wrap:has(.module-card) .flux-todo-head { display: block; }
+
+/* Mobile : solde au-dessus, KPI côte à côte, graphe pleine largeur */
+@media (max-width: 760px) {
+    .flux-hero-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .fhero-balance { grid-column: 1 / -1; flex-direction: row; align-items: baseline; gap: 8px; justify-content: space-between; }
+    .fhero-balance-value { font-size: 1.35rem !important; }
+    .fhero-chart { grid-column: 1 / -1; }
+}
