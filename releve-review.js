@@ -616,6 +616,83 @@ window.reviewUpdateAmount = reviewUpdateAmount;
 // ===== Reprise d'import : sauvegarde et chargement de l'etat de revue =====
 const REVIEW_STORAGE_KEY = 'releve_review_progress_v1';
 
+// --- Persistance du PDF via IndexedDB (localStorage est trop petit pour un PDF) ---
+const REVIEW_PDF_IDB_NAME = 'cab-releve-review';
+const REVIEW_PDF_IDB_STORE = 'pdfs';
+
+function idbOpenDb() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) { reject(new Error('IndexedDB indisponible')); return; }
+        const req = window.indexedDB.open(REVIEW_PDF_IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+            if (!req.result.objectStoreNames.contains(REVIEW_PDF_IDB_STORE)) {
+                req.result.createObjectStore(REVIEW_PDF_IDB_STORE);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+function idbPutPdf(key, blob) {
+    return idbOpenDb().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(REVIEW_PDF_IDB_STORE, 'readwrite');
+        tx.objectStore(REVIEW_PDF_IDB_STORE).put(blob, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    })).catch(e => console.error('[REVIEW] idb put pdf:', e));
+}
+
+function idbGetPdf(key) {
+    return idbOpenDb().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(REVIEW_PDF_IDB_STORE, 'readonly');
+        const req = tx.objectStore(REVIEW_PDF_IDB_STORE).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+    })).catch(e => { console.error('[REVIEW] idb get pdf:', e); return null; });
+}
+
+function idbClearPdf() {
+    return idbOpenDb().then(db => new Promise((resolve) => {
+        const tx = db.transaction(REVIEW_PDF_IDB_STORE, 'readwrite');
+        tx.objectStore(REVIEW_PDF_IDB_STORE).clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+    })).catch(() => {});
+}
+window.idbClearPdf = idbClearPdf;
+
+// Construit les vignettes + rects de texte a partir d'un PDF pdf.js deja charge
+async function buildRelevePageThumbs(pdf) {
+    window.relevePageThumbs = [];
+    for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 30); pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const thumbViewport = page.getViewport({ scale: 0.35 });
+        const thumbCanvas = document.createElement('canvas');
+        const thumbCtx = thumbCanvas.getContext('2d');
+        thumbCanvas.height = thumbViewport.height;
+        thumbCanvas.width = thumbViewport.width;
+        await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
+        const textContent = await page.getTextContent();
+        const itemRects = [];
+        let lineNo = 0;
+        for (const it of textContent.items) {
+            if (!it.str || !it.str.trim() || !it.transform) continue;
+            if (it.hasEOL) lineNo++;
+            const tx = page.getViewport({ scale: 1 }).convertToViewportPoint(it.transform[4], it.transform[5]);
+            itemRects.push({ str: it.str, x: tx[0], y: tx[1], w: (it.width || 0), h: (it.height || 10), _line: lineNo });
+        }
+        window.relevePageThumbs.push({
+            page: pageNum,
+            thumb: thumbCanvas.toDataURL('image/jpeg', 0.7),
+            text: '',
+            itemRects,
+            pageHeight: page.getViewport({ scale: 1 }).height,
+            pageWidth: page.getViewport({ scale: 1 }).width
+        });
+    }
+}
+
 function stampValidation() {
     if (!window._reviewTiming) window._reviewTiming = { stamps: [] };
     window._reviewTiming.stamps.push(Date.now());
@@ -636,6 +713,13 @@ function saveReviewProgress() {
                 _page: t._page, _line: t._line
             }))
         }));
+        // persister aussi le PDF (une seule fois par fichier) pour restaurer
+        // l'apercu bandeau a la reprise, meme apres rechargement de la page
+        const pdfBlob = window._relevePdfBytes;
+        if (pdfBlob && window._reviewPdfIdbSavedFor !== pdfBlob) {
+            window._reviewPdfIdbSavedFor = pdfBlob;
+            idbPutPdf('current', pdfBlob);
+        }
     } catch (e) {
         console.error('[REVIEW] save progress:', e);
     }
@@ -662,8 +746,12 @@ window.resumeSavedReview = async function() {
         document.getElementById('releve-upload-modal').style.display = 'none';
         window._releveReviewResumed = true;
 
-        // tenter de recharger le PDF depuis l'archive Supabase (bucket releves)
-        await restoreReviewPdfFromArchive(data);
+        // recharger le PDF : d'abord la copie locale (IndexedDB),
+        // sinon l'archive Supabase (bucket releves)
+        await restoreReviewPdfFromIdb(data);
+        if (!(window.relevePageThumbs || []).length) {
+            await restoreReviewPdfFromArchive(data);
+        }
 
         openReleveReview();
         if (typeof showToast === 'function') {
@@ -676,6 +764,27 @@ window.resumeSavedReview = async function() {
         return false;
     }
 };
+
+// recharge le PDF sauvegarde localement (IndexedDB) au moment de la fermeture
+async function restoreReviewPdfFromIdb(data) {
+    try {
+        if (!window.relevePageThumbs) window.relevePageThumbs = [];
+        if (window.relevePageThumbs.length) return;
+        const blob = await idbGetPdf('current');
+        if (!blob || !(blob instanceof Blob)) return;
+        if (typeof window.pdfjsLib === 'undefined' || !window.pdfjsLib) return;
+        const pdf = await window.pdfjsLib.getDocument({ data: await blob.arrayBuffer() }).promise;
+        window._releveCurrentPdf = pdf;
+        window._relevePdfBytes = blob;
+        window._reviewPdfIdbSavedFor = blob;
+        window._releveCurrentFile = new File([blob], data.fileName || 'releve.pdf', { type: blob.type || 'application/pdf' });
+        await buildRelevePageThumbs(pdf);
+        console.log('[REVIEW] PDF restaure depuis IndexedDB');
+    } catch (e) {
+        console.error('[REVIEW] restore pdf (idb):', e);
+    }
+}
+window.restoreReviewPdfFromIdb = restoreReviewPdfFromIdb;
 
 // recharge le PDF archive pour restaurer l'aperçu bandeau
 async function restoreReviewPdfFromArchive(data) {
@@ -697,33 +806,10 @@ async function restoreReviewPdfFromArchive(data) {
         const arrayBuffer = await blob.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         window._releveCurrentPdf = pdf;
-        window.relevePageThumbs = [];
-        for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 30); pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const thumbViewport = page.getViewport({ scale: 0.35 });
-            const thumbCanvas = document.createElement('canvas');
-            const thumbCtx = thumbCanvas.getContext('2d');
-            thumbCanvas.height = thumbViewport.height;
-            thumbCanvas.width = thumbViewport.width;
-            await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
-            const textContent = await page.getTextContent();
-            const itemRects = [];
-            let lineNo = 0;
-            for (const it of textContent.items) {
-                if (!it.str || !it.str.trim() || !it.transform) continue;
-                if (it.hasEOL) lineNo++;
-                const tx = page.getViewport({ scale: 1 }).convertToViewportPoint(it.transform[4], it.transform[5]);
-                itemRects.push({ str: it.str, x: tx[0], y: tx[1], w: (it.width || 0), h: (it.height || 10), _line: lineNo });
-            }
-            window.relevePageThumbs.push({
-                page: pageNum,
-                thumb: thumbCanvas.toDataURL('image/jpeg', 0.7),
-                text: '',
-                itemRects,
-                pageHeight: page.getViewport({ scale: 1 }).height,
-                pageWidth: page.getViewport({ scale: 1 }).width
-            });
-        }
+        window._relevePdfBytes = blob;
+        window._reviewPdfIdbSavedFor = blob;
+        window._releveCurrentFile = new File([blob], data.fileName || months[0] + '.pdf', { type: 'application/pdf' });
+        await buildRelevePageThumbs(pdf);
         console.log('[REVIEW] PDF restaure depuis l\'archive:', months[0]);
     } catch (e) {
         console.error('[REVIEW] restore pdf:', e);
@@ -733,6 +819,8 @@ window.restoreReviewPdfFromArchive = restoreReviewPdfFromArchive;
 
 window.clearSavedReview = function() {
     localStorage.removeItem(REVIEW_STORAGE_KEY);
+    window._reviewPdfIdbSavedFor = null;
+    idbClearPdf();
 };
 
 // sauvegarde aussi a chaque changement de ligne courante
