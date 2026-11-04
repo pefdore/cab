@@ -1378,6 +1378,7 @@ function switchDashboardMode(mode) {
             cabinetDash.style.display = 'block';
             cabinetDash.style.visibility = 'visible';
             console.log('[TOGGLE] cabinet-dashboard shown');
+            if (typeof mdArmAnimations === 'function') mdArmAnimations();
             loadCabinetData();
             renderCabinetLifeDashboard();
         }

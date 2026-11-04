@@ -12806,4 +12806,147 @@ body.md-armed .fhero-kpi:nth-child(4) { animation-delay: 0.26s !important; }
 #flux-recon-pending .module-card:has(#recon-pending-body:not([style*="none"])) {
     flex: 1 1 100% !important;
     width: auto !important;
+/* ═════════════════════════════════════════════════════════════════════
+   PAGE DASHBOARD CABINET — habillage MD3 Expressive
+   Bandeau santé aéré, cartes tonales à grands rayons, entrées
+   élastiques en cascade (md-pop / md-bar-in, springs MD3).
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* ---- Bandeau santé : une ligne claire et aérée, sans halo ---- */
+#cabinet-dashboard .cab-health-wrap {
+    background: var(--md-surface-high, var(--color-bg-elevated));
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--md-radius-2xl, 24px);
+    box-shadow: var(--elev-1);
+    padding: 18px 24px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.25s ease, transform 0.3s var(--md-spring, ease);
+}
+#cabinet-dashboard .cab-health-wrap::before,
+#cabinet-dashboard .cab-health-wrap::after { content: none; }
+#cabinet-dashboard .cab-health-wrap:hover { box-shadow: var(--elev-2); }
+#cabinet-dashboard .cab-health-status { gap: 16px; }
+#cabinet-dashboard .cab-health-overline { margin-bottom: 3px; }
+#cabinet-dashboard .cab-health-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+#cabinet-dashboard .cab-health-sub { margin-top: 2px; }
+#cabinet-dashboard .cab-health-pulse,
+#cabinet-dashboard .cab-health-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full, 999px);
+    flex-shrink: 0;
+    background: var(--color-success);
+    position: relative;
+}
+#cabinet-dashboard .cab-health-wrap[data-status="warn"] .cab-health-pulse,
+#cabinet-dashboard .cab-health-dot.warn { background: var(--color-warning); }
+#cabinet-dashboard .cab-health-wrap[data-status="danger"] .cab-health-pulse,
+#cabinet-dashboard .cab-health-dot.danger { background: var(--color-danger); }
+#cabinet-dashboard .cab-health-dot.ok { background: var(--color-success); }
+#cabinet-dashboard .cab-health-pulse::after,
+#cabinet-dashboard .cab-health-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+}
+#cabinet-dashboard .cab-health-wrap[data-status="danger"] .cab-health-pulse::after {
+    background: var(--color-danger);
+    animation: cabPulse 1.6s ease-in-out infinite;
+}
+
+/* ---- Cartes : grands rayons, surface haute, ombre douce ---- */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .cab-org-card,
+#cabinet-dashboard .cab-kpi-mini,
+#cabinet-dashboard .cab-ia-details {
+    border-radius: var(--md-radius-2xl, 24px);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--elev-1);
+    transition: transform 0.3s var(--md-spring, ease), box-shadow 0.25s ease;
+}
+#cabinet-dashboard .stat-card:hover,
+#cabinet-dashboard .chart-card:hover,
+#cabinet-dashboard .cab-org-card:hover,
+#cabinet-dashboard .cab-kpi-mini:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--elev-2);
+}
+#cabinet-dashboard .cab-kpi-mini:hover { transform: scale(1.03); }
+#cabinet-dashboard .stat-icon { border-radius: var(--md-radius-xl, 18px); }
+#cabinet-dashboard .cab-org-stat { border-radius: var(--md-radius-xl, 18px); }
+#cabinet-dashboard .cab-org-subtitle { margin-top: 18px; }
+
+/* ---- Pastilles : chips MD3 tonales, feedback élastique ---- */
+#cabinet-dashboard .cab-tile-pill {
+    border-radius: var(--radius-full, 999px);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    transition: transform 0.25s var(--md-spring, ease), background 0.15s ease;
+}
+#cabinet-dashboard .cab-tile-pill:active { transform: scale(0.92); }
+
+/* ---- Histogrammes : barres élastiques ---- */
+#cabinet-dashboard .bar-chart .bar {
+    transition: height 0.6s var(--md-spring, ease), filter 0.15s ease;
+    border-radius: 6px 6px 0 0;
+}
+#cabinet-dashboard .bar-chart .bar:hover { filter: brightness(1.12); }
+#cabinet-dashboard .bar-chart .bar-group:hover .bar { filter: brightness(1.08); }
+#cabinet-dashboard .donut-chart {
+    transition: transform 0.35s var(--md-spring, ease);
+}
+#cabinet-dashboard .donut-wrapper:hover .donut-chart { transform: scale(1.04) rotate(2deg); }
+
+/* ---- Analyse IA : summary chip MD3 ---- */
+.cab-ia-details summary {
+    border-radius: var(--md-radius-2xl, 24px);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.cab-ia-details summary:hover { background: var(--md-surface-low, var(--color-bg-subtle)); }
+.cab-ia-details[open] summary { border-bottom: 1px solid var(--color-border-subtle); }
+
+/* ---- Entrées élastiques en cascade (armées 900ms au changement de vue) ---- */
+#cabinet-dashboard .cab-health-wrap,
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .cab-kpi-mini,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .cab-org-card,
+#cabinet-dashboard .cab-alertes-section,
+#cabinet-dashboard .donut-chart,
+#cabinet-dashboard .bar-chart .bar {
+    animation: none !important;
+}
+body.md-armed #cabinet-dashboard .cab-health-wrap { animation: md-pop 0.55s var(--md-spring) both !important; }
+body.md-armed #cabinet-dashboard .stat-card { animation: md-pop 0.55s var(--md-spring) both !important; }
+body.md-armed #cabinet-dashboard .stat-card:nth-child(1) { animation-delay: 0.06s !important; }
+body.md-armed #cabinet-dashboard .stat-card:nth-child(2) { animation-delay: 0.12s !important; }
+body.md-armed #cabinet-dashboard .stat-card:nth-child(3) { animation-delay: 0.18s !important; }
+body.md-armed #cabinet-dashboard .stat-card:nth-child(4) { animation-delay: 0.24s !important; }
+body.md-armed #cabinet-dashboard .cab-kpi-mini { animation: md-pop 0.55s var(--md-spring) both !important; }
+body.md-armed #cabinet-dashboard .cab-kpi-mini:nth-child(1) { animation-delay: 0.20s !important; }
+body.md-armed #cabinet-dashboard .cab-kpi-mini:nth-child(2) { animation-delay: 0.24s !important; }
+body.md-armed #cabinet-dashboard .cab-kpi-mini:nth-child(3) { animation-delay: 0.28s !important; }
+body.md-armed #cabinet-dashboard .cab-kpi-mini:nth-child(4) { animation-delay: 0.32s !important; }
+body.md-armed #cabinet-dashboard .cab-kpi-mini:nth-child(5) { animation-delay: 0.36s !important; }
+body.md-armed #cabinet-dashboard .cab-kpi-mini:nth-child(6) { animation-delay: 0.40s !important; }
+body.md-armed #cabinet-dashboard .chart-card { animation: md-pop 0.6s var(--md-spring) 0.30s both !important; }
+body.md-armed #cabinet-dashboard .chart-card:nth-child(2) { animation-delay: 0.40s !important; }
+body.md-armed #cabinet-dashboard .donut-chart { animation: md-pop 0.6s var(--md-spring) 0.50s both !important; }
+body.md-armed #cabinet-dashboard .bar-chart .bar { animation: md-bar-in 0.7s var(--md-spring) both !important; }
+body.md-armed #cabinet-dashboard .cab-org-card { animation: md-pop 0.55s var(--md-spring) 0.45s both !important; }
+body.md-armed #cabinet-dashboard .cab-org-card:nth-child(2) { animation-delay: 0.55s !important; }
+body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s var(--md-spring) 0.62s both !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    #cabinet-dashboard *,
+    body.md-armed #cabinet-dashboard * {
+        animation: none !important;
+        transition: none !important;
+    }
 }
