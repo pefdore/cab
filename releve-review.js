@@ -275,6 +275,7 @@ function advanceReview() {
         return;
     }
     window._reviewState.current = next;
+    window._reviewState.pdfPage = null;
     renderReleveReview();
 }
 window.advanceReview = advanceReview;
@@ -386,19 +387,28 @@ async function renderReviewPdf(t) {
         zone.innerHTML = '<div style="color:var(--color-text-secondary); font-size:0.8rem; padding:20px;">PDF non disponible.</div>';
         return;
     }
-    let pageIdx = 0;
+    const total = thumbs.length;
+    let autoIdx = 0;
     if (t && t._page != null) {
         const i = thumbs.findIndex(p => p.page === t._page);
+        if (i >= 0) autoIdx = i;
+    }
+    // page manuelle (navigation) prioritaire sur le suivi automatique de la ligne
+    let pageIdx = autoIdx;
+    if (window._reviewState.pdfPage != null) {
+        const i = thumbs.findIndex(p => p.page === window._reviewState.pdfPage);
         if (i >= 0) pageIdx = i;
     }
+    const manual = window._reviewState.pdfPage != null && pageIdx !== autoIdx;
     const pageData = thumbs[pageIdx];
     const hires = (typeof getHiResPage === 'function') ? await getHiResPage(pageIdx, pageData) : null;
     const imgSrc = hires ? hires.dataUrl : pageData.thumb;
     const label = pageData ? pageData.page : '?';
+    const onTxPage = !!(t && pageData && t._page != null && pageData.page === t._page);
 
     // rectangle surligne (coordonnees relatives de la ligne)
     let hlHtml = '';
-    if (t && pageData && pageData.itemRects && pageData.itemRects.length && typeof releveCropLineDataUrl === 'function') {
+    if (onTxPage && pageData && pageData.itemRects && pageData.itemRects.length && typeof releveCropLineDataUrl === 'function') {
         try {
             const m = findReviewLineRect(t, pageData);
             if (m) {
@@ -407,15 +417,26 @@ async function renderReviewPdf(t) {
         } catch (e) {}
     }
 
+    const prevDisabled = pageIdx <= 0 ? ' disabled' : '';
+    const nextDisabled = pageIdx >= total - 1 ? ' disabled' : '';
+
     zone.innerHTML = `
-        <div style="font-size:0.7rem; color:var(--color-text-secondary); margin-bottom:6px;">Page ${label} — ligne en cours surlignée (scroll pour voir le reste du relevé)</div>
+        <div class="review-pdf-head">
+            <div class="review-pdf-nav">
+                <button class="review-pdf-nav-btn" onclick="reviewPdfNav(-1)"${prevDisabled} title="Page précédente" aria-label="Page précédente">‹</button>
+                <span class="review-pdf-page-label">Page <strong>${label}</strong>/${total}</span>
+                <button class="review-pdf-nav-btn" onclick="reviewPdfNav(1)"${nextDisabled} title="Page suivante" aria-label="Page suivante">›</button>
+            </div>
+            ${manual ? `<button class="review-pdf-follow" onclick="reviewPdfFollow()" title="Revenir à la page de la ligne en cours">↺ Ligne en cours</button>` : ''}
+            <span class="review-pdf-hint">${onTxPage ? 'Ligne en cours surlignée — scroll pour voir le reste de la page' : 'Page consultée manuellement'}</span>
+        </div>
         <div id="review-pdf-inner" style="position:relative; display:inline-block; width:100%; max-width:1100px; vertical-align:top;">
             <img id="review-pdf-img" src="${imgSrc}" alt="Page ${label}" style="width:100%; display:block; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
             <div id="review-hl-wrap" style="position:absolute; inset:0; overflow:hidden; border-radius:6px; pointer-events:none;">${hlHtml}</div>
         </div>`;
 
     // scroll automatique du bandeau pour centrer la ligne surlignee
-    if (t) {
+    if (t && onTxPage) {
         const wrap = document.getElementById('review-hl-wrap');
         const hl = wrap ? wrap.firstElementChild : null;
         if (hl) {
@@ -424,6 +445,33 @@ async function renderReviewPdf(t) {
         }
     }
 }
+
+// Navigation manuelle entre les pages du PDF (toutes les pages restent accessibles)
+window.reviewPdfNav = function(dir) {
+    const thumbs = window.relevePageThumbs || [];
+    if (!thumbs.length) return;
+    const st = window._reviewState;
+    let idx;
+    if (st.pdfPage == null) {
+        const t = pendingTransactions[st.current];
+        idx = 0;
+        if (t && t._page != null) {
+            const i = thumbs.findIndex(p => p.page === t._page);
+            if (i >= 0) idx = i;
+        }
+    } else {
+        idx = thumbs.findIndex(p => p.page === st.pdfPage);
+        if (idx < 0) idx = 0;
+    }
+    idx = Math.max(0, Math.min(thumbs.length - 1, idx + dir));
+    st.pdfPage = thumbs[idx].page;
+    renderReleveReview();
+};
+
+window.reviewPdfFollow = function() {
+    window._reviewState.pdfPage = null;
+    renderReleveReview();
+};
 
 // retrouve le rectangle (relatif) de la ligne de la transaction
 function findReviewLineRect(t, pageData) {
@@ -691,6 +739,7 @@ window.clearSavedReview = function() {
 const _origSetReviewCurrent = window.setReviewCurrent;
 window.setReviewCurrent = function(index) {
     window._reviewState.current = index;
+    window._reviewState.pdfPage = null;
     saveReviewProgress();
     renderReleveReview();
 };
