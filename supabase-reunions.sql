@@ -199,3 +199,6 @@ CREATE POLICY "Cabinet members update sujets" ON reunion_sujets
 -- Seul le créateur du sujet peut le supprimer
 CREATE POLICY "Creator deletes own sujet" ON reunion_sujets
     FOR DELETE USING (auth.uid() = user_id);
+
+-- Recharge le cache de schema PostgREST (sinon "Couldn't find the title column ... in the schema key cache")
+NOTIFY pgrst, 'reload schema';
