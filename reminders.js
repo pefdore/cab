@@ -9,19 +9,29 @@ function remindersMonthKey(d) {
 }
 
 function remindersMonthHasData(mKey) {
-    // Un mois est valide UNIQUEMENT par un import de releve confirme
+    // Un mois est valide UNIQUEMENT par validation explicite du medecin
     try {
-        const months = window._releveImportedMonthsCache;
-        if (months && months.has) return months.has(mKey);
+        const map = window._releveImportedMonthsCache;
+        if (map && map.get) return !!(map.get(mKey) && map.get(mKey).validated);
     } catch (e) {}
     return false;
 }
 
-// Charge les mois valides par import puis rafraichit l'affichage
+function remindersMonthStarted(mKey) {
+    // Un releve a ete importe pour ce mois, mais le mois n'est pas valide
+    // (2e quinzaine possiblement manquante)
+    try {
+        const map = window._releveImportedMonthsCache;
+        if (map && map.get) return !!(map.get(mKey) && map.get(mKey).imported && !map.get(mKey).validated);
+    } catch (e) {}
+    return false;
+}
+
+// Charge les statuts des mois (importe / valide) puis rafraichit l'affichage
 async function remindersLoadImportedMonths() {
-    if (typeof getImportedMonths !== 'function') return;
-    const set = await getImportedMonths();
-    window._releveImportedMonthsCache = set;
+    if (typeof getReleveMonthStatuses !== 'function') return;
+    const map = await getReleveMonthStatuses();
+    window._releveImportedMonthsCache = map;
     renderReminders();
 }
 window.remindersLoadImportedMonths = remindersLoadImportedMonths;
@@ -42,12 +52,12 @@ function remindersYearMonths() {
         const mKey = remindersMonthKey(d).slice(0, 7);
         const depCount = (typeof cabinetDepenses !== 'undefined' ? cabinetDepenses : []).filter(e => (e.date || '').slice(0, 7) === mKey).length;
         const recCount = (typeof cabinetRecettes !== 'undefined' ? cabinetRecettes : []).filter(e => (e.date || '').slice(0, 7) === mKey).length;
-        const importedSet = window._releveImportedMonthsCache;
         months.push({
             key: mKey,
             label: REMINDER_MONTHS[d.getMonth()] + ' ' + d.getFullYear(),
             short: REMINDER_MONTHS[d.getMonth()],
-            imported: !!(importedSet && importedSet.has && importedSet.has(mKey)),
+            imported: remindersMonthHasData(mKey),
+            started: remindersMonthStarted(mKey),
             movements: depCount + recCount
         });
     }
@@ -55,7 +65,7 @@ function remindersYearMonths() {
 }
 
 function renderReminders() {
-    if (!window._releveImportedMonthsCache && typeof getImportedMonths === 'function') {
+    if (!window._releveImportedMonthsCache && typeof getReleveMonthStatuses === 'function') {
         remindersLoadImportedMonths();
     }
     const missing = remindersMissingMonths();
@@ -103,12 +113,13 @@ function renderReminders() {
     if (!holder) return;
     const all = remindersYearMonths();
     const okCount = all.filter(m => m.imported).length;
+    const startedCount = all.filter(m => m.started).length;
     const pendingCount = all.length - okCount;
     const open = window._releveListOpen === true;
     const headerColor = pendingCount > 0 ? '#b45309' : '#059669';
     const headerTxt = pendingCount > 0
-        ? `${pendingCount} relevé${pendingCount > 1 ? 's' : ''} en attente d'import`
-        : `Tous les relevés ${new Date().getFullYear()} sont importés ✅`;
+        ? `${pendingCount} mois de relevé${pendingCount > 1 ? 's' : ''} à finaliser${startedCount ? ` (dont ${startedCount} en cours)` : ''}`
+        : `Tous les relevés ${new Date().getFullYear()} sont validés ✅`;
     // quand tout est fait, le module À FAIRE n'existe plus
     if (pendingCount === 0) {
         if (window.__lastChecklistHtml !== '') { window.__lastChecklistHtml = ''; holder.innerHTML = ''; }
@@ -121,7 +132,7 @@ function renderReminders() {
                 <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼ ' + okCount + '/' + all.length}</span>
             </div>
             <div id="releve-checklist-body" style="display:${open ? 'block' : 'none'}; margin-top:12px;" data-open="${open ? '1' : ''}">
-            <p class="module-desc">Relevés de compte de l'année en cours. Les mois en vert sont importés, pas besoin de les refaire. Les mois en attente attendent leur relevé.</p>
+            <p class="module-desc">Relevés de compte de l'année en cours. Les mois en vert sont validés par vos soins, pas besoin de les refaire. « En cours » : un relevé est enregistré mais le mois n'est pas encore validé (2ᵉ quinzaine possible).</p>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;">
                 ${all.map(m => m.imported ? `
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4);">
@@ -130,10 +141,17 @@ function renderReminders() {
                             <span style="font-size:0.68rem; color:#059669;">${m.movements} mvt</span>
                             <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="viewRelevePdf('${m.key}')" title="Voir le PDF importé de ${m.short}">📄 PDF</button>
                         </span>
+                    </div>` : m.started ? `
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(59,130,246,0.10); border:1px solid rgba(59,130,246,0.4);">
+                        <span style="font-size:0.82rem; font-weight:500; color:#2563eb;" title="Relevé importé mais mois non validé (2ᵉ quinzaine possible)">🔄 ${m.short}</span>
+                        <span style="display:flex; align-items:center; gap:4px;">
+                            <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="validateReleveMonth('${m.key}')" title="Tout le relevé de ${m.short} est fait : valider ce mois">✓ Valider</button>
+                            <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="openReleveUploadFlowForMonth('${m.key}')" title="Ajouter un 2ᵉ relevé pour ${m.short} (quinzaine)">＋</button>
+                        </span>
                     </div>` : `
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4);">
                         <span style="font-size:0.82rem; font-weight:500; color:#b45309;">⏳ ${m.short}</span>
-                        <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="document.getElementById('releve-upload-modal').style.display='flex'" title="Importer le relevé de ${m.short}">Importer</button>
+                        <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="openReleveUploadFlowForMonth('${m.key}')" title="Importer le relevé de ${m.short}">Importer</button>
                     </div>`).join('')}
             </div>
             </div>

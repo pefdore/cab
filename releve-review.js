@@ -383,6 +383,14 @@ window.saveAllReviewed = async function() {
                         badgeLabel.textContent = 'Mois : ' + releveMonthLabel(monthKey);
                         badge.style.display = 'block';
                     }
+                    return;
+                }
+                // pas d'autre PDF : proposer la validation explicite du mois
+                // (certaines banques editent 2 releves par mois : c'est le medecin
+                // qui confirme que tout le mois est fait)
+                const validate = await askValidateMonth(monthKey);
+                if (validate && typeof validateReleveMonth === 'function') {
+                    await validateReleveMonth(monthKey);
                 }
             }, 400);
         }
@@ -602,6 +610,31 @@ function askAnotherReleve(monthKey) {
     });
 }
 window.askAnotherReleve = askAnotherReleve;
+
+// Dialogue Oui / Non : valider definitivement ce mois ?
+function askValidateMonth(monthKey) {
+    return new Promise(resolve => {
+        const label = releveMonthLabel(monthKey);
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(15,15,30,0.45); z-index:11000; display:flex; align-items:center; justify-content:center; padding:20px;';
+        overlay.innerHTML = `
+            <div class="modal-card" style="max-width:400px; width:100%; padding:26px 24px; text-align:center;">
+                <div style="width:48px; height:48px; margin:0 auto 12px; background:var(--md-primary-container, #e8e6ff); color:var(--md-on-primary-container, #2a1f9e); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">📅</div>
+                <h3 style="margin:0 0 8px; font-size:1.08rem; font-weight:800; letter-spacing:-0.02em;">Valider le mois de ${reviewEscapeHtml(label)} ?</h3>
+                <p style="margin:0 0 18px; font-size:0.85rem; color:var(--color-text-secondary); line-height:1.45;">Si tout le relevé de ${reviewEscapeHtml(label)} est intégré, validez ce mois — il sera marqué comme terminé. Certaines banques éditent un 2ᵉ relevé par quinzaine : ne validez que si le mois est complet.</p>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" id="ask-validate-oui" class="btn-primary" style="flex:1; padding:12px; border:none; border-radius:999px; cursor:pointer;">Oui, valider</button>
+                    <button type="button" id="ask-validate-non" class="btn-secondary" style="flex:1; padding:12px; border-radius:999px; cursor:pointer;">Pas encore</button>
+                </div>
+            </div>`;
+        const close = (val) => { overlay.remove(); resolve(val); };
+        overlay.querySelector('#ask-validate-oui').onclick = () => close(true);
+        overlay.querySelector('#ask-validate-non').onclick = () => close(false);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+        document.body.appendChild(overlay);
+    });
+}
+window.askValidateMonth = askValidateMonth;
 
 // ===== Pinch-to-zoom du PDF dans le bandeau =====
 (function initReviewPdfZoom() {
