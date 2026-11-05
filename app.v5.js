@@ -7899,12 +7899,6 @@ function refreshRelevePhotosPanel() {
     // une seule action a la fois : le panneau du mois laisse la place au panier
     const monthPanel = document.getElementById('releveMonthPanel');
     if (monthPanel) monthPanel.style.display = 'none';
-    const badge = document.getElementById('releveMonthBadge');
-    const badgeLabel = document.getElementById('releveMonthBadgeLabel');
-    if (badge && badgeLabel && window._releveTargetMonthPreChosen) {
-        badgeLabel.textContent = 'Mois : ' + ((typeof releveMonthLabel === 'function') ? releveMonthLabel(window._releveTargetMonthPreChosen) : window._releveTargetMonthPreChosen);
-        badge.style.display = 'block';
-    }
     thumbsEl.innerHTML = photos.map((p, i) => `
         <div style="position:relative; width:86px;">
             <img src="${p.previewUrl}" alt="Page ${i + 1}" style="width:86px; height:86px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border); display:block;">
@@ -7945,31 +7939,15 @@ window.validateRelevePhotos = async function() {
     const photos = window._relevePendingPhotos.map(p => p.file);
     if (!photos.length) return;
 
-    // mois deja choisi : lancer l'analyse directement
-    if (window._releveTargetMonthPreChosen) {
-        window._releveTargetMonth = window._releveTargetMonthPreChosen;
-        window._releveTargetMonthPreChosen = null;
-        const badge = document.getElementById('releveMonthBadge');
-        if (badge) badge.style.display = 'none';
-        await processRelevéUpload(photos);
-        return;
-    }
-
-    // sinon : demander le mois avant l'analyse (une seule action visible : Continuer)
+    // demander le mois AVANT l'analyse (une seule action : Lancer l'analyse)
     window._pendingReleveFile = photos;
     const monthPanel = document.getElementById('releveMonthPanel');
     const pickers = document.getElementById('releveUploadPickers');
     const photosPanel = document.getElementById('relevePhotosPanel');
     const fileNameEl = document.getElementById('releveMonthFileName');
-    const monthInput = document.getElementById('releveMonthInput');
     if (monthPanel && pickers) {
         if (fileNameEl) fileNameEl.textContent = photos.length + ' photo' + (photos.length > 1 ? 's' : '') + ' du relevé';
-        if (monthInput && !monthInput.value) {
-            const now = new Date();
-            monthInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-        }
-        monthPanel.style.display = 'block';
-        pickers.style.display = 'none';
+        showReleveMonthPanel();
         if (photosPanel) photosPanel.style.display = 'none';
         return;
     }
@@ -7992,32 +7970,14 @@ async function handleRelevéUpload(event) {
     const file = pdf || files[0];
     if (!file) return;
 
-    // mois deja choisi via "Ajouter un relevé à un mois précis" : analyse directe
-    if (window._releveTargetMonthPreChosen) {
-        window._releveTargetMonth = window._releveTargetMonthPreChosen;
-        window._releveTargetMonthPreChosen = null;
-        const badge = document.getElementById('releveMonthBadge');
-        if (badge) badge.style.display = 'none';
-        await processRelevéUpload(file);
-        return;
-    }
-
-    // cas residual (mois jamais valide) : demander a quel mois est associe ce releve
+    // fichier choisi : demander a quel mois il correspond AVANT l'analyse
     window._pendingReleveFile = file;
-    const uploadBody = document.getElementById('releveUploadBody');
     const monthPanel = document.getElementById('releveMonthPanel');
     const pickers = document.getElementById('releveUploadPickers');
     const fileNameEl = document.getElementById('releveMonthFileName');
     if (monthPanel && pickers) {
         if (fileNameEl) fileNameEl.textContent = file.name;
-        initReleveMonthSelects();
-        if (!getReleveMonthValue()) {
-            const now = new Date();
-            setReleveMonthValue(now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
-        }
-        monthPanel.style.display = 'block';
-        pickers.style.display = 'none';
-        if (uploadBody) uploadBody.style.display = 'block';
+        showReleveMonthPanel();
         return;
     }
     // fallback (panneau absent) : analyse directe
@@ -8059,16 +8019,37 @@ function setReleveMonthValue(monthKey) {
 window.getReleveMonthValue = getReleveMonthValue;
 window.setReleveMonthValue = setReleveMonthValue;
 
-// Ouverture du flux d'import : on atterrit directement sur la question du mois
-// (pre-rempli avec le mois selectionne dans le module Flux), puis le fichier.
+// Affiche le panneau du mois (pre-rempli) avant de lancer l'analyse
+function showReleveMonthPanel() {
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    if (!monthPanel) return;
+    initReleveMonthSelects();
+    if (!window._releveFlowPrefMonth) {
+        let m = null;
+        try {
+            if (typeof fluxCurrentMonth !== 'undefined' && fluxCurrentMonth instanceof Date && !isNaN(fluxCurrentMonth)) {
+                m = fluxCurrentMonth;
+            }
+        } catch (e) {}
+        if (!m) m = new Date();
+        window._releveFlowPrefMonth = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+    }
+    setReleveMonthValue(window._releveFlowPrefMonth);
+    monthPanel.style.display = 'block';
+    if (pickers) pickers.style.display = 'none';
+}
+
+// Ouverture du flux d'import : on choisit D'ABORD la source (PDF / Image /
+// Camera), puis le fichier, puis on confirme le mois avant l'analyse.
 window.openReleveUploadFlow = function(prefMonth) {
     const modal = document.getElementById('releve-upload-modal');
     if (!modal) return;
     modal.style.display = 'flex';
     if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
-    initReleveMonthSelects();
+    // mois propose par le module appelant (checklist) ou mois du module Flux
     if (prefMonth && /^\d{4}-\d{2}$/.test(prefMonth)) {
-        setReleveMonthValue(prefMonth);
+        window._releveFlowPrefMonth = prefMonth;
     } else {
         let m = null;
         try {
@@ -8077,85 +8058,51 @@ window.openReleveUploadFlow = function(prefMonth) {
             }
         } catch (e) {}
         if (!m) m = new Date();
-        setReleveMonthValue(m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0'));
+        window._releveFlowPrefMonth = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
     }
     window._pendingReleveFile = null;
     const monthPanel = document.getElementById('releveMonthPanel');
     const pickers = document.getElementById('releveUploadPickers');
-    const fileNameEl = document.getElementById('releveMonthFileName');
-    const badge = document.getElementById('releveMonthBadge');
-    if (fileNameEl) fileNameEl.textContent = 'Le fichier (photo ou PDF) sera choisi ensuite.';
-    if (monthPanel) monthPanel.style.display = 'block';
-    if (pickers) pickers.style.display = 'none';
-    if (badge) badge.style.display = 'none';
+    if (monthPanel) monthPanel.style.display = 'none';
+    if (pickers) pickers.style.display = 'grid';
     if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
 };
 
-// Depuis le checklist : ouvrir l'import avec le mois de la ligne pre-rempli
+// Depuis le checklist : le mois de la ligne sera propose a l'etape du mois
 window.openReleveUploadFlowForMonth = function(monthKey) {
-    window._releveTargetMonthPreChosen = null;
     openReleveUploadFlow(monthKey);
 };
 
-// Choisir le mois AVANT le fichier (depuis le FAB ou le module d'import)
-window.pickReleveMonthFirst = function() {
-    window._pendingReleveFile = null;
-    const uploadBody = document.getElementById('releveUploadBody');
-    const monthPanel = document.getElementById('releveMonthPanel');
-    const pickers = document.getElementById('releveUploadPickers');
-    const fileNameEl = document.getElementById('releveMonthFileName');
-    if (!monthPanel || !pickers) return;
-    if (fileNameEl) fileNameEl.textContent = 'Le fichier (photo ou PDF) sera choisi ensuite.';
-    monthPanel.style.display = 'block';
-    pickers.style.display = 'none';
-    if (uploadBody) uploadBody.style.display = 'block';
-    if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
-    const modal = document.getElementById('releve-upload-modal');
-    if (modal) modal.style.display = 'flex';
-};
-
+// Unique action du panneau du mois : valider le mois et lancer l'analyse
 window.confirmReleveMonth = async function() {
     const val = getReleveMonthValue();
     if (!val) {
         alert('Indiquez le mois du relevé.');
         return;
     }
-    const monthPanel = document.getElementById('releveMonthPanel');
-    const pickers = document.getElementById('releveUploadPickers');
-    const badge = document.getElementById('releveMonthBadge');
-    const badgeLabel = document.getElementById('releveMonthBadgeLabel');
     const file = window._pendingReleveFile;
     window._pendingReleveFile = null;
+    window._releveTargetMonth = val;
+    window._releveFlowPrefMonth = val;
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
     if (monthPanel) monthPanel.style.display = 'none';
     if (pickers) pickers.style.display = 'grid';
     if (file) {
-        // fichier deja choisi : lancer l'analyse pour ce mois
-        window._releveTargetMonth = val;
-        if (badge) badge.style.display = 'none';
         await processRelevéUpload(file);
         return;
     }
-    // pas de fichier : memoriser le mois, l'utilisateur choisit ensuite photo/PDF
-    window._releveTargetMonthPreChosen = val;
-    if (badge && badgeLabel) {
-        badgeLabel.textContent = 'Mois : ' + ((typeof releveMonthLabel === 'function') ? releveMonthLabel(val) : val);
-        badge.style.display = 'block';
-    }
+    if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
 };
 
+// Remise a zero du panneau du mois (a la fermeture du modal)
 window.cancelReleveMonth = function() {
     window._pendingReleveFile = null;
-    window._releveTargetMonthPreChosen = null;
     const monthPanel = document.getElementById('releveMonthPanel');
     const pickers = document.getElementById('releveUploadPickers');
-    const badge = document.getElementById('releveMonthBadge');
     if (monthPanel) monthPanel.style.display = 'none';
     if (pickers) pickers.style.display = 'grid';
-    if (badge) badge.style.display = 'none';
     if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
-    // le panneau du mois est la porte d'entree : annuler ferme le modal
-    const modal = document.getElementById('releve-upload-modal');
-    if (modal && modal.style.display !== 'none') modal.style.display = 'none';
 };
 
 async function processRelevéUpload(fileOrFiles) {

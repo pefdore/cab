@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=202611051200">
+    <link rel="stylesheet" href="style.css?v=202611061500">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -324,47 +324,53 @@ window.attemptLogin = function() {
                             <button class="action-btn" style="padding:6px 14px;" onclick="clearSavedReview(); document.getElementById('review-resume-banner').style.display='none';">Abandonner</button>
                         </div>
                     </div>
-                    <p style="text-align: center; margin-bottom: 20px; color: var(--color-text-secondary); font-size: 0.9rem;">Sélectionnez un fichier ou prenez une photo de votre relevé bancaire</p>
+                    <p class="releve-upload-sub">Comment importer votre relevé bancaire ?</p>
                     <input type="file" id="releveFileInputGlobal" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleRelevéUpload(event)">
                     <input type="file" id="releveCameraInputGlobal" accept="image/*" capture="environment" style="display:none" onchange="handleRelevéUpload(event)">
-                    <div id="releveMonthPanel" style="display:none; text-align:center; padding:8px 0 4px;">
-                        <p style="margin:0 0 4px; font-size:0.95rem; font-weight:600;">À quel mois correspond ce relevé ?</p>
+                    <div id="releveMonthPanel" class="releve-month-panel" style="display:none;">
+                        <p class="releve-month-title">À quel mois correspond ce relevé ?</p>
                         <p id="releveMonthFileName" style="margin:0 0 14px; font-size:0.75rem; color:var(--color-text-secondary); word-break:break-all;"></p>
-                        <div style="display:flex; gap:10px;">
-                            <select id="releveMonthSelM" style="flex:1; box-sizing:border-box; padding:12px; font-size:1rem; border-radius:10px; border:1px solid var(--color-border); background:var(--color-bg-elevated); color:var(--color-text);">
+                        <div class="releve-month-selects">
+                            <select id="releveMonthSelM" class="releve-month-select" style="flex:1;">
                                 <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option><option value="4">Avril</option>
                                 <option value="5">Mai</option><option value="6">Juin</option><option value="7">Juillet</option><option value="8">Août</option>
                                 <option value="9">Septembre</option><option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
                             </select>
-                            <select id="releveMonthSelY" style="width:120px; box-sizing:border-box; padding:12px; font-size:1rem; border-radius:10px; border:1px solid var(--color-border); background:var(--color-bg-elevated); color:var(--color-text);"></select>
+                            <select id="releveMonthSelY" class="releve-month-select" style="width:120px;"></select>
                         </div>
-                        <div style="display:flex; gap:10px; margin-top:14px;">
-                            <button class="btn-primary" style="flex:1; padding:12px; border-radius:12px;" onclick="confirmReleveMonth()">Continuer</button>
-                            <button class="btn-secondary" style="flex:1; padding:12px; border-radius:12px;" onclick="cancelReleveMonth()">Annuler</button>
-                        </div>
+                        <button class="releve-month-go" onclick="confirmReleveMonth()">Lancer l'analyse ➜</button>
                     </div>
-                    <div id="releveUploadPickers" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                        <button class="btn-primary" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 8px; border-radius: 12px; height: 100%;" onclick="document.getElementById('releveFileInputGlobal').click();">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                <circle cx="8.5" cy="8.5" r="1.5"/>
-                                <polyline points="21 15 16 10 5 21"/>
-                            </svg>
-                            <span style="font-size: 0.8rem;">Photo</span>
+                    <div id="releveUploadPickers" class="releve-source-grid">
+                        <button type="button" class="releve-source-card" onclick="document.getElementById('releveFileInputGlobal').click();">
+                            <span class="releve-source-ico">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                            </span>
+                            <span class="releve-source-label">PDF</span>
+                            <span class="releve-source-hint">Relevé bancaire</span>
                         </button>
-                        <button class="btn-primary" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 8px; border-radius: 12px; height: 100%;" onclick="document.getElementById('releveCameraInputGlobal').click();">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                <circle cx="12" cy="13" r="4"/>
-                            </svg>
-                            <span style="font-size: 0.8rem;">Camera</span>
+                        <button type="button" class="releve-source-card" onclick="document.getElementById('releveFileInputGlobal').click();">
+                            <span class="releve-source-ico">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                            </span>
+                            <span class="releve-source-label">Image</span>
+                            <span class="releve-source-hint">Galerie / capture</span>
                         </button>
-                        <button class="btn-secondary" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 8px; border-radius: 12px; height: 100%;" onclick="document.getElementById('releveFileInputGlobal').click();">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                            </svg>
-                            <span style="font-size: 0.8rem;">PDF</span>
+                        <button type="button" class="releve-source-card" onclick="document.getElementById('releveCameraInputGlobal').click();">
+                            <span class="releve-source-ico">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                </svg>
+                            </span>
+                            <span class="releve-source-label">Caméra</span>
+                            <span class="releve-source-hint">Photographier les pages</span>
                         </button>
                     </div>
                     <div id="relevePhotosPanel" style="display:none; margin-top:16px; padding:14px; border:1px dashed var(--color-border); border-radius:12px;">
@@ -378,9 +384,8 @@ window.attemptLogin = function() {
                         <button class="btn-primary" style="width:100%; margin-top:10px; padding:12px; border-radius:10px; font-size:0.85rem;" onclick="validateRelevePhotos()">✓ Valider — lancer l'analyse</button>
                         <button class="btn-secondary" style="width:100%; margin-top:8px; padding:8px; border-radius:10px; font-size:0.75rem;" onclick="resetRelevePhotos()">Retirer toutes les photos</button>
                     </div>
-                    <div id="releveMonthBadge" style="display:none; margin-top:12px; background:var(--md-primary-container, #e8e6ff); color:var(--md-on-primary-container, #2a1f9e); border-radius:999px; padding:8px 16px; font-size:0.8rem; font-weight:700; cursor:pointer;" onclick="pickReleveMonthFirst(true)" title="Cliquer pour changer le mois">📅 <span id="releveMonthBadgeLabel"></span> — cliquer pour changer</div>
-                    <button class="btn-secondary" style="width: 100%; margin-top: 12px; padding: 12px;" onclick="closeRelevéUploadModal()">
-                        Annuler
+                    <button class="btn-secondary" style="width: 100%; margin-top: 12px; padding: 12px; border-radius:999px;" onclick="closeRelevéUploadModal()">
+                        Fermer
                     </button>
                 </div>
                 <!-- Loading zone inside modal -->
@@ -3344,7 +3349,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202611061300" defer></script>
+    <script src="app.v5.js?v=202611061500" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
     <script src="urgence.js?v=2026110115000" defer></script>
@@ -3352,7 +3357,7 @@ window.attemptLogin = function() {
     <script src="reconciliation.js?v=2026110115000" defer></script>
     <script src="reminders.js?v=202611061300" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
-    <script src="releve-review.js?v=202611061300" defer></script>
+    <script src="releve-review.js?v=202611061500" defer></script>
     <script src="urgence-orders.js?v=2026110115000" defer></script>
     <script>
       // Toggle form function for mobile
