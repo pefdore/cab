@@ -10352,9 +10352,33 @@ html.no-anim *::after {
     border-color: var(--color-border);
     background: var(--color-bg-muted);
 }
-.reunion-card-date {
+.reunion-card-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 220px;
+    flex: 1;
+}
+.reunion-card-title {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 1rem;
+}
+.reunion-title-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.reunion-title-chip {
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.reunion-title-chip:hover {
+    border-color: var(--color-primary);
 }
 .reunion-detail-header {
     display: flex;

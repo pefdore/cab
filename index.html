@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-CtSuzFbu.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-DIbJiEMx.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -2053,24 +2053,37 @@ window.attemptLogin = function() {
                         <div id="reunionsList"></div>
                         <button class="action-btn primary" id="reunionNewDateBtn" style="margin-top:14px;">+ Nouveau processus de date</button>
                         <div id="reunionScheduleSection" style="display:none;">
-                            <div class="odj-section-label" style="margin-top:18px;">Fixer directement une date (si elle est connue)</div>
+                            <div class="odj-section-label" style="margin-top:18px;">Titre de la réunion</div>
                             <div class="form-group">
-                                <div class="reunion-date-row">
-                                    <input type="date" id="reunionFixDate" class="form-input">
-                                    <input type="time" id="reunionFixTime" class="form-input">
-                                    <button class="action-btn" id="reunionFixBtn">Fixer la date</button>
+                                <input type="text" id="reunionTitleInput" class="form-input" placeholder="Ex : Réunion de mai 2027">
+                            </div>
+                            <div class="reunion-title-chips" id="reunionTitleChips"></div>
+                            <div class="odj-section-label" style="margin-top:18px;">La date est-elle déjà connue ?</div>
+                            <div class="reunion-date-row">
+                                <button class="action-btn" id="reunionDateKnownBtn">Oui, je connais la date</button>
+                                <button class="action-btn" id="reunionDateUnknownBtn">Non, proposer plusieurs dates (sondage)</button>
+                            </div>
+                            <div id="reunionFixBlock" style="display:none;">
+                                <div class="form-group">
+                                    <div class="reunion-date-row">
+                                        <input type="date" id="reunionFixDate" class="form-input">
+                                        <input type="time" id="reunionFixTime" class="form-input">
+                                        <button class="action-btn primary" id="reunionFixBtn">Fixer la réunion</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="odj-section-label" style="margin-top:18px;">Ou proposer plusieurs dates</div>
-                            <div class="form-group">
-                                <div class="reunion-date-row">
-                                    <input type="date" id="reunionDateInput" class="form-input">
-                                    <input type="time" id="reunionTimeInput" class="form-input">
-                                    <button class="action-btn primary" id="reunionProposeBtn">Ajouter une date</button>
+                            <div id="reunionSondageBlock" style="display:none;">
+                                <div class="odj-section-label" style="margin-top:18px;">Proposez plusieurs dates — les membres du cabinet indiqueront leurs disponibilités</div>
+                                <div class="form-group">
+                                    <div class="reunion-date-row">
+                                        <input type="date" id="reunionDateInput" class="form-input">
+                                        <input type="time" id="reunionTimeInput" class="form-input">
+                                        <button class="action-btn primary" id="reunionProposeBtn">Ajouter une date</button>
+                                    </div>
                                 </div>
+                                <div id="reunionProposalsList"></div>
+                                <div id="reunionValidateBox"></div>
                             </div>
-                            <div id="reunionProposalsList"></div>
-                            <div id="reunionValidateBox"></div>
                         </div>
                     </div>
 
