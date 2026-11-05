@@ -7917,6 +7917,35 @@ async function handleRelevéUpload(event) {
     await processRelevéUpload(file);
 }
 
+// Ouverture du flux d'import : on atterrit directement sur la question du mois
+// (pre-rempli avec le mois selectionne dans le module Flux), puis le fichier.
+window.openReleveUploadFlow = function() {
+    const modal = document.getElementById('releve-upload-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
+    const monthInput = document.getElementById('releveMonthInput');
+    if (monthInput) {
+        let m = null;
+        try {
+            if (typeof fluxCurrentMonth !== 'undefined' && fluxCurrentMonth instanceof Date && !isNaN(fluxCurrentMonth)) {
+                m = fluxCurrentMonth;
+            }
+        } catch (e) {}
+        if (!m) m = new Date();
+        monthInput.value = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+    }
+    window._pendingReleveFile = null;
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    const fileNameEl = document.getElementById('releveMonthFileName');
+    const badge = document.getElementById('releveMonthBadge');
+    if (fileNameEl) fileNameEl.textContent = 'Le fichier (photo ou PDF) sera choisi ensuite.';
+    if (monthPanel) monthPanel.style.display = 'block';
+    if (pickers) pickers.style.display = 'none';
+    if (badge) badge.style.display = 'none';
+};
+
 // Choisir le mois AVANT le fichier (depuis le FAB ou le module d'import)
 window.pickReleveMonthFirst = function() {
     window._pendingReleveFile = null;
@@ -7980,6 +8009,9 @@ window.cancelReleveMonth = function() {
     if (monthPanel) monthPanel.style.display = 'none';
     if (pickers) pickers.style.display = 'grid';
     if (badge) badge.style.display = 'none';
+    // le panneau du mois est la porte d'entree : annuler ferme le modal
+    const modal = document.getElementById('releve-upload-modal');
+    if (modal && modal.style.display !== 'none') modal.style.display = 'none';
 };
 
 async function processRelevéUpload(file) {
