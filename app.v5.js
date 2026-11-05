@@ -7880,10 +7880,107 @@ function closeRelevéModal() {
     }
 }
 
+// ===== Import multi-photos (relevé papier photographié page par page) =====
+window._relevePendingPhotos = window._relevePendingPhotos || [];
+
+function refreshRelevePhotosPanel() {
+    const panel = document.getElementById('relevePhotosPanel');
+    const thumbsEl = document.getElementById('relevePhotoThumbs');
+    const pickers = document.getElementById('releveUploadPickers');
+    if (!panel || !thumbsEl) return;
+    const photos = window._relevePendingPhotos;
+    if (!photos.length) {
+        panel.style.display = 'none';
+        if (pickers) pickers.style.display = 'grid';
+        return;
+    }
+    panel.style.display = 'block';
+    if (pickers) pickers.style.display = 'none';
+    thumbsEl.innerHTML = photos.map((p, i) => `
+        <div style="position:relative; width:86px;">
+            <img src="${p.previewUrl}" alt="Page ${i + 1}" style="width:86px; height:86px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border); display:block;">
+            <span style="position:absolute; top:2px; left:2px; background:rgba(0,0,0,0.6); color:#fff; font-size:0.65rem; padding:1px 6px; border-radius:6px;">${i + 1}</span>
+            <button type="button" onclick="removeRelevePhoto(${i})" title="Retirer cette photo" aria-label="Retirer cette photo" style="position:absolute; top:2px; right:2px; width:22px; height:22px; border:none; border-radius:50%; background:rgba(0,0,0,0.6); color:#fff; font-size:0.8rem; cursor:pointer; line-height:1;">✕</button>
+        </div>`).join('');
+}
+
+function addRelevePhotosToBasket(files) {
+    for (const f of files) {
+        if (!f.type || !f.type.startsWith('image/')) continue;
+        window._relevePendingPhotos.push({ file: f, previewUrl: URL.createObjectURL(f) });
+    }
+    const monthPanel = document.getElementById('releveMonthPanel');
+    if (monthPanel) monthPanel.style.display = 'none';
+    refreshRelevePhotosPanel();
+}
+
+window.addRelevePhoto = function(source) {
+    const input = document.getElementById(source === 'camera' ? 'releveCameraInputGlobal' : 'releveFileInputGlobal');
+    if (input) input.click();
+};
+
+window.removeRelevePhoto = function(index) {
+    const item = window._relevePendingPhotos[index];
+    if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    window._relevePendingPhotos.splice(index, 1);
+    refreshRelevePhotosPanel();
+};
+
+window.resetRelevePhotos = function() {
+    window._relevePendingPhotos.forEach(p => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
+    window._relevePendingPhotos = [];
+    refreshRelevePhotosPanel();
+};
+
+window.validateRelevePhotos = async function() {
+    const photos = window._relevePendingPhotos.map(p => p.file);
+    if (!photos.length) return;
+
+    // mois deja choisi : lancer l'analyse directement
+    if (window._releveTargetMonthPreChosen) {
+        window._releveTargetMonth = window._releveTargetMonthPreChosen;
+        window._releveTargetMonthPreChosen = null;
+        const badge = document.getElementById('releveMonthBadge');
+        if (badge) badge.style.display = 'none';
+        await processRelevéUpload(photos);
+        return;
+    }
+
+    // sinon : demander le mois avant l'analyse
+    window._pendingReleveFile = photos;
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    const fileNameEl = document.getElementById('releveMonthFileName');
+    const monthInput = document.getElementById('releveMonthInput');
+    if (monthPanel && pickers) {
+        if (fileNameEl) fileNameEl.textContent = photos.length + ' photo' + (photos.length > 1 ? 's' : '') + ' du relevé';
+        if (monthInput && !monthInput.value) {
+            const now = new Date();
+            monthInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+        }
+        monthPanel.style.display = 'block';
+        pickers.style.display = 'none';
+        refreshRelevePhotosPanel();
+        return;
+    }
+    await processRelevéUpload(photos);
+};
+
 async function handleRelevéUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
     event.target.value = '';
+
+    // photos (appareil ou galerie) : accumulatees dans le panier, validees ensuite
+    const images = files.filter(f => f.type && f.type.startsWith('image/'));
+    const pdf = files.find(f => f.type === 'application/pdf');
+    if (images.length && !pdf) {
+        addRelevePhotosToBasket(images);
+        return;
+    }
+
+    const file = pdf || files[0];
+    if (!file) return;
 
     // mois deja choisi via "Ajouter un relevé à un mois précis" : analyse directe
     if (window._releveTargetMonthPreChosen) {
@@ -7944,6 +8041,7 @@ window.openReleveUploadFlow = function() {
     if (monthPanel) monthPanel.style.display = 'block';
     if (pickers) pickers.style.display = 'none';
     if (badge) badge.style.display = 'none';
+    if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
 };
 
 // Choisir le mois AVANT le fichier (depuis le FAB ou le module d'import)
@@ -7966,6 +8064,7 @@ window.pickReleveMonthFirst = function() {
     monthPanel.style.display = 'block';
     pickers.style.display = 'none';
     if (uploadBody) uploadBody.style.display = 'block';
+    if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
     const modal = document.getElementById('releve-upload-modal');
     if (modal) modal.style.display = 'flex';
 };
@@ -8009,14 +8108,19 @@ window.cancelReleveMonth = function() {
     if (monthPanel) monthPanel.style.display = 'none';
     if (pickers) pickers.style.display = 'grid';
     if (badge) badge.style.display = 'none';
+    if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
     // le panneau du mois est la porte d'entree : annuler ferme le modal
     const modal = document.getElementById('releve-upload-modal');
     if (modal && modal.style.display !== 'none') modal.style.display = 'none';
 };
 
-async function processRelevéUpload(file) {
+async function processRelevéUpload(fileOrFiles) {
+    const isPhotos = Array.isArray(fileOrFiles);
+    const file = isPhotos ? fileOrFiles[0] : fileOrFiles;
     window._releveCurrentFile = file;
     window._relevePdfBytes = null;
+    window._releveIsPhotos = isPhotos;
+    window._reviewPhotosIdbSaved = false;
     
     window.relevePageThumbs = [];
     const thumbsEl = document.getElementById('releveThumbs');
@@ -8035,8 +8139,8 @@ async function processRelevéUpload(file) {
     if (analysisZone) analysisZone.style.display = 'none';
     
     try {
-        console.log('[RELEVÉ] Starting extraction for file:', file.name, file.type);
-        const text = await extractTextFromFile(file);
+        console.log('[RELEVÉ] Starting extraction for file:', isPhotos ? fileOrFiles.length + ' photo(s)' : file.name, file.type);
+        const text = isPhotos ? await extractTextFromImages(fileOrFiles) : await extractTextFromFile(file);
         console.log('[RELEVÉ] Extracted text length:', text?.length || 0);
         
         if (!text || text.trim().length < 10) {
@@ -8050,6 +8154,8 @@ async function processRelevéUpload(file) {
         console.log('[RELEVÉ] Analyzing with AI...');
         const transactions = await analyzeRelevéWithAI(text);
         console.log('[RELEVÉ] Found transactions:', transactions.length);
+        
+        if (isPhotos && typeof resetRelevePhotos === 'function') resetRelevePhotos();
         
         try {
             await loadReleveLearning();
@@ -8129,7 +8235,7 @@ async function extractTextFromFile(file) {
     if (fileType === 'application/pdf') {
         return await extractTextFromPDF(file);
     } else if (fileType.startsWith('image/')) {
-        return await extractTextFromImage(file);
+        return await extractTextFromImages([file]);
     }
     
     throw new Error('Format de fichier non supporté. Utilisez PDF, JPG ou PNG.');
@@ -8226,9 +8332,110 @@ async function extractTextFromPDF(file) {
     return fullText;
 }
 
-async function extractTextFromImage(file) {
-    console.log('[RELEVÉ] Extracting image via Tesseract.js');
-    return await performOCR(file);
+// OCR multi-photos : chaque photo est une page du releve. Les vignettes et le texte
+// sont poussees dans relevePageThumbs pour alimenter la vue de revue (bandeau pages),
+// exactement comme pour un PDF multi-pages.
+async function extractTextFromImages(files) {
+    console.log('[RELEVÉ] Extracting', files.length, 'photo(s) via Tesseract.js');
+    let fullText = '';
+    _releveHiResCache = {};
+    
+    for (let i = 0; i < files.length; i++) {
+        const pageNum = i + 1;
+        const statusEl = document.querySelector('#releveLoadingModal .scan-status');
+        if (statusEl) statusEl.textContent = 'Photo ' + pageNum + '/' + files.length + ' — reconnaissance du texte';
+        
+        const prepared = await prepareRelevePhoto(files[i]);
+        
+        const result = await Tesseract.recognize(
+            prepared.ocrBlob,
+            'fra+eng',
+            {
+                logger: m => console.log('[TESSERACT]', m.status, m.progress)
+            }
+        );
+        
+        fullText += '\n<<<PAGE ' + pageNum + '>>>\n' + result.data.text + '\n';
+        window.relevePageThumbs.push({
+            page: pageNum,
+            thumb: prepared.thumbDataUrl,
+            hiresDataUrl: prepared.hiresDataUrl,
+            text: result.data.text,
+            itemRects: buildPhotoItemRects(result.data.words || []),
+            pageHeight: prepared.height,
+            pageWidth: prepared.width
+        });
+    }
+    
+    console.log('[RELEVÉ] Extraction photos completed, total text length:', fullText.length);
+    return fullText;
+}
+
+// Construit les rectangles de mots Tesseract, regroupes en lignes par position Y,
+// au meme format que la couche texte pdf.js (str, x, y, w, h, _line)
+function buildPhotoItemRects(words) {
+    const sorted = words
+        .filter(wd => wd?.bbox && wd.text && wd.text.trim())
+        .sort((a, b) => (a.bbox.y0 - b.bbox.y0) || (a.bbox.x0 - b.bbox.x0));
+    const rects = [];
+    let lineNo = -1;
+    let lastY = null;
+    for (const wd of sorted) {
+        const h = wd.bbox.y1 - wd.bbox.y0;
+        const yMid = (wd.bbox.y0 + wd.bbox.y1) / 2;
+        if (lastY === null || Math.abs(yMid - lastY) > Math.max(6, h * 0.6)) {
+            lineNo++;
+            lastY = yMid;
+        }
+        rects.push({
+            str: wd.text,
+            x: wd.bbox.x0,
+            y: wd.bbox.y0,
+            w: wd.bbox.x1 - wd.bbox.x0,
+            h: h || 10,
+            _line: lineNo
+        });
+    }
+    return rects;
+}
+
+// Redimensionne une photo : version OCR (~1800px) + vignette apercu (~350px)
+async function prepareRelevePhoto(file) {
+    const url = URL.createObjectURL(file);
+    const img = await new Promise((resolve, reject) => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = () => reject(new Error('Photo illisible'));
+        im.src = url;
+    });
+    URL.revokeObjectURL(url);
+    
+    const maxSide = 1800;
+    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+    const hiresDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const ocrBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    
+    const thumbScale = Math.min(1, 350 / Math.max(w, h));
+    const tw = Math.max(1, Math.round(w * thumbScale));
+    const th = Math.max(1, Math.round(h * thumbScale));
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = tw;
+    thumbCanvas.height = th;
+    const thumbCtx = thumbCanvas.getContext('2d');
+    thumbCtx.imageSmoothingQuality = 'high';
+    thumbCtx.drawImage(img, 0, 0, tw, th);
+    const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.7);
+    
+    return { ocrBlob, hiresDataUrl, thumbDataUrl, width: w, height: h };
 }
 
 async function performOCR(fileOrBlob) {
@@ -11645,6 +11852,8 @@ function countMonthDuplicates(transactions) {
 // ===== Archivage du PDF de relevé importé (bucket Supabase "releves") =====
 async function saveRelevePdfToStorage(depenses, recettes) {
     try {
+        // import photo : pas d'archivage PDF (les photos restent en local via IndexedDB)
+        if (window._releveIsPhotos) return;
         const blob = window._relevePdfBytes || (window._releveCurrentFile instanceof Blob ? window._releveCurrentFile : null);
         if (!blob || !supabaseClient || !currentUser?.id) return;
         const all = [...(depenses || []), ...(recettes || [])];
@@ -11975,7 +12184,19 @@ async function getHiResPage(pageIdx, pageData) {
     if (_releveHiResCache[pageIdx]) return _releveHiResCache[pageIdx];
     try {
         const pdfjsLib = window.pdfjsLib;
-        if (!pdfjsLib || !window._releveCurrentPdf) return null;
+        if (!pdfjsLib || !window._releveCurrentPdf) {
+            // pas de PDF : les photos du releve stockent leur version hi-res directement
+            if (pageData.hiresDataUrl) {
+                const result = await new Promise(res => {
+                    const img = new Image();
+                    img.onload = () => res({ img, dataUrl: pageData.hiresDataUrl });
+                    img.src = pageData.hiresDataUrl;
+                });
+                _releveHiResCache[pageIdx] = result;
+                return result;
+            }
+            return null;
+        }
         const page = await window._releveCurrentPdf.getPage(pageData.page);
         const viewport = page.getViewport({ scale: 2 });
         const canvas = document.createElement('canvas');
