@@ -10380,6 +10380,14 @@ html.no-anim *::after {
 .reunion-title-chip:hover {
     border-color: var(--color-primary);
 }
+.reunion-date-row .reunion-date-mode-btn.selected {
+    background: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+}
+.reunion-date-row .reunion-date-mode-btn.selected:hover {
+    background: var(--color-primary-hover);
+}
 .reunion-detail-header {
     display: flex;
     align-items: center;

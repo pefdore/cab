@@ -11262,8 +11262,8 @@ function reunionToggleSchedule(show) {
         if (sondage) sondage.style.display = 'none';
         const known = document.getElementById('reunionDateKnownBtn');
         const unknown = document.getElementById('reunionDateUnknownBtn');
-        if (known) known.classList.remove('primary');
-        if (unknown) unknown.classList.remove('primary');
+        if (known) known.classList.remove('selected');
+        if (unknown) unknown.classList.remove('selected');
         reunionRenderTitleChips();
     }
 }
@@ -11275,8 +11275,8 @@ function reunionShowDateMode(fixe) {
     if (sondage) sondage.style.display = fixe ? 'none' : 'block';
     const known = document.getElementById('reunionDateKnownBtn');
     const unknown = document.getElementById('reunionDateUnknownBtn');
-    if (known) known.classList.toggle('primary', fixe);
-    if (unknown) unknown.classList.toggle('primary', !fixe);
+    if (known) known.classList.toggle('selected', fixe);
+    if (unknown) unknown.classList.toggle('selected', !fixe);
 }
 
 async function reunionRenderProposals() {
