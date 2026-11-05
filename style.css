@@ -13146,7 +13146,7 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 /* Grille unifiée : solde | entrées | dépenses | graphe — même famille visuelle */
 .flux-hero-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr);
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr);
     gap: 6px;
     align-items: stretch;
 }
@@ -13179,6 +13179,7 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 .fhero-kpi-value { color: var(--color-text) !important; }
 .fhero-kpi.income .fhero-kpi-value { color: #0d8a5f !important; }
 .fhero-kpi.expense .fhero-kpi-value { color: #d93036 !important; }
+.fhero-kpi.year .fhero-kpi-value { color: var(--md-primary) !important; }
 .fhero-chart {
     background: var(--md-surface-low) !important;
     border-radius: var(--md-radius-xl) !important;
