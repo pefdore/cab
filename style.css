@@ -13343,3 +13343,125 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 .souscat-chips { border-radius: var(--radius-m); box-shadow: var(--elev-2); background: var(--md-surface-high); border-color: var(--color-border-subtle); }
 .souscat-chip { border-radius: var(--radius-full); background: var(--md-surface-low); border-color: var(--color-border-subtle); }
 .souscat-chip:hover { background: var(--md-primary-container); color: var(--md-on-primary-container); border-color: transparent; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL D'IMPORT DE RELEVÉ — cartes source + étape du mois (MD3 Expressive)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.releve-upload-sub {
+    text-align: center;
+    margin-bottom: 18px;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Cartes source : PDF / Image / Caméra */
+.releve-source-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.releve-source-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 22px 10px 18px;
+    border: none;
+    border-radius: var(--md-radius-xl, 20px);
+    background: var(--md-surface-low);
+    color: var(--color-text);
+    cursor: pointer;
+    box-shadow: none;
+    animation: md-pop 0.45s var(--md-spring) both;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease, box-shadow 0.15s ease;
+}
+.releve-source-card:nth-child(2) { animation-delay: 0.05s; }
+.releve-source-card:nth-child(3) { animation-delay: 0.1s; }
+.releve-source-card:hover {
+    background: var(--md-surface-high);
+    transform: translateY(-3px);
+    box-shadow: var(--elev-1);
+}
+.releve-source-card:active { transform: scale(0.95); }
+.releve-source-ico {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    transition: transform 0.25s var(--md-spring);
+}
+.releve-source-card:hover .releve-source-ico { transform: scale(1.08) rotate(-3deg); }
+.releve-source-card:active .releve-source-ico { transform: scale(0.92); }
+.releve-source-label {
+    font-size: 0.88rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+.releve-source-hint {
+    font-size: 0.66rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.2;
+}
+@media (max-width: 480px) {
+    .releve-source-grid { grid-template-columns: 1fr; }
+    .releve-source-card { flex-direction: row; justify-content: flex-start; gap: 14px; padding: 14px 16px; }
+    .releve-source-ico { width: 44px; height: 44px; border-radius: 14px; margin-bottom: 0; flex-shrink: 0; }
+    .releve-source-hint { text-align: left; }
+}
+
+/* Étape du mois : une seule action, pilules */
+.releve-month-panel {
+    text-align: center;
+    padding: 6px 0 2px;
+    animation: md-pop 0.4s var(--md-spring) both;
+}
+.releve-month-title {
+    margin: 0 0 4px;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+.releve-month-selects {
+    display: flex;
+    gap: 10px;
+}
+.releve-month-select {
+    box-sizing: border-box;
+    padding: 13px 14px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border-subtle);
+    background: var(--md-surface-high);
+    color: var(--color-text);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.releve-month-select:focus {
+    outline: none;
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+}
+.releve-month-go {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--md-primary);
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    box-shadow: var(--elev-1);
+    transition: transform 0.25s var(--md-spring), box-shadow 0.15s ease;
+    animation: md-pop 0.4s var(--md-spring) 0.08s both;
+}
+.releve-month-go:hover { box-shadow: var(--elev-2); transform: translateY(-1px); }
+.releve-month-go:active { transform: scale(0.97); }

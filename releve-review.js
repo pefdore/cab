@@ -366,22 +366,12 @@ window.saveAllReviewed = async function() {
             setTimeout(async () => {
                 const another = await askAnotherReleve(monthKey);
                 if (another) {
-                    // le mois est deja connu : pickers directement, mois affiche en badge
-                    window._releveTargetMonthPreChosen = monthKey;
-                    const uploadModal = document.getElementById('releve-upload-modal');
-                    if (uploadModal) {
-                        uploadModal.style.display = 'flex';
-                        if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
-                    }
-                    const monthPanel = document.getElementById('releveMonthPanel');
-                    const pickers = document.getElementById('releveUploadPickers');
-                    const badge = document.getElementById('releveMonthBadge');
-                    const badgeLabel = document.getElementById('releveMonthBadgeLabel');
-                    if (monthPanel) monthPanel.style.display = 'none';
-                    if (pickers) pickers.style.display = 'grid';
-                    if (badge && badgeLabel) {
-                        badgeLabel.textContent = 'Mois : ' + releveMonthLabel(monthKey);
-                        badge.style.display = 'block';
+                    // le mois est deja connu : il sera propose a l'etape du mois
+                    if (typeof openReleveUploadFlow === 'function') {
+                        openReleveUploadFlow(monthKey);
+                    } else {
+                        const uploadModal = document.getElementById('releve-upload-modal');
+                        if (uploadModal) uploadModal.style.display = 'flex';
                     }
                     return;
                 }
