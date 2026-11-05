@@ -13344,6 +13344,7 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 .souscat-chip { border-radius: var(--radius-full); background: var(--md-surface-low); border-color: var(--color-border-subtle); }
 .souscat-chip:hover { background: var(--md-primary-container); color: var(--md-on-primary-container); border-color: transparent; }
 
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MODAL D'IMPORT DE RELEVÉ — cartes source + étape du mois (MD3 Expressive)
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -13465,3 +13466,120 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 }
 .releve-month-go:hover { box-shadow: var(--elev-2); transform: translateY(-1px); }
 .releve-month-go:active { transform: scale(0.97); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL IMPORT RELEVÉ — finition MD3 Expressive
+   Complète les cartes source/étape mois : carte du modal, en-tête tonal,
+   panier photos, boutons pilules, thème sombre.
+   ═══════════════════════════════════════════════════════════════════ */
+#releve-upload-modal .modal-card {
+    border-radius: 28px !important;
+    border: 1px solid var(--color-border-subtle, transparent) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24) !important;
+    background: var(--md-surface-high) !important;
+    animation: md-pop 0.5s var(--md-spring) both;
+}
+
+#releve-upload-modal .modal-header {
+    border-bottom: none !important;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    padding: 18px 22px !important;
+}
+#releve-upload-modal .modal-header h3 {
+    font-size: 1.25rem !important;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+#releve-upload-modal .modal-header p { color: var(--md-on-primary-container) !important; opacity: 0.78; }
+#releve-upload-modal .modal-header > div:first-child > div:first-child {
+    background: rgba(255, 255, 255, 0.55) !important;
+    border-radius: 14px !important;
+}
+#releve-upload-modal .modal-header > div:first-child > div:first-child svg { stroke: var(--md-on-primary-container) !important; }
+#releve-upload-modal .modal-close {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-radius: 999px !important;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s var(--md-spring), background 0.15s ease !important;
+}
+#releve-upload-modal .modal-close:hover { transform: scale(1.1); background: rgba(255, 255, 255, 0.7) !important; }
+#releve-upload-modal .modal-close:active { transform: scale(0.94); }
+#releve-upload-modal .modal-close svg { stroke: var(--md-on-primary-container); }
+
+/* Panier photos : carte tonale expressive */
+#relevePhotosPanel {
+    border: none !important;
+    background: var(--md-primary-container) !important;
+    border-radius: 24px !important;
+    padding: 16px !important;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+#relevePhotosPanel p { color: var(--md-on-primary-container) !important; }
+#relevePhotosPanel p:nth-child(2) { opacity: 0.78; }
+#relevePhotoThumbs img {
+    border-radius: 16px !important;
+    border: 2px solid rgba(255, 255, 255, 0.75) !important;
+    box-shadow: 0 4px 12px rgba(42, 31, 158, 0.18);
+    transition: transform 0.3s var(--md-spring) !important;
+}
+#relevePhotoThumbs img:hover { transform: scale(1.05) rotate(-1deg); }
+#relevePhotosPanel .btn-secondary {
+    background: rgba(255, 255, 255, 0.6) !important;
+    color: var(--md-on-primary-container) !important;
+    border: none !important;
+    border-radius: 999px !important;
+    font-weight: 700;
+}
+#relevePhotosPanel .btn-primary {
+    background: var(--md-primary) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 999px !important;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+/* Badge mois : pilule tonale */
+#releveMonthBadge { border-radius: 999px !important; animation: md-pop 0.4s var(--md-spring) both; }
+
+/* Boutons du modal : pilules + ressorts */
+#releve-upload-modal .btn-primary,
+#releve-upload-modal .btn-secondary {
+    border-radius: 999px !important;
+    font-weight: 700;
+    transition: transform 0.3s var(--md-spring), box-shadow 0.2s ease !important;
+}
+#releve-upload-modal .btn-primary:hover,
+#releve-upload-modal .btn-secondary:hover { transform: translateY(-2px) scale(1.015); }
+#releve-upload-modal .btn-primary:active,
+#releve-upload-modal .btn-secondary:active { transform: scale(0.97); }
+#releve-upload-modal .btn-primary { box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25); }
+
+/* Zone de chargement : scan conservé, statut en pilule */
+#releveLoadingModal p { letter-spacing: -0.01em; }
+#releveLoadingModal .scan-status {
+    background: var(--color-bg-subtle);
+    border-radius: 999px;
+    padding: 6px 16px;
+    display: inline-block;
+}
+
+/* Thème sombre : surfaces tonales assombries, textes lisibles */
+[data-theme="dark"] #releve-upload-modal .modal-header {
+    background: rgba(79, 70, 229, 0.24);
+    color: #cfcbff;
+}
+[data-theme="dark"] #releve-upload-modal .modal-header h3 { color: #e4e1ff; }
+[data-theme="dark"] #releve-upload-modal .modal-header p { color: #a8a3f0 !important; }
+[data-theme="dark"] #releve-upload-modal .modal-header > div:first-child > div:first-child { background: rgba(255, 255, 255, 0.12) !important; }
+[data-theme="dark"] #releve-upload-modal .modal-close { background: rgba(255, 255, 255, 0.14) !important; }
+[data-theme="dark"] #releve-upload-modal .modal-close svg { stroke: #cfcbff; }
+[data-theme="dark"] #relevePhotosPanel { background: var(--color-bg-subtle) !important; }
+[data-theme="dark"] #relevePhotosPanel p { color: var(--color-text) !important; }
+[data-theme="dark"] #relevePhotosPanel .btn-secondary { background: var(--color-bg-elevated) !important; color: var(--color-text) !important; }
+[data-theme="dark"] #relevePhotoThumbs img { border-color: var(--color-border) !important; box-shadow: none; }
