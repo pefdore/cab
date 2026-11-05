@@ -770,6 +770,18 @@ function saveReviewProgress() {
             window._reviewPdfIdbSavedFor = pdfBlob;
             idbPutPdf('current', pdfBlob);
         }
+        // persister les photos du releve (import photo) de la meme facon
+        if (window._releveIsPhotos && (window.relevePageThumbs || []).length && !window._reviewPhotosIdbSaved) {
+            window._reviewPhotosIdbSaved = true;
+            idbPutPdf('photos', JSON.stringify({
+                fileName: window._releveCurrentFile?.name || null,
+                thumbs: window.relevePageThumbs.map(t => ({
+                    page: t.page, thumb: t.thumb, hiresDataUrl: t.hiresDataUrl || null,
+                    text: t.text || '', itemRects: t.itemRects || [],
+                    pageHeight: t.pageHeight, pageWidth: t.pageWidth
+                }))
+            }));
+        }
     } catch (e) {
         console.error('[REVIEW] save progress:', e);
     }
@@ -796,9 +808,11 @@ window.resumeSavedReview = async function() {
         document.getElementById('releve-upload-modal').style.display = 'none';
         window._releveReviewResumed = true;
 
-        // recharger le PDF : d'abord la copie locale (IndexedDB),
-        // sinon l'archive Supabase (bucket releves)
-        await restoreReviewPdfFromIdb(data);
+        // recharger l'aperçu : photos (import photo) d'abord, sinon le PDF
+        const photosRestored = await restoreReviewPhotosFromIdb(data);
+        if (!photosRestored) {
+            await restoreReviewPdfFromIdb(data);
+        }
         if (!(window.relevePageThumbs || []).length) {
             await restoreReviewPdfFromArchive(data);
         }
@@ -814,6 +828,30 @@ window.resumeSavedReview = async function() {
         return false;
     }
 };
+
+// recharge les photos sauvegardees localement (IndexedDB) au moment de la fermeture
+async function restoreReviewPhotosFromIdb(data) {
+    try {
+        if (!window.relevePageThumbs) window.relevePageThumbs = [];
+        if (window.relevePageThumbs.length) return false;
+        const raw = await idbGetPdf('photos');
+        if (!raw || typeof raw !== 'string') return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.thumbs?.length) return false;
+        window.relevePageThumbs = parsed.thumbs;
+        window._releveIsPhotos = true;
+        window._reviewPhotosIdbSaved = true;
+        if (parsed.fileName) {
+            window._releveCurrentFile = { name: parsed.fileName, type: 'image/jpeg' };
+        }
+        console.log('[REVIEW] Photos restaurées depuis IndexedDB:', parsed.thumbs.length, 'page(s)');
+        return true;
+    } catch (e) {
+        console.error('[REVIEW] restore photos (idb):', e);
+        return false;
+    }
+}
+window.restoreReviewPhotosFromIdb = restoreReviewPhotosFromIdb;
 
 // recharge le PDF sauvegarde localement (IndexedDB) au moment de la fermeture
 async function restoreReviewPdfFromIdb(data) {
@@ -870,6 +908,7 @@ window.restoreReviewPdfFromArchive = restoreReviewPdfFromArchive;
 window.clearSavedReview = function() {
     localStorage.removeItem(REVIEW_STORAGE_KEY);
     window._reviewPdfIdbSavedFor = null;
+    window._reviewPhotosIdbSaved = false;
     idbClearPdf();
 };
 

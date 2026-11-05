@@ -325,7 +325,7 @@ window.attemptLogin = function() {
                         </div>
                     </div>
                     <p style="text-align: center; margin-bottom: 20px; color: var(--color-text-secondary); font-size: 0.9rem;">Sélectionnez un fichier ou prenez une photo de votre relevé bancaire</p>
-                    <input type="file" id="releveFileInputGlobal" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleRelevéUpload(event)">
+                    <input type="file" id="releveFileInputGlobal" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleRelevéUpload(event)">
                     <input type="file" id="releveCameraInputGlobal" accept="image/*" capture="environment" style="display:none" onchange="handleRelevéUpload(event)">
                     <div id="releveMonthPanel" style="display:none; text-align:center; padding:8px 0 4px;">
                         <p style="margin:0 0 4px; font-size:0.95rem; font-weight:600;">À quel mois correspond ce relevé ?</p>
@@ -359,6 +359,17 @@ window.attemptLogin = function() {
                             </svg>
                             <span style="font-size: 0.8rem;">PDF</span>
                         </button>
+                    </div>
+                    <div id="relevePhotosPanel" style="display:none; margin-top:16px; padding:14px; border:1px dashed var(--color-border); border-radius:12px;">
+                        <p style="margin:0 0 4px; font-size:0.85rem; font-weight:600;">Photos du relevé</p>
+                        <p style="margin:0 0 12px; font-size:0.75rem; color:var(--color-text-secondary);">Photographiez chaque page du relevé (commencez par la première), puis validez pour lancer l'analyse.</p>
+                        <div id="relevePhotoThumbs" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                        <div style="display:flex; gap:10px; margin-top:14px;">
+                            <button class="btn-secondary" style="flex:1; padding:10px; border-radius:10px; font-size:0.8rem;" onclick="addRelevePhoto('camera')">📷 + Photo</button>
+                            <button class="btn-secondary" style="flex:1; padding:10px; border-radius:10px; font-size:0.8rem;" onclick="addRelevePhoto('file')">🖼️ + Galerie</button>
+                            <button class="btn-primary" style="flex:1.4; padding:10px; border-radius:10px; font-size:0.8rem;" onclick="validateRelevePhotos()">✓ Valider</button>
+                        </div>
+                        <button class="btn-secondary" style="width:100%; margin-top:8px; padding:8px; border-radius:10px; font-size:0.75rem;" onclick="resetRelevePhotos()">Retirer toutes les photos</button>
                     </div>
                     <div id="releveMonthBadge" style="display:none; margin-top:12px; background:var(--md-primary-container, #e8e6ff); color:var(--md-on-primary-container, #2a1f9e); border-radius:999px; padding:8px 16px; font-size:0.8rem; font-weight:700; cursor:pointer;" onclick="pickReleveMonthFirst(true)" title="Cliquer pour changer le mois">📅 <span id="releveMonthBadgeLabel"></span> — cliquer pour changer</div>
                     <button class="btn-secondary" style="width: 100%; margin-top: 12px; padding: 12px;" onclick="closeRelevéUploadModal()">
@@ -3326,7 +3337,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202611052000" defer></script>
+    <script src="app.v5.js?v=202611061200" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
     <script src="urgence.js?v=2026110115000" defer></script>
@@ -3334,7 +3345,7 @@ window.attemptLogin = function() {
     <script src="reconciliation.js?v=2026110115000" defer></script>
     <script src="reminders.js?v=2026110115000" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
-    <script src="releve-review.js?v=202611052000" defer></script>
+    <script src="releve-review.js?v=202611061200" defer></script>
     <script src="urgence-orders.js?v=2026110115000" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3744,6 +3755,7 @@ window.attemptLogin = function() {
       // Close Relevé Upload Modal
       window.closeRelevéUploadModal = function() {
         document.getElementById('releve-upload-modal').style.display = 'none';
+        if (typeof resetRelevePhotos === 'function') resetRelevePhotos();
         const uploadBody = document.getElementById('releveUploadBody');
         const loadingModal = document.getElementById('releveLoadingModal');
         const analysisModal = document.getElementById('releveAnalysisModal');
