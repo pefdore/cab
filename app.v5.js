@@ -8646,6 +8646,9 @@ function t_detectColumnSides(pageData) {
 
     // Si introuvable sur cette page, chercher sur les autres pages du même relevé
     if (creditX === null || debitX === null) {
+        // garde anti-recursion : marquer la page en cours AVANT de parcourir les autres,
+        // sinon A appelle B qui rappelle A (RangeError: too much recursion)
+        pageData._columnSides = { creditX: null, debitX: null };
         for (const pd of (window.relevePageThumbs || [])) {
             if (pd === pageData || !pd.itemRects || pd._columnSides) continue;
             t_detectColumnSides(pd);
