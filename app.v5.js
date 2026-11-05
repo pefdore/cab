@@ -7896,6 +7896,15 @@ function refreshRelevePhotosPanel() {
     }
     panel.style.display = 'block';
     if (pickers) pickers.style.display = 'none';
+    // une seule action a la fois : le panneau du mois laisse la place au panier
+    const monthPanel = document.getElementById('releveMonthPanel');
+    if (monthPanel) monthPanel.style.display = 'none';
+    const badge = document.getElementById('releveMonthBadge');
+    const badgeLabel = document.getElementById('releveMonthBadgeLabel');
+    if (badge && badgeLabel && window._releveTargetMonthPreChosen) {
+        badgeLabel.textContent = 'Mois : ' + ((typeof releveMonthLabel === 'function') ? releveMonthLabel(window._releveTargetMonthPreChosen) : window._releveTargetMonthPreChosen);
+        badge.style.display = 'block';
+    }
     thumbsEl.innerHTML = photos.map((p, i) => `
         <div style="position:relative; width:86px;">
             <img src="${p.previewUrl}" alt="Page ${i + 1}" style="width:86px; height:86px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border); display:block;">
@@ -7946,10 +7955,11 @@ window.validateRelevePhotos = async function() {
         return;
     }
 
-    // sinon : demander le mois avant l'analyse
+    // sinon : demander le mois avant l'analyse (une seule action visible : Continuer)
     window._pendingReleveFile = photos;
     const monthPanel = document.getElementById('releveMonthPanel');
     const pickers = document.getElementById('releveUploadPickers');
+    const photosPanel = document.getElementById('relevePhotosPanel');
     const fileNameEl = document.getElementById('releveMonthFileName');
     const monthInput = document.getElementById('releveMonthInput');
     if (monthPanel && pickers) {
@@ -7960,7 +7970,7 @@ window.validateRelevePhotos = async function() {
         }
         monthPanel.style.display = 'block';
         pickers.style.display = 'none';
-        refreshRelevePhotosPanel();
+        if (photosPanel) photosPanel.style.display = 'none';
         return;
     }
     await processRelevéUpload(photos);
@@ -8188,6 +8198,7 @@ async function processRelevéUpload(fileOrFiles) {
         console.log('[RELEVÉ] Analyzing with AI...');
         const transactions = await analyzeRelevéWithAI(text);
         console.log('[RELEVÉ] Found transactions:', transactions.length);
+        assignReleveTransactionPages(transactions);
         
         if (isPhotos && typeof resetRelevePhotos === 'function') resetRelevePhotos();
         
@@ -8261,6 +8272,52 @@ async function processRelevéUpload(fileOrFiles) {
     }
     
     event.target.value = '';
+}
+
+// Associe chaque transaction a sa page (PDF ou photo) en cherchant date + montant
+// dans les lignes detectees (itemRects) ou le texte de la page. Indispensable pour
+// le suivi automatique et le surlignage de la ligne en cours dans la vue de revue.
+function assignReleveTransactionPages(transactions) {
+    const thumbs = window.relevePageThumbs || [];
+    if (!thumbs.length) return transactions;
+    for (const t of transactions) {
+        if (t._page != null) continue;
+        const amountKey = Math.abs(Number(t.amount) || 0).toFixed(2);
+        const amountVariants = [amountKey.replace('.', ','), amountKey];
+        const dParts = (t.date || '').split('-');
+        const dateVariants = dParts.length === 3
+            ? [dParts[2] + '/' + dParts[1], dParts[1] + '/' + dParts[2], dParts[2] + '-' + dParts[1]]
+            : [];
+        let bestPage = null;
+        let bestScore = 0;
+        for (const pd of thumbs) {
+            let score = 0;
+            if (pd.itemRects && pd.itemRects.length) {
+                const byLine = {};
+                pd.itemRects.forEach(it => {
+                    if (!byLine[it._line]) byLine[it._line] = [];
+                    byLine[it._line].push(it);
+                });
+                for (const items of Object.values(byLine)) {
+                    const joined = items.map(i => i.str).join(' ').toLowerCase();
+                    const flat = joined.replace(/[\s\u00a0]/g, '');
+                    const hasAmount = amountVariants.some(v => flat.includes(v));
+                    const hasDate = dateVariants.some(v => joined.includes(v.toLowerCase()));
+                    const s = (hasAmount ? 2 : 0) + (hasDate ? 2 : 0);
+                    if (s > score) score = s;
+                    if (score >= 4) break;
+                }
+            } else {
+                const pageText = (pd.text || '').toLowerCase();
+                const flat = pageText.replace(/[\s\u00a0]/g, '');
+                if (amountVariants.some(v => flat.includes(v))) score += 2;
+                if (dateVariants.some(v => pageText.includes(v.toLowerCase()))) score += 2;
+            }
+            if (score > bestScore) { bestScore = score; bestPage = pd.page; }
+        }
+        t._page = (bestScore >= 2 && bestPage != null) ? bestPage : 1;
+    }
+    return transactions;
 }
 
 async function extractTextFromFile(file) {
