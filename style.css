@@ -13755,3 +13755,206 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 [data-theme="dark"] #import-standard-modal #importStatus { background: rgba(79, 70, 229, 0.24); color: #cfcbff; }
 [data-theme="dark"] #import-standard-modal .import-result { background: rgba(79, 70, 229, 0.24) !important; }
 [data-theme="dark"] #import-standard-modal .import-result p { color: #e4e1ff !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL « AJOUTER UN PASSAGE » — finition MD3 Expressive
+   Même langage que les autres modals : carte 28px, en-tête tonal,
+   champs arrondis, pilules, ressorts, thème sombre.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#passage-add-modal .modal-card {
+    border-radius: 28px !important;
+    border: 1px solid var(--color-border-subtle, transparent) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24) !important;
+    background: var(--md-surface-high) !important;
+    animation: md-pop 0.5s var(--md-spring) both;
+}
+
+#passage-add-modal .modal-header {
+    border-bottom: none !important;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    padding: 18px 22px !important;
+}
+#passage-add-modal .modal-header h3 {
+    font-size: 1.25rem !important;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+#passage-add-modal .modal-close {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-radius: 999px !important;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s var(--md-spring), background 0.15s ease !important;
+}
+#passage-add-modal .modal-close:hover { transform: scale(1.1); background: rgba(255, 255, 255, 0.7) !important; }
+#passage-add-modal .modal-close:active { transform: scale(0.94); }
+#passage-add-modal .modal-close svg { stroke: var(--md-on-primary-container); }
+
+/* Champs : surfaces arrondies, focus tonal */
+#passage-add-modal .modal-body { padding: 18px 20px !important; }
+#passage-add-modal .add-form { gap: 14px !important; }
+#passage-add-modal .form-group label {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 5px;
+}
+#passage-add-modal input[type="text"],
+#passage-add-modal input[type="date"],
+#passage-add-modal input[type="number"],
+#passage-add-modal select {
+    border-radius: 14px !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    background: var(--md-surface-low) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
+}
+#passage-add-modal input:focus,
+#passage-add-modal select:focus {
+    outline: none;
+    border-color: var(--md-primary) !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    background: var(--md-surface-high) !important;
+}
+
+/* Montant : pilule tonale expressive */
+#passage-add-modal .amount-display {
+    border-radius: 999px !important;
+    background: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container) !important;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-align: center;
+    border: none !important;
+}
+
+/* Autocomplete : pilules au ressort */
+#passage-add-modal .autocomplete-dropdown {
+    border-radius: 18px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16) !important;
+    border: 1px solid var(--color-border-subtle);
+    overflow: hidden;
+    animation: md-pop 0.35s var(--md-spring) both;
+}
+#passage-add-modal .autocomplete-dropdown .autocomplete-item,
+#passage-add-modal .autocomplete-dropdown > div {
+    transition: background 0.15s ease, transform 0.2s var(--md-spring);
+}
+#passage-add-modal .autocomplete-dropdown > div:hover,
+#passage-add-modal .autocomplete-dropdown .autocomplete-item:hover {
+    background: var(--md-primary-container);
+    transform: translateX(3px);
+}
+
+/* Bouton Enregistrer : pilule pleine, ombre tonale, ressort */
+#passage-add-modal .submit-btn {
+    border: none !important;
+    border-radius: 999px !important;
+    background: var(--md-primary) !important;
+    color: #fff !important;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    padding: 14px !important;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    transition: transform 0.3s var(--md-spring), box-shadow 0.2s ease !important;
+}
+#passage-add-modal .submit-btn:hover { transform: translateY(-2px) scale(1.015); box-shadow: var(--elev-2); }
+#passage-add-modal .submit-btn:active { transform: scale(0.97); }
+
+/* Sections internes (VL récentes, passages du mois) : séparations douces */
+#passage-add-modal .recent-vl-section,
+#passage-add-modal .entries-section {
+    border-top: 1px solid var(--color-border-subtle) !important;
+    border-radius: 0;
+}
+#passage-add-modal .recent-vl-header h3,
+#passage-add-modal .entries-header h3 {
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+#passage-add-modal .recent-vl-list {
+    border-radius: 16px;
+    background: var(--md-surface-low);
+    padding: 8px;
+}
+#passage-add-modal .recent-vl-list:empty { display: none; }
+
+/* Sélecteur de mois : pilules tonales */
+#passage-add-modal .month-selector {
+    border-radius: 999px;
+    background: var(--md-surface-low);
+    padding: 4px;
+    gap: 2px;
+}
+#passage-add-modal .month-selector button {
+    border-radius: 999px !important;
+    border: none !important;
+    background: transparent;
+    color: var(--color-text);
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.25s var(--md-spring);
+}
+#passage-add-modal .month-selector button:hover { background: var(--md-primary-container); transform: scale(1.08); }
+#passage-add-modal .month-selector button:active { transform: scale(0.92); }
+#passage-add-modal .month-selector span { font-weight: 700; padding: 0 6px; }
+
+/* Table des passages du mois : arrondis et en-tête tonal */
+#passage-add-modal .entries-table-wrapper {
+    border-radius: 16px;
+    border: 1px solid var(--color-border-subtle);
+    overflow: hidden;
+}
+#passage-add-modal .entries-table thead th {
+    background: var(--md-surface-low);
+    position: sticky;
+    top: 0;
+}
+
+/* Popups imbriquées (citations / règles VL) : même carte expressive */
+#passage-add-modal .popup-card {
+    border-radius: 24px !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24) !important;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+#passage-add-modal .popup-header {
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    border-radius: 24px 24px 0 0 !important;
+}
+#passage-add-modal .popup-header h3 { font-weight: 800; letter-spacing: -0.02em; }
+#passage-add-modal .popup-close {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-radius: 999px !important;
+    transition: transform 0.3s var(--md-spring) !important;
+}
+#passage-add-modal .popup-close:hover { transform: scale(1.1); }
+#passage-add-modal .add-cotation-form .add-btn {
+    border-radius: 999px !important;
+    font-weight: 700;
+    transition: transform 0.25s var(--md-spring) !important;
+}
+#passage-add-modal .add-cotation-form .add-btn:hover { transform: scale(1.04); }
+#passage-add-modal .add-cotation-form .add-btn:active { transform: scale(0.95); }
+
+/* Thème sombre : surfaces tonales assombries, textes lisibles */
+[data-theme="dark"] #passage-add-modal .modal-header {
+    background: rgba(79, 70, 229, 0.24);
+    color: #cfcbff;
+}
+[data-theme="dark"] #passage-add-modal .modal-header h3 { color: #e4e1ff; }
+[data-theme="dark"] #passage-add-modal .modal-close { background: rgba(255, 255, 255, 0.14) !important; }
+[data-theme="dark"] #passage-add-modal .modal-close svg { stroke: #cfcbff; }
+[data-theme="dark"] #passage-add-modal .amount-display { background: rgba(79, 70, 229, 0.24) !important; color: #e4e1ff !important; }
+[data-theme="dark"] #passage-add-modal .recent-vl-list { background: var(--color-bg-subtle); }
+[data-theme="dark"] #passage-add-modal .month-selector { background: var(--color-bg-subtle); }
+[data-theme="dark"] #passage-add-modal .month-selector button:hover { background: rgba(79, 70, 229, 0.24); }
+[data-theme="dark"] #passage-add-modal .entries-table thead th { background: var(--color-bg-subtle); }
+[data-theme="dark"] #passage-add-modal .popup-header { background: rgba(79, 70, 229, 0.24); color: #cfcbff; }
+[data-theme="dark"] #passage-add-modal .popup-header h3 { color: #e4e1ff; }
+[data-theme="dark"] #passage-add-modal .popup-close { background: rgba(255, 255, 255, 0.14) !important; }
