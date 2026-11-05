@@ -361,9 +361,6 @@ window.attemptLogin = function() {
                         </button>
                     </div>
                     <div id="releveMonthBadge" style="display:none; margin-top:12px; background:var(--md-primary-container, #e8e6ff); color:var(--md-on-primary-container, #2a1f9e); border-radius:999px; padding:8px 16px; font-size:0.8rem; font-weight:700; cursor:pointer;" onclick="pickReleveMonthFirst(true)" title="Cliquer pour changer le mois">📅 <span id="releveMonthBadgeLabel"></span> — cliquer pour changer</div>
-                    <button class="btn-secondary" style="width: 100%; margin-top: 12px; padding: 12px; border-radius:999px;" onclick="pickReleveMonthFirst()">
-                        📅 Ajouter un relevé à un mois précis
-                    </button>
                     <button class="btn-secondary" style="width: 100%; margin-top: 12px; padding: 12px;" onclick="closeRelevéUploadModal()">
                         Annuler
                     </button>
@@ -3329,7 +3326,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202611051800" defer></script>
+    <script src="app.v5.js?v=202611052000" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
     <script src="urgence.js?v=2026110115000" defer></script>
@@ -3337,7 +3334,7 @@ window.attemptLogin = function() {
     <script src="reconciliation.js?v=2026110115000" defer></script>
     <script src="reminders.js?v=2026110115000" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
-    <script src="releve-review.js?v=202611051800" defer></script>
+    <script src="releve-review.js?v=202611052000" defer></script>
     <script src="urgence-orders.js?v=2026110115000" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3719,7 +3716,7 @@ window.attemptLogin = function() {
             case 'releve':
               switchView('cabinet');
               setTimeout(() => {
-                document.getElementById('releve-upload-modal').style.display = 'flex'; if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
+                if (typeof openReleveUploadFlow === 'function') openReleveUploadFlow(); else { document.getElementById('releve-upload-modal').style.display = 'flex'; if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner(); }
               }, 300);
               break;
             case 'contrat':
