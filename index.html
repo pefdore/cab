@@ -330,7 +330,14 @@ window.attemptLogin = function() {
                     <div id="releveMonthPanel" style="display:none; text-align:center; padding:8px 0 4px;">
                         <p style="margin:0 0 4px; font-size:0.95rem; font-weight:600;">À quel mois correspond ce relevé ?</p>
                         <p id="releveMonthFileName" style="margin:0 0 14px; font-size:0.75rem; color:var(--color-text-secondary); word-break:break-all;"></p>
-                        <input type="month" id="releveMonthInput" style="width:100%; box-sizing:border-box; padding:12px; font-size:1rem; border-radius:10px; border:1px solid var(--color-border); background:var(--color-bg-elevated); color:var(--color-text);">
+                        <div style="display:flex; gap:10px;">
+                            <select id="releveMonthSelM" style="flex:1; box-sizing:border-box; padding:12px; font-size:1rem; border-radius:10px; border:1px solid var(--color-border); background:var(--color-bg-elevated); color:var(--color-text);">
+                                <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option><option value="4">Avril</option>
+                                <option value="5">Mai</option><option value="6">Juin</option><option value="7">Juillet</option><option value="8">Août</option>
+                                <option value="9">Septembre</option><option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+                            </select>
+                            <select id="releveMonthSelY" style="width:120px; box-sizing:border-box; padding:12px; font-size:1rem; border-radius:10px; border:1px solid var(--color-border); background:var(--color-bg-elevated); color:var(--color-text);"></select>
+                        </div>
                         <div style="display:flex; gap:10px; margin-top:14px;">
                             <button class="btn-primary" style="flex:1; padding:12px; border-radius:12px;" onclick="confirmReleveMonth()">Continuer</button>
                             <button class="btn-secondary" style="flex:1; padding:12px; border-radius:12px;" onclick="cancelReleveMonth()">Annuler</button>
@@ -3337,15 +3344,15 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202611061200" defer></script>
+    <script src="app.v5.js?v=202611061300" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
     <script src="urgence.js?v=2026110115000" defer></script>
     <script src="flux.js?v=2026110115000" defer></script>
     <script src="reconciliation.js?v=2026110115000" defer></script>
-    <script src="reminders.js?v=2026110115000" defer></script>
+    <script src="reminders.js?v=202611061300" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
-    <script src="releve-review.js?v=202611061200" defer></script>
+    <script src="releve-review.js?v=202611061300" defer></script>
     <script src="urgence-orders.js?v=2026110115000" defer></script>
     <script>
       // Toggle form function for mobile

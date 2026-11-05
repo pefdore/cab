@@ -7992,18 +7992,18 @@ async function handleRelevéUpload(event) {
         return;
     }
 
-    // sinon : demander a quel mois est associe ce releve avant l'analyse
+    // cas residual (mois jamais valide) : demander a quel mois est associe ce releve
     window._pendingReleveFile = file;
     const uploadBody = document.getElementById('releveUploadBody');
     const monthPanel = document.getElementById('releveMonthPanel');
     const pickers = document.getElementById('releveUploadPickers');
     const fileNameEl = document.getElementById('releveMonthFileName');
-    const monthInput = document.getElementById('releveMonthInput');
     if (monthPanel && pickers) {
         if (fileNameEl) fileNameEl.textContent = file.name;
-        if (monthInput && !monthInput.value) {
+        initReleveMonthSelects();
+        if (!getReleveMonthValue()) {
             const now = new Date();
-            monthInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            setReleveMonthValue(now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
         }
         monthPanel.style.display = 'block';
         pickers.style.display = 'none';
@@ -8014,15 +8014,52 @@ async function handleRelevéUpload(event) {
     await processRelevéUpload(file);
 }
 
+// ---- Selecteur de mois francais : mois en toutes lettres + annee ----
+function initReleveMonthSelects() {
+    const selY = document.getElementById('releveMonthSelY');
+    if (selY && !selY.options.length) {
+        const y = new Date().getFullYear();
+        for (let i = y + 1; i >= y - 3; i--) {
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = String(i);
+            selY.appendChild(opt);
+        }
+    }
+}
+
+function getReleveMonthValue() {
+    const selM = document.getElementById('releveMonthSelM');
+    const selY = document.getElementById('releveMonthSelY');
+    const m = parseInt(selM?.value, 10);
+    const y = parseInt(selY?.value, 10);
+    if (!m || !y || m < 1 || m > 12) return null;
+    return y + '-' + String(m).padStart(2, '0');
+}
+
+function setReleveMonthValue(monthKey) {
+    const match = /^(\d{4})-(\d{2})$/.exec(monthKey || '');
+    if (!match) return;
+    const selM = document.getElementById('releveMonthSelM');
+    const selY = document.getElementById('releveMonthSelY');
+    initReleveMonthSelects();
+    if (selY) selY.value = match[1];
+    if (selM) selM.value = String(parseInt(match[2], 10));
+}
+window.getReleveMonthValue = getReleveMonthValue;
+window.setReleveMonthValue = setReleveMonthValue;
+
 // Ouverture du flux d'import : on atterrit directement sur la question du mois
 // (pre-rempli avec le mois selectionne dans le module Flux), puis le fichier.
-window.openReleveUploadFlow = function() {
+window.openReleveUploadFlow = function(prefMonth) {
     const modal = document.getElementById('releve-upload-modal');
     if (!modal) return;
     modal.style.display = 'flex';
     if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
-    const monthInput = document.getElementById('releveMonthInput');
-    if (monthInput) {
+    initReleveMonthSelects();
+    if (prefMonth && /^\d{4}-\d{2}$/.test(prefMonth)) {
+        setReleveMonthValue(prefMonth);
+    } else {
         let m = null;
         try {
             if (typeof fluxCurrentMonth !== 'undefined' && fluxCurrentMonth instanceof Date && !isNaN(fluxCurrentMonth)) {
@@ -8030,7 +8067,7 @@ window.openReleveUploadFlow = function() {
             }
         } catch (e) {}
         if (!m) m = new Date();
-        monthInput.value = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+        setReleveMonthValue(m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0'));
     }
     window._pendingReleveFile = null;
     const monthPanel = document.getElementById('releveMonthPanel');
@@ -8044,6 +8081,12 @@ window.openReleveUploadFlow = function() {
     if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
 };
 
+// Depuis le checklist : ouvrir l'import avec le mois de la ligne pre-rempli
+window.openReleveUploadFlowForMonth = function(monthKey) {
+    window._releveTargetMonthPreChosen = null;
+    openReleveUploadFlow(monthKey);
+};
+
 // Choisir le mois AVANT le fichier (depuis le FAB ou le module d'import)
 window.pickReleveMonthFirst = function() {
     window._pendingReleveFile = null;
@@ -8051,16 +8094,8 @@ window.pickReleveMonthFirst = function() {
     const monthPanel = document.getElementById('releveMonthPanel');
     const pickers = document.getElementById('releveUploadPickers');
     const fileNameEl = document.getElementById('releveMonthFileName');
-    const monthInput = document.getElementById('releveMonthInput');
     if (!monthPanel || !pickers) return;
     if (fileNameEl) fileNameEl.textContent = 'Le fichier (photo ou PDF) sera choisi ensuite.';
-    if (monthInput) {
-        if (window._releveTargetMonthPreChosen) monthInput.value = window._releveTargetMonthPreChosen;
-        else if (!monthInput.value) {
-            const now = new Date();
-            monthInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-        }
-    }
     monthPanel.style.display = 'block';
     pickers.style.display = 'none';
     if (uploadBody) uploadBody.style.display = 'block';
@@ -8070,10 +8105,9 @@ window.pickReleveMonthFirst = function() {
 };
 
 window.confirmReleveMonth = async function() {
-    const monthInput = document.getElementById('releveMonthInput');
-    const val = (monthInput?.value || '').trim();
-    if (!/^\d{4}-\d{2}$/.test(val)) {
-        alert('Indiquez le mois du relevé (ex. ' + new Date().toISOString().slice(0, 7) + ').');
+    const val = getReleveMonthValue();
+    if (!val) {
+        alert('Indiquez le mois du relevé.');
         return;
     }
     const monthPanel = document.getElementById('releveMonthPanel');
@@ -11923,7 +11957,9 @@ async function viewRelevePdf(monthKey) {
 window.viewRelevePdf = viewRelevePdf;
 
 
-// Trace l'import confirme : c'est CECI qui valide un mois (pas la presence de mouvements)
+// Trace l'import confirme. Un import NE VALIDE PAS le mois : certaines banques
+// editent 2 releves par mois (par quinzaine) — le mois n'est valide que par
+// l'action explicite du medecin (validateReleveMonth).
 async function recordReleveImport(depenses, recettes) {
     try {
         if (!supabaseClient || !currentUser?.id) return;
@@ -11935,20 +11971,67 @@ async function recordReleveImport(depenses, recettes) {
             // un mois n'est valide que par un import reel (au moins 2 lignes),
             // pas par une ligne manuelle isolee datee du jour
             if (count < 2) continue;
-            await supabaseClient.from('releve_imports').insert({
+            const row = {
                 user_id: currentUser.id,
                 cabinet_id: (await getCabinetId()) || null,
                 month: m,
                 file_name: window._releveCurrentFile?.name || null,
                 transactions_count: count
-            });
+            };
+            let { error } = await supabaseClient.from('releve_imports').insert({ ...row, validated: false });
+            if (error) {
+                // colonne validated pas encore migree : insert sans elle (comportement legacy)
+                const res = await supabaseClient.from('releve_imports').insert(row);
+                error = res.error;
+            }
+            if (error) console.error('[RELEVÉ] recordReleveImport insert:', error.message);
         }
-        window._releveImportedMonths = null; // invalide le cache
+        window._releveMonthStatuses = null; // invalide le cache
         console.log('[RELEVÉ] Import enregistré:', months.join(', '));
     } catch (e) {
         console.error('[RELEVÉ] recordReleveImport:', e);
     }
 }
+
+// Validation explicite d'un mois par le medecin : tout le releve du mois est fait
+window.validateReleveMonth = async function(monthKey) {
+    try {
+        if (!supabaseClient || !currentUser?.id || !/^\d{4}-\d{2}$/.test(monthKey || '')) return false;
+        const { data: updated, error } = await supabaseClient
+            .from('releve_imports')
+            .update({ validated: true })
+            .eq('user_id', currentUser.id)
+            .eq('month', monthKey)
+            .select('id');
+        if (error) {
+            console.error('[RELEVÉ] validateReleveMonth:', error.message);
+            if (typeof showToast === 'function') showToast('Validation impossible : ' + error.message);
+            return false;
+        }
+        if (!updated || !updated.length) {
+            // aucun import trace pour ce mois : creer la trace validee
+            const { error: insErr } = await supabaseClient.from('releve_imports').insert({
+                user_id: currentUser.id,
+                cabinet_id: (await getCabinetId()) || null,
+                month: monthKey,
+                file_name: null,
+                transactions_count: 0,
+                validated: true
+            });
+            if (insErr) {
+                console.error('[RELEVÉ] validateReleveMonth insert:', insErr.message);
+                return false;
+            }
+        }
+        window._releveMonthStatuses = null;
+        if (typeof showToast === 'function') showToast('✓ Relevé du mois validé');
+        if (typeof renderReminders === 'function') renderReminders();
+        return true;
+    } catch (e) {
+        console.error('[RELEVÉ] validateReleveMonth:', e);
+        return false;
+    }
+};
 
 async function getCabinetId() {
     try {
@@ -11957,24 +12040,45 @@ async function getCabinetId() {
     } catch (e) { return null; }
 }
 
-// Mois valides par import confirme (cache)
-async function getImportedMonths() {
-    if (window._releveImportedMonths) return window._releveImportedMonths;
+// Statuts des mois : importe (au moins un releve enregistre) et valide
+// (le medecin a confirme que tout le mois est fait). Map month -> {imported, validated}
+async function getReleveMonthStatuses() {
+    if (window._releveMonthStatuses) return window._releveMonthStatuses;
+    const map = new Map();
     try {
         const { data, error } = await supabaseClient
             .from('releve_imports')
-            .select('month')
+            .select('month, validated')
             .eq('user_id', currentUser.id);
         if (error) throw error;
-        const set = new Set((data || []).map(r => r.month));
-        window._releveImportedMonths = set;
-        return set;
+        (data || []).forEach(r => {
+            const prev = map.get(r.month) || { imported: false, validated: false };
+            prev.imported = true;
+            if (r.validated) prev.validated = true;
+            map.set(r.month, prev);
+        });
     } catch (e) {
-        console.error('[RELEVÉ] getImportedMonths:', e);
-        return new Set();
+        // colonne validated pas encore migree : fallback legacy (tout import = valide)
+        try {
+            const { data } = await supabaseClient
+                .from('releve_imports')
+                .select('month')
+                .eq('user_id', currentUser.id);
+            (data || []).forEach(r => map.set(r.month, { imported: true, validated: true }));
+        } catch (e2) {
+            console.error('[RELEVÉ] getReleveMonthStatuses:', e2);
+        }
     }
+    window._releveMonthStatuses = map;
+    return map;
 }
 window.recordReleveImport = recordReleveImport;
+window.getReleveMonthStatuses = getReleveMonthStatuses;
+// compat : ensemble des mois valides
+async function getImportedMonths() {
+    const map = await getReleveMonthStatuses();
+    return new Set([...map.entries()].filter(([, s]) => s.validated).map(([m]) => m));
+}
 window.getImportedMonths = getImportedMonths;
 
 
