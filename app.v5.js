@@ -11161,7 +11161,10 @@ async function reunionRenderList() {
         const isToday = reunionIsToday(r);
         const sujetsCount = r._sujets_count;
         html += '<div class="reunion-card fixed" data-reunion="' + r.id + '">'
+            + '<div class="reunion-card-main">'
+            + '<div class="reunion-card-title">' + reunionEsc(r.titre || 'Réunion de cabinet') + '</div>'
             + '<div class="reunion-card-date">📅 ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</div>'
+            + '</div>'
             + '<div class="odj-vote-count">'
             + (r.odj_genere ? 'Ordre du jour généré' : 'Ordre du jour non généré')
             + ' · ' + sujetsCount + ' sujet' + (sujetsCount > 1 ? 's' : '')
@@ -11175,8 +11178,12 @@ async function reunionRenderList() {
         const iAnswered = proposals.every(p => (dateVotes[p.id] || []).some(v => v.user_id === currentUser.id));
         const best = reunionBestProposal(proposals, dateVotes);
         const allAnswered = proposals.every(p => (dateVotes[p.id] || []).length >= total);
+        const sondageTitre = reunionSondageTitre(proposals);
         html += '<div class="reunion-card pending">'
-            + '<div class="reunion-card-date">⏳ ' + proposals.length + ' réunion en attente de confirmation de date</div>'
+            + '<div class="reunion-card-main">'
+            + '<div class="reunion-card-title">' + reunionEsc(sondageTitre || 'Réunion') + ' <span class="sujet-author">— sondage de dates</span></div>'
+            + '<div class="reunion-card-date">⏳ ' + proposals.length + ' date' + (proposals.length > 1 ? 's' : '') + ' proposée' + (proposals.length > 1 ? 's' : '') + ' — réunion en attente de confirmation</div>'
+            + '</div>'
             + '<div class="odj-vote-count">'
             + (iAnswered ? '✅ Vous avez donné votre avis sur les dates proposées' : '⚠️ Votre avis est en attente sur les dates proposées')
             + (best ? ' · Pré-sélection : ' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + ' (' + best.dispo + '/' + total + ' dispo)' : '')
@@ -11203,12 +11210,73 @@ async function reunionRenderList() {
 
 // ---------- Nouveau processus de date ----------
 
+const REUNION_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+function reunionTitreSuggestions() {
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return [
+        'Réunion de ' + REUNION_MOIS[now.getMonth()] + ' ' + now.getFullYear(),
+        'Réunion de ' + REUNION_MOIS[next.getMonth()] + ' ' + next.getFullYear(),
+        'Réunion mensuelle',
+        'Réunion de cabinet'
+    ];
+}
+
+function reunionRenderTitleChips() {
+    const box = document.getElementById('reunionTitleChips');
+    if (!box) return;
+    box.innerHTML = reunionTitreSuggestions().map(t =>
+        '<button type="button" class="reunion-title-chip" data-titre="' + reunionEsc(t) + '">' + reunionEsc(t) + '</button>').join('');
+    box.querySelectorAll('.reunion-title-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const input = document.getElementById('reunionTitleInput');
+            if (input) input.value = chip.dataset.titre;
+        });
+    });
+}
+
+function reunionGetTitre() {
+    return (document.getElementById('reunionTitleInput')?.value || '').trim() || 'Réunion de cabinet';
+}
+
+function reunionSondageTitre(proposals) {
+    if (!proposals || !proposals.length) return null;
+    let titre = null;
+    proposals.forEach(p => { if (p.titre) titre = p.titre; });
+    return titre;
+}
+
 function reunionToggleSchedule(show) {
     const section = document.getElementById('reunionScheduleSection');
     if (!section) return;
     section.style.display = show ? 'block' : 'none';
     const newBtn = document.getElementById('reunionNewDateBtn');
     if (newBtn) newBtn.style.display = show ? 'none' : 'inline-flex';
+    if (show) {
+        const title = document.getElementById('reunionTitleInput');
+        if (title) title.value = '';
+        const fix = document.getElementById('reunionFixBlock');
+        const sondage = document.getElementById('reunionSondageBlock');
+        if (fix) fix.style.display = 'none';
+        if (sondage) sondage.style.display = 'none';
+        const known = document.getElementById('reunionDateKnownBtn');
+        const unknown = document.getElementById('reunionDateUnknownBtn');
+        if (known) known.classList.remove('primary');
+        if (unknown) unknown.classList.remove('primary');
+        reunionRenderTitleChips();
+    }
+}
+
+function reunionShowDateMode(fixe) {
+    const fix = document.getElementById('reunionFixBlock');
+    const sondage = document.getElementById('reunionSondageBlock');
+    if (fix) fix.style.display = fixe ? 'block' : 'none';
+    if (sondage) sondage.style.display = fixe ? 'none' : 'block';
+    const known = document.getElementById('reunionDateKnownBtn');
+    const unknown = document.getElementById('reunionDateUnknownBtn');
+    if (known) known.classList.toggle('primary', fixe);
+    if (unknown) unknown.classList.toggle('primary', !fixe);
 }
 
 async function reunionRenderProposals() {
@@ -11224,7 +11292,8 @@ async function reunionRenderProposals() {
         const votes = await reunionLoadDateVotes(data.map(p => p.id));
         const total = members.length || 1;
         const best = reunionBestProposal(data, votes);
-        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées — indiquez votre disponibilité sur chaque date</h4>';
+        const sondageTitre = reunionSondageTitre(data);
+        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">' + (sondageTitre ? reunionEsc(sondageTitre) + ' — d' : 'D') + 'ates proposées — indiquez votre disponibilité sur chaque date</h4>';
         data.forEach(p => {
             const arr = votes[p.id] || [];
             const dispo = arr.filter(v => v.vote === 1).length;
@@ -11304,12 +11373,13 @@ async function reunionProposeDate() {
     const date = document.getElementById('reunionDateInput')?.value;
     const time = document.getElementById('reunionTimeInput')?.value || '18:00';
     if (!date) { alert('Choisissez une date.'); return; }
+    const titre = reunionGetTitre();
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
     try {
         const { error } = await supabaseClient
             .from('reunion_date_proposals')
-            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, date_proposee: date, heure_proposee: time });
+            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, titre: titre, date_proposee: date, heure_proposee: time });
         if (error) throw error;
         document.getElementById('reunionDateInput').value = '';
         await reunionRenderProposals();
@@ -11324,16 +11394,17 @@ async function reunionFixDate() {
     const date = document.getElementById('reunionFixDate')?.value;
     const time = document.getElementById('reunionFixTime')?.value || '18:00';
     if (!date) { alert('Choisissez une date à fixer.'); return; }
+    const titre = reunionGetTitre();
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
     try {
         const { error } = await supabaseClient
             .from('reunions')
-            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, date_reunion: date, heure_reunion: time, statut: 'fixee' });
+            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, titre: titre, date_reunion: date, heure_reunion: time, statut: 'fixee' });
         if (error) throw error;
         await reunionRenderProposals();
         await reunionRenderList();
-        alert('Réunion fixée le ' + reunionFmt(date, time) + '.');
+        alert('Réunion « ' + titre + ' » fixée le ' + reunionFmt(date, time) + '.');
     } catch (e) {
         console.error('[REUNIONS] fix error:', e);
         alert('Erreur : ' + (e.message || e));
@@ -11403,7 +11474,7 @@ async function reunionRenderDetail() {
 
     let html = '<div class="module-card">'
         + '<div class="reunion-detail-header">'
-        + '<h3>Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</h3>'
+        + '<h3>' + (r.titre ? reunionEsc(r.titre) + ' <span class="sujet-author">· ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</span>' : 'Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion))) + '</h3>'
         + '<button class="action-btn" id="reunionDetailCloseBtn">← Retour aux réunions</button>'
         + '</div>'
         + '<div class="odj-empty">Étape actuelle : <strong>' + reunionEtapeLabel(etape) + '</strong>'
@@ -11836,6 +11907,10 @@ async function reunionInit() {
     if (fixBtn) fixBtn.addEventListener('click', reunionFixDate);
     const newBtn = document.getElementById('reunionNewDateBtn');
     if (newBtn) newBtn.addEventListener('click', () => reunionToggleSchedule(true));
+    const knownBtn = document.getElementById('reunionDateKnownBtn');
+    if (knownBtn) knownBtn.addEventListener('click', () => reunionShowDateMode(true));
+    const unknownBtn = document.getElementById('reunionDateUnknownBtn');
+    if (unknownBtn) unknownBtn.addEventListener('click', () => reunionShowDateMode(false));
 }
 
 window.reunionInit = reunionInit;

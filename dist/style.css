@@ -10352,9 +10352,33 @@ html.no-anim *::after {
     border-color: var(--color-border);
     background: var(--color-bg-muted);
 }
-.reunion-card-date {
+.reunion-card-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 220px;
+    flex: 1;
+}
+.reunion-card-title {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 1rem;
+}
+.reunion-title-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.reunion-title-chip {
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.reunion-title-chip:hover {
+    border-color: var(--color-primary);
 }
 .reunion-detail-header {
     display: flex;
@@ -13175,3 +13199,786 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 }
 /* le recap categories : aligne visuellement avec les mouvements */
 #flux-category-summary .flux-cat-row { padding: 6px 10px !important; margin-bottom: 4px !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VUE DE REVUE DE RELEVÉ — habillage MD3 Expressive
+   (plein écran : bandeau PDF + liste de lignes)
+   ═══════════════════════════════════════════════════════════════════════════ */
+#releve-review-view { background: var(--md-surface); }
+
+/* Topbar : surface haute, pilules plein rond */
+.review-topbar {
+    background: var(--md-surface-high) !important;
+    border-bottom: none !important;
+    box-shadow: var(--elev-1) !important;
+    padding: 10px 16px;
+}
+.review-title {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+.review-btn {
+    background: var(--md-surface-low);
+    border: none !important;
+    border-radius: var(--radius-full) !important;
+    padding: 9px 14px;
+    box-shadow: none;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease, box-shadow 0.15s ease;
+}
+.review-btn:hover {
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container) !important;
+    box-shadow: var(--elev-1);
+}
+.review-btn.primary { background: var(--md-primary); color: white !important; }
+.review-btn.primary:hover { background: var(--md-primary); opacity: 0.92; }
+.review-btn.success { background: #10b981; color: white !important; }
+.review-btn.success:hover { background: #10b981; opacity: 0.92; }
+.review-btn.danger { background: #ef4444; color: white !important; }
+.review-btn.danger:hover { background: #ef4444; opacity: 0.92; }
+
+/* Disclaimer : bandeau tonal ambre, sans bordure dure */
+.review-disclaimer {
+    background: rgba(245,158,11,0.14);
+    border-bottom: none;
+    color: #b45309;
+    padding: 8px 16px;
+}
+[data-theme="dark"] .review-disclaimer { background: rgba(245,158,11,0.10); color: #fbbf24; }
+
+/* Bandeau PDF : surface basse, pages en pilules */
+#review-pdf-zone, .review-pdf-zone {
+    height: 35vh;
+    overflow-y: auto;
+    text-align: center;
+    background: var(--md-surface-low) !important;
+    border-bottom: none !important;
+    padding: 12px 12px 16px !important;
+}
+.review-pdf-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.review-pdf-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--md-surface-high);
+    border-radius: var(--radius-full);
+    padding: 3px 6px;
+    box-shadow: var(--elev-1);
+}
+.review-pdf-nav-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--color-text);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.25s var(--md-spring);
+}
+.review-pdf-nav-btn:hover:not(:disabled) { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.review-pdf-nav-btn:active:not(:disabled) { transform: scale(0.9); }
+.review-pdf-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.review-pdf-page-label {
+    font-size: var(--text-caption);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    padding: 0 4px;
+    font-variant-numeric: tabular-nums;
+}
+.review-pdf-page-label strong { font-size: 0.9rem; color: var(--color-text); }
+.review-pdf-follow {
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    font-size: var(--text-caption);
+    font-weight: 700;
+    padding: 7px 14px;
+    cursor: pointer;
+    box-shadow: var(--elev-1);
+    transition: transform 0.25s var(--md-spring);
+}
+.review-pdf-follow:active { transform: scale(0.94); }
+.review-pdf-hint {
+    font-size: var(--text-caption);
+    color: var(--color-text-tertiary);
+    width: 100%;
+    text-align: center;
+}
+@media (min-width: 761px) {
+    .review-pdf-hint { width: auto; }
+}
+#review-pdf-img { border-radius: var(--radius-m) !important; box-shadow: var(--elev-2) !important; }
+
+/* Lignes : surfaces tonales, hover élevé, ligne courante en anneau primaire */
+.review-line {
+    background: var(--md-surface-low);
+    border: none !important;
+    border-radius: 18px !important;
+    padding: 14px 16px !important;
+    margin-bottom: 8px;
+    box-shadow: none;
+    animation: md-pop 0.4s var(--md-spring) both;
+    transition: background 0.15s ease, transform 0.25s var(--md-spring), box-shadow 0.15s ease;
+}
+.review-line:hover {
+    background: var(--md-surface-high);
+    transform: translateY(-2px);
+    box-shadow: var(--elev-1);
+}
+.review-line.current {
+    background: var(--md-surface-high);
+    box-shadow: 0 0 0 2px var(--md-primary), var(--elev-2) !important;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+.review-line.confirmed { opacity: 0.55; background: rgba(16,185,129,0.07); }
+.review-line.rejected { opacity: 0.4; background: rgba(239,68,68,0.05); text-decoration: line-through; }
+.review-line.dup { border-left: 4px solid #f59e0b !important; }
+.review-libelle { font-size: var(--text-body); }
+.review-badge { border-radius: var(--radius-full); padding: 3px 10px; }
+.review-state { border-radius: var(--radius-full); padding: 2px 9px; }
+.review-field select, .review-field input { border-radius: var(--radius-s); background: var(--md-surface-high); border-color: var(--color-border-subtle); }
+.review-field select:focus, .review-field input:focus {
+    outline: none;
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+}
+.review-sug-btn {
+    border-radius: var(--radius-full);
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    border: none;
+    padding: 2px 9px;
+}
+.souscat-chips { border-radius: var(--radius-m); box-shadow: var(--elev-2); background: var(--md-surface-high); border-color: var(--color-border-subtle); }
+.souscat-chip { border-radius: var(--radius-full); background: var(--md-surface-low); border-color: var(--color-border-subtle); }
+.souscat-chip:hover { background: var(--md-primary-container); color: var(--md-on-primary-container); border-color: transparent; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL D'IMPORT DE RELEVÉ — cartes source + étape du mois (MD3 Expressive)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.releve-upload-sub {
+    text-align: center;
+    margin-bottom: 18px;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Cartes source : PDF / Image / Caméra */
+.releve-source-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.releve-source-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 22px 10px 18px;
+    border: none;
+    border-radius: var(--md-radius-xl, 20px);
+    background: var(--md-surface-low);
+    color: var(--color-text);
+    cursor: pointer;
+    box-shadow: none;
+    animation: md-pop 0.45s var(--md-spring) both;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease, box-shadow 0.15s ease;
+}
+.releve-source-card:nth-child(2) { animation-delay: 0.05s; }
+.releve-source-card:nth-child(3) { animation-delay: 0.1s; }
+.releve-source-card:hover {
+    background: var(--md-surface-high);
+    transform: translateY(-3px);
+    box-shadow: var(--elev-1);
+}
+.releve-source-card:active { transform: scale(0.95); }
+.releve-source-ico {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    transition: transform 0.25s var(--md-spring);
+}
+.releve-source-card:hover .releve-source-ico { transform: scale(1.08) rotate(-3deg); }
+.releve-source-card:active .releve-source-ico { transform: scale(0.92); }
+.releve-source-label {
+    font-size: 0.88rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+.releve-source-hint {
+    font-size: 0.66rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.2;
+}
+@media (max-width: 480px) {
+    .releve-source-grid { grid-template-columns: 1fr; }
+    .releve-source-card { flex-direction: row; justify-content: flex-start; gap: 14px; padding: 14px 16px; }
+    .releve-source-ico { width: 44px; height: 44px; border-radius: 14px; margin-bottom: 0; flex-shrink: 0; }
+    .releve-source-hint { text-align: left; }
+}
+
+/* Étape du mois : une seule action, pilules */
+.releve-month-panel {
+    text-align: center;
+    padding: 6px 0 2px;
+    animation: md-pop 0.4s var(--md-spring) both;
+}
+.releve-month-title {
+    margin: 0 0 4px;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+.releve-month-selects {
+    display: flex;
+    gap: 10px;
+}
+.releve-month-select {
+    box-sizing: border-box;
+    padding: 13px 14px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border-subtle);
+    background: var(--md-surface-high);
+    color: var(--color-text);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.releve-month-select:focus {
+    outline: none;
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+}
+.releve-month-go {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--md-primary);
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    box-shadow: var(--elev-1);
+    transition: transform 0.25s var(--md-spring), box-shadow 0.15s ease;
+    animation: md-pop 0.4s var(--md-spring) 0.08s both;
+}
+.releve-month-go:hover { box-shadow: var(--elev-2); transform: translateY(-1px); }
+.releve-month-go:active { transform: scale(0.97); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL IMPORT RELEVÉ — finition MD3 Expressive
+   Complète les cartes source/étape mois : carte du modal, en-tête tonal,
+   panier photos, boutons pilules, thème sombre.
+   ═══════════════════════════════════════════════════════════════════ */
+#releve-upload-modal .modal-card {
+    border-radius: 28px !important;
+    border: 1px solid var(--color-border-subtle, transparent) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24) !important;
+    background: var(--md-surface-high) !important;
+    animation: md-pop 0.5s var(--md-spring) both;
+}
+
+#releve-upload-modal .modal-header {
+    border-bottom: none !important;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    padding: 18px 22px !important;
+}
+#releve-upload-modal .modal-header h3 {
+    font-size: 1.25rem !important;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+#releve-upload-modal .modal-header p { color: var(--md-on-primary-container) !important; opacity: 0.78; }
+#releve-upload-modal .modal-header > div:first-child > div:first-child {
+    background: rgba(255, 255, 255, 0.55) !important;
+    border-radius: 14px !important;
+}
+#releve-upload-modal .modal-header > div:first-child > div:first-child svg { stroke: var(--md-on-primary-container) !important; }
+#releve-upload-modal .modal-close {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-radius: 999px !important;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s var(--md-spring), background 0.15s ease !important;
+}
+#releve-upload-modal .modal-close:hover { transform: scale(1.1); background: rgba(255, 255, 255, 0.7) !important; }
+#releve-upload-modal .modal-close:active { transform: scale(0.94); }
+#releve-upload-modal .modal-close svg { stroke: var(--md-on-primary-container); }
+
+/* Panier photos : carte tonale expressive */
+#relevePhotosPanel {
+    border: none !important;
+    background: var(--md-primary-container) !important;
+    border-radius: 24px !important;
+    padding: 16px !important;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+#relevePhotosPanel p { color: var(--md-on-primary-container) !important; }
+#relevePhotosPanel p:nth-child(2) { opacity: 0.78; }
+#relevePhotoThumbs img {
+    border-radius: 16px !important;
+    border: 2px solid rgba(255, 255, 255, 0.75) !important;
+    box-shadow: 0 4px 12px rgba(42, 31, 158, 0.18);
+    transition: transform 0.3s var(--md-spring) !important;
+}
+#relevePhotoThumbs img:hover { transform: scale(1.05) rotate(-1deg); }
+#relevePhotosPanel .btn-secondary {
+    background: rgba(255, 255, 255, 0.6) !important;
+    color: var(--md-on-primary-container) !important;
+    border: none !important;
+    border-radius: 999px !important;
+    font-weight: 700;
+}
+#relevePhotosPanel .btn-primary {
+    background: var(--md-primary) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 999px !important;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+/* Badge mois : pilule tonale */
+#releveMonthBadge { border-radius: 999px !important; animation: md-pop 0.4s var(--md-spring) both; }
+
+/* Boutons du modal : pilules + ressorts */
+#releve-upload-modal .btn-primary,
+#releve-upload-modal .btn-secondary {
+    border-radius: 999px !important;
+    font-weight: 700;
+    transition: transform 0.3s var(--md-spring), box-shadow 0.2s ease !important;
+}
+#releve-upload-modal .btn-primary:hover,
+#releve-upload-modal .btn-secondary:hover { transform: translateY(-2px) scale(1.015); }
+#releve-upload-modal .btn-primary:active,
+#releve-upload-modal .btn-secondary:active { transform: scale(0.97); }
+#releve-upload-modal .btn-primary { box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25); }
+
+/* Zone de chargement : scan conservé, statut en pilule */
+#releveLoadingModal p { letter-spacing: -0.01em; }
+#releveLoadingModal .scan-status {
+    background: var(--color-bg-subtle);
+    border-radius: 999px;
+    padding: 6px 16px;
+    display: inline-block;
+}
+
+/* Thème sombre : surfaces tonales assombries, textes lisibles */
+[data-theme="dark"] #releve-upload-modal .modal-header {
+    background: rgba(79, 70, 229, 0.24);
+    color: #cfcbff;
+}
+[data-theme="dark"] #releve-upload-modal .modal-header h3 { color: #e4e1ff; }
+[data-theme="dark"] #releve-upload-modal .modal-header p { color: #a8a3f0 !important; }
+[data-theme="dark"] #releve-upload-modal .modal-header > div:first-child > div:first-child { background: rgba(255, 255, 255, 0.12) !important; }
+[data-theme="dark"] #releve-upload-modal .modal-close { background: rgba(255, 255, 255, 0.14) !important; }
+[data-theme="dark"] #releve-upload-modal .modal-close svg { stroke: #cfcbff; }
+[data-theme="dark"] #relevePhotosPanel { background: var(--color-bg-subtle) !important; }
+[data-theme="dark"] #relevePhotosPanel p { color: var(--color-text) !important; }
+[data-theme="dark"] #relevePhotosPanel .btn-secondary { background: var(--color-bg-elevated) !important; color: var(--color-text) !important; }
+[data-theme="dark"] #relevePhotoThumbs img { border-color: var(--color-border) !important; box-shadow: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL D'IMPORT DU STANDARD — finition MD3 Expressive
+   Même langage que le modal de relevé : carte 28px, en-tête tonal,
+   zone de dépôt en carte tonale, pilules, ressorts, thème sombre.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#import-standard-modal .modal-card {
+    border-radius: 28px !important;
+    border: 1px solid var(--color-border-subtle, transparent) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24) !important;
+    background: var(--md-surface-high) !important;
+    animation: md-pop 0.5s var(--md-spring) both;
+}
+
+#import-standard-modal .modal-header {
+    border-bottom: none !important;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    padding: 18px 22px !important;
+}
+#import-standard-modal .modal-header h3 {
+    font-size: 1.25rem !important;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+#import-standard-modal .modal-close {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-radius: 999px !important;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s var(--md-spring), background 0.15s ease !important;
+}
+#import-standard-modal .modal-close:hover { transform: scale(1.1); background: rgba(255, 255, 255, 0.7) !important; }
+#import-standard-modal .modal-close:active { transform: scale(0.94); }
+#import-standard-modal .modal-close svg { stroke: var(--md-on-primary-container); }
+
+/* Bloc instructions : carte tonale douce */
+#import-standard-modal .import-instructions {
+    border: none !important;
+    background: var(--md-surface-low) !important;
+    border-radius: 20px !important;
+    padding: 16px 18px !important;
+    animation: md-pop 0.4s var(--md-spring) 0.05s both;
+}
+#import-standard-modal .import-instructions h4 {
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+#import-standard-modal .import-instructions p { margin-bottom: 4px; font-size: 0.88rem; }
+#import-standard-modal .import-instructions .form-hint { margin: 0; }
+#import-standard-modal .import-instructions .form-hint::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--md-primary);
+    margin-right: 6px;
+    vertical-align: 1px;
+}
+
+/* Zone de dépôt : carte tonale expressive avec pilule d'action */
+#import-standard-modal .file-drop-zone {
+    border: 2px dashed var(--color-border-subtle) !important;
+    border-radius: 24px !important;
+    padding: 30px 24px !important;
+    background: var(--md-surface-low) !important;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.3s var(--md-spring), box-shadow 0.2s ease !important;
+    animation: md-pop 0.45s var(--md-spring) 0.1s both;
+}
+#import-standard-modal .file-drop-zone:hover {
+    border-color: var(--md-primary) !important;
+    background: var(--md-surface-high) !important;
+    transform: translateY(-3px);
+    box-shadow: var(--elev-1);
+}
+#import-standard-modal .file-drop-zone.drag-over {
+    border-color: var(--md-primary) !important;
+    background: var(--md-primary-container) !important;
+    transform: scale(1.01);
+}
+#import-standard-modal .file-drop-zone svg {
+    color: var(--md-primary);
+    transition: transform 0.3s var(--md-spring);
+}
+#import-standard-modal .file-drop-zone:hover svg { transform: scale(1.08) rotate(-3deg); }
+#import-standard-modal .file-drop-zone:active svg { transform: scale(0.92); }
+#import-standard-modal .file-drop-zone .action-btn {
+    border-radius: 999px !important;
+    font-weight: 700;
+    padding: 10px 22px;
+    background: var(--md-primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+    transition: transform 0.25s var(--md-spring), box-shadow 0.2s ease;
+}
+#import-standard-modal .file-drop-zone .action-btn:hover { transform: translateY(-2px) scale(1.015); box-shadow: var(--elev-2); }
+#import-standard-modal .file-drop-zone .action-btn:active { transform: scale(0.97); }
+
+/* Progression : piste en pilule, remplissage tonal animé */
+#import-standard-modal .import-progress { padding: 20px 4px; }
+#import-standard-modal .progress-bar {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--md-surface-low);
+    border: 1px solid var(--color-border-subtle);
+    overflow: hidden;
+}
+#import-standard-modal .progress-fill {
+    border-radius: 999px;
+    background: var(--md-primary);
+    transition: width 0.5s var(--md-spring-soft);
+}
+#import-standard-modal #importStatus {
+    display: inline-block;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+/* Résultat : pilule succès expressive */
+#import-standard-modal .import-result {
+    border: none !important;
+    border-radius: 20px !important;
+    background: var(--md-primary-container) !important;
+    padding: 16px !important;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+#import-standard-modal .import-result p {
+    color: var(--md-on-primary-container) !important;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+/* Boutons du modal : pilules + ressorts */
+#import-standard-modal .btn-primary,
+#import-standard-modal .btn-secondary {
+    border-radius: 999px !important;
+    font-weight: 700;
+    transition: transform 0.3s var(--md-spring), box-shadow 0.2s ease !important;
+}
+#import-standard-modal .btn-primary:hover,
+#import-standard-modal .btn-secondary:hover { transform: translateY(-2px) scale(1.015); }
+#import-standard-modal .btn-primary:active,
+#import-standard-modal .btn-secondary:active { transform: scale(0.97); }
+#import-standard-modal .btn-primary { box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25); }
+#import-standard-modal .btn-primary:disabled { box-shadow: none; }
+
+/* Thème sombre : surfaces tonales assombries, textes lisibles */
+[data-theme="dark"] #import-standard-modal .modal-header {
+    background: rgba(79, 70, 229, 0.24);
+    color: #cfcbff;
+}
+[data-theme="dark"] #import-standard-modal .modal-header h3 { color: #e4e1ff; }
+[data-theme="dark"] #import-standard-modal .modal-close { background: rgba(255, 255, 255, 0.14) !important; }
+[data-theme="dark"] #import-standard-modal .modal-close svg { stroke: #cfcbff; }
+[data-theme="dark"] #import-standard-modal .import-instructions { background: var(--color-bg-subtle) !important; }
+[data-theme="dark"] #import-standard-modal .file-drop-zone { background: var(--color-bg-subtle) !important; }
+[data-theme="dark"] #import-standard-modal .file-drop-zone.drag-over { background: rgba(79, 70, 229, 0.24) !important; }
+[data-theme="dark"] #import-standard-modal #importStatus { background: rgba(79, 70, 229, 0.24); color: #cfcbff; }
+[data-theme="dark"] #import-standard-modal .import-result { background: rgba(79, 70, 229, 0.24) !important; }
+[data-theme="dark"] #import-standard-modal .import-result p { color: #e4e1ff !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL « AJOUTER UN PASSAGE » — finition MD3 Expressive
+   Même langage que les autres modals : carte 28px, en-tête tonal,
+   champs arrondis, pilules, ressorts, thème sombre.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#passage-add-modal .modal-card {
+    border-radius: 28px !important;
+    border: 1px solid var(--color-border-subtle, transparent) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24) !important;
+    background: var(--md-surface-high) !important;
+    animation: md-pop 0.5s var(--md-spring) both;
+}
+
+#passage-add-modal .modal-header {
+    border-bottom: none !important;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    padding: 18px 22px !important;
+}
+#passage-add-modal .modal-header h3 {
+    font-size: 1.25rem !important;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+#passage-add-modal .modal-close {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-radius: 999px !important;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s var(--md-spring), background 0.15s ease !important;
+}
+#passage-add-modal .modal-close:hover { transform: scale(1.1); background: rgba(255, 255, 255, 0.7) !important; }
+#passage-add-modal .modal-close:active { transform: scale(0.94); }
+#passage-add-modal .modal-close svg { stroke: var(--md-on-primary-container); }
+
+/* Champs : surfaces arrondies, focus tonal */
+#passage-add-modal .modal-body { padding: 18px 20px !important; }
+#passage-add-modal .add-form { gap: 14px !important; }
+#passage-add-modal .form-group label {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 5px;
+}
+#passage-add-modal input[type="text"],
+#passage-add-modal input[type="date"],
+#passage-add-modal input[type="number"],
+#passage-add-modal select {
+    border-radius: 14px !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    background: var(--md-surface-low) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
+}
+#passage-add-modal input:focus,
+#passage-add-modal select:focus {
+    outline: none;
+    border-color: var(--md-primary) !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    background: var(--md-surface-high) !important;
+}
+
+/* Montant : pilule tonale expressive */
+#passage-add-modal .amount-display {
+    border-radius: 999px !important;
+    background: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container) !important;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-align: center;
+    border: none !important;
+}
+
+/* Autocomplete : pilules au ressort */
+#passage-add-modal .autocomplete-dropdown {
+    border-radius: 18px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16) !important;
+    border: 1px solid var(--color-border-subtle);
+    overflow: hidden;
+    animation: md-pop 0.35s var(--md-spring) both;
+}
+#passage-add-modal .autocomplete-dropdown .autocomplete-item,
+#passage-add-modal .autocomplete-dropdown > div {
+    transition: background 0.15s ease, transform 0.2s var(--md-spring);
+}
+#passage-add-modal .autocomplete-dropdown > div:hover,
+#passage-add-modal .autocomplete-dropdown .autocomplete-item:hover {
+    background: var(--md-primary-container);
+    transform: translateX(3px);
+}
+
+/* Bouton Enregistrer : pilule pleine, ombre tonale, ressort */
+#passage-add-modal .submit-btn {
+    border: none !important;
+    border-radius: 999px !important;
+    background: var(--md-primary) !important;
+    color: #fff !important;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    padding: 14px !important;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    transition: transform 0.3s var(--md-spring), box-shadow 0.2s ease !important;
+}
+#passage-add-modal .submit-btn:hover { transform: translateY(-2px) scale(1.015); box-shadow: var(--elev-2); }
+#passage-add-modal .submit-btn:active { transform: scale(0.97); }
+
+/* Sections internes (VL récentes, passages du mois) : séparations douces */
+#passage-add-modal .recent-vl-section,
+#passage-add-modal .entries-section {
+    border-top: 1px solid var(--color-border-subtle) !important;
+    border-radius: 0;
+}
+#passage-add-modal .recent-vl-header h3,
+#passage-add-modal .entries-header h3 {
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+#passage-add-modal .recent-vl-list {
+    border-radius: 16px;
+    background: var(--md-surface-low);
+    padding: 8px;
+}
+#passage-add-modal .recent-vl-list:empty { display: none; }
+
+/* Sélecteur de mois : pilules tonales */
+#passage-add-modal .month-selector {
+    border-radius: 999px;
+    background: var(--md-surface-low);
+    padding: 4px;
+    gap: 2px;
+}
+#passage-add-modal .month-selector button {
+    border-radius: 999px !important;
+    border: none !important;
+    background: transparent;
+    color: var(--color-text);
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.25s var(--md-spring);
+}
+#passage-add-modal .month-selector button:hover { background: var(--md-primary-container); transform: scale(1.08); }
+#passage-add-modal .month-selector button:active { transform: scale(0.92); }
+#passage-add-modal .month-selector span { font-weight: 700; padding: 0 6px; }
+
+/* Table des passages du mois : arrondis et en-tête tonal */
+#passage-add-modal .entries-table-wrapper {
+    border-radius: 16px;
+    border: 1px solid var(--color-border-subtle);
+    overflow: hidden;
+}
+#passage-add-modal .entries-table thead th {
+    background: var(--md-surface-low);
+    position: sticky;
+    top: 0;
+}
+
+/* Popups imbriquées (citations / règles VL) : même carte expressive */
+#passage-add-modal .popup-card {
+    border-radius: 24px !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24) !important;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+#passage-add-modal .popup-header {
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    border-radius: 24px 24px 0 0 !important;
+}
+#passage-add-modal .popup-header h3 { font-weight: 800; letter-spacing: -0.02em; }
+#passage-add-modal .popup-close {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border-radius: 999px !important;
+    transition: transform 0.3s var(--md-spring) !important;
+}
+#passage-add-modal .popup-close:hover { transform: scale(1.1); }
+#passage-add-modal .add-cotation-form .add-btn {
+    border-radius: 999px !important;
+    font-weight: 700;
+    transition: transform 0.25s var(--md-spring) !important;
+}
+#passage-add-modal .add-cotation-form .add-btn:hover { transform: scale(1.04); }
+#passage-add-modal .add-cotation-form .add-btn:active { transform: scale(0.95); }
+
+/* Thème sombre : surfaces tonales assombries, textes lisibles */
+[data-theme="dark"] #passage-add-modal .modal-header {
+    background: rgba(79, 70, 229, 0.24);
+    color: #cfcbff;
+}
+[data-theme="dark"] #passage-add-modal .modal-header h3 { color: #e4e1ff; }
+[data-theme="dark"] #passage-add-modal .modal-close { background: rgba(255, 255, 255, 0.14) !important; }
+[data-theme="dark"] #passage-add-modal .modal-close svg { stroke: #cfcbff; }
+[data-theme="dark"] #passage-add-modal .amount-display { background: rgba(79, 70, 229, 0.24) !important; color: #e4e1ff !important; }
+[data-theme="dark"] #passage-add-modal .recent-vl-list { background: var(--color-bg-subtle); }
+[data-theme="dark"] #passage-add-modal .month-selector { background: var(--color-bg-subtle); }
+[data-theme="dark"] #passage-add-modal .month-selector button:hover { background: rgba(79, 70, 229, 0.24); }
+[data-theme="dark"] #passage-add-modal .entries-table thead th { background: var(--color-bg-subtle); }
+[data-theme="dark"] #passage-add-modal .popup-header { background: rgba(79, 70, 229, 0.24); color: #cfcbff; }
+[data-theme="dark"] #passage-add-modal .popup-header h3 { color: #e4e1ff; }
+[data-theme="dark"] #passage-add-modal .popup-close { background: rgba(255, 255, 255, 0.14) !important; }

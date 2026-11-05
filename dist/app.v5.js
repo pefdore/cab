@@ -4941,6 +4941,8 @@ function switchView(viewName) {
         view.classList.toggle('active', view.id === `view-${viewName}`);
     });
 
+    window.scrollTo({ top: 0 });
+
     const pageTitles = {
         'dashboard': 'Dashboard',
         'flux': 'Flux',
@@ -7878,11 +7880,238 @@ function closeRelevéModal() {
     }
 }
 
+// ===== Import multi-photos (relevé papier photographié page par page) =====
+window._relevePendingPhotos = window._relevePendingPhotos || [];
+
+function refreshRelevePhotosPanel() {
+    const panel = document.getElementById('relevePhotosPanel');
+    const thumbsEl = document.getElementById('relevePhotoThumbs');
+    const pickers = document.getElementById('releveUploadPickers');
+    if (!panel || !thumbsEl) return;
+    const photos = window._relevePendingPhotos;
+    if (!photos.length) {
+        panel.style.display = 'none';
+        if (pickers) pickers.style.display = 'grid';
+        return;
+    }
+    panel.style.display = 'block';
+    if (pickers) pickers.style.display = 'none';
+    // une seule action a la fois : le panneau du mois laisse la place au panier
+    const monthPanel = document.getElementById('releveMonthPanel');
+    if (monthPanel) monthPanel.style.display = 'none';
+    thumbsEl.innerHTML = photos.map((p, i) => `
+        <div style="position:relative; width:86px;">
+            <img src="${p.previewUrl}" alt="Page ${i + 1}" style="width:86px; height:86px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border); display:block;">
+            <span style="position:absolute; top:2px; left:2px; background:rgba(0,0,0,0.6); color:#fff; font-size:0.65rem; padding:1px 6px; border-radius:6px;">${i + 1}</span>
+            <button type="button" onclick="removeRelevePhoto(${i})" title="Retirer cette photo" aria-label="Retirer cette photo" style="position:absolute; top:2px; right:2px; width:22px; height:22px; border:none; border-radius:50%; background:rgba(0,0,0,0.6); color:#fff; font-size:0.8rem; cursor:pointer; line-height:1;">✕</button>
+        </div>`).join('');
+}
+
+function addRelevePhotosToBasket(files) {
+    for (const f of files) {
+        if (!f.type || !f.type.startsWith('image/')) continue;
+        window._relevePendingPhotos.push({ file: f, previewUrl: URL.createObjectURL(f) });
+    }
+    const monthPanel = document.getElementById('releveMonthPanel');
+    if (monthPanel) monthPanel.style.display = 'none';
+    refreshRelevePhotosPanel();
+}
+
+window.addRelevePhoto = function(source) {
+    const input = document.getElementById(source === 'camera' ? 'releveCameraInputGlobal' : 'releveFileInputGlobal');
+    if (input) input.click();
+};
+
+window.removeRelevePhoto = function(index) {
+    const item = window._relevePendingPhotos[index];
+    if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    window._relevePendingPhotos.splice(index, 1);
+    refreshRelevePhotosPanel();
+};
+
+window.resetRelevePhotos = function() {
+    window._relevePendingPhotos.forEach(p => { if (p.previewUrl) URL.revokeObjectURL(p.previewUrl); });
+    window._relevePendingPhotos = [];
+    refreshRelevePhotosPanel();
+};
+
+window.validateRelevePhotos = async function() {
+    const photos = window._relevePendingPhotos.map(p => p.file);
+    if (!photos.length) return;
+
+    // demander le mois AVANT l'analyse (une seule action : Lancer l'analyse)
+    window._pendingReleveFile = photos;
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    const photosPanel = document.getElementById('relevePhotosPanel');
+    const fileNameEl = document.getElementById('releveMonthFileName');
+    if (monthPanel && pickers) {
+        if (fileNameEl) fileNameEl.textContent = photos.length + ' photo' + (photos.length > 1 ? 's' : '') + ' du relevé';
+        showReleveMonthPanel();
+        if (photosPanel) photosPanel.style.display = 'none';
+        return;
+    }
+    await processRelevéUpload(photos);
+};
+
 async function handleRelevéUpload(event) {
-    const file = event.target.files[0];
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    event.target.value = '';
+
+    // photos (appareil ou galerie) : accumulatees dans le panier, validees ensuite
+    const images = files.filter(f => f.type && f.type.startsWith('image/'));
+    const pdf = files.find(f => f.type === 'application/pdf');
+    if (images.length && !pdf) {
+        addRelevePhotosToBasket(images);
+        return;
+    }
+
+    const file = pdf || files[0];
     if (!file) return;
+
+    // fichier choisi : demander a quel mois il correspond AVANT l'analyse
+    window._pendingReleveFile = file;
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    const fileNameEl = document.getElementById('releveMonthFileName');
+    if (monthPanel && pickers) {
+        if (fileNameEl) fileNameEl.textContent = file.name;
+        showReleveMonthPanel();
+        return;
+    }
+    // fallback (panneau absent) : analyse directe
+    await processRelevéUpload(file);
+}
+
+// ---- Selecteur de mois francais : mois en toutes lettres + annee ----
+function initReleveMonthSelects() {
+    const selY = document.getElementById('releveMonthSelY');
+    if (selY && !selY.options.length) {
+        const y = new Date().getFullYear();
+        for (let i = y + 1; i >= y - 3; i--) {
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = String(i);
+            selY.appendChild(opt);
+        }
+    }
+}
+
+function getReleveMonthValue() {
+    const selM = document.getElementById('releveMonthSelM');
+    const selY = document.getElementById('releveMonthSelY');
+    const m = parseInt(selM?.value, 10);
+    const y = parseInt(selY?.value, 10);
+    if (!m || !y || m < 1 || m > 12) return null;
+    return y + '-' + String(m).padStart(2, '0');
+}
+
+function setReleveMonthValue(monthKey) {
+    const match = /^(\d{4})-(\d{2})$/.exec(monthKey || '');
+    if (!match) return;
+    const selM = document.getElementById('releveMonthSelM');
+    const selY = document.getElementById('releveMonthSelY');
+    initReleveMonthSelects();
+    if (selY) selY.value = match[1];
+    if (selM) selM.value = String(parseInt(match[2], 10));
+}
+window.getReleveMonthValue = getReleveMonthValue;
+window.setReleveMonthValue = setReleveMonthValue;
+
+// Affiche le panneau du mois (pre-rempli) avant de lancer l'analyse
+function showReleveMonthPanel() {
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    if (!monthPanel) return;
+    initReleveMonthSelects();
+    if (!window._releveFlowPrefMonth) {
+        let m = null;
+        try {
+            if (typeof fluxCurrentMonth !== 'undefined' && fluxCurrentMonth instanceof Date && !isNaN(fluxCurrentMonth)) {
+                m = fluxCurrentMonth;
+            }
+        } catch (e) {}
+        if (!m) m = new Date();
+        window._releveFlowPrefMonth = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+    }
+    setReleveMonthValue(window._releveFlowPrefMonth);
+    monthPanel.style.display = 'block';
+    if (pickers) pickers.style.display = 'none';
+}
+
+// Ouverture du flux d'import : on choisit D'ABORD la source (PDF / Image /
+// Camera), puis le fichier, puis on confirme le mois avant l'analyse.
+window.openReleveUploadFlow = function(prefMonth) {
+    const modal = document.getElementById('releve-upload-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
+    // mois propose par le module appelant (checklist) ou mois du module Flux
+    if (prefMonth && /^\d{4}-\d{2}$/.test(prefMonth)) {
+        window._releveFlowPrefMonth = prefMonth;
+    } else {
+        let m = null;
+        try {
+            if (typeof fluxCurrentMonth !== 'undefined' && fluxCurrentMonth instanceof Date && !isNaN(fluxCurrentMonth)) {
+                m = fluxCurrentMonth;
+            }
+        } catch (e) {}
+        if (!m) m = new Date();
+        window._releveFlowPrefMonth = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+    }
+    window._pendingReleveFile = null;
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    if (monthPanel) monthPanel.style.display = 'none';
+    if (pickers) pickers.style.display = 'grid';
+    if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
+};
+
+// Depuis le checklist : le mois de la ligne sera propose a l'etape du mois
+window.openReleveUploadFlowForMonth = function(monthKey) {
+    openReleveUploadFlow(monthKey);
+};
+
+// Unique action du panneau du mois : valider le mois et lancer l'analyse
+window.confirmReleveMonth = async function() {
+    const val = getReleveMonthValue();
+    if (!val) {
+        alert('Indiquez le mois du relevé.');
+        return;
+    }
+    const file = window._pendingReleveFile;
+    window._pendingReleveFile = null;
+    window._releveTargetMonth = val;
+    window._releveFlowPrefMonth = val;
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    if (monthPanel) monthPanel.style.display = 'none';
+    if (pickers) pickers.style.display = 'grid';
+    if (file) {
+        await processRelevéUpload(file);
+        return;
+    }
+    if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
+};
+
+// Remise a zero du panneau du mois (a la fermeture du modal)
+window.cancelReleveMonth = function() {
+    window._pendingReleveFile = null;
+    const monthPanel = document.getElementById('releveMonthPanel');
+    const pickers = document.getElementById('releveUploadPickers');
+    if (monthPanel) monthPanel.style.display = 'none';
+    if (pickers) pickers.style.display = 'grid';
+    if (typeof refreshRelevePhotosPanel === 'function') refreshRelevePhotosPanel();
+};
+
+async function processRelevéUpload(fileOrFiles) {
+    const isPhotos = Array.isArray(fileOrFiles);
+    const file = isPhotos ? fileOrFiles[0] : fileOrFiles;
     window._releveCurrentFile = file;
     window._relevePdfBytes = null;
+    window._releveIsPhotos = isPhotos;
+    window._reviewPhotosIdbSaved = false;
     
     window.relevePageThumbs = [];
     const thumbsEl = document.getElementById('releveThumbs');
@@ -7901,8 +8130,8 @@ async function handleRelevéUpload(event) {
     if (analysisZone) analysisZone.style.display = 'none';
     
     try {
-        console.log('[RELEVÉ] Starting extraction for file:', file.name, file.type);
-        const text = await extractTextFromFile(file);
+        console.log('[RELEVÉ] Starting extraction for file:', isPhotos ? fileOrFiles.length + ' photo(s)' : file.name, file.type);
+        const text = isPhotos ? await extractTextFromImages(fileOrFiles) : await extractTextFromFile(file);
         console.log('[RELEVÉ] Extracted text length:', text?.length || 0);
         
         if (!text || text.trim().length < 10) {
@@ -7916,6 +8145,9 @@ async function handleRelevéUpload(event) {
         console.log('[RELEVÉ] Analyzing with AI...');
         const transactions = await analyzeRelevéWithAI(text);
         console.log('[RELEVÉ] Found transactions:', transactions.length);
+        assignReleveTransactionPages(transactions);
+        
+        if (isPhotos && typeof resetRelevePhotos === 'function') resetRelevePhotos();
         
         try {
             await loadReleveLearning();
@@ -7989,13 +8221,59 @@ async function handleRelevéUpload(event) {
     event.target.value = '';
 }
 
+// Associe chaque transaction a sa page (PDF ou photo) en cherchant date + montant
+// dans les lignes detectees (itemRects) ou le texte de la page. Indispensable pour
+// le suivi automatique et le surlignage de la ligne en cours dans la vue de revue.
+function assignReleveTransactionPages(transactions) {
+    const thumbs = window.relevePageThumbs || [];
+    if (!thumbs.length) return transactions;
+    for (const t of transactions) {
+        if (t._page != null) continue;
+        const amountKey = Math.abs(Number(t.amount) || 0).toFixed(2);
+        const amountVariants = [amountKey.replace('.', ','), amountKey];
+        const dParts = (t.date || '').split('-');
+        const dateVariants = dParts.length === 3
+            ? [dParts[2] + '/' + dParts[1], dParts[1] + '/' + dParts[2], dParts[2] + '-' + dParts[1]]
+            : [];
+        let bestPage = null;
+        let bestScore = 0;
+        for (const pd of thumbs) {
+            let score = 0;
+            if (pd.itemRects && pd.itemRects.length) {
+                const byLine = {};
+                pd.itemRects.forEach(it => {
+                    if (!byLine[it._line]) byLine[it._line] = [];
+                    byLine[it._line].push(it);
+                });
+                for (const items of Object.values(byLine)) {
+                    const joined = items.map(i => i.str).join(' ').toLowerCase();
+                    const flat = joined.replace(/[\s\u00a0]/g, '');
+                    const hasAmount = amountVariants.some(v => flat.includes(v));
+                    const hasDate = dateVariants.some(v => joined.includes(v.toLowerCase()));
+                    const s = (hasAmount ? 2 : 0) + (hasDate ? 2 : 0);
+                    if (s > score) score = s;
+                    if (score >= 4) break;
+                }
+            } else {
+                const pageText = (pd.text || '').toLowerCase();
+                const flat = pageText.replace(/[\s\u00a0]/g, '');
+                if (amountVariants.some(v => flat.includes(v))) score += 2;
+                if (dateVariants.some(v => pageText.includes(v.toLowerCase()))) score += 2;
+            }
+            if (score > bestScore) { bestScore = score; bestPage = pd.page; }
+        }
+        t._page = (bestScore >= 2 && bestPage != null) ? bestPage : 1;
+    }
+    return transactions;
+}
+
 async function extractTextFromFile(file) {
     const fileType = file.type;
     
     if (fileType === 'application/pdf') {
         return await extractTextFromPDF(file);
     } else if (fileType.startsWith('image/')) {
-        return await extractTextFromImage(file);
+        return await extractTextFromImages([file]);
     }
     
     throw new Error('Format de fichier non supporté. Utilisez PDF, JPG ou PNG.');
@@ -8092,9 +8370,110 @@ async function extractTextFromPDF(file) {
     return fullText;
 }
 
-async function extractTextFromImage(file) {
-    console.log('[RELEVÉ] Extracting image via Tesseract.js');
-    return await performOCR(file);
+// OCR multi-photos : chaque photo est une page du releve. Les vignettes et le texte
+// sont poussees dans relevePageThumbs pour alimenter la vue de revue (bandeau pages),
+// exactement comme pour un PDF multi-pages.
+async function extractTextFromImages(files) {
+    console.log('[RELEVÉ] Extracting', files.length, 'photo(s) via Tesseract.js');
+    let fullText = '';
+    _releveHiResCache = {};
+    
+    for (let i = 0; i < files.length; i++) {
+        const pageNum = i + 1;
+        const statusEl = document.querySelector('#releveLoadingModal .scan-status');
+        if (statusEl) statusEl.textContent = 'Photo ' + pageNum + '/' + files.length + ' — reconnaissance du texte';
+        
+        const prepared = await prepareRelevePhoto(files[i]);
+        
+        const result = await Tesseract.recognize(
+            prepared.ocrBlob,
+            'fra+eng',
+            {
+                logger: m => console.log('[TESSERACT]', m.status, m.progress)
+            }
+        );
+        
+        fullText += '\n<<<PAGE ' + pageNum + '>>>\n' + result.data.text + '\n';
+        window.relevePageThumbs.push({
+            page: pageNum,
+            thumb: prepared.thumbDataUrl,
+            hiresDataUrl: prepared.hiresDataUrl,
+            text: result.data.text,
+            itemRects: buildPhotoItemRects(result.data.words || []),
+            pageHeight: prepared.height,
+            pageWidth: prepared.width
+        });
+    }
+    
+    console.log('[RELEVÉ] Extraction photos completed, total text length:', fullText.length);
+    return fullText;
+}
+
+// Construit les rectangles de mots Tesseract, regroupes en lignes par position Y,
+// au meme format que la couche texte pdf.js (str, x, y, w, h, _line)
+function buildPhotoItemRects(words) {
+    const sorted = words
+        .filter(wd => wd?.bbox && wd.text && wd.text.trim())
+        .sort((a, b) => (a.bbox.y0 - b.bbox.y0) || (a.bbox.x0 - b.bbox.x0));
+    const rects = [];
+    let lineNo = -1;
+    let lastY = null;
+    for (const wd of sorted) {
+        const h = wd.bbox.y1 - wd.bbox.y0;
+        const yMid = (wd.bbox.y0 + wd.bbox.y1) / 2;
+        if (lastY === null || Math.abs(yMid - lastY) > Math.max(6, h * 0.6)) {
+            lineNo++;
+            lastY = yMid;
+        }
+        rects.push({
+            str: wd.text,
+            x: wd.bbox.x0,
+            y: wd.bbox.y0,
+            w: wd.bbox.x1 - wd.bbox.x0,
+            h: h || 10,
+            _line: lineNo
+        });
+    }
+    return rects;
+}
+
+// Redimensionne une photo : version OCR (~1800px) + vignette apercu (~350px)
+async function prepareRelevePhoto(file) {
+    const url = URL.createObjectURL(file);
+    const img = await new Promise((resolve, reject) => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = () => reject(new Error('Photo illisible'));
+        im.src = url;
+    });
+    URL.revokeObjectURL(url);
+    
+    const maxSide = 1800;
+    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+    const hiresDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const ocrBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    
+    const thumbScale = Math.min(1, 350 / Math.max(w, h));
+    const tw = Math.max(1, Math.round(w * thumbScale));
+    const th = Math.max(1, Math.round(h * thumbScale));
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = tw;
+    thumbCanvas.height = th;
+    const thumbCtx = thumbCanvas.getContext('2d');
+    thumbCtx.imageSmoothingQuality = 'high';
+    thumbCtx.drawImage(img, 0, 0, tw, th);
+    const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.7);
+    
+    return { ocrBlob, hiresDataUrl, thumbDataUrl, width: w, height: h };
 }
 
 async function performOCR(fileOrBlob) {
@@ -10782,7 +11161,10 @@ async function reunionRenderList() {
         const isToday = reunionIsToday(r);
         const sujetsCount = r._sujets_count;
         html += '<div class="reunion-card fixed" data-reunion="' + r.id + '">'
+            + '<div class="reunion-card-main">'
+            + '<div class="reunion-card-title">' + reunionEsc(r.titre || 'Réunion de cabinet') + '</div>'
             + '<div class="reunion-card-date">📅 ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</div>'
+            + '</div>'
             + '<div class="odj-vote-count">'
             + (r.odj_genere ? 'Ordre du jour généré' : 'Ordre du jour non généré')
             + ' · ' + sujetsCount + ' sujet' + (sujetsCount > 1 ? 's' : '')
@@ -10796,8 +11178,12 @@ async function reunionRenderList() {
         const iAnswered = proposals.every(p => (dateVotes[p.id] || []).some(v => v.user_id === currentUser.id));
         const best = reunionBestProposal(proposals, dateVotes);
         const allAnswered = proposals.every(p => (dateVotes[p.id] || []).length >= total);
+        const sondageTitre = reunionSondageTitre(proposals);
         html += '<div class="reunion-card pending">'
-            + '<div class="reunion-card-date">⏳ ' + proposals.length + ' réunion en attente de confirmation de date</div>'
+            + '<div class="reunion-card-main">'
+            + '<div class="reunion-card-title">' + reunionEsc(sondageTitre || 'Réunion') + ' <span class="sujet-author">— sondage de dates</span></div>'
+            + '<div class="reunion-card-date">⏳ ' + proposals.length + ' date' + (proposals.length > 1 ? 's' : '') + ' proposée' + (proposals.length > 1 ? 's' : '') + ' — réunion en attente de confirmation</div>'
+            + '</div>'
             + '<div class="odj-vote-count">'
             + (iAnswered ? '✅ Vous avez donné votre avis sur les dates proposées' : '⚠️ Votre avis est en attente sur les dates proposées')
             + (best ? ' · Pré-sélection : ' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + ' (' + best.dispo + '/' + total + ' dispo)' : '')
@@ -10824,12 +11210,73 @@ async function reunionRenderList() {
 
 // ---------- Nouveau processus de date ----------
 
+const REUNION_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+function reunionTitreSuggestions() {
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return [
+        'Réunion de ' + REUNION_MOIS[now.getMonth()] + ' ' + now.getFullYear(),
+        'Réunion de ' + REUNION_MOIS[next.getMonth()] + ' ' + next.getFullYear(),
+        'Réunion mensuelle',
+        'Réunion de cabinet'
+    ];
+}
+
+function reunionRenderTitleChips() {
+    const box = document.getElementById('reunionTitleChips');
+    if (!box) return;
+    box.innerHTML = reunionTitreSuggestions().map(t =>
+        '<button type="button" class="reunion-title-chip" data-titre="' + reunionEsc(t) + '">' + reunionEsc(t) + '</button>').join('');
+    box.querySelectorAll('.reunion-title-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const input = document.getElementById('reunionTitleInput');
+            if (input) input.value = chip.dataset.titre;
+        });
+    });
+}
+
+function reunionGetTitre() {
+    return (document.getElementById('reunionTitleInput')?.value || '').trim() || 'Réunion de cabinet';
+}
+
+function reunionSondageTitre(proposals) {
+    if (!proposals || !proposals.length) return null;
+    let titre = null;
+    proposals.forEach(p => { if (p.titre) titre = p.titre; });
+    return titre;
+}
+
 function reunionToggleSchedule(show) {
     const section = document.getElementById('reunionScheduleSection');
     if (!section) return;
     section.style.display = show ? 'block' : 'none';
     const newBtn = document.getElementById('reunionNewDateBtn');
     if (newBtn) newBtn.style.display = show ? 'none' : 'inline-flex';
+    if (show) {
+        const title = document.getElementById('reunionTitleInput');
+        if (title) title.value = '';
+        const fix = document.getElementById('reunionFixBlock');
+        const sondage = document.getElementById('reunionSondageBlock');
+        if (fix) fix.style.display = 'none';
+        if (sondage) sondage.style.display = 'none';
+        const known = document.getElementById('reunionDateKnownBtn');
+        const unknown = document.getElementById('reunionDateUnknownBtn');
+        if (known) known.classList.remove('primary');
+        if (unknown) unknown.classList.remove('primary');
+        reunionRenderTitleChips();
+    }
+}
+
+function reunionShowDateMode(fixe) {
+    const fix = document.getElementById('reunionFixBlock');
+    const sondage = document.getElementById('reunionSondageBlock');
+    if (fix) fix.style.display = fixe ? 'block' : 'none';
+    if (sondage) sondage.style.display = fixe ? 'none' : 'block';
+    const known = document.getElementById('reunionDateKnownBtn');
+    const unknown = document.getElementById('reunionDateUnknownBtn');
+    if (known) known.classList.toggle('primary', fixe);
+    if (unknown) unknown.classList.toggle('primary', !fixe);
 }
 
 async function reunionRenderProposals() {
@@ -10845,7 +11292,8 @@ async function reunionRenderProposals() {
         const votes = await reunionLoadDateVotes(data.map(p => p.id));
         const total = members.length || 1;
         const best = reunionBestProposal(data, votes);
-        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées — indiquez votre disponibilité sur chaque date</h4>';
+        const sondageTitre = reunionSondageTitre(data);
+        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">' + (sondageTitre ? reunionEsc(sondageTitre) + ' — d' : 'D') + 'ates proposées — indiquez votre disponibilité sur chaque date</h4>';
         data.forEach(p => {
             const arr = votes[p.id] || [];
             const dispo = arr.filter(v => v.vote === 1).length;
@@ -10925,12 +11373,13 @@ async function reunionProposeDate() {
     const date = document.getElementById('reunionDateInput')?.value;
     const time = document.getElementById('reunionTimeInput')?.value || '18:00';
     if (!date) { alert('Choisissez une date.'); return; }
+    const titre = reunionGetTitre();
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
     try {
         const { error } = await supabaseClient
             .from('reunion_date_proposals')
-            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, date_proposee: date, heure_proposee: time });
+            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, titre: titre, date_proposee: date, heure_proposee: time });
         if (error) throw error;
         document.getElementById('reunionDateInput').value = '';
         await reunionRenderProposals();
@@ -10945,16 +11394,17 @@ async function reunionFixDate() {
     const date = document.getElementById('reunionFixDate')?.value;
     const time = document.getElementById('reunionFixTime')?.value || '18:00';
     if (!date) { alert('Choisissez une date à fixer.'); return; }
+    const titre = reunionGetTitre();
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
     try {
         const { error } = await supabaseClient
             .from('reunions')
-            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, date_reunion: date, heure_reunion: time, statut: 'fixee' });
+            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, titre: titre, date_reunion: date, heure_reunion: time, statut: 'fixee' });
         if (error) throw error;
         await reunionRenderProposals();
         await reunionRenderList();
-        alert('Réunion fixée le ' + reunionFmt(date, time) + '.');
+        alert('Réunion « ' + titre + ' » fixée le ' + reunionFmt(date, time) + '.');
     } catch (e) {
         console.error('[REUNIONS] fix error:', e);
         alert('Erreur : ' + (e.message || e));
@@ -11024,7 +11474,7 @@ async function reunionRenderDetail() {
 
     let html = '<div class="module-card">'
         + '<div class="reunion-detail-header">'
-        + '<h3>Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</h3>'
+        + '<h3>' + (r.titre ? reunionEsc(r.titre) + ' <span class="sujet-author">· ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</span>' : 'Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion))) + '</h3>'
         + '<button class="action-btn" id="reunionDetailCloseBtn">← Retour aux réunions</button>'
         + '</div>'
         + '<div class="odj-empty">Étape actuelle : <strong>' + reunionEtapeLabel(etape) + '</strong>'
@@ -11457,6 +11907,10 @@ async function reunionInit() {
     if (fixBtn) fixBtn.addEventListener('click', reunionFixDate);
     const newBtn = document.getElementById('reunionNewDateBtn');
     if (newBtn) newBtn.addEventListener('click', () => reunionToggleSchedule(true));
+    const knownBtn = document.getElementById('reunionDateKnownBtn');
+    if (knownBtn) knownBtn.addEventListener('click', () => reunionShowDateMode(true));
+    const unknownBtn = document.getElementById('reunionDateUnknownBtn');
+    if (unknownBtn) unknownBtn.addEventListener('click', () => reunionShowDateMode(false));
 }
 
 window.reunionInit = reunionInit;
@@ -11511,10 +11965,14 @@ function countMonthDuplicates(transactions) {
 // ===== Archivage du PDF de relevé importé (bucket Supabase "releves") =====
 async function saveRelevePdfToStorage(depenses, recettes) {
     try {
+        // import photo : pas d'archivage PDF (les photos restent en local via IndexedDB)
+        if (window._releveIsPhotos) return;
         const blob = window._relevePdfBytes || (window._releveCurrentFile instanceof Blob ? window._releveCurrentFile : null);
         if (!blob || !supabaseClient || !currentUser?.id) return;
         const all = [...(depenses || []), ...(recettes || [])];
         const monthKeys = [...new Set(all.map(t => (t.date || '').slice(0, 7)))].filter(Boolean).sort();
+        // le mois choisi a l'import fait foi pour l'archivage
+        if (window._releveTargetMonth) monthKeys.unshift(window._releveTargetMonth);
         if (!monthKeys.length) return;
         const fileName = monthKeys[0] + '.pdf';
         try {
@@ -11578,7 +12036,9 @@ async function viewRelevePdf(monthKey) {
 window.viewRelevePdf = viewRelevePdf;
 
 
-// Trace l'import confirme : c'est CECI qui valide un mois (pas la presence de mouvements)
+// Trace l'import confirme. Un import NE VALIDE PAS le mois : certaines banques
+// editent 2 releves par mois (par quinzaine) — le mois n'est valide que par
+// l'action explicite du medecin (validateReleveMonth).
 async function recordReleveImport(depenses, recettes) {
     try {
         if (!supabaseClient || !currentUser?.id) return;
@@ -11590,20 +12050,67 @@ async function recordReleveImport(depenses, recettes) {
             // un mois n'est valide que par un import reel (au moins 2 lignes),
             // pas par une ligne manuelle isolee datee du jour
             if (count < 2) continue;
-            await supabaseClient.from('releve_imports').insert({
+            const row = {
                 user_id: currentUser.id,
                 cabinet_id: (await getCabinetId()) || null,
                 month: m,
                 file_name: window._releveCurrentFile?.name || null,
                 transactions_count: count
-            });
+            };
+            let { error } = await supabaseClient.from('releve_imports').insert({ ...row, validated: false });
+            if (error) {
+                // colonne validated pas encore migree : insert sans elle (comportement legacy)
+                const res = await supabaseClient.from('releve_imports').insert(row);
+                error = res.error;
+            }
+            if (error) console.error('[RELEVÉ] recordReleveImport insert:', error.message);
         }
-        window._releveImportedMonths = null; // invalide le cache
+        window._releveMonthStatuses = null; // invalide le cache
         console.log('[RELEVÉ] Import enregistré:', months.join(', '));
     } catch (e) {
         console.error('[RELEVÉ] recordReleveImport:', e);
     }
 }
+
+// Validation explicite d'un mois par le medecin : tout le releve du mois est fait
+window.validateReleveMonth = async function(monthKey) {
+    try {
+        if (!supabaseClient || !currentUser?.id || !/^\d{4}-\d{2}$/.test(monthKey || '')) return false;
+        const { data: updated, error } = await supabaseClient
+            .from('releve_imports')
+            .update({ validated: true })
+            .eq('user_id', currentUser.id)
+            .eq('month', monthKey)
+            .select('id');
+        if (error) {
+            console.error('[RELEVÉ] validateReleveMonth:', error.message);
+            if (typeof showToast === 'function') showToast('Validation impossible : ' + error.message);
+            return false;
+        }
+        if (!updated || !updated.length) {
+            // aucun import trace pour ce mois : creer la trace validee
+            const { error: insErr } = await supabaseClient.from('releve_imports').insert({
+                user_id: currentUser.id,
+                cabinet_id: (await getCabinetId()) || null,
+                month: monthKey,
+                file_name: null,
+                transactions_count: 0,
+                validated: true
+            });
+            if (insErr) {
+                console.error('[RELEVÉ] validateReleveMonth insert:', insErr.message);
+                return false;
+            }
+        }
+        window._releveMonthStatuses = null;
+        if (typeof showToast === 'function') showToast('✓ Relevé du mois validé');
+        if (typeof renderReminders === 'function') renderReminders();
+        return true;
+    } catch (e) {
+        console.error('[RELEVÉ] validateReleveMonth:', e);
+        return false;
+    }
+};
 
 async function getCabinetId() {
     try {
@@ -11612,24 +12119,45 @@ async function getCabinetId() {
     } catch (e) { return null; }
 }
 
-// Mois valides par import confirme (cache)
-async function getImportedMonths() {
-    if (window._releveImportedMonths) return window._releveImportedMonths;
+// Statuts des mois : importe (au moins un releve enregistre) et valide
+// (le medecin a confirme que tout le mois est fait). Map month -> {imported, validated}
+async function getReleveMonthStatuses() {
+    if (window._releveMonthStatuses) return window._releveMonthStatuses;
+    const map = new Map();
     try {
         const { data, error } = await supabaseClient
             .from('releve_imports')
-            .select('month')
+            .select('month, validated')
             .eq('user_id', currentUser.id);
         if (error) throw error;
-        const set = new Set((data || []).map(r => r.month));
-        window._releveImportedMonths = set;
-        return set;
+        (data || []).forEach(r => {
+            const prev = map.get(r.month) || { imported: false, validated: false };
+            prev.imported = true;
+            if (r.validated) prev.validated = true;
+            map.set(r.month, prev);
+        });
     } catch (e) {
-        console.error('[RELEVÉ] getImportedMonths:', e);
-        return new Set();
+        // colonne validated pas encore migree : fallback legacy (tout import = valide)
+        try {
+            const { data } = await supabaseClient
+                .from('releve_imports')
+                .select('month')
+                .eq('user_id', currentUser.id);
+            (data || []).forEach(r => map.set(r.month, { imported: true, validated: true }));
+        } catch (e2) {
+            console.error('[RELEVÉ] getReleveMonthStatuses:', e2);
+        }
     }
+    window._releveMonthStatuses = map;
+    return map;
 }
 window.recordReleveImport = recordReleveImport;
+window.getReleveMonthStatuses = getReleveMonthStatuses;
+// compat : ensemble des mois valides
+async function getImportedMonths() {
+    const map = await getReleveMonthStatuses();
+    return new Set([...map.entries()].filter(([, s]) => s.validated).map(([m]) => m));
+}
 window.getImportedMonths = getImportedMonths;
 
 
@@ -11839,7 +12367,19 @@ async function getHiResPage(pageIdx, pageData) {
     if (_releveHiResCache[pageIdx]) return _releveHiResCache[pageIdx];
     try {
         const pdfjsLib = window.pdfjsLib;
-        if (!pdfjsLib || !window._releveCurrentPdf) return null;
+        if (!pdfjsLib || !window._releveCurrentPdf) {
+            // pas de PDF : les photos du releve stockent leur version hi-res directement
+            if (pageData.hiresDataUrl) {
+                const result = await new Promise(res => {
+                    const img = new Image();
+                    img.onload = () => res({ img, dataUrl: pageData.hiresDataUrl });
+                    img.src = pageData.hiresDataUrl;
+                });
+                _releveHiResCache[pageIdx] = result;
+                return result;
+            }
+            return null;
+        }
         const page = await window._releveCurrentPdf.getPage(pageData.page);
         const viewport = page.getViewport({ scale: 2 });
         const canvas = document.createElement('canvas');

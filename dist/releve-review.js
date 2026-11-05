@@ -275,6 +275,7 @@ function advanceReview() {
         return;
     }
     window._reviewState.current = next;
+    window._reviewState.pdfPage = null;
     renderReleveReview();
 }
 window.advanceReview = advanceReview;
@@ -356,16 +357,30 @@ window.saveAllReviewed = async function() {
 
         alert(`${depenses.length + recettes.length} ligne(s) enregistrée(s) avec succès`);
 
-        // La banque edite parfois 2 releves par mois : proposer l'import du second
+        // La banque edite parfois plusieurs releves par mois :
+        // demander (Oui / Non) s'il y a un autre PDF pour ce mois-la
         const monthsSet = [...new Set([...depenses, ...recettes].map(t => (t.date || '').slice(0, 7)))].filter(Boolean);
-        if (monthsSet.length) {
-            setTimeout(() => {
-                if (confirm(`Relevé de ${monthsSet.join(', ')} enregistré.\n\nAvez-vous un DEUXIÈME relevé pour ce mois-ci à intégrer ?\n\nOK = Oui, je l'importe maintenant\nAnnuler = Non, ce mois est complet`)) {
-                    const uploadModal = document.getElementById('releve-upload-modal');
-                    if (uploadModal) {
-                        uploadModal.style.display = 'flex';
-                        if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
+        const monthKey = window._releveTargetMonth || monthsSet[0] || null;
+        window._releveTargetMonth = null;
+        if (monthKey) {
+            setTimeout(async () => {
+                const another = await askAnotherReleve(monthKey);
+                if (another) {
+                    // le mois est deja connu : il sera propose a l'etape du mois
+                    if (typeof openReleveUploadFlow === 'function') {
+                        openReleveUploadFlow(monthKey);
+                    } else {
+                        const uploadModal = document.getElementById('releve-upload-modal');
+                        if (uploadModal) uploadModal.style.display = 'flex';
                     }
+                    return;
+                }
+                // pas d'autre PDF : proposer la validation explicite du mois
+                // (certaines banques editent 2 releves par mois : c'est le medecin
+                // qui confirme que tout le mois est fait)
+                const validate = await askValidateMonth(monthKey);
+                if (validate && typeof validateReleveMonth === 'function') {
+                    await validateReleveMonth(monthKey);
                 }
             }, 400);
         }
@@ -386,19 +401,28 @@ async function renderReviewPdf(t) {
         zone.innerHTML = '<div style="color:var(--color-text-secondary); font-size:0.8rem; padding:20px;">PDF non disponible.</div>';
         return;
     }
-    let pageIdx = 0;
+    const total = thumbs.length;
+    let autoIdx = 0;
     if (t && t._page != null) {
         const i = thumbs.findIndex(p => p.page === t._page);
+        if (i >= 0) autoIdx = i;
+    }
+    // page manuelle (navigation) prioritaire sur le suivi automatique de la ligne
+    let pageIdx = autoIdx;
+    if (window._reviewState.pdfPage != null) {
+        const i = thumbs.findIndex(p => p.page === window._reviewState.pdfPage);
         if (i >= 0) pageIdx = i;
     }
+    const manual = window._reviewState.pdfPage != null && pageIdx !== autoIdx;
     const pageData = thumbs[pageIdx];
     const hires = (typeof getHiResPage === 'function') ? await getHiResPage(pageIdx, pageData) : null;
     const imgSrc = hires ? hires.dataUrl : pageData.thumb;
     const label = pageData ? pageData.page : '?';
+    const onTxPage = !!(t && pageData && t._page != null && pageData.page === t._page);
 
     // rectangle surligne (coordonnees relatives de la ligne)
     let hlHtml = '';
-    if (t && pageData && pageData.itemRects && pageData.itemRects.length && typeof releveCropLineDataUrl === 'function') {
+    if (onTxPage && pageData && pageData.itemRects && pageData.itemRects.length && typeof releveCropLineDataUrl === 'function') {
         try {
             const m = findReviewLineRect(t, pageData);
             if (m) {
@@ -407,15 +431,26 @@ async function renderReviewPdf(t) {
         } catch (e) {}
     }
 
+    const prevDisabled = pageIdx <= 0 ? ' disabled' : '';
+    const nextDisabled = pageIdx >= total - 1 ? ' disabled' : '';
+
     zone.innerHTML = `
-        <div style="font-size:0.7rem; color:var(--color-text-secondary); margin-bottom:6px;">Page ${label} — ligne en cours surlignée (scroll pour voir le reste du relevé)</div>
+        <div class="review-pdf-head">
+            <div class="review-pdf-nav">
+                <button class="review-pdf-nav-btn" onclick="reviewPdfNav(-1)"${prevDisabled} title="Page précédente" aria-label="Page précédente">‹</button>
+                <span class="review-pdf-page-label">Page <strong>${label}</strong>/${total}</span>
+                <button class="review-pdf-nav-btn" onclick="reviewPdfNav(1)"${nextDisabled} title="Page suivante" aria-label="Page suivante">›</button>
+            </div>
+            ${manual ? `<button class="review-pdf-follow" onclick="reviewPdfFollow()" title="Revenir à la page de la ligne en cours">↺ Ligne en cours</button>` : ''}
+            <span class="review-pdf-hint">${onTxPage ? 'Ligne en cours surlignée — scroll pour voir le reste de la page' : 'Page consultée manuellement'}</span>
+        </div>
         <div id="review-pdf-inner" style="position:relative; display:inline-block; width:100%; max-width:1100px; vertical-align:top;">
             <img id="review-pdf-img" src="${imgSrc}" alt="Page ${label}" style="width:100%; display:block; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
             <div id="review-hl-wrap" style="position:absolute; inset:0; overflow:hidden; border-radius:6px; pointer-events:none;">${hlHtml}</div>
         </div>`;
 
     // scroll automatique du bandeau pour centrer la ligne surlignee
-    if (t) {
+    if (t && onTxPage) {
         const wrap = document.getElementById('review-hl-wrap');
         const hl = wrap ? wrap.firstElementChild : null;
         if (hl) {
@@ -424,6 +459,33 @@ async function renderReviewPdf(t) {
         }
     }
 }
+
+// Navigation manuelle entre les pages du PDF (toutes les pages restent accessibles)
+window.reviewPdfNav = function(dir) {
+    const thumbs = window.relevePageThumbs || [];
+    if (!thumbs.length) return;
+    const st = window._reviewState;
+    let idx;
+    if (st.pdfPage == null) {
+        const t = pendingTransactions[st.current];
+        idx = 0;
+        if (t && t._page != null) {
+            const i = thumbs.findIndex(p => p.page === t._page);
+            if (i >= 0) idx = i;
+        }
+    } else {
+        idx = thumbs.findIndex(p => p.page === st.pdfPage);
+        if (idx < 0) idx = 0;
+    }
+    idx = Math.max(0, Math.min(thumbs.length - 1, idx + dir));
+    st.pdfPage = thumbs[idx].page;
+    renderReleveReview();
+};
+
+window.reviewPdfFollow = function() {
+    window._reviewState.pdfPage = null;
+    renderReleveReview();
+};
 
 // retrouve le rectangle (relatif) de la ligne de la transaction
 function findReviewLineRect(t, pageData) {
@@ -505,6 +567,65 @@ function reviewUpdateAmount(index, value) {
 window.reviewUpdateAmount = reviewUpdateAmount;
 
 
+// Dialogue Oui / Non : un autre PDF pour ce mois ?
+function releveMonthLabel(monthKey) {
+    const [y, m] = (monthKey || '').split('-');
+    const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const idx = parseInt(m, 10) - 1;
+    if (!y || isNaN(idx) || !months[idx]) return monthKey;
+    return months[idx] + ' ' + y;
+}
+
+function askAnotherReleve(monthKey) {
+    return new Promise(resolve => {
+        const label = releveMonthLabel(monthKey);
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(15,15,30,0.45); z-index:11000; display:flex; align-items:center; justify-content:center; padding:20px;';
+        overlay.innerHTML = `
+            <div class="modal-card" style="max-width:400px; width:100%; padding:26px 24px; text-align:center;">
+                <div style="width:48px; height:48px; margin:0 auto 12px; background:var(--md-primary-container, #e8e6ff); color:var(--md-on-primary-container, #2a1f9e); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">✓</div>
+                <h3 style="margin:0 0 8px; font-size:1.08rem; font-weight:800; letter-spacing:-0.02em;">Relevé de ${reviewEscapeHtml(label)} enregistré</h3>
+                <p style="margin:0 0 18px; font-size:0.85rem; color:var(--color-text-secondary); line-height:1.45;">Avez-vous un autre PDF pour ${reviewEscapeHtml(label)} à intégrer ?</p>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" id="ask-another-oui" class="btn-primary" style="flex:1; padding:12px; border:none; border-radius:999px; cursor:pointer;">Oui, importer</button>
+                    <button type="button" id="ask-another-non" class="btn-secondary" style="flex:1; padding:12px; border-radius:999px; cursor:pointer;">Non</button>
+                </div>
+            </div>`;
+        const close = (val) => { overlay.remove(); resolve(val); };
+        overlay.querySelector('#ask-another-oui').onclick = () => close(true);
+        overlay.querySelector('#ask-another-non').onclick = () => close(false);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+        document.body.appendChild(overlay);
+    });
+}
+window.askAnotherReleve = askAnotherReleve;
+
+// Dialogue Oui / Non : valider definitivement ce mois ?
+function askValidateMonth(monthKey) {
+    return new Promise(resolve => {
+        const label = releveMonthLabel(monthKey);
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(15,15,30,0.45); z-index:11000; display:flex; align-items:center; justify-content:center; padding:20px;';
+        overlay.innerHTML = `
+            <div class="modal-card" style="max-width:400px; width:100%; padding:26px 24px; text-align:center;">
+                <div style="width:48px; height:48px; margin:0 auto 12px; background:var(--md-primary-container, #e8e6ff); color:var(--md-on-primary-container, #2a1f9e); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">📅</div>
+                <h3 style="margin:0 0 8px; font-size:1.08rem; font-weight:800; letter-spacing:-0.02em;">Valider le mois de ${reviewEscapeHtml(label)} ?</h3>
+                <p style="margin:0 0 18px; font-size:0.85rem; color:var(--color-text-secondary); line-height:1.45;">Si tout le relevé de ${reviewEscapeHtml(label)} est intégré, validez ce mois — il sera marqué comme terminé. Certaines banques éditent un 2ᵉ relevé par quinzaine : ne validez que si le mois est complet.</p>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" id="ask-validate-oui" class="btn-primary" style="flex:1; padding:12px; border:none; border-radius:999px; cursor:pointer;">Oui, valider</button>
+                    <button type="button" id="ask-validate-non" class="btn-secondary" style="flex:1; padding:12px; border-radius:999px; cursor:pointer;">Pas encore</button>
+                </div>
+            </div>`;
+        const close = (val) => { overlay.remove(); resolve(val); };
+        overlay.querySelector('#ask-validate-oui').onclick = () => close(true);
+        overlay.querySelector('#ask-validate-non').onclick = () => close(false);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+        document.body.appendChild(overlay);
+    });
+}
+window.askValidateMonth = askValidateMonth;
+
 // ===== Pinch-to-zoom du PDF dans le bandeau =====
 (function initReviewPdfZoom() {
     if (window._reviewZoomInit) return;
@@ -568,6 +689,83 @@ window.reviewUpdateAmount = reviewUpdateAmount;
 // ===== Reprise d'import : sauvegarde et chargement de l'etat de revue =====
 const REVIEW_STORAGE_KEY = 'releve_review_progress_v1';
 
+// --- Persistance du PDF via IndexedDB (localStorage est trop petit pour un PDF) ---
+const REVIEW_PDF_IDB_NAME = 'cab-releve-review';
+const REVIEW_PDF_IDB_STORE = 'pdfs';
+
+function idbOpenDb() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) { reject(new Error('IndexedDB indisponible')); return; }
+        const req = window.indexedDB.open(REVIEW_PDF_IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+            if (!req.result.objectStoreNames.contains(REVIEW_PDF_IDB_STORE)) {
+                req.result.createObjectStore(REVIEW_PDF_IDB_STORE);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+function idbPutPdf(key, blob) {
+    return idbOpenDb().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(REVIEW_PDF_IDB_STORE, 'readwrite');
+        tx.objectStore(REVIEW_PDF_IDB_STORE).put(blob, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    })).catch(e => console.error('[REVIEW] idb put pdf:', e));
+}
+
+function idbGetPdf(key) {
+    return idbOpenDb().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(REVIEW_PDF_IDB_STORE, 'readonly');
+        const req = tx.objectStore(REVIEW_PDF_IDB_STORE).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+    })).catch(e => { console.error('[REVIEW] idb get pdf:', e); return null; });
+}
+
+function idbClearPdf() {
+    return idbOpenDb().then(db => new Promise((resolve) => {
+        const tx = db.transaction(REVIEW_PDF_IDB_STORE, 'readwrite');
+        tx.objectStore(REVIEW_PDF_IDB_STORE).clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+    })).catch(() => {});
+}
+window.idbClearPdf = idbClearPdf;
+
+// Construit les vignettes + rects de texte a partir d'un PDF pdf.js deja charge
+async function buildRelevePageThumbs(pdf) {
+    window.relevePageThumbs = [];
+    for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 30); pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const thumbViewport = page.getViewport({ scale: 0.35 });
+        const thumbCanvas = document.createElement('canvas');
+        const thumbCtx = thumbCanvas.getContext('2d');
+        thumbCanvas.height = thumbViewport.height;
+        thumbCanvas.width = thumbViewport.width;
+        await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
+        const textContent = await page.getTextContent();
+        const itemRects = [];
+        let lineNo = 0;
+        for (const it of textContent.items) {
+            if (!it.str || !it.str.trim() || !it.transform) continue;
+            if (it.hasEOL) lineNo++;
+            const tx = page.getViewport({ scale: 1 }).convertToViewportPoint(it.transform[4], it.transform[5]);
+            itemRects.push({ str: it.str, x: tx[0], y: tx[1], w: (it.width || 0), h: (it.height || 10), _line: lineNo });
+        }
+        window.relevePageThumbs.push({
+            page: pageNum,
+            thumb: thumbCanvas.toDataURL('image/jpeg', 0.7),
+            text: '',
+            itemRects,
+            pageHeight: page.getViewport({ scale: 1 }).height,
+            pageWidth: page.getViewport({ scale: 1 }).width
+        });
+    }
+}
+
 function stampValidation() {
     if (!window._reviewTiming) window._reviewTiming = { stamps: [] };
     window._reviewTiming.stamps.push(Date.now());
@@ -588,6 +786,25 @@ function saveReviewProgress() {
                 _page: t._page, _line: t._line
             }))
         }));
+        // persister aussi le PDF (une seule fois par fichier) pour restaurer
+        // l'apercu bandeau a la reprise, meme apres rechargement de la page
+        const pdfBlob = window._relevePdfBytes;
+        if (pdfBlob && window._reviewPdfIdbSavedFor !== pdfBlob) {
+            window._reviewPdfIdbSavedFor = pdfBlob;
+            idbPutPdf('current', pdfBlob);
+        }
+        // persister les photos du releve (import photo) de la meme facon
+        if (window._releveIsPhotos && (window.relevePageThumbs || []).length && !window._reviewPhotosIdbSaved) {
+            window._reviewPhotosIdbSaved = true;
+            idbPutPdf('photos', JSON.stringify({
+                fileName: window._releveCurrentFile?.name || null,
+                thumbs: window.relevePageThumbs.map(t => ({
+                    page: t.page, thumb: t.thumb, hiresDataUrl: t.hiresDataUrl || null,
+                    text: t.text || '', itemRects: t.itemRects || [],
+                    pageHeight: t.pageHeight, pageWidth: t.pageWidth
+                }))
+            }));
+        }
     } catch (e) {
         console.error('[REVIEW] save progress:', e);
     }
@@ -614,8 +831,14 @@ window.resumeSavedReview = async function() {
         document.getElementById('releve-upload-modal').style.display = 'none';
         window._releveReviewResumed = true;
 
-        // tenter de recharger le PDF depuis l'archive Supabase (bucket releves)
-        await restoreReviewPdfFromArchive(data);
+        // recharger l'aperçu : photos (import photo) d'abord, sinon le PDF
+        const photosRestored = await restoreReviewPhotosFromIdb(data);
+        if (!photosRestored) {
+            await restoreReviewPdfFromIdb(data);
+        }
+        if (!(window.relevePageThumbs || []).length) {
+            await restoreReviewPdfFromArchive(data);
+        }
 
         openReleveReview();
         if (typeof showToast === 'function') {
@@ -628,6 +851,51 @@ window.resumeSavedReview = async function() {
         return false;
     }
 };
+
+// recharge les photos sauvegardees localement (IndexedDB) au moment de la fermeture
+async function restoreReviewPhotosFromIdb(data) {
+    try {
+        if (!window.relevePageThumbs) window.relevePageThumbs = [];
+        if (window.relevePageThumbs.length) return false;
+        const raw = await idbGetPdf('photos');
+        if (!raw || typeof raw !== 'string') return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.thumbs?.length) return false;
+        window.relevePageThumbs = parsed.thumbs;
+        window._releveIsPhotos = true;
+        window._reviewPhotosIdbSaved = true;
+        if (parsed.fileName) {
+            window._releveCurrentFile = { name: parsed.fileName, type: 'image/jpeg' };
+        }
+        console.log('[REVIEW] Photos restaurées depuis IndexedDB:', parsed.thumbs.length, 'page(s)');
+        return true;
+    } catch (e) {
+        console.error('[REVIEW] restore photos (idb):', e);
+        return false;
+    }
+}
+window.restoreReviewPhotosFromIdb = restoreReviewPhotosFromIdb;
+
+// recharge le PDF sauvegarde localement (IndexedDB) au moment de la fermeture
+async function restoreReviewPdfFromIdb(data) {
+    try {
+        if (!window.relevePageThumbs) window.relevePageThumbs = [];
+        if (window.relevePageThumbs.length) return;
+        const blob = await idbGetPdf('current');
+        if (!blob || !(blob instanceof Blob)) return;
+        if (typeof window.pdfjsLib === 'undefined' || !window.pdfjsLib) return;
+        const pdf = await window.pdfjsLib.getDocument({ data: await blob.arrayBuffer() }).promise;
+        window._releveCurrentPdf = pdf;
+        window._relevePdfBytes = blob;
+        window._reviewPdfIdbSavedFor = blob;
+        window._releveCurrentFile = new File([blob], data.fileName || 'releve.pdf', { type: blob.type || 'application/pdf' });
+        await buildRelevePageThumbs(pdf);
+        console.log('[REVIEW] PDF restaure depuis IndexedDB');
+    } catch (e) {
+        console.error('[REVIEW] restore pdf (idb):', e);
+    }
+}
+window.restoreReviewPdfFromIdb = restoreReviewPdfFromIdb;
 
 // recharge le PDF archive pour restaurer l'aperçu bandeau
 async function restoreReviewPdfFromArchive(data) {
@@ -649,33 +917,10 @@ async function restoreReviewPdfFromArchive(data) {
         const arrayBuffer = await blob.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         window._releveCurrentPdf = pdf;
-        window.relevePageThumbs = [];
-        for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 30); pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const thumbViewport = page.getViewport({ scale: 0.35 });
-            const thumbCanvas = document.createElement('canvas');
-            const thumbCtx = thumbCanvas.getContext('2d');
-            thumbCanvas.height = thumbViewport.height;
-            thumbCanvas.width = thumbViewport.width;
-            await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
-            const textContent = await page.getTextContent();
-            const itemRects = [];
-            let lineNo = 0;
-            for (const it of textContent.items) {
-                if (!it.str || !it.str.trim() || !it.transform) continue;
-                if (it.hasEOL) lineNo++;
-                const tx = page.getViewport({ scale: 1 }).convertToViewportPoint(it.transform[4], it.transform[5]);
-                itemRects.push({ str: it.str, x: tx[0], y: tx[1], w: (it.width || 0), h: (it.height || 10), _line: lineNo });
-            }
-            window.relevePageThumbs.push({
-                page: pageNum,
-                thumb: thumbCanvas.toDataURL('image/jpeg', 0.7),
-                text: '',
-                itemRects,
-                pageHeight: page.getViewport({ scale: 1 }).height,
-                pageWidth: page.getViewport({ scale: 1 }).width
-            });
-        }
+        window._relevePdfBytes = blob;
+        window._reviewPdfIdbSavedFor = blob;
+        window._releveCurrentFile = new File([blob], data.fileName || months[0] + '.pdf', { type: 'application/pdf' });
+        await buildRelevePageThumbs(pdf);
         console.log('[REVIEW] PDF restaure depuis l\'archive:', months[0]);
     } catch (e) {
         console.error('[REVIEW] restore pdf:', e);
@@ -685,12 +930,16 @@ window.restoreReviewPdfFromArchive = restoreReviewPdfFromArchive;
 
 window.clearSavedReview = function() {
     localStorage.removeItem(REVIEW_STORAGE_KEY);
+    window._reviewPdfIdbSavedFor = null;
+    window._reviewPhotosIdbSaved = false;
+    idbClearPdf();
 };
 
 // sauvegarde aussi a chaque changement de ligne courante
 const _origSetReviewCurrent = window.setReviewCurrent;
 window.setReviewCurrent = function(index) {
     window._reviewState.current = index;
+    window._reviewState.pdfPage = null;
     saveReviewProgress();
     renderReleveReview();
 };

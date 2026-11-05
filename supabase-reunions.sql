@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS reunions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cabinet_id UUID REFERENCES cabinets(id),
     user_id UUID REFERENCES auth.users(id),
+    titre TEXT,
     date_reunion DATE NOT NULL,
     heure_reunion TIME DEFAULT '18:00',
     statut TEXT DEFAULT 'fixee',
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS reunion_date_proposals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cabinet_id UUID REFERENCES cabinets(id),
     user_id UUID REFERENCES auth.users(id),
+    titre TEXT,
     date_proposee DATE NOT NULL,
     heure_proposee TIME DEFAULT '18:00',
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -47,6 +49,10 @@ CREATE TABLE IF NOT EXISTS reunion_votes (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (sujet_id, user_id)
 );
+
+-- Migration des installations existantes
+ALTER TABLE reunions ADD COLUMN IF NOT EXISTS titre TEXT;
+ALTER TABLE reunion_date_proposals ADD COLUMN IF NOT EXISTS titre TEXT;
 
 -- Enable RLS
 ALTER TABLE reunions ENABLE ROW LEVEL SECURITY;

@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-DbZ6H6sf.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-DIbJiEMx.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -291,7 +291,7 @@ window.attemptLogin = function() {
                 <span>⚠️ <strong>Lecture automatique :</strong> des erreurs de débit/crédit, de montant ou de catégorie peuvent subsister — vérifiez chaque ligne avec le PDF surligné avant de valider.</span>
                 <button class="review-disclaimer-close" onclick="hideReviewDisclaimer()" title="Ne plus afficher">✕</button>
             </div>
-            <div id="review-pdf-zone" style="height:35vh; overflow-y:auto; background:#e2e8f0; padding:10px; text-align:center; border-bottom:2px solid var(--color-border);"></div>
+            <div id="review-pdf-zone" class="review-pdf-zone"></div>
             <div style="max-width:860px; margin:0 auto; padding:14px 16px 60px;">
                 <div id="review-lines-list"></div>
             </div>
@@ -324,35 +324,68 @@ window.attemptLogin = function() {
                             <button class="action-btn" style="padding:6px 14px;" onclick="clearSavedReview(); document.getElementById('review-resume-banner').style.display='none';">Abandonner</button>
                         </div>
                     </div>
-                    <p style="text-align: center; margin-bottom: 20px; color: var(--color-text-secondary); font-size: 0.9rem;">Sélectionnez un fichier ou prenez une photo de votre relevé bancaire</p>
-                    <input type="file" id="releveFileInputGlobal" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleRelevéUpload(event)">
+                    <p class="releve-upload-sub">Comment importer votre relevé bancaire ?</p>
+                    <input type="file" id="releveFileInputGlobal" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleRelevéUpload(event)">
                     <input type="file" id="releveCameraInputGlobal" accept="image/*" capture="environment" style="display:none" onchange="handleRelevéUpload(event)">
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                        <button class="btn-primary" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 8px; border-radius: 12px; height: 100%;" onclick="document.getElementById('releveFileInputGlobal').click();">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                <circle cx="8.5" cy="8.5" r="1.5"/>
-                                <polyline points="21 15 16 10 5 21"/>
-                            </svg>
-                            <span style="font-size: 0.8rem;">Photo</span>
+                    <div id="releveMonthPanel" class="releve-month-panel" style="display:none;">
+                        <p class="releve-month-title">À quel mois correspond ce relevé ?</p>
+                        <p id="releveMonthFileName" style="margin:0 0 14px; font-size:0.75rem; color:var(--color-text-secondary); word-break:break-all;"></p>
+                        <div class="releve-month-selects">
+                            <select id="releveMonthSelM" class="releve-month-select" style="flex:1;">
+                                <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option><option value="4">Avril</option>
+                                <option value="5">Mai</option><option value="6">Juin</option><option value="7">Juillet</option><option value="8">Août</option>
+                                <option value="9">Septembre</option><option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+                            </select>
+                            <select id="releveMonthSelY" class="releve-month-select" style="width:120px;"></select>
+                        </div>
+                        <button class="releve-month-go" onclick="confirmReleveMonth()">Lancer l'analyse ➜</button>
+                    </div>
+                    <div id="releveUploadPickers" class="releve-source-grid">
+                        <button type="button" class="releve-source-card" onclick="document.getElementById('releveFileInputGlobal').click();">
+                            <span class="releve-source-ico">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                            </span>
+                            <span class="releve-source-label">PDF</span>
+                            <span class="releve-source-hint">Relevé bancaire</span>
                         </button>
-                        <button class="btn-primary" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 8px; border-radius: 12px; height: 100%;" onclick="document.getElementById('releveCameraInputGlobal').click();">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                <circle cx="12" cy="13" r="4"/>
-                            </svg>
-                            <span style="font-size: 0.8rem;">Camera</span>
+                        <button type="button" class="releve-source-card" onclick="document.getElementById('releveFileInputGlobal').click();">
+                            <span class="releve-source-ico">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                            </span>
+                            <span class="releve-source-label">Image</span>
+                            <span class="releve-source-hint">Galerie / capture</span>
                         </button>
-                        <button class="btn-secondary" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 8px; border-radius: 12px; height: 100%;" onclick="document.getElementById('releveFileInputGlobal').click();">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                            </svg>
-                            <span style="font-size: 0.8rem;">PDF</span>
+                        <button type="button" class="releve-source-card" onclick="document.getElementById('releveCameraInputGlobal').click();">
+                            <span class="releve-source-ico">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                </svg>
+                            </span>
+                            <span class="releve-source-label">Caméra</span>
+                            <span class="releve-source-hint">Photographier les pages</span>
                         </button>
                     </div>
-                    <button class="btn-secondary" style="width: 100%; margin-top: 12px; padding: 12px;" onclick="closeRelevéUploadModal()">
-                        Annuler
+                    <div id="relevePhotosPanel" style="display:none; margin-top:16px; padding:14px; border:1px dashed var(--color-border); border-radius:12px;">
+                        <p style="margin:0 0 4px; font-size:0.85rem; font-weight:600;">Photos du relevé</p>
+                        <p style="margin:0 0 12px; font-size:0.75rem; color:var(--color-text-secondary);">Photographiez chaque page du relevé (commencez par la première), puis validez pour lancer l'analyse.</p>
+                        <div id="relevePhotoThumbs" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                        <div style="display:flex; gap:10px; margin-top:14px;">
+                            <button class="btn-secondary" style="flex:1; padding:10px; border-radius:10px; font-size:0.8rem;" onclick="addRelevePhoto('camera')">📷 + Photo</button>
+                            <button class="btn-secondary" style="flex:1; padding:10px; border-radius:10px; font-size:0.8rem;" onclick="addRelevePhoto('file')">🖼️ + Galerie</button>
+                        </div>
+                        <button class="btn-primary" style="width:100%; margin-top:10px; padding:12px; border-radius:10px; font-size:0.85rem;" onclick="validateRelevePhotos()">✓ Valider — lancer l'analyse</button>
+                        <button class="btn-secondary" style="width:100%; margin-top:8px; padding:8px; border-radius:10px; font-size:0.75rem;" onclick="resetRelevePhotos()">Retirer toutes les photos</button>
+                    </div>
+                    <button class="btn-secondary" style="width: 100%; margin-top: 12px; padding: 12px; border-radius:999px;" onclick="closeRelevéUploadModal()">
+                        Fermer
                     </button>
                 </div>
                 <!-- Loading zone inside modal -->
@@ -972,8 +1005,6 @@ window.attemptLogin = function() {
 
 
                     </div>
-
-                </div>
             </section>
 
   <!-- Salle d'urgence View -->
@@ -2022,24 +2053,37 @@ window.attemptLogin = function() {
                         <div id="reunionsList"></div>
                         <button class="action-btn primary" id="reunionNewDateBtn" style="margin-top:14px;">+ Nouveau processus de date</button>
                         <div id="reunionScheduleSection" style="display:none;">
-                            <div class="odj-section-label" style="margin-top:18px;">Fixer directement une date (si elle est connue)</div>
+                            <div class="odj-section-label" style="margin-top:18px;">Titre de la réunion</div>
                             <div class="form-group">
-                                <div class="reunion-date-row">
-                                    <input type="date" id="reunionFixDate" class="form-input">
-                                    <input type="time" id="reunionFixTime" class="form-input">
-                                    <button class="action-btn" id="reunionFixBtn">Fixer la date</button>
+                                <input type="text" id="reunionTitleInput" class="form-input" placeholder="Ex : Réunion de mai 2027">
+                            </div>
+                            <div class="reunion-title-chips" id="reunionTitleChips"></div>
+                            <div class="odj-section-label" style="margin-top:18px;">La date est-elle déjà connue ?</div>
+                            <div class="reunion-date-row">
+                                <button class="action-btn" id="reunionDateKnownBtn">Oui, je connais la date</button>
+                                <button class="action-btn" id="reunionDateUnknownBtn">Non, proposer plusieurs dates (sondage)</button>
+                            </div>
+                            <div id="reunionFixBlock" style="display:none;">
+                                <div class="form-group">
+                                    <div class="reunion-date-row">
+                                        <input type="date" id="reunionFixDate" class="form-input">
+                                        <input type="time" id="reunionFixTime" class="form-input">
+                                        <button class="action-btn primary" id="reunionFixBtn">Fixer la réunion</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="odj-section-label" style="margin-top:18px;">Ou proposer plusieurs dates</div>
-                            <div class="form-group">
-                                <div class="reunion-date-row">
-                                    <input type="date" id="reunionDateInput" class="form-input">
-                                    <input type="time" id="reunionTimeInput" class="form-input">
-                                    <button class="action-btn primary" id="reunionProposeBtn">Ajouter une date</button>
+                            <div id="reunionSondageBlock" style="display:none;">
+                                <div class="odj-section-label" style="margin-top:18px;">Proposez plusieurs dates — les membres du cabinet indiqueront leurs disponibilités</div>
+                                <div class="form-group">
+                                    <div class="reunion-date-row">
+                                        <input type="date" id="reunionDateInput" class="form-input">
+                                        <input type="time" id="reunionTimeInput" class="form-input">
+                                        <button class="action-btn primary" id="reunionProposeBtn">Ajouter une date</button>
+                                    </div>
                                 </div>
+                                <div id="reunionProposalsList"></div>
+                                <div id="reunionValidateBox"></div>
                             </div>
-                            <div id="reunionProposalsList"></div>
-                            <div id="reunionValidateBox"></div>
                         </div>
                     </div>
 
@@ -3318,15 +3362,15 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202611041100" defer></script>
+    <script src="app.v5.js?v=202611061500" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
     <script src="urgence.js?v=2026110115000" defer></script>
     <script src="flux.js?v=2026110115000" defer></script>
     <script src="reconciliation.js?v=2026110115000" defer></script>
-    <script src="reminders.js?v=2026110115000" defer></script>
+    <script src="reminders.js?v=202611061300" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
-    <script src="releve-review.js?v=2026110115000" defer></script>
+    <script src="releve-review.js?v=202611061500" defer></script>
     <script src="urgence-orders.js?v=2026110115000" defer></script>
     <script>
       // Toggle form function for mobile
@@ -3708,7 +3752,7 @@ window.attemptLogin = function() {
             case 'releve':
               switchView('cabinet');
               setTimeout(() => {
-                document.getElementById('releve-upload-modal').style.display = 'flex'; if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner();
+                if (typeof openReleveUploadFlow === 'function') openReleveUploadFlow(); else { document.getElementById('releve-upload-modal').style.display = 'flex'; if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner(); }
               }, 300);
               break;
             case 'contrat':
@@ -3736,9 +3780,11 @@ window.attemptLogin = function() {
       // Close Relevé Upload Modal
       window.closeRelevéUploadModal = function() {
         document.getElementById('releve-upload-modal').style.display = 'none';
+        if (typeof resetRelevePhotos === 'function') resetRelevePhotos();
         const uploadBody = document.getElementById('releveUploadBody');
         const loadingModal = document.getElementById('releveLoadingModal');
         const analysisModal = document.getElementById('releveAnalysisModal');
+        if (typeof cancelReleveMonth === 'function') cancelReleveMonth();
         if (uploadBody) uploadBody.style.display = 'block';
         if (loadingModal) loadingModal.style.display = 'none';
         if (analysisModal) analysisModal.style.display = 'none';
