@@ -696,6 +696,67 @@ const URGENCE_PROTOCOLS = [
             { title: 'Transmettre', text: 'Heure de début des signes, heure de l’antibiotique, terrain (asplénie, vaccins), constantes → SAMU.' }
         ]
     },
+
+    {
+        id: 'convulsions',
+        title: 'Crise convulsive / État de mal épileptique',
+        icon: '🌀',
+        color: 'danger',
+        intro: 'Toute crise convulsive généralisée qui dure plus de 5 minutes, ou des crises qui se répètent sans reprise de conscience entre elles, = état de mal épileptique = urgence vitale absolue. Protéger, chronométrer, appeler le 15.',
+        criteria: [
+            { t: 'Crise typique', d: 'Perte de connaissance brutale, raideur tonique puis secousses cloniques généralisées, durée habituelle 1 à 3 min, confusion et somnolence post-critique.' },
+            { t: 'Signes de gravité = état de mal', d: 'Crise > 5 min, crises en série sans réveil intermédiaire, patient qui ne reprend pas connaissance, première crise de la vie, traumatisme crânien récent, fièvre, grossesse, anticoagulants, sevrage alcoolique.' },
+            { t: 'Post-critique', d: 'Confusion, somnolence, déficit transitoire (parésie de Todd), morsure de langue latérale, perte d’urines. Un réveil rapide et complet oriente vers une syncope.' },
+            { t: 'Terrain', d: 'Épilepsie connue (observance du traitement ? dernière prise ?), alcool, hypoglycémie, diabète, fièvre, AVC récent, médicaments épileptogènes.' }
+        ],
+        differential: 'Ne pas confondre avec : syncope (brutale, hypotonie, reprise de conscience rapide, pas de clonies prolongées), hypoglycémie (sueurs, tremblements, glycémie capillaire basse — à corriger immédiatement), pseudo-crise psychogène (mouvements variables, yeux fermés, pas de cyanose, reprise immédiate), AVC (déficit sans crise).',
+        material: [
+            'Chronomètre (téléphone)',
+            'Glucomètre + bandelettes',
+            'Oxygène + masque, aspiration de bouche si disponible',
+            'Diazépam (solution buvable pour voie rectale) si disponible au cabinet',
+            'Couverture, matériel de PLS'
+        ],
+        steps: [
+            { title: 'Protéger', text: 'Écarter les objets dangereux, glisser quelque chose de mou sous la tête, desserrer les vêtements. NE RIEN METTRE DANS LA BOUCHE et ne pas contenir les mouvements.' },
+            { title: 'Chronométrer', text: 'Noter l’heure de début et la durée exactes : > 5 min = état de mal. Surveiller en continu la respiration et la couleur des lèvres.' },
+            { title: 'Appeler le 15', text: 'Appeler le 15 (SAMU) pendant la crise. Crise > 5 min ou patient qui ne se réveille pas = urgence absolue, le préciser explicitement.' },
+            { title: 'Après la crise', text: 'Position latérale de sécurité, dégager la bouche après la crise, oxygène si SpO2 < 92 %, surveillance conscience + respiration jusqu’au SAMU. La confusion post-critique est normale 10 à 30 min.' },
+            { title: 'Chercher la cause', text: 'Glycémie capillaire SYSTÉMATIQUE (hypoglycémie = cause réversible immédiate), température, traitement habituel, alcool, traumatisme, grossesse. Transmettre au 15.' },
+            { title: 'Diazépam si crise prolongée', text: 'Si la crise dure > 5 min et que le diazépam est disponible : 0,5 mg/kg en lavement rectal (maximum 10 mg), dose selon le poids dans le calculateur en haut de page. Surveiller la respiration : une benzodiazépine peut déprimer la ventilation — avoir le BAVU prêt.' },
+            { title: 'Surveillance & transmission', text: 'Heure de début, durée, description des mouvements, glycémie, traitement habituel → SAMU. Hospitalisation si première crise, état de mal, cause non évidente ou anomalie neurologique persistante.' }
+        ]
+    },
+
+    {
+        id: 'asthme',
+        title: 'Crise d’asthme aiguë grave',
+        icon: '🫁',
+        color: 'danger',
+        intro: 'Détresse respiratoire avec sibilants : la gravité se juge sur la parole (le patient arrive-t-il à parler en phrases complètes ?), la fréquence respiratoire et la SpO2. Salbutamol immédiat, appel du 15 au moindre signe de gravité.',
+        criteria: [
+            { t: 'Crise typique', d: 'Dyspnée prédominante à l’expiration, sibilants, toux, oppression thoracique, patient connu asthmatique ou contexte allergique / infectieux.' },
+            { t: 'Signes de gravité = 15 immédiat', d: 'Patient incapable de parler en phrases complètes ou de s’allonger, FR > 30/min, FC > 120/min, SpO2 < 92 %, cyanose, sueurs, épuisement, agitation ou trouble de conscience, silence auscultatoire (thorax silencieux = extrême gravité).' },
+            { t: 'Terrain', d: 'Asthme connu (arrêt récent des corticoïdes ? oubli du traitement ?), infection, prise d’AINS ou de bêtabloquant, allergie, antécédent d’intubation pour asthme.' },
+            { t: 'Détresse chez l’enfant', d: 'Refus de s’alimenter ou de parler, tirage, battements des ailes du nez, transpiration, FR très rapide : tout tirage + SpO2 < 92 % = urgence absolue.' }
+        ],
+        differential: 'Ne pas confondre avec : œdème aigu du poumon cardiogénique (orthopnée, crépitants, contexte cardiaque, ECG anormal), choc anaphylactique (urticaire, œdème, contexte allergique — adrénaline IM en première intention), embolie pulmonaire (contexte thrombotique, sans sibilants), inhalation de corps étranger (début brutal, contexte).',
+        material: [
+            'Salbutamol aérosol-doseur + chambre d’inhalation',
+            'Oxygène avec débitmètre',
+            'Oxymètre de pouls (SpO2)',
+            'Corticoïde oral (prednisolone) ou injectable (hydrocortisone)',
+            'Stéthoscope, tensiomètre'
+        ],
+        steps: [
+            { title: 'Évaluer la gravité', text: 'Parle-t-il en phrases complètes ? FR, FC, SpO2, cyanose, tirage, état de conscience. Tout signe de gravité = appel du 15 immédiat, en parallèle du traitement.' },
+            { title: 'Appeler le 15', text: 'Appeler le 15 en précisant « crise d’asthme aiguë grave » + SpO2 + FR. Ne jamais laisser le patient seul.' },
+            { title: 'Salbutamol', text: 'Salbutamol 4 à 10 bouffées via chambre d’inhalation (ou nébulisation 2,5 à 5 mg dans 3 mL de sérum physiologique), renouvelable toutes les 20 min la première heure. Enfant : 2 à 6 bouffées selon l’âge. Position demi-assise.' },
+            { title: 'Oxygène', text: 'Oxygène pour maintenir SpO2 ≥ 92-95 % : 2 à 6 L/min au masque selon la saturation.' },
+            { title: 'Corticoïde', text: 'Corticoïde systématique et précoce : prednisolone orale 1 mg/kg (maximum 60 mg, dose selon le poids dans le calculateur en haut de page) ou hydrocortisone 200 mg IV/IM si voie orale impossible.' },
+            { title: 'Surveillance', text: 'Réévaluer toutes les 15 à 20 min : SpO2, FR, parole. Aggravation, épuisement, thorax silencieux ou SpO2 qui chute = urgence vitale : 15, oxygène haut débit, préparation à la RCP si arrêt.' }
+        ]
+    },
 ];
 
 
@@ -711,6 +772,7 @@ function renderUrgenceProtocols() {
                 <span class="urgence-protocol-toggle" data-toggle="${proto.id}">▾</span>
             </div>
             <div class="urgence-protocol-body">
+                ${proto.id === 'acr' ? `<div class="urgence-rea-panel" data-rea-panel></div>` : ''}
                 <p class="urgence-protocol-intro">${urgenceEscapeHtml(proto.intro)}</p>
                 <div class="urgence-suggested" data-suggested="${proto.id}"></div>
 
@@ -751,8 +813,6 @@ function renderUrgenceProtocols() {
                     <button class="action-btn primary" onclick="urgenceTTSPlay('${proto.id}')">🔊 Écouter le protocole</button>
                     <button class="action-btn" onclick="urgenceTTSStop()" style="display:none;" data-tts="stop-${proto.id}">⏹ Stop</button>
                 </div>
-                ${proto.id === 'acr' ? `
-                <div class="urgence-rea-panel" data-rea-panel></div>` : ''}
             </div>
         </div>`).join('');
 }
@@ -790,7 +850,9 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
         avc: `<strong>Aucun médicament à donner (${fmt(w)} kg)</strong> — pas d’aspirine ni d’antihypertenseur avant avis du 15. Glycémie capillaire obligatoire.`,
         anaphylaxie: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Adrénaline IM : <strong>${fmt(adreIM)} mg = ${fmt(adreIM)} mL</strong> (sol. 1 mg/mL, cuisse)`,
         purpura: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Ceftriaxone : <strong>${fmt(cef)} g = ${fmt(cef * 10)} mL</strong> (1 g/10 mL, IVL ou IM) · Remplissage si choc : <strong>${isAdult ? '500 mL' : fmt(w * 20) + ' mL'}</strong>`,
-        acr: `<strong>Dose suggérée (${fmt(w)} kg) — selon le rythme :</strong> NON CHOCABLE (asystolie/AESP) : adrénaline <strong>${fmt(adreIV)} mg = ${fmt(adreIV)} mL</strong> IV/IO / 3–5 min, dès la voie posée · CHOCABLE (FV/FVT) : adrénaline <strong>${fmt(adreIV)} mg</strong> + amiodarone <strong>${fmt(amio)} mg</strong> seulement APRÈS le 3e choc`
+        acr: `<strong>Dose suggérée (${fmt(w)} kg) — selon le rythme :</strong> NON CHOCABLE (asystolie/AESP) : adrénaline <strong>${fmt(adreIV)} mg = ${fmt(adreIV)} mL</strong> IV/IO / 3–5 min, dès la voie posée · CHOCABLE (FV/FVT) : adrénaline <strong>${fmt(adreIV)} mg</strong> + amiodarone <strong>${fmt(amio)} mg</strong> seulement APRÈS le 3e choc`,
+        convulsions: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Diazépam rectal si crise > 5 min : <strong>${fmt(Math.min(10, 0.5 * w))} mg</strong> (0,5 mg/kg, max 10 mg) · Surveiller la respiration après administration`,
+        asthme: `<strong>Dose suggérée (${fmt(w)} kg)</strong> — Prednisolone orale : <strong>${fmt(Math.min(60, w))} mg</strong> (1 mg/kg, max 60 mg) · Salbutamol : 4 à 10 bouffées via chambre d'inhalation`
     };
 
     document.querySelectorAll('.urgence-suggested').forEach(el => {
@@ -802,22 +864,6 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
 
 
 
-function urgenceToggleCard(cardId) {
-    const card = document.getElementById(cardId);
-    if (!card) return;
-    card.classList.toggle('collapsed');
-    card.classList.toggle('open');
-}
-
-function urgenceOpenCard(cardId) {
-    const card = document.getElementById(cardId);
-    if (card && card.classList.contains('collapsed')) {
-        card.classList.remove('collapsed');
-        card.classList.add('open');
-    }
-}
-
-window.urgenceToggleCard = urgenceToggleCard;
 window.urgenceDaysSinceLastPointage = urgenceDaysSinceLastPointage;
 
 // ---------- Chercheur de DAE (base GeoDAE officielle via proxy /api/dae) ----------
@@ -893,7 +939,6 @@ async function urgenceFindDae() {
     const out = document.getElementById('urgenceDaeResults');
     const btn = document.getElementById('urgenceDaeBtn');
     if (!out) return;
-    urgenceOpenCard('daeCard');
     out.innerHTML = '<div class="urgence-alert info">\u23F3 Localisation et recherche des DAE...</div>';
     if (btn) btn.disabled = true;
 
@@ -914,7 +959,6 @@ async function urgenceFindDaeByAddress() {
     const input = document.getElementById('urgenceDaeAddress');
     const out = document.getElementById('urgenceDaeResults');
     if (!out) return;
-    urgenceOpenCard('daeCard');
     const address = (input && input.value || '').trim();
     if (!address) {
         out.innerHTML = urgenceDaeManualUI('Entrez une adresse, une ville ou un code postal.');
@@ -932,7 +976,6 @@ async function urgenceFindDaeByAddress() {
 async function urgenceFindDaeCabinet() {
     const out = document.getElementById('urgenceDaeResults');
     if (!out) return;
-    urgenceOpenCard('daeCard');
     out.innerHTML = '<div class="urgence-alert info">\u23F3 Recherche de l\u2019adresse du cabinet...</div>';
     try {
         if (!window.supabaseClient || !window.currentUser) {
@@ -1666,8 +1709,6 @@ function initUrgenceModule() {
 
     const weightInput = document.getElementById('urgenceWeightInput');
     if (weightInput) weightInput.addEventListener('input', urgenceComputeDoses);
-    if (weightInput) weightInput.addEventListener('input', urgenceComputeDoses);
-        weightInput.addEventListener('focus', () => urgenceOpenCard('doseCard'));
     urgenceComputeDoses();
     document.getElementById('urgenceProtocolsGrid')?.addEventListener('change', () => urgenceComputeDoses());
 
