@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS reunions (
     cabinet_id UUID REFERENCES cabinets(id),
     user_id UUID REFERENCES auth.users(id),
     titre TEXT,
-    date_reunion DATE NOT NULL,
+    date_reunion DATE,
     heure_reunion TIME DEFAULT '18:00',
     statut TEXT DEFAULT 'fixee',
     odj_genere BOOLEAN DEFAULT FALSE,
@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS reunion_date_proposals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cabinet_id UUID REFERENCES cabinets(id),
     user_id UUID REFERENCES auth.users(id),
+    reunion_id UUID REFERENCES reunions(id) ON DELETE CASCADE,
     titre TEXT,
     date_proposee DATE NOT NULL,
     heure_proposee TIME DEFAULT '18:00',
@@ -54,6 +55,10 @@ CREATE TABLE IF NOT EXISTS reunion_votes (
 ALTER TABLE reunions ADD COLUMN IF NOT EXISTS titre TEXT;
 ALTER TABLE reunion_date_proposals ADD COLUMN IF NOT EXISTS titre TEXT;
 
+-- Sondage rattache a une reunion : date non connue => reunion en preparation (date NULL)
+ALTER TABLE reunions ALTER COLUMN date_reunion DROP NOT NULL;
+ALTER TABLE reunion_date_proposals ADD COLUMN IF NOT EXISTS reunion_id UUID REFERENCES reunions(id) ON DELETE CASCADE;
+
 -- Enable RLS
 ALTER TABLE reunions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reunion_date_proposals ENABLE ROW LEVEL SECURITY;
@@ -73,6 +78,7 @@ $$ LANGUAGE sql SECURITY DEFINER STABLE;
 DROP POLICY IF EXISTS "Cabinet members view reunions" ON reunions;
 DROP POLICY IF EXISTS "Cabinet members insert reunions" ON reunions;
 DROP POLICY IF EXISTS "Cabinet members update reunions" ON reunions;
+DROP POLICY IF EXISTS "Cabinet members delete reunions" ON reunions;
 
 CREATE POLICY "Cabinet members view reunions" ON reunions
     FOR SELECT USING (reunion_same_cabinet(cabinet_id));
@@ -83,15 +89,22 @@ CREATE POLICY "Cabinet members insert reunions" ON reunions
 CREATE POLICY "Cabinet members update reunions" ON reunions
     FOR UPDATE USING (reunion_same_cabinet(cabinet_id));
 
+CREATE POLICY "Cabinet members delete reunions" ON reunions
+    FOR DELETE USING (reunion_same_cabinet(cabinet_id));
+
 -- Policies reunion_date_proposals
 DROP POLICY IF EXISTS "Cabinet members view date proposals" ON reunion_date_proposals;
 DROP POLICY IF EXISTS "Members insert own date proposals" ON reunion_date_proposals;
+DROP POLICY IF EXISTS "Cabinet members delete date proposals" ON reunion_date_proposals;
 
 CREATE POLICY "Cabinet members view date proposals" ON reunion_date_proposals
     FOR SELECT USING (reunion_same_cabinet(cabinet_id));
 
 CREATE POLICY "Members insert own date proposals" ON reunion_date_proposals
     FOR INSERT WITH CHECK (auth.uid() = user_id AND reunion_same_cabinet(cabinet_id));
+
+CREATE POLICY "Cabinet members delete date proposals" ON reunion_date_proposals
+    FOR DELETE USING (reunion_same_cabinet(cabinet_id));
 
 -- Policies reunion_sujets
 DROP POLICY IF EXISTS "Cabinet members view sujets" ON reunion_sujets;

@@ -10911,6 +10911,7 @@ function reunionFmt(dateStr, timeStr) {
 let reunionInitialized = false;
 let reunionMyCabinet = null;
 let reunionCurrentId = null;
+let reunionSondageId = null;
 let reunionEtapeCouranteDetail = null;
 let reunionVoteFeedbackTimer = null;
 
@@ -11011,8 +11012,8 @@ async function reunionLoadReunions() {
             .from('reunions')
             .select('*')
             .eq('cabinet_id', cabinetId)
-            .gte('date_reunion', today)
-            .order('date_reunion', { ascending: true });
+            .or('date_reunion.gte.' + today + ',date_reunion.is.null')
+            .order('created_at', { ascending: true });
         if (data && data.length) {
             const counts = await supabaseClient
                 .from('reunion_sujets')
@@ -11021,7 +11022,14 @@ async function reunionLoadReunions() {
             (counts.data || []).forEach(s => { byReunion[s.reunion_id] = (byReunion[s.reunion_id] || 0) + 1; });
             data.forEach(r => { r._sujets_count = byReunion[r.id] || 0; });
         }
-        return data || [];
+        const list = data || [];
+        list.sort((a, b) => {
+            if (!a.date_reunion && !b.date_reunion) return String(a.created_at).localeCompare(String(b.created_at));
+            if (!a.date_reunion) return -1;
+            if (!b.date_reunion) return 1;
+            return a.date_reunion.localeCompare(b.date_reunion);
+        });
+        return list;
     } catch (e) {
         console.error('[REUNIONS] load reunions error:', e);
         return [];
@@ -11056,13 +11064,14 @@ async function reunionLoadSujetVotes(sujetIds) {
     return votes;
 }
 
-async function reunionLoadProposals(cabinetId) {
-    if (!cabinetId) return [];
+async function reunionLoadProposals(cabinetId, reunionId) {
+    if (!cabinetId || !reunionId) return [];
     try {
         const { data } = await supabaseClient
             .from('reunion_date_proposals')
             .select('*')
             .eq('cabinet_id', cabinetId)
+            .eq('reunion_id', reunionId)
             .gte('date_proposee', new Date().toISOString().slice(0, 10))
             .order('date_proposee', { ascending: true });
         return data || [];
@@ -11197,53 +11206,56 @@ async function reunionRenderList() {
         return;
     }
     const reunions = await reunionLoadReunions();
-    const proposals = await reunionLoadProposals(cabinetId);
     const members = await reunionMembers(cabinetId);
     const byId = reunionMembersById(members);
-    const dateVotes = await reunionLoadDateVotes(proposals.map(p => p.id));
     const total = members.length || 1;
 
     let html = '';
 
-    reunions.forEach(r => {
-        const isToday = reunionIsToday(r);
-        const sujetsCount = r._sujets_count;
-        html += '<div class="reunion-card fixed" data-reunion="' + r.id + '">'
-            + '<div class="reunion-card-main">'
-            + '<div class="reunion-card-title">' + reunionEsc(r.titre || 'Réunion de cabinet') + '</div>'
-            + '<div class="reunion-card-date">📅 ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</div>'
-            + '</div>'
-            + '<div class="odj-vote-count">'
-            + (r.odj_genere ? 'Ordre du jour généré' : 'Ordre du jour non généré')
-            + ' · ' + sujetsCount + ' sujet' + (sujetsCount > 1 ? 's' : '')
-            + (isToday ? ' · ⚠️ Aujourd’hui — votes ouverts' : '')
-            + '</div>'
-            + '<button class="action-btn primary reunion-open-btn" data-reunion="' + r.id + '">Ouvrir la réunion</button>'
-            + '</div>';
-    });
-
-    if (proposals.length) {
-        const iAnswered = proposals.every(p => (dateVotes[p.id] || []).some(v => v.user_id === currentUser.id));
-        const best = reunionBestProposal(proposals, dateVotes);
-        const allAnswered = proposals.every(p => (dateVotes[p.id] || []).length >= total);
-        const sondageTitre = reunionSondageTitre(proposals);
-        html += '<div class="reunion-card pending">'
-            + '<div class="reunion-card-main">'
-            + '<div class="reunion-card-title">' + reunionEsc(sondageTitre || 'Réunion') + ' <span class="sujet-author">— sondage de dates</span></div>'
-            + '<div class="reunion-card-date">⏳ ' + proposals.length + ' date' + (proposals.length > 1 ? 's' : '') + ' proposée' + (proposals.length > 1 ? 's' : '') + ' — réunion en attente de confirmation</div>'
-            + '</div>'
-            + '<div class="odj-vote-count">'
-            + (iAnswered ? '✅ Vous avez donné votre avis sur les dates proposées' : '⚠️ Votre avis est en attente sur les dates proposées')
-            + (best ? ' · Pré-sélection : ' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + ' (' + best.dispo + '/' + total + ' dispo)' : '')
-            + (allAnswered ? ' · tout le monde a répondu' : '')
-            + '</div>'
-            + '<div class="odj-vote-bar">'
-            + '<button class="action-btn odj-vote-btn" data-goto-dates="1">Voir les dates</button>'
-            + '</div>'
-            + '</div>';
+    for (const r of reunions) {
+        if (r.date_reunion) {
+            const isToday = reunionIsToday(r);
+            const sujetsCount = r._sujets_count;
+            html += '<div class="reunion-card fixed" data-reunion="' + r.id + '">'
+                + '<div class="reunion-card-main">'
+                + '<div class="reunion-card-title">' + reunionEsc(r.titre || 'Réunion de cabinet') + '</div>'
+                + '<div class="reunion-card-date">📅 ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</div>'
+                + '</div>'
+                + '<div class="odj-vote-count">'
+                + (r.odj_genere ? 'Ordre du jour généré' : 'Ordre du jour non généré')
+                + ' · ' + sujetsCount + ' sujet' + (sujetsCount > 1 ? 's' : '')
+                + (isToday ? ' · ⚠️ Aujourd’hui — votes ouverts' : '')
+                + '</div>'
+                + '<button class="action-btn primary reunion-open-btn" data-reunion="' + r.id + '">Ouvrir la réunion</button>'
+                + '</div>';
+        } else {
+            const proposals = await reunionLoadProposals(cabinetId, r.id);
+            const dateVotes = await reunionLoadDateVotes(proposals.map(p => p.id));
+            const iAnswered = proposals.length > 0 && proposals.every(p => (dateVotes[p.id] || []).some(v => v.user_id === currentUser.id));
+            const best = reunionBestProposal(proposals, dateVotes);
+            const allAnswered = proposals.length > 0 && proposals.every(p => (dateVotes[p.id] || []).length >= total);
+            html += '<div class="reunion-card pending" data-reunion="' + r.id + '">'
+                + '<div class="reunion-card-main">'
+                + '<div class="reunion-card-title">' + reunionEsc(r.titre || 'Réunion') + ' <span class="sujet-author">— date à définir (sondage)</span></div>'
+                + '<div class="reunion-card-date">⏳ '
+                + (proposals.length ? proposals.length + ' date' + (proposals.length > 1 ? 's' : '') + ' proposée' + (proposals.length > 1 ? 's' : '') + ' — en attente de confirmation' : 'Aucune date proposée pour le moment')
+                + '</div>'
+                + '</div>'
+                + '<div class="odj-vote-count">'
+                + (proposals.length ? (iAnswered ? '✅ Vous avez donné votre avis sur les dates proposées' : '⚠️ Votre avis est en attente sur les dates proposées')
+                    + (best ? ' · Pré-sélection : ' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + ' (' + best.dispo + '/' + total + ' dispo)' : '')
+                    + (allAnswered ? ' · tout le monde a répondu' : '')
+                    : 'Ajoutez des dates via le sondage.')
+                + '</div>'
+                + '<div class="odj-vote-bar">'
+                + '<button class="action-btn odj-vote-btn" data-sondage="' + r.id + '">Participer au sondage</button>'
+                + '<button class="action-btn reunion-open-btn" data-reunion="' + r.id + '">Ouvrir la réunion</button>'
+                + '</div>'
+                + '</div>';
+        }
     }
 
-    if (!reunions.length && !proposals.length) {
+    if (!reunions.length) {
         html = '<div class="odj-empty">Aucune réunion programmée. Lancez un nouveau processus de date ci-dessous.</div>';
     }
 
@@ -11251,8 +11263,8 @@ async function reunionRenderList() {
     listEl.querySelectorAll('.reunion-open-btn').forEach(btn => {
         btn.addEventListener('click', () => reunionOpenDetail(btn.dataset.reunion));
     });
-    listEl.querySelectorAll('[data-goto-dates]').forEach(btn => {
-        btn.addEventListener('click', () => reunionToggleSchedule(true));
+    listEl.querySelectorAll('[data-sondage]').forEach(btn => {
+        btn.addEventListener('click', () => reunionOpenSondage(btn.dataset.sondage));
     });
 }
 
@@ -11302,6 +11314,9 @@ function reunionToggleSchedule(show) {
     const newBtn = document.getElementById('reunionNewDateBtn');
     if (newBtn) newBtn.style.display = show ? 'none' : 'inline-flex';
     if (show) {
+        reunionSondageId = null;
+        const intro = document.getElementById('reunionWizardIntro');
+        if (intro) intro.style.display = 'block';
         const title = document.getElementById('reunionTitleInput');
         if (title) title.value = '';
         const fix = document.getElementById('reunionFixBlock');
@@ -11312,28 +11327,79 @@ function reunionToggleSchedule(show) {
         const unknown = document.getElementById('reunionDateUnknownBtn');
         if (known) known.classList.remove('selected');
         if (unknown) unknown.classList.remove('selected');
+        const list = document.getElementById('reunionProposalsList');
+        if (list) list.innerHTML = '';
+        const vb = document.getElementById('reunionValidateBox');
+        if (vb) vb.innerHTML = '';
         reunionRenderTitleChips();
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+}
+
+function reunionShowWizardSondage() {
+    const intro = document.getElementById('reunionWizardIntro');
+    if (intro) intro.style.display = 'none';
+    const fix = document.getElementById('reunionFixBlock');
+    const sondage = document.getElementById('reunionSondageBlock');
+    if (fix) fix.style.display = 'none';
+    if (sondage) sondage.style.display = 'block';
+}
+
+async function reunionStartSondage() {
+    const titre = reunionGetTitre();
+    const cabinetId = await reunionGetCabinetId();
+    if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
+    try {
+        const { data, error } = await supabaseClient
+            .from('reunions')
+            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, titre: titre, statut: 'sondage', date_reunion: null })
+            .select()
+            .single();
+        if (error) throw error;
+        reunionSondageId = data.id;
+        reunionShowWizardSondage();
+        await reunionRenderProposals();
+        await reunionRenderList();
+    } catch (e) {
+        console.error('[REUNIONS] start sondage error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
+}
+
+async function reunionOpenSondage(reunionId) {
+    reunionSondageId = reunionId;
+    const section = document.getElementById('reunionScheduleSection');
+    if (!section) return;
+    section.style.display = 'block';
+    const newBtn = document.getElementById('reunionNewDateBtn');
+    if (newBtn) newBtn.style.display = 'none';
+    reunionShowWizardSondage();
+    await reunionRenderProposals();
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function reunionShowDateMode(fixe) {
     const fix = document.getElementById('reunionFixBlock');
     const sondage = document.getElementById('reunionSondageBlock');
     if (fix) fix.style.display = fixe ? 'block' : 'none';
-    if (sondage) sondage.style.display = fixe ? 'none' : 'block';
+    if (sondage) sondage.style.display = 'none';
     const known = document.getElementById('reunionDateKnownBtn');
     const unknown = document.getElementById('reunionDateUnknownBtn');
     if (known) known.classList.toggle('selected', fixe);
     if (unknown) unknown.classList.toggle('selected', !fixe);
+    if (!fixe) {
+        if (reunionSondageId) reunionShowWizardSondage();
+        else reunionStartSondage();
+    }
 }
 
 async function reunionRenderProposals() {
     const list = document.getElementById('reunionProposalsList');
     if (!list) return;
     const cabinetId = await reunionGetCabinetId();
-    if (!cabinetId) { list.innerHTML = ''; return; }
+    if (!cabinetId || !reunionSondageId) { list.innerHTML = ''; const vb = document.getElementById('reunionValidateBox'); if (vb) vb.innerHTML = ''; return; }
     try {
-        const data = await reunionLoadProposals(cabinetId);
+        const data = await reunionLoadProposals(cabinetId, reunionSondageId);
         if (!data.length) { list.innerHTML = ''; const vb = document.getElementById('reunionValidateBox'); if (vb) vb.innerHTML = ''; return; }
         const members = await reunionMembers(cabinetId);
         const byId = reunionMembersById(members);
@@ -11381,14 +11447,31 @@ async function reunionRenderValidateBox(proposals, votes, members) {
         + 'Date pré-sélectionnée : <strong>' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + '</strong> (' + best.dispo + '/' + total + ' disponibles)'
         + '</div>'
         + '<button class="action-btn primary" id="reunionValidateBtn" style="margin-top:10px;">Valider cette date</button>';
-    box.querySelector('#reunionValidateBtn').addEventListener('click', () => {
-        const dateEl = document.getElementById('reunionFixDate');
-        const timeEl = document.getElementById('reunionFixTime');
-        if (!dateEl) return;
-        dateEl.value = best.p.date_proposee;
-        if (timeEl) timeEl.value = best.p.heure_proposee || '18:00';
-        reunionFixDate();
-    });
+    box.querySelector('#reunionValidateBtn').addEventListener('click', () => reunionValidateDate(reunionSondageId, best.p));
+}
+
+async function reunionValidateDate(reunionId, proposal) {
+    if (!reunionId || !proposal) return;
+    if (!confirm('Fixer la réunion le ' + reunionFmt(proposal.date_proposee, proposal.heure_proposee) + ' ? Le sondage sera clos.')) return;
+    try {
+        const { error } = await supabaseClient
+            .from('reunions')
+            .update({ date_reunion: proposal.date_proposee, heure_reunion: proposal.heure_proposee || '18:00', statut: 'fixee' })
+            .eq('id', reunionId);
+        if (error) throw error;
+        const { error: delErr } = await supabaseClient
+            .from('reunion_date_proposals')
+            .delete()
+            .eq('reunion_id', reunionId);
+        if (delErr) throw delErr;
+        reunionSondageId = null;
+        reunionToggleSchedule(false);
+        await reunionRenderList();
+        alert('Date validée : la réunion est fixée et le sondage est clos.');
+    } catch (e) {
+        console.error('[REUNIONS] validate date error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
 }
 
 async function reunionDateVote(proposalId, vote) {
@@ -11424,10 +11507,11 @@ async function reunionProposeDate() {
     const titre = reunionGetTitre();
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
+    if (!reunionSondageId) { await reunionStartSondage(); if (!reunionSondageId) return; }
     try {
         const { error } = await supabaseClient
             .from('reunion_date_proposals')
-            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, titre: titre, date_proposee: date, heure_proposee: time });
+            .insert({ cabinet_id: cabinetId, user_id: currentUser.id, reunion_id: reunionSondageId, titre: titre, date_proposee: date, heure_proposee: time });
         if (error) throw error;
         document.getElementById('reunionDateInput').value = '';
         await reunionRenderProposals();
@@ -11450,11 +11534,45 @@ async function reunionFixDate() {
             .from('reunions')
             .insert({ cabinet_id: cabinetId, user_id: currentUser.id, titre: titre, date_reunion: date, heure_reunion: time, statut: 'fixee' });
         if (error) throw error;
+        reunionToggleSchedule(false);
         await reunionRenderProposals();
         await reunionRenderList();
         alert('Réunion « ' + titre + ' » fixée le ' + reunionFmt(date, time) + '.');
     } catch (e) {
         console.error('[REUNIONS] fix error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
+}
+
+async function reunionReportDate(reunionId, date, time) {
+    try {
+        const { error } = await supabaseClient
+            .from('reunions')
+            .update({ date_reunion: date, heure_reunion: time, statut: 'fixee' })
+            .eq('id', reunionId);
+        if (error) throw error;
+        await reunionRenderDetail();
+        await reunionRenderList();
+        alert('Réunion reportée au ' + reunionFmt(date, time) + '. Les propositions de sujets sont rouvertes jusqu’au jour de la réunion ; les votes auront lieu le jour J.');
+    } catch (e) {
+        console.error('[REUNIONS] report error:', e);
+        alert('Erreur : ' + (e.message || e));
+    }
+}
+
+async function reunionDeleteReunion(reunionId) {
+    if (!reunionId) return;
+    if (!confirm('Supprimer cette réunion ? Ses sujets et son éventuel sondage de dates seront supprimés.')) return;
+    try {
+        const { error } = await supabaseClient
+            .from('reunions')
+            .delete()
+            .eq('id', reunionId);
+        if (error) throw error;
+        await reunionCloseDetail();
+        await reunionRenderList();
+    } catch (e) {
+        console.error('[REUNIONS] delete reunion error:', e);
         alert('Erreur : ' + (e.message || e));
     }
 }
@@ -11496,6 +11614,7 @@ async function reunionGetCurrent() {
 
 // Étape courante selon la période : propositions avant J, ODJ le jour J, CR 3h après l'heure de réunion
 function reunionEtape(r) {
+    if (!r.date_reunion) return 'propositions';
     const now = Date.now();
     const jour = new Date(r.date_reunion + 'T00:00').getTime();
     const jourSuivant = jour + 24 * 3600 * 1000;
@@ -11520,10 +11639,22 @@ async function reunionRenderDetail() {
     const etape = reunionEtape(r);
     const navEtape = reunionEtapeCouranteDetail || etape;
 
+    const dateLabel = r.date_reunion
+        ? reunionFmt(r.date_reunion, r.heure_reunion)
+        : 'date à définir — sondage en cours';
     let html = '<div class="module-card">'
         + '<div class="reunion-detail-header">'
-        + '<h3>' + (r.titre ? reunionEsc(r.titre) + ' <span class="sujet-author">· ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion)) + '</span>' : 'Réunion du ' + reunionEsc(reunionFmt(r.date_reunion, r.heure_reunion))) + '</h3>'
+        + '<h3>' + (r.titre ? reunionEsc(r.titre) + ' <span class="sujet-author">· ' + reunionEsc(dateLabel) + '</span>' : 'Réunion du ' + reunionEsc(dateLabel)) + '</h3>'
+        + '<div style="display:flex; gap:8px; flex-wrap:wrap;">'
+        + (r.date_reunion ? '<button class="action-btn" id="reunionReportBtn">Reporter la date</button>' : '')
+        + '<button class="action-btn" id="reunionDeleteBtn">Supprimer la réunion</button>'
         + '<button class="action-btn" id="reunionDetailCloseBtn">← Retour aux réunions</button>'
+        + '</div>'
+        + '</div>'
+        + '<div id="reunionReportRow" class="reunion-date-row" style="display:none; margin-top:12px;">'
+        + '<input type="date" id="reunionReportDate" class="form-input">'
+        + '<input type="time" id="reunionReportTime" class="form-input">'
+        + '<button class="action-btn primary" id="reunionReportConfirmBtn">Confirmer le report</button>'
         + '</div>'
         + '<div class="odj-empty">Étape actuelle : <strong>' + reunionEtapeLabel(etape) + '</strong>'
         + (etape === 'propositions' ? ' — jusqu’au jour de la réunion, chaque associé peut ajouter des sujets.' : '')
@@ -11541,6 +11672,27 @@ async function reunionRenderDetail() {
     detailEl.style.display = 'block';
 
     detailEl.querySelector('#reunionDetailCloseBtn').addEventListener('click', reunionCloseDetail);
+    const reportBtn = detailEl.querySelector('#reunionReportBtn');
+    if (reportBtn) reportBtn.addEventListener('click', () => {
+        const row = detailEl.querySelector('#reunionReportRow');
+        if (!row) return;
+        row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+        const dateEl = detailEl.querySelector('#reunionReportDate');
+        const timeEl = detailEl.querySelector('#reunionReportTime');
+        if (dateEl && !dateEl.value) dateEl.value = r.date_reunion;
+        if (timeEl && !timeEl.value) timeEl.value = r.heure_reunion || '18:00';
+    });
+    const reportConfirm = detailEl.querySelector('#reunionReportConfirmBtn');
+    if (reportConfirm) reportConfirm.addEventListener('click', async () => {
+        const dateEl = detailEl.querySelector('#reunionReportDate');
+        const timeEl = detailEl.querySelector('#reunionReportTime');
+        const date = dateEl?.value;
+        const time = timeEl?.value || '18:00';
+        if (!date) { alert('Choisissez la nouvelle date.'); return; }
+        await reunionReportDate(r.id, date, time);
+    });
+    const deleteBtn = detailEl.querySelector('#reunionDeleteBtn');
+    if (deleteBtn) deleteBtn.addEventListener('click', () => reunionDeleteReunion(r.id));
     detailEl.querySelectorAll('.sub-tab[data-etape]').forEach(btn => {
         btn.addEventListener('click', () => {
             reunionEtapeCouranteDetail = btn.dataset.etape;
@@ -11959,6 +12111,8 @@ async function reunionInit() {
     if (knownBtn) knownBtn.addEventListener('click', () => reunionShowDateMode(true));
     const unknownBtn = document.getElementById('reunionDateUnknownBtn');
     if (unknownBtn) unknownBtn.addEventListener('click', () => reunionShowDateMode(false));
+    const closeBtn = document.getElementById('reunionWizardCloseBtn');
+    if (closeBtn) closeBtn.addEventListener('click', () => reunionToggleSchedule(false));
 }
 
 window.reunionInit = reunionInit;
