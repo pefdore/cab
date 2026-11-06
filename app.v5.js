@@ -11196,6 +11196,26 @@ window.renderProfileCabinetBox = renderProfileCabinetBox;
 
 // ---------- Vue liste des réunions ----------
 
+function reunionSetBadge(el, count) {
+    if (!el) return;
+    let b = el.querySelector('.nav-badge');
+    if (count > 0) {
+        if (!b) {
+            b = document.createElement('span');
+            b.className = 'nav-badge';
+            el.appendChild(b);
+        }
+        b.textContent = count > 9 ? '9+' : String(count);
+    } else if (b) {
+        b.remove();
+    }
+}
+
+function reunionUpdateNavBadges(pendingSondages) {
+    document.querySelectorAll('a[data-view="cabinet"]').forEach(el => reunionSetBadge(el, pendingSondages));
+    reunionSetBadge(document.querySelector('.cabinet-tab[data-tab="reunions"]'), pendingSondages);
+}
+
 async function reunionRenderList() {
     const listEl = document.getElementById('reunionsList');
     const detailEl = document.getElementById('reunionDetailView');
@@ -11203,6 +11223,7 @@ async function reunionRenderList() {
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) {
         listEl.innerHTML = '<div class="odj-empty">Aucun cabinet associé à votre profil.</div>';
+        reunionUpdateNavBadges(0);
         return;
     }
     const reunions = await reunionLoadReunions();
@@ -11211,6 +11232,7 @@ async function reunionRenderList() {
     const total = members.length || 1;
 
     let html = '';
+    let pendingSondages = 0;
 
     for (const r of reunions) {
         if (r.date_reunion) {
@@ -11232,6 +11254,7 @@ async function reunionRenderList() {
             const proposals = await reunionLoadProposals(cabinetId, r.id);
             const dateVotes = await reunionLoadDateVotes(proposals.map(p => p.id));
             const iAnswered = proposals.length > 0 && proposals.every(p => (dateVotes[p.id] || []).some(v => v.user_id === currentUser.id));
+            if (proposals.length > 0 && !iAnswered) pendingSondages++;
             const best = reunionBestProposal(proposals, dateVotes);
             const allAnswered = proposals.length > 0 && proposals.every(p => (dateVotes[p.id] || []).length >= total);
             html += '<div class="reunion-card pending" data-reunion="' + r.id + '">'
@@ -11266,6 +11289,7 @@ async function reunionRenderList() {
     listEl.querySelectorAll('[data-sondage]').forEach(btn => {
         btn.addEventListener('click', () => reunionOpenSondage(btn.dataset.sondage));
     });
+    reunionUpdateNavBadges(pendingSondages);
 }
 
 // ---------- Nouveau processus de date ----------

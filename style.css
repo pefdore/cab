@@ -14360,3 +14360,37 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     #reunionReportRow .form-input { min-width: 0; }
     #reunionReportRow .action-btn { width: 100%; }
 }
+
+/* ---- Badges de notification (nav Cabinet + onglet Réunions) ---- */
+.nav-item[data-view="cabinet"],
+.mobile-nav-item[data-view="cabinet"],
+.cabinet-tab[data-tab="reunions"] { position: relative; }
+
+.nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #d93036;
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(217, 48, 54, 0.45);
+    border: 2px solid var(--color-bg, #fff);
+    box-sizing: content-box;
+    pointer-events: none;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+.cabinet-tab .nav-badge {
+    top: -4px;
+    right: -4px;
+    border-color: var(--color-bg-elevated, var(--color-bg, #fff));
+}
+[data-theme="dark"] .nav-badge { background: #ff6b6b; border-color: #1e1e2e; }
