@@ -478,12 +478,14 @@ window.attemptLogin = function() {
                     Flux
                     <span id="fluxNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#ef4444; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
                 </a>
-                <a href="#" class="nav-item" data-view="history">
+                <a href="#" class="nav-item" data-view="affaires" style="position:relative;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14,2 14,8 20,8"/>
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                        <rect x="8" y="2" width="8" height="4" rx="1"/>
+                        <path d="M9 14l2 2 4-4"/>
                     </svg>
-                    Documents
+                    Affaires
+                    <span id="affairesNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#ef4444; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
                 </a>
                 <a href="#" class="nav-item" data-view="urgence">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -503,7 +505,7 @@ window.attemptLogin = function() {
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                     </svg>
-                    Paramètres
+                    Plus
                     <span id="secNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#f59e0b; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
                 </a>
             </nav>
@@ -947,20 +949,6 @@ window.attemptLogin = function() {
                         <p class="md-headline-sub">Chaque mouvement validé depuis les relevés importés. Le dashboard s'alimente automatiquement de ces données.</p>
                     </div>
 
-                    <!-- Reprise d'import en cours -->
-                    <div id="flux-releve-resume" style="display:none;"></div>
-
-                    <div class="flux-todo-wrap">
-                    <div class="flux-todo-head">À faire</div>
-                    <div class="flux-chips-row">
-                        <!-- Rappels relevés -->
-                        <div id="flux-reminders"></div>
-
-                        <!-- Rapprochement commandes -->
-                        <div id="flux-recon-pending"></div>
-                    </div>
-                    </div>
-
 <div class="flux-hero">
                     <div class="flux-hero-month">
                         <button class="fhero-arrow" onclick="fluxChangeMonth(-1)" aria-label="Mois précédent">‹</button>
@@ -1144,6 +1132,31 @@ window.attemptLogin = function() {
                 <div id="documentsList" class="documents-list"></div>
             </section>
 
+            <!-- Affaires View -->
+            <section id="view-affaires" class="view">
+                <div class="module-card" style="padding:18px; margin-bottom:16px;">
+                    <h2 style="margin:0; font-size:1.15rem;">Affaires</h2>
+                    <p style="margin:6px 0 0; font-size:0.85rem; color:var(--color-text-secondary);">Les tâches à faire de temps en temps : solde d'ouverture, relevés à intégrer, rapprochement des dépenses, pointage des stocks.</p>
+                </div>
+
+                <!-- Reprise d'import en cours -->
+                <div id="affaires-releve-resume" style="display:none;"></div>
+
+                <!-- 1. Solde bancaire au 31/12 -->
+                <div id="affaires-opening-balance"></div>
+
+                <!-- 2. Relevés à intégrer -->
+                <div id="affaires-releve-task"></div>
+                <div id="affaires-releve-checklist"></div>
+
+                <!-- 3. Rapprochement des dépenses -->
+                <div id="affaires-recon-task"></div>
+                <div id="affaires-recon-pending"></div>
+
+                <!-- 4. Pointage des stocks -->
+                <div id="affaires-stock-pointage"></div>
+            </section>
+
             <!-- Settings View -->
             <section id="view-settings" class="view">
                 <!-- Settings Header -->
@@ -1155,13 +1168,29 @@ window.attemptLogin = function() {
                         <span>Retour</span>
                     </button>
                     <div class="settings-title-block">
-                        <h2 id="settingsTitle">Paramètres</h2>
+                        <h2 id="settingsTitle">Plus</h2>
                         <span class="settings-subtitle" id="settingsSubtitle">Gérez votre compte et vos préférences</span>
                     </div>
                 </div>
 
                 <!-- Settings Menu (main page) -->
                 <div id="settings-menu" class="settings-menu">
+                    <button type="button" class="settings-card" data-view="history" onclick="switchView('history')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14,2 14,8 20,8"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Documents</h3>
+                            <p>Feuilles de cotation, comptabilité et exports</p>
+                            <span class="settings-card-value" id="menuDocsValue"></span>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
                     <button type="button" class="settings-card" data-settings-page="profil" onclick="openSettingsPage('profil')">
                         <div class="settings-card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -3320,12 +3349,13 @@ window.attemptLogin = function() {
                 </svg>
                 <span style="position:relative;">Flux<span id="fluxNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#ef4444; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
-            <a href="#" class="mobile-nav-item" data-view="history">
+            <a href="#" class="mobile-nav-item" data-view="affaires" style="position:relative;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14,2 14,8 20,8"/>
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                    <rect x="8" y="2" width="8" height="4" rx="1"/>
+                    <path d="M9 14l2 2 4-4"/>
                 </svg>
-                <span>Docs</span>
+                <span style="position:relative;">Affaires<span id="affairesNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#ef4444; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
             <a href="#" class="mobile-nav-item" data-view="urgence">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3344,7 +3374,7 @@ window.attemptLogin = function() {
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
-                <span style="position:relative;">Paramètres<span id="secNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#f59e0b; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
+                <span style="position:relative;">Plus<span id="secNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#f59e0b; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
         </nav>
     </div>
@@ -3390,6 +3420,7 @@ window.attemptLogin = function() {
     <script src="flux.js?v=2026110115000" defer></script>
     <script src="reconciliation.js?v=2026110115000" defer></script>
     <script src="reminders.js?v=202611062000" defer></script>
+    <script src="affaires.js?v=202611071000" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
     <script src="releve-review.js?v=202611062200" defer></script>
     <script src="urgence-orders.js?v=2026110115000" defer></script>

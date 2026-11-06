@@ -71,20 +71,11 @@ function renderReminders() {
     const missing = remindersMissingMonths();
     const recent = missing.slice(0, 3);
 
-    // Badge sur la nav (desktop + mobile)
-    ['fluxNavBadge', 'fluxNavBadgeMobile'].forEach(id => {
-        const badge = document.getElementById(id);
-        if (!badge) return;
-        if (recent.length > 0) {
-            badge.textContent = recent.length;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
-    });
+    // Badge global de l'onglet Affaires (calcule par affaires.js)
+    if (typeof window.updateAffairesBadge === 'function') window.updateAffairesBadge();
 
     // Banniere de reprise d'import en cours
-    const resumeZone = document.getElementById('flux-releve-resume');
+    const resumeZone = document.getElementById('affaires-releve-resume');
     if (resumeZone) {
         if (typeof hasSavedReview === 'function' && hasSavedReview()) {
             const raw = localStorage.getItem('releve_review_progress_v1');
@@ -105,11 +96,26 @@ function renderReminders() {
         } else {
             resumeZone.innerHTML = '';
             resumeZone.style.display = 'none';
+            // import lance sur un autre appareil (ex. photos prises sur le telephone)
+            if (typeof hasRemoteSavedReview === 'function' && typeof resumeRemoteReview === 'function') {
+                hasRemoteSavedReview().then(ok => {
+                    if (!ok || resumeZone.innerHTML) return;
+                    resumeZone.innerHTML = `
+                        <div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.4); border-radius:10px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <span style="font-size:0.8rem;">📱 <strong>Un import de relevé a été lancé sur un autre appareil</strong> — reprenez-le ici, les photos sont synchronisées.</span>
+                            <span style="display:flex; gap:8px;">
+                                <button class="action-btn primary" style="padding:6px 14px; font-size:0.78rem;" onclick="resumeSavedReview()">▶ Reprendre ici</button>
+                                <button class="action-btn" style="padding:6px 14px; font-size:0.78rem;" onclick="clearSavedReview(); renderReminders();">Abandonner</button>
+                            </span>
+                        </div>`;
+                    resumeZone.style.display = 'block';
+                });
+            }
         }
     }
 
     // Checklist annuelle dans la vue Flux (pliee par defaut)
-    const holder = document.getElementById('flux-reminders');
+    const holder = document.getElementById('affaires-releve-checklist');
     if (!holder) return;
     const all = remindersYearMonths();
     const okCount = all.filter(m => m.imported).length;

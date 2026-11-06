@@ -212,27 +212,39 @@ window.applyReviewSuggestion = applyReviewSuggestion;
 
 // Ajoute une ligne non detectee automatiquement (saisie manuelle dans la revue)
 window.reviewAddLine = function() {
-    const newLine = {
-        date: new Date().toISOString().split('T')[0],
-        description: 'Ligne ajoutée manuellement',
-        amount: 0,
-        type: 'dépense',
-        category: 'autres_depenses',
-        sous_categorie: '',
-        comment: '',
-        confirmed: false,
-        manual: true
-    };
     // inserer a la suite de la derniere ligne traitee (validee ou rejettee),
     // pas en fin de liste
     let insertAt = pendingTransactions.length;
     for (let i = pendingTransactions.length - 1; i >= 0; i--) {
         if (pendingTransactions[i].confirmed || pendingTransactions[i].rejected) { insertAt = i + 1; break; }
     }
+    // contexte : la page affichee a l'ecran (navigation manuelle prioritaire),
+    // sinon la page de la ligne precedente ; la date vient de la ligne precedente
+    const ctxTx = pendingTransactions[insertAt - 1] || pendingTransactions[window._reviewState.current];
+    const ctxPage = (window._reviewState.pdfPage != null)
+        ? window._reviewState.pdfPage
+        : ((ctxTx && ctxTx._page != null) ? ctxTx._page : ((window.relevePageThumbs || [])[0]?.page ?? null));
+    const newLine = {
+        date: (ctxTx && ctxTx.date) || new Date().toISOString().split('T')[0],
+        description: '',
+        amount: 0,
+        type: 'dépense',
+        category: 'autres_depenses',
+        sous_categorie: '',
+        comment: '',
+        confirmed: false,
+        manual: true,
+        _page: ctxPage
+    };
     pendingTransactions.splice(insertAt, 0, newLine);
     window._reviewState.current = insertAt;
+    // rester sur la page en cours de traitement : le bandeau ne doit PAS
+    // repartir sur la premiere page
+    window._reviewState.pdfPage = ctxPage;
     renderReleveReview();
     updatePendingCount();
+    const descInput = document.querySelector(`.review-line[data-index="${insertAt}"] input[onchange*="description"]`);
+    if (descInput) { try { descInput.focus(); } catch (e) {} }
 };
 
 window.setReviewCurrent = function(index) {
@@ -805,6 +817,8 @@ function saveReviewProgress() {
                 }))
             }));
         }
+        // reprise cross-device : pousser aussi vers Supabase (throttle interne)
+        if (typeof saveReviewProgressRemote === 'function') saveReviewProgressRemote();
     } catch (e) {
         console.error('[REVIEW] save progress:', e);
     }
@@ -824,7 +838,11 @@ window.hasSavedReview = function() {
 window.resumeSavedReview = async function() {
     try {
         const raw = localStorage.getItem(REVIEW_STORAGE_KEY);
-        if (!raw) return false;
+        if (!raw) {
+            // pas de reprise locale : chercher un import lance sur un autre appareil
+            if (typeof resumeRemoteReview === 'function') return await resumeRemoteReview();
+            return false;
+        }
         const data = JSON.parse(raw);
         pendingTransactions = (data.transactions || []).map(t => ({ ...t }));
         window._reviewState.current = Math.min(data.current || 0, pendingTransactions.length - 1);
@@ -928,11 +946,180 @@ async function restoreReviewPdfFromArchive(data) {
 }
 window.restoreReviewPdfFromArchive = restoreReviewPdfFromArchive;
 
+// ===== Reprise cross-device : progression + pages persistees sur Supabase =====
+// Les photos prises sur le telephone peuvent etre traitees sur l'ordinateur :
+// le panier d'import en cours est pousse dans le bucket "releves" sous pending/.
+function reviewRemoteBase() {
+    return (window.supabaseClient && window.currentUser?.id) ? (window.currentUser.id + '/pending') : null;
+}
+
+function reviewBlobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = reject;
+        fr.readAsDataURL(blob);
+    });
+}
+
+function reviewDataUrlToBlob(dataUrl) {
+    try {
+        const [head, b64] = String(dataUrl).split(',');
+        const mime = (head.match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
+        const bin = atob(b64);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return new Blob([arr], { type: mime });
+    } catch (e) { return null; }
+}
+
+// pousse la progression (throttle) + les pages (une seule fois par import)
+async function saveReviewProgressRemote() {
+    const base = reviewRemoteBase();
+    if (!base) return;
+    const now = Date.now();
+    if (window._reviewRemoteSaveAt && now - window._reviewRemoteSaveAt < 15000) return;
+    window._reviewRemoteSaveAt = now;
+    try {
+        await window.supabaseClient.storage.createBucket('releves', { public: false });
+    } catch (e) {}
+    try {
+        // pages hi-res : une seule fois par import
+        if (!window._reviewRemotePagesSaved) {
+            const thumbs = window.relevePageThumbs || [];
+            if (window._releveIsPhotos) {
+                for (const pd of thumbs) {
+                    if (!pd.hiresDataUrl) continue;
+                    const blob = reviewDataUrlToBlob(pd.hiresDataUrl);
+                    if (!blob) continue;
+                    await window.supabaseClient.storage.from('releves')
+                        .upload(base + '/page-' + pd.page + '.jpg', blob, { upsert: true, contentType: 'image/jpeg' });
+                }
+                window._reviewRemotePagesSaved = true;
+            } else if (window._relevePdfBytes) {
+                await window.supabaseClient.storage.from('releves')
+                    .upload(base + '/releve.pdf', window._relevePdfBytes, { upsert: true, contentType: 'application/pdf' });
+                window._reviewRemotePagesSaved = true;
+            }
+        }
+        const payload = {
+            savedAt: Date.now(),
+            kind: window._releveIsPhotos ? 'photos' : 'pdf',
+            fileName: window._releveCurrentFile?.name || null,
+            current: window._reviewState.current,
+            transactions: pendingTransactions.map(t => ({
+                date: t.date, description: t.description, amount: t.amount, type: t.type,
+                category: t.category, sous_categorie: t.sous_categorie || '',
+                comment: t.comment || '',
+                confirmed: !!t.confirmed, rejected: !!t.rejected,
+                duplicate: !!t.duplicate, manual: !!t.manual,
+                _page: t._page, _line: t._line
+            })),
+            pages: (window.relevePageThumbs || []).map(pd => ({
+                page: pd.page, thumb: pd.thumb, itemRects: pd.itemRects || [],
+                pageWidth: pd.pageWidth, pageHeight: pd.pageHeight
+            }))
+        };
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        await window.supabaseClient.storage.from('releves')
+            .upload(base + '/progress.json', blob, { upsert: true, contentType: 'application/json' });
+    } catch (e) {
+        console.error('[REVIEW] save remote progress:', e);
+    }
+}
+window.saveReviewProgressRemote = saveReviewProgressRemote;
+
+// une reprise existe-t-elle sur un autre appareil ?
+window.hasRemoteSavedReview = async function() {
+    const base = reviewRemoteBase();
+    if (!base) return false;
+    try {
+        const { data, error } = await window.supabaseClient.storage.from('releves').download(base + '/progress.json');
+        if (error || !data) return false;
+        const txt = await data.text();
+        const parsed = JSON.parse(txt);
+        const txs = parsed.transactions || [];
+        return txs.some(t => !t.confirmed && !t.rejected);
+    } catch (e) {
+        return false;
+    }
+};
+
+// recharge une reprise depuis Supabase (photos prises sur un autre appareil)
+window.resumeRemoteReview = async function() {
+    const base = reviewRemoteBase();
+    if (!base) return false;
+    try {
+        const { data, error } = await window.supabaseClient.storage.from('releves').download(base + '/progress.json');
+        if (error || !data) return false;
+        const parsed = JSON.parse(await data.text());
+        const txs = parsed.transactions || [];
+        if (!txs.length) return false;
+        pendingTransactions = txs.map(t => ({ ...t }));
+        window._reviewState.current = Math.min(parsed.current || 0, pendingTransactions.length - 1);
+        window._releveIsPhotos = parsed.kind === 'photos';
+        window._reviewRemotePagesSaved = true;
+        if (parsed.fileName) window._releveCurrentFile = { name: parsed.fileName, type: parsed.kind === 'photos' ? 'image/jpeg' : 'application/pdf' };
+        window.relevePageThumbs = [];
+        // pages : photos JPEG ou PDF
+        for (const pd of (parsed.pages || [])) {
+            let hiresDataUrl = null;
+            try {
+                const { data: pageBlob } = await window.supabaseClient.storage.from('releves').download(base + '/page-' + pd.page + '.jpg');
+                if (pageBlob) hiresDataUrl = await reviewBlobToDataUrl(pageBlob);
+            } catch (e) {}
+            window.relevePageThumbs.push({
+                page: pd.page, thumb: pd.thumb, hiresDataUrl,
+                text: '', itemRects: pd.itemRects || [],
+                pageWidth: pd.pageWidth, pageHeight: pd.pageHeight
+            });
+        }
+        if (parsed.kind !== 'photos' && typeof buildRelevePageThumbs === 'function' && window.pdfjsLib) {
+            // PDF : toujours le recharger via pdf.js (haute resolution, zoom, extraits
+            // recadres) — les vignettes du payload ne sont qu'un filet de secours
+            try {
+                const { data: pdfBlob } = await window.supabaseClient.storage.from('releves').download(base + '/releve.pdf');
+                if (pdfBlob) {
+                    window._relevePdfBytes = pdfBlob;
+                    window._reviewPdfIdbSavedFor = pdfBlob;
+                    const pdf = await window.pdfjsLib.getDocument({ data: await pdfBlob.arrayBuffer() }).promise;
+                    window._releveCurrentPdf = pdf;
+                    await buildRelevePageThumbs(pdf);
+                }
+            } catch (e) {
+                console.error('[REVIEW] resume remote pdf:', e);
+            }
+        }
+        document.getElementById('releve-upload-modal').style.display = 'none';
+        openReleveReview();
+        if (typeof showToast === 'function') {
+            const done = pendingTransactions.filter(t => t.confirmed || t.rejected).length;
+            showToast(`Reprise (autre appareil) : ${done}/${pendingTransactions.length} lignes déjà traitées`);
+        }
+        return true;
+    } catch (e) {
+        console.error('[REVIEW] resume remote:', e);
+        return false;
+    }
+};
+
 window.clearSavedReview = function() {
     localStorage.removeItem(REVIEW_STORAGE_KEY);
     window._reviewPdfIdbSavedFor = null;
     window._reviewPhotosIdbSaved = false;
     idbClearPdf();
+    // reprise distante aussi : l'import est termine ou abandonne
+    const base = reviewRemoteBase();
+    if (base && window.supabaseClient) {
+        try {
+            const paths = [base + '/progress.json', base + '/releve.pdf'];
+            const knownPages = (window.relevePageThumbs || []).map(pd => base + '/page-' + pd.page + '.jpg');
+            // sur l'appareil qui ne connait pas les pages, nettoyer 1..30 par securite
+            const guessPages = knownPages.length ? knownPages : Array.from({ length: 30 }, (_, i) => base + '/page-' + (i + 1) + '.jpg');
+            window.supabaseClient.storage.from('releves').remove([...paths, ...guessPages]).catch(() => {});
+        } catch (e) {}
+    }
+    window._reviewRemotePagesSaved = false;
 };
 
 // sauvegarde aussi a chaque changement de ligne courante
@@ -965,10 +1152,21 @@ function showSousCatChips(index, query, isDepense) {
     const q = (query || '').toLowerCase().trim();
     const filtered = q ? all.filter(sc => sc.toLowerCase().includes(q)) : all;
     if (!filtered.length) { chips.style.display = 'none'; return; }
-    chips.innerHTML = filtered.slice(0, 12).map(sc =>
+    chips.innerHTML = filtered.slice(0, 20).map(sc =>
         `<button type="button" class="souscat-chip" onclick="event.stopPropagation(); pickSousCatChip(${index}, ${JSON.stringify(sc).replace(/"/g, '&quot;')})">${reviewEscapeHtml(sc)}</button>`
     ).join('');
     chips.style.display = 'flex';
+    // mobile : ouvrir au-dessus du champ si la place manque en dessous,
+    // puis derouler pour que les puces soient visibles
+    const input = document.getElementById(`review-souscat-input-${index}`);
+    if (input) {
+        const r = input.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - r.bottom;
+        chips.classList.toggle('up', spaceBelow < 200 && r.top > spaceBelow);
+        requestAnimationFrame(() => {
+            try { chips.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+        });
+    }
 }
 window.showSousCatChips = showSousCatChips;
 

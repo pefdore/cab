@@ -4137,7 +4137,7 @@ function showOverlaySettingsPage(overlay, pageName) {
 
     const h2 = overlay.querySelector('h2');
     if (h2) {
-        h2.innerHTML = `<span class="back-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Paramètres</span> <span class="page-title">${meta.title}</span>`;
+        h2.innerHTML = `<span class="back-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Plus</span> <span class="page-title">${meta.title}</span>`;
         const backLink = h2.querySelector('.back-link');
         if (backLink) {
             backLink.addEventListener('click', () => resetOverlaySettings(overlay));
@@ -4234,7 +4234,7 @@ function resetOverlaySettings(overlay) {
     const backBtn = overlay.querySelector('#settingsBackBtn');
     if (backBtn) backBtn.style.display = 'none';
     const h2 = overlay.querySelector('h2');
-    if (h2) h2.innerHTML = 'Paramètres';
+    if (h2) h2.innerHTML = 'Plus';
     const subtitleEl = overlay.querySelector('#settingsSubtitle');
     if (subtitleEl) subtitleEl.textContent = 'Gérez votre compte et vos préférences';
     const logoutBtn = overlay.querySelector('.mobile-logout-btn');
@@ -4265,7 +4265,7 @@ function updateSettingsHeader(pageName, inOverlay) {
         if (subtitle) subtitle.textContent = meta.subtitle;
     } else {
         if (backBtn) backBtn.style.display = 'none';
-        if (title) title.textContent = 'Paramètres';
+        if (title) title.textContent = 'Plus';
         if (subtitle) subtitle.textContent = 'Gérez votre compte et vos préférences';
     }
 }
@@ -4495,7 +4495,7 @@ window.callLLM = async function(prompt, taskType) {
     let apiKey = localStorage.getItem('groq_api_key') || localStorage.getItem('openrouter_api_key');
     
     if (!apiKey) {
-        throw new Error('Clé API non configurée. Veuillez la configurer dans Paramètres > Préférences.');
+        throw new Error('Clé API non configurée. Veuillez la configurer dans Plus > Préférences.');
     }
     
     const isGroq = apiKey.startsWith('gsk_') || !apiKey.includes('sk-or-');
@@ -4948,9 +4948,10 @@ function switchView(viewName) {
         'flux': 'Flux',
         'urgence': 'Salle d’urgence',
         'history': 'Documents',
+        'affaires': 'Affaires',
         'cabinet': 'Cabinet',
         'admin': 'Administration',
-        'settings': 'Paramètres'
+        'settings': 'Plus'
     };
     
     const mobileTitle = document.getElementById('mobilePageTitle');
@@ -5022,6 +5023,12 @@ function switchView(viewName) {
         loadCabinetData().then(() => {
             if (typeof renderFluxView === 'function') renderFluxView();
         });
+    } else if (viewName === 'affaires') {
+        loadCabinetData().then(() => {
+            if (typeof window.fluxLoadOpeningBalances === 'function') window.fluxLoadOpeningBalances();
+        }).then(() => {
+            if (typeof renderAffairesView === 'function') renderAffairesView();
+        });
     } else if (viewName === 'urgence') {
         if (typeof refreshUrgenceView === 'function') refreshUrgenceView();
     }
@@ -5072,6 +5079,7 @@ async function loadCabinetData() {
         renderAddDepensesRecettes();
         if (typeof renderFluxView === 'function') renderFluxView();
         if (typeof renderReminders === 'function') renderReminders();
+        if (typeof window.affairesRefresh === 'function') window.affairesRefresh();
         try {
             await window.reunionInit();
         } catch (e) {
@@ -11144,7 +11152,7 @@ async function reunionRenderCabinetBanner() {
     const cab = await reunionLoadMyCabinet();
     const label = await reunionCabinetLabel(cab);
     if (!label) {
-        banner.innerHTML = '<div class="odj-empty">⚠️ Aucun cabinet associé à votre profil : les réunions de cabinet ne sont pas disponibles. Associez votre compte à un cabinet (Paramètres > Profil > Mon cabinet).</div>';
+        banner.innerHTML = '<div class="odj-empty">⚠️ Aucun cabinet associé à votre profil : les réunions de cabinet ne sont pas disponibles. Associez votre compte à un cabinet (Plus > Profil > Mon cabinet).</div>';
     } else {
         banner.innerHTML = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong></div>';
     }

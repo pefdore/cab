@@ -154,7 +154,7 @@ window.saveRecon = async function(depenseId) {
 
 // Bloc "à rapprocher" dans la vue Flux
 window.renderReconPending = function() {
-    const container = document.getElementById('flux-recon-pending');
+    const container = document.getElementById('affaires-recon-pending');
     if (!container) return;
     const pending = reconUnmatchedDepenses();
     if (pending.length === 0) {
@@ -198,7 +198,7 @@ window.renderReconPending = function() {
     let timer = null;
     window.renderReconPending = function() {
         clearTimeout(timer);
-        timer = setTimeout(() => { real(); }, 150);
+        timer = setTimeout(() => { real(); if (typeof window.updateAffairesBadge === 'function') window.updateAffairesBadge(); }, 150);
     };
 })();
 
