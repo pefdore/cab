@@ -71,20 +71,11 @@ function renderReminders() {
     const missing = remindersMissingMonths();
     const recent = missing.slice(0, 3);
 
-    // Badge sur la nav (desktop + mobile)
-    ['fluxNavBadge', 'fluxNavBadgeMobile'].forEach(id => {
-        const badge = document.getElementById(id);
-        if (!badge) return;
-        if (recent.length > 0) {
-            badge.textContent = recent.length;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
-    });
+    // Badge global de l'onglet Affaires (calcule par affaires.js)
+    if (typeof window.updateAffairesBadge === 'function') window.updateAffairesBadge();
 
     // Banniere de reprise d'import en cours
-    const resumeZone = document.getElementById('flux-releve-resume');
+    const resumeZone = document.getElementById('affaires-releve-resume');
     if (resumeZone) {
         if (typeof hasSavedReview === 'function' && hasSavedReview()) {
             const raw = localStorage.getItem('releve_review_progress_v1');
@@ -124,7 +115,7 @@ function renderReminders() {
     }
 
     // Checklist annuelle dans la vue Flux (pliee par defaut)
-    const holder = document.getElementById('flux-reminders');
+    const holder = document.getElementById('affaires-releve-checklist');
     if (!holder) return;
     const all = remindersYearMonths();
     const okCount = all.filter(m => m.imported).length;

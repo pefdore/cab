@@ -371,12 +371,12 @@ function secApplySecretarySpace() {
     // dashboard cotation/finances, flux, documents, urgence.
     // Un medecin installé VERROUILLE (en attente de validation) est aussi
     // soustrait a TOUTES ces vues : il ne doit voir que le bandeau d'attente.
-    ['view-dashboard', 'view-flux', 'view-history', 'view-urgence'].forEach(id => {
+    ['view-dashboard', 'view-flux', 'view-history', 'view-urgence', 'view-affaires'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
     document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(item => {
-        if (item.dataset.view && ['dashboard', 'flux', 'history', 'urgence'].includes(item.dataset.view)) {
+        if (item.dataset.view && ['dashboard', 'flux', 'history', 'urgence', 'affaires'].includes(item.dataset.view)) {
             item.style.display = 'none';
         }
     });

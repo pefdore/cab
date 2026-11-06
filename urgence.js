@@ -818,6 +818,7 @@ function urgenceOpenCard(cardId) {
 }
 
 window.urgenceToggleCard = urgenceToggleCard;
+window.urgenceDaysSinceLastPointage = urgenceDaysSinceLastPointage;
 
 // ---------- Chercheur de DAE (base GeoDAE officielle via proxy /api/dae) ----------
 

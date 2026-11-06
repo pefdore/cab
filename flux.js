@@ -115,6 +115,8 @@ async function fluxEditOpeningBalance() {
     }
 }
 window.fluxEditOpeningBalance = fluxEditOpeningBalance;
+window.fluxHasOpeningBalance = fluxHasOpeningBalance;
+window.fluxLoadOpeningBalances = fluxLoadOpeningBalances;
 
 function fluxSelectMonth(key) {
     const parts = key.split('-');
