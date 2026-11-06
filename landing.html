@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Medix.io — Le pilotage de l'activité médicale, enfin simple</title>
-<meta name="description" content="Medix.io est la plateforme tout-en-un des médecins libéraux : cotation CCN, suivi d'activité en temps réel, gestion de cabinet, urgences, remplacements et secrétariat.">
+<title>Cabix.io — Tout ce que votre logiciel médecin ne fait pas</title>
+<meta name="description" content="Cabix.io est la plateforme de gestion des cabinets médicaux : flux financiers, vue à 360° des dépenses, urgences absolues, stocks et réunions de cabinet. Le complément de votre logiciel médecin.">
 <link rel="icon" href="icon-192.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,7 +76,7 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
 .hero-badge strong{background:var(--accent-soft);color:var(--accent-deep);font-weight:700;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
 .hero h1{font-size:clamp(2.6rem,5.6vw,4.2rem);margin-bottom:22px}
 .hero h1 em{font-style:italic;color:var(--accent-deep)}
-.hero .lead{font-size:1.22rem;margin-bottom:36px;max-width:620px}
+.hero .lead{font-size:1.22rem;margin-bottom:36px;max-width:640px}
 .hero-actions{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:20px}
 .hero-note{font-size:.86rem;color:var(--ink-3);display:flex;align-items:center;gap:8px}
 .hero-note svg{width:15px;height:15px;color:var(--accent)}
@@ -102,14 +102,14 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
 .mock-chart .bar{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#2BD4AE,var(--accent));opacity:.9}
 .mock-chart .bar:nth-child(3){background:linear-gradient(180deg,#0E9F7E,#087457)}
 
-/* LOGOS */
+/* TRUST */
 .trust{padding:40px 0 24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}
 .trust p{text-align:center;font-size:.8rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:24px}
 .trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:20px 56px;align-items:center}
 .trust-item{display:flex;align-items:center;gap:9px;font-weight:600;font-size:.92rem;color:var(--ink-2)}
 .trust-item svg{width:19px;height:19px;color:var(--accent)}
 
-/* FEATURES ALT (indy style) */
+/* FEATURES */
 .feature{padding:104px 0}
 .feature:nth-of-type(even){background:#fff}
 .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
@@ -143,6 +143,14 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
 .fc-blob{position:absolute;z-index:-1;border-radius:50%;filter:blur(2px)}
 .blob-a{width:220px;height:220px;background:rgba(14,159,126,.14);top:-60px;left:-70px}
 .blob-b{width:260px;height:260px;background:rgba(11,207,160,.10);bottom:-80px;right:-60px}
+
+/* MODULES GRID */
+.modules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
+.module-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow)}
+.module-card .m-icon{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent-deep);display:grid;place-items:center;margin-bottom:18px}
+.module-card .m-icon svg{width:22px;height:22px}
+.module-card h3{font-size:1.15rem;margin-bottom:8px}
+.module-card p{font-size:.93rem;color:var(--ink-2)}
 
 /* STEPS */
 .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
@@ -199,7 +207,7 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
   .header-cta .btn-primary{display:none}
   .feature-grid{grid-template-columns:1fr;gap:44px}
   .feature-grid.reverse .f-media{order:0}
-  .steps-grid,.testi-grid{grid-template-columns:1fr}
+  .steps-grid,.testi-grid,.modules-grid{grid-template-columns:1fr}
   .footer-grid{grid-template-columns:1fr 1fr;gap:36px}
   .mock-body{grid-template-columns:1fr}
   .mock-side{display:none}
@@ -219,12 +227,12 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
   <div class="container header-inner">
     <a class="logo" href="#">
       <span class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M10 21v-6h4v6"/></svg>
       </span>
-      Medix<span style="color:var(--accent)">.io</span>
+      Cabix<span style="color:var(--accent)">.io</span>
     </a>
     <nav class="nav-links">
-      <a href="#features">Fonctionnalités</a>
+      <a href="#modules">Modules</a>
       <a href="#how">Comment ça marche</a>
       <a href="#testimonials">Avis</a>
       <a href="#faq">FAQ</a>
@@ -238,7 +246,7 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
     </div>
   </div>
   <nav class="mobile-menu" id="mobileMenu">
-    <a href="#features">Fonctionnalités</a>
+    <a href="#modules">Modules</a>
     <a href="#how">Comment ça marche</a>
     <a href="#testimonials">Avis</a>
     <a href="#faq">FAQ</a>
@@ -250,47 +258,58 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
 <section class="hero">
   <div class="container">
     <div class="hero-inner">
-      <div class="hero-badge"><strong>Nouveau</strong> Cotations CCN vérifiées en temps réel, à la seconde.</div>
-      <h1>Le pilotage de l'activité médicale, <em>enfin simple.</em></h1>
-      <p class="lead">Medix.io réunit dans une seule plateforme la cotation de vos actes, le suivi de votre activité en temps réel, la gestion complète de votre cabinet et l'organisation de vos remplacements.</p>
+      <div class="hero-badge"><strong>Cabinet 2.0</strong> La plateforme de gestion pensée pour les cabinets médicaux.</div>
+      <h1>Tout ce que votre logiciel médecin <em>ne fait pas.</em></h1>
+      <p class="lead">Votre logiciel médecin gère vos patients. <strong>Cabix.io gère votre cabinet.</strong> Flux financiers, dépenses, stocks, urgences, réunions : toute la gestion commune de votre cabinet, enfin réunie dans une seule plateforme.</p>
       <div class="hero-actions">
         <a class="btn btn-accent" href="index.html">
           Démarrer gratuitement
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-        <a class="btn btn-ghost" href="#how">Voir comment ça marche</a>
+        <a class="btn btn-ghost" href="#modules">Découvrir les modules</a>
       </div>
       <p class="hero-note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
-        Sans engagement · Données chiffrées &amp; hébergées en Europe
+        Sans engagement · Compatible avec votre logiciel médecin · Données chiffrées &amp; hébergées en Europe
       </p>
     </div>
 
     <!-- App mock -->
-    <div class="mock" role="img" aria-label="Aperçu du tableau de bord Medix.io">
+    <div class="mock" role="img" aria-label="Aperçu du tableau de bord Cabix.io">
       <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></div>
       <div class="mock-body">
         <div class="mock-side">
-          <a class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
-          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Flux</a>
-          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Documents</a>
-          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Urgence</a>
-          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Cabinet</a>
+          <a class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vue 360°</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Flux financiers</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Urgences</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Stocks</a>
+          <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Réunions</a>
         </div>
         <div class="mock-main">
           <div class="mock-stats">
-            <div class="stat-card"><div class="s-label">Actes cotés</div><div class="s-value">1 248</div><div class="s-delta up">▲ +12 % ce mois</div></div>
-            <div class="stat-card"><div class="s-label">Taux CCN optimal</div><div class="s-value">96,4 %</div><div class="s-delta up">▲ +2,1 pts</div></div>
-            <div class="stat-card"><div class="s-label">Recettes du mois</div><div class="s-value">9 320 €</div><div class="s-delta down">▼ −3 % vs m-1</div></div>
+            <div class="stat-card">
+              <div class="s-label">Trésorerie du mois</div>
+              <div class="s-value">8 940 €</div>
+              <div class="s-delta up">+ 12 % vs mois dernier</div>
+            </div>
+            <div class="stat-card">
+              <div class="s-label">Urgences absolues</div>
+              <div class="s-value">2</div>
+              <div class="s-delta down">À traiter aujourd'hui</div>
+            </div>
+            <div class="stat-card">
+              <div class="s-label">Prochaine réunion</div>
+              <div class="s-value">Jeu. 18h</div>
+              <div class="s-delta up">4 participants</div>
+            </div>
           </div>
           <div class="mock-chart" aria-hidden="true">
-            <div class="bar" style="height:38%"></div>
+            <div class="bar" style="height:45%"></div>
+            <div class="bar" style="height:70%"></div>
             <div class="bar" style="height:55%"></div>
-            <div class="bar" style="height:82%"></div>
-            <div class="bar" style="height:47%"></div>
-            <div class="bar" style="height:66%"></div>
-            <div class="bar" style="height:58%"></div>
-            <div class="bar" style="height:90%"></div>
+            <div class="bar" style="height:85%"></div>
+            <div class="bar" style="height:60%"></div>
+            <div class="bar" style="height:92%"></div>
           </div>
         </div>
       </div>
@@ -301,183 +320,224 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
 <!-- TRUST -->
 <div class="trust">
   <div class="container">
-    <p>Conçu pour les professionnels de santé</p>
+    <p>Cabix.io s'intègre à votre quotidien</p>
     <div class="trust-row">
-      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Cotation CCN conforme</span>
-      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Données chiffrées, hébergées en Europe</span>
-      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Multi-profils : médecins, remplaçants, secrétaires</span>
-      <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Disponible 24/7, web &amp; mobile</span>
+      <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Aucune saisie double</div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Espace partagé pour toute l'équipe</div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Données chiffrées, hébergées en Europe</div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>100 % web, rien à installer</div>
     </div>
   </div>
 </div>
 
-<!-- FEATURE 1 : Cotation -->
-<div class="feature" id="features">
+<!-- FEATURE 1 : Flux financiers -->
+<div class="feature" id="modules">
   <div class="container feature-grid">
     <div class="f-copy">
-      <span class="kicker">Cotation</span>
-      <h3>Cotez chaque acte avec la certitude d'être juste.</h3>
-      <p>Une base de cotations CCN et d'avis SNITEM toujours à jour, pour tarifer vos actes en confiance et sécuriser vos relevés.</p>
+      <span class="kicker">Flux financiers</span>
+      <h3>La trésorerie de votre cabinet, claire comme jamais.</h3>
+      <p>Recettes, dépenses, relevés bancaires, rapprochements : Cabix.io centralise tous les flux financiers du cabinet. Chaque euro est catégorisé, rapproché et visible par toute l'équipe — fini les tableurs partagés et les relevés perdus.</p>
       <ul class="f-list">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Base CCN + avis intégrée</strong>, mise à jour en continu.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Réconciliation automatique</strong> de vos relevés d'assurance maladie.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Apprentissage de vos habitudes</strong> : les relevés deviennent de plus en plus justes.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Solde bancaire en temps réel</strong>, encaissements et décaissements du mois.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Rapprochement automatique</strong> de vos relevés bancaires, écarts signalés.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Export comptable mensuel</strong> prêt pour votre expert-comptable.</span></li>
       </ul>
     </div>
     <div class="f-media">
       <div class="fc-blob blob-a"></div>
       <div class="f-card">
         <div class="fc-head">
-          <span class="fc-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Cotation — Octobre</span>
-          <span class="fc-chip">CCN ✓</span>
+          <span class="fc-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Flux — Octobre</span>
+          <span class="fc-chip">Live</span>
         </div>
-        <div class="fc-row"><span class="muted">AIS2 — Avis médical</span><span class="val">24 × 22,50 €</span></div>
-        <div class="fc-row"><span class="muted">DPT — Déplacement</span><span class="val">8 × 7,20 €</span></div>
-        <div class="fc-row"><span class="muted">FSV — Forfait semaine</span><span class="val">4 × 18,00 €</span></div>
-        <div class="fc-row"><span class="muted">Total coté</span><span class="val">823,20 €</span></div>
+        <div class="fc-row"><span class="muted">Encaissements</span><span class="val">24 180 €</span></div>
+        <div class="fc-row"><span class="muted">Décaissements</span><span class="val">− 7 320 €</span></div>
+        <div class="fc-row"><span class="muted">Solde bancaire</span><span class="val">18 940 €</span></div>
+        <div class="fc-row"><span class="muted">Relevés rapprochés</span><span class="val">12 / 12</span></div>
         <div class="fc-progress">
-          <div class="track"><div class="fill" style="width:96%"></div></div>
-          <div class="legends"><span>Conformité relevé</span><span>96,4 %</span></div>
+          <div class="track"><div class="fill" style="width:76%"></div></div>
+          <div class="legends"><span>Objectif de trésorerie</span><span>76 %</span></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- FEATURE 2 : Flux -->
+<!-- FEATURE 2 : Vue 360° des dépenses -->
 <div class="feature">
   <div class="container feature-grid reverse">
     <div class="f-copy">
-      <span class="kicker">Flux d'activité</span>
-      <h3>Votre activité en temps réel, sans tableur.</h3>
-      <p>Le dashboard Medix.io agrège vos actes, vos recettes et vos déplacements dans des graphiques vivants. Fini les feuilles de calcul : vous savez, chaque jour, où vous en êtes.</p>
+      <span class="kicker">Vue 360° des dépenses</span>
+      <h3>Chaque dépense du cabinet, vue sous tous les angles.</h3>
+      <p>Loyers, fournitures, salaires, honoraires de remplacement, équipements : Cabix.io donne une vision à 360° des dépenses du cabinet. Vous voyez qui a dépensé quoi, quand, et pourquoi — et vous comparez mois après mois.</p>
       <ul class="f-list">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Statistiques du jour, de la semaine, du mois</strong> en un coup d'œil.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Historique complet</strong> et export PDF de vos relevés.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Rappels intelligents</strong> pour ne plus jamais oublier un acte ou un document.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Dépenses catégorisées</strong> et réparties par poste et par membre du cabinet.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Tendances et comparatifs</strong> pour anticiper les grosses échéances.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Justificatifs centralisés</strong>, plus jamais une facture égarée.</span></li>
       </ul>
     </div>
     <div class="f-media">
       <div class="fc-blob blob-b"></div>
       <div class="f-card alt-bg">
         <div class="fc-head">
-          <span class="fc-title" style="color:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Flux — Semaine 42</span>
-          <span class="fc-chip">Live</span>
+          <span class="fc-title" style="color:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>Dépenses — Vue 360°</span>
+          <span class="fc-chip">Octobre</span>
         </div>
-        <div class="fc-row"><span class="muted">Lundi</span><span class="val">18 actes · 342 €</span></div>
-        <div class="fc-row"><span class="muted">Mardi</span><span class="val">21 actes · 405 €</span></div>
-        <div class="fc-row"><span class="muted">Mercredi</span><span class="val">16 actes · 298 €</span></div>
-        <div class="fc-row"><span class="muted">Jeudi</span><span class="val">24 actes · 486 €</span></div>
+        <div class="fc-row"><span class="muted">Loyer &amp; charges</span><span class="val">2 450 €</span></div>
+        <div class="fc-row"><span class="muted">Salaires &amp; remplacements</span><span class="val">3 100 €</span></div>
+        <div class="fc-row"><span class="muted">Fournitures &amp; stocks</span><span class="val">640 €</span></div>
+        <div class="fc-row"><span class="muted">Équipement &amp; divers</span><span class="val">1 130 €</span></div>
         <div class="fc-progress">
-          <div class="track"><div class="fill" style="width:78%"></div></div>
-          <div class="legends"><span>Objectif mensuel</span><span>78 %</span></div>
+          <div class="track"><div class="fill" style="width:64%"></div></div>
+          <div class="legends"><span>Budget mensuel consommé</span><span>64 %</span></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- FEATURE 3 : Cabinet -->
+<!-- FEATURE 3 : Urgences -->
 <div class="feature">
   <div class="container feature-grid">
     <div class="f-copy">
-      <span class="kicker">Gestion de cabinet</span>
-      <h3>Finances, stocks, RH : tout votre cabinet au même endroit.</h3>
-      <p>Medix.io centralise la compta de cabinet, la gestion des stocks, l'organisation des réunions et même une analyse IA de vos finances. Votre secrétariat dispose de son propre espace, avec des permissions fines.</p>
-      <ul class="f-list">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Dépenses &amp; recettes</strong> catégorisées, avec export comptable mensuel automatisé.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Stocks, remplacements, réunions</strong> gérés en équipe.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Espace secrétariat dédié</strong> et validation des nouveaux membres du cabinet.</span></li>
-      </ul>
-    </div>
-    <div class="f-media">
-      <div class="fc-blob blob-a"></div>
-      <div class="f-card">
-        <div class="fc-head">
-          <span class="fc-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>Cabinet — Vue d'ensemble</span>
-          <span class="fc-chip">4 onglets</span>
-        </div>
-        <div class="fc-row"><span class="muted">Finances · résultat net</span><span class="val">+ 12 % vs m-1</span></div>
-        <div class="fc-row"><span class="muted">RH · remplacements planifiés</span><span class="val">3</span></div>
-        <div class="fc-row"><span class="muted">Ops · alertes stock</span><span class="val">2 produits</span></div>
-        <div class="fc-row"><span class="muted">IA · analyse financière</span><span class="val">Disponible</span></div>
-        <div class="fc-progress">
-          <div class="track"><div class="fill" style="width:64%"></div></div>
-          <div class="legends"><span>Budget consommé</span><span>64 %</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- FEATURE 4 : Urgence -->
-<div class="feature">
-  <div class="container feature-grid reverse">
-    <div class="f-copy">
       <span class="kicker">Salle d'urgence</span>
-      <h3>Les demandes urgentes traitées en priorité, sans stress.</h3>
-      <p>Une file d'urgence dédiée pour réagir immédiatement : demandes de garde, remplacements de dernière minute, documents à valider. Vous êtes notifié, vous décidez, c'est traité.</p>
+      <h3>Les urgences absolues, traitées en priorité. Ensemble.</h3>
+      <p>Une salle d'urgence partagée pour tout le cabinet : commandes urgentes, ruptures de stock critiques, situations qui ne peuvent pas attendre. Chacun voit, chacun agit, rien ne reste bloqué sur le coin d'un bureau.</p>
       <ul class="f-list">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Notifications en temps réel</strong> avec badges de priorité.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Offres de remplacement</strong> publiées, candidatures suivies, tarifs négociés.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>File d'urgences absolues</strong> partagée avec tout le cabinet, priorités visibles.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Notifications en temps réel</strong> pour les membres du cabinet.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Commandes urgentes</strong> tracées de la demande à la livraison.</span></li>
       </ul>
     </div>
     <div class="f-media">
-      <div class="fc-blob blob-b"></div>
-      <div class="f-card alt-bg">
+      <div class="fc-blob blob-a"></div>
+      <div class="f-card">
         <div class="fc-head">
-          <span class="fc-title" style="color:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Salle d'urgence</span>
-          <span class="fc-chip">3 en attente</span>
+          <span class="fc-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Salle d'urgence</span>
+          <span class="fc-chip">2 en attente</span>
         </div>
-        <div class="fc-row"><span class="muted">Remplacement — samedi</span><span class="val">Candidature reçue</span></div>
-        <div class="fc-row"><span class="muted">Garde — hôpital</span><span class="val">À confirmer</span></div>
-        <div class="fc-row"><span class="muted">Commande sérum</span><span class="val">Expédiée</span></div>
-        <div class="fc-row"><span class="muted">Document à valider</span><span class="val">Relevé 09/24</span></div>
+        <div class="fc-row"><span class="muted">Rupture sérum physiologique</span><span class="val">Absolue</span></div>
+        <div class="fc-row"><span class="muted">Réappro gants (taille M)</span><span class="val">Aujourd'hui</span></div>
+        <div class="fc-row"><span class="muted">Commande compresses</span><span class="val">Expédiée</span></div>
+        <div class="fc-row"><span class="muted">Panne autoclave</span><span class="val">Pris en charge</span></div>
         <div class="fc-progress">
-          <div class="track"><div class="fill" style="width:52%"></div></div>
-          <div class="legends"><span>File traitée aujourd'hui</span><span>52 %</span></div>
+          <div class="track"><div class="fill" style="width:58%"></div></div>
+          <div class="legends"><span>File traitée aujourd'hui</span><span>58 %</span></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- FEATURE 4 : Stocks & réunions -->
+<div class="feature">
+  <div class="container feature-grid reverse">
+    <div class="f-copy">
+      <span class="kicker">Stocks &amp; réunions</span>
+      <h3>Les stocks sous contrôle, les réunions de cabinet organisées.</h3>
+      <p>Cabix.io gère les stocks du cabinet — consommables, fournitures, péremptions — et organise la vie collective : réunions de cabinet planifiées, ordres du jour partagés, comptes-rendus centralisés. Le cabinet tourne, tout simplement.</p>
+      <ul class="f-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Stocks en temps réel</strong> avec alertes de seuil et suivi des péremptions.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Réunions de cabinet</strong> : dates, ordres du jour et décisions partagés.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Pointage des stocks</strong> et commandes déclenchées au bon moment.</span></li>
+      </ul>
+    </div>
+    <div class="f-media">
+      <div class="fc-blob blob-b"></div>
+      <div class="f-card alt-bg">
+        <div class="fc-head">
+          <span class="fc-title" style="color:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Stocks &amp; réunions</span>
+          <span class="fc-chip">Cette semaine</span>
+        </div>
+        <div class="fc-row"><span class="muted">Gants taille M</span><span class="val">Seuil atteint</span></div>
+        <div class="fc-row"><span class="muted">Compresses stériles</span><span class="val">OK · 12 boîtes</span></div>
+        <div class="fc-row"><span class="muted">Réunion cabinet — jeudi 18h</span><span class="val">4 présents</span></div>
+        <div class="fc-row"><span class="muted">Ordre du jour partagé</span><span class="val">3 points</span></div>
+        <div class="fc-progress">
+          <div class="track"><div class="fill" style="width:42%"></div></div>
+          <div class="legends"><span>Produits sous seuil d'alerte</span><span>2 / 24</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODULES OVERVIEW -->
+<section id="modules-overview" style="background:#fff">
+  <div class="container center">
+    <span class="kicker">Tous les modules</span>
+    <h2>Une plateforme, toute la gestion du cabinet.</h2>
+    <p class="lead">Cabix.io couvre tout ce qui n'est pas dans votre logiciel médecin — la gestion commune du cabinet, au quotidien.</p>
+    <div class="modules-grid">
+      <div class="module-card">
+        <div class="m-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+        <h3>Flux financiers</h3>
+        <p>Recettes, dépenses, relevés et rapprochements bancaires centralisés pour tout le cabinet.</p>
+      </div>
+      <div class="module-card">
+        <div class="m-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></div>
+        <h3>Vue 360° des dépenses</h3>
+        <p>Toutes les dépenses du cabinet, catégorisées, réparties et comparées mois après mois.</p>
+      </div>
+      <div class="module-card">
+        <div class="m-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <h3>Salle d'urgence</h3>
+        <p>Les urgences absolues du cabinet dans une file partagée, avec notifications en temps réel.</p>
+      </div>
+      <div class="module-card">
+        <div class="m-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+        <h3>Gestion des stocks</h3>
+        <p>Consommables et fournitures suivis en temps réel, alertes de seuil et péremptions.</p>
+      </div>
+      <div class="module-card">
+        <div class="m-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <h3>Réunions de cabinet</h3>
+        <p>Planification des réunions, ordres du jour partagés et décisions tracées pour l'équipe.</p>
+      </div>
+      <div class="module-card">
+        <div class="m-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>Gestion commune</h3>
+        <p>Un espace partagé pour l'équipe : secrétariat, associés et collaborateurs au même endroit.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
-<section id="how" style="background:#fff">
+<section id="how">
   <div class="container center">
     <span class="kicker">Comment ça marche</span>
-    <h2>Opérationnel en moins de 5 minutes.</h2>
-    <p class="lead">Pas d'installation, pas de formation : Medix.io fonctionne dans votre navigateur, sur ordinateur comme sur mobile.</p>
+    <h2>Votre cabinet organisé en moins de 5 minutes.</h2>
+    <p class="lead">Pas d'installation, pas de formation : Cabix.io fonctionne dans votre navigateur, sur ordinateur comme sur mobile. Et il ne remplace rien — il complète votre logiciel médecin.</p>
     <div class="steps-grid">
       <div class="step-card">
         <div class="step-num">01</div>
-        <h3>Créez votre compte</h3>
-        <p>Inscription en quelques clics. Invitez ensuite vos secrétaires et remplaçants dans votre cabinet avec des permissions adaptées.</p>
+        <h3>Créez votre cabinet</h3>
+        <p>Inscription en quelques clics. Invitez vos associés, collaborateurs et secrétariat dans l'espace partagé du cabinet.</p>
       </div>
       <div class="step-card">
         <div class="step-num">02</div>
-        <h3>Cotez et suivez</h3>
-        <p>Enregistrez vos actes avec la base CCN intégrée. Votre dashboard et vos relevés se construisent automatiquement.</p>
+        <h3>Centralisez vos flux</h3>
+        <p>Dépenses, relevés, stocks : les données du cabinet sont saisies une seule fois et visibles par toute l'équipe.</p>
       </div>
       <div class="step-card">
         <div class="step-num">03</div>
-        <h3>Pilotez votre cabinet</h3>
-        <p>Finances, stocks, urgences, remplacements : tout est là, à jour, et exportable en PDF quand vous en avez besoin.</p>
+        <h3>Pilotez à 360°</h3>
+        <p>Trésorerie, urgences, réunions : vous voyez tout, en temps réel, et exportez quand votre comptable en a besoin.</p>
       </div>
     </div>
   </div>
 </section>
 
 <!-- TESTIMONIALS -->
-<section id="testimonials">
+<section id="testimonials" style="background:#fff">
   <div class="container center">
     <span class="kicker">Avis</span>
-    <h2>Ils pilotent leur activité avec Medix.io.</h2>
+    <h2>Ils gèrent leur cabinet avec Cabix.io.</h2>
     <div class="testi-grid">
       <div class="testi-card">
         <div class="stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div>
-        <blockquote>« Avant, je cotais mes actes sur un tableur et je passais des heures à reconcilier mes relevés. Avec Medix.io, <strong>tout est automatique</strong>. Je gagne au moins deux heures par semaine. »</blockquote>
+        <blockquote>« Mon logiciel médecin gère les patients, mais rien du cabinet. Avec Cabix.io, <strong>la trésorerie et les dépenses sont enfin claires</strong> pour toute l'équipe. »</blockquote>
         <div class="testi-author">
           <div class="testi-avatar" style="background:linear-gradient(135deg,#0E9F7E,#2BD4AE)">SL</div>
           <div><div class="ta-name">Dr Sophie L.</div><div class="ta-role">Médecin généraliste, Lyon</div></div>
@@ -485,15 +545,15 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
       </div>
       <div class="testi-card">
         <div class="stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div>
-        <blockquote>« La salle d'urgence et les offres de remplacement ont changé mon organisation. Je trouve mes remplaçants <strong>sans un seul coup de fil</strong>. »</blockquote>
+        <blockquote>« La salle d'urgence partagée a tout changé : une rupture de stock, un souci d'équipement, <strong>tout le cabinet le voit immédiatement</strong>. Plus rien ne traîne. »</blockquote>
         <div class="testi-author">
           <div class="testi-avatar" style="background:linear-gradient(135deg,#0B6E8C,#22A2C4)">TM</div>
-          <div><div class="ta-name">Dr Thomas M.</div><div class="ta-role">Médecin conventionné, Nantes</div></div>
+          <div><div class="ta-name">Dr Thomas M.</div><div class="ta-role">Cabinet de 4 associés, Nantes</div></div>
         </div>
       </div>
       <div class="testi-card">
         <div class="stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.6 7 .8-5.2 4.8 1.4 7L12 17.8 5.8 21.2l1.4-7L2 9.4l7-.8z"/></svg></div>
-        <blockquote>« En tant que secrétaire, j'ai enfin un espace clair avec <strong>juste les outils dont j'ai besoin</strong>. Les stocks, les documents, les tâches : tout est simple. »</blockquote>
+        <blockquote>« En tant que secrétaire, je gère les stocks, les commandes urgentes et les réunions <strong>dans un seul espace clair</strong>. Les médecins voient tout, je gagne du temps. »</blockquote>
         <div class="testi-author">
           <div class="testi-avatar" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)">CD</div>
           <div><div class="ta-name">Claire D.</div><div class="ta-role">Secrétaire médicale, Bordeaux</div></div>
@@ -504,29 +564,29 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
 </section>
 
 <!-- FAQ -->
-<section id="faq" style="background:#fff">
+<section id="faq">
   <div class="container center">
     <span class="kicker">FAQ</span>
     <h2>Questions fréquentes</h2>
     <div class="faq-wrap">
       <details class="faq-item">
-        <summary>Medix.io est-il conforme pour la cotation CCN ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
-        <p class="faq-body">Oui. La base de cotations s'appuie sur la CCN des médecins et les avis publiés, et est mise à jour en continu. Chaque acte est vérifié, et la réconciliation automatique de vos relevés vous signale tout écart.</p>
+        <summary>Cabix.io remplace-t-il mon logiciel médecin ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-body">Non, et c'est voulu. Votre logiciel médecin gère les patients : dossier médical, facturation, agenda de consultation. Cabix.io gère tout le reste : les flux financiers, les dépenses, les stocks, les urgences du cabinet et les réunions. Les deux sont complémentaires.</p>
       </details>
       <details class="faq-item">
         <summary>Mes données sont-elles sécurisées ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
-        <p class="faq-body">Vos données sont chiffrées, hébergées en Europe, et chaque membre du cabinet n'accède qu'à ce qui lui est permis grâce à des politiques d'accès strictes au niveau de la base. Vous gardez le contrôle total sur les membres de votre cabinet.</p>
+        <p class="faq-body">Vos données sont chiffrées et hébergées en Europe. Chaque membre du cabinet n'accède qu'à ce qui lui est permis, grâce à des politiques d'accès strictes. Vous gardez le contrôle total sur les membres de votre cabinet.</p>
       </details>
       <details class="faq-item">
-        <summary>Puis-je inviter ma secrétaire ou mes remplaçants ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
-        <p class="faq-body">Oui. Chaque cabinet peut inviter ses secrétaires dans un espace dédié, publier des offres de remplacement et suivre les candidatures. Les nouveaux membres sont validés par le médecin responsable du cabinet.</p>
+        <summary>Puis-je inviter mon secrétariat et mes associés ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <p class="faq-body">Oui, c'est le principe : Cabix.io est un espace partagé. Chaque cabinet invite ses associés, collaborateurs et secrétaires, avec des permissions adaptées à chacun.</p>
       </details>
       <details class="faq-item">
         <summary>Faut-il installer une application ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
-        <p class="faq-body">Non. Medix.io est une application web qui fonctionne sur votre navigateur, sur ordinateur, tablette et mobile. Vous pouvez aussi l'ajouter à votre écran d'accueil comme une application.</p>
+        <p class="faq-body">Non. Cabix.io est une application web qui fonctionne sur votre navigateur, sur ordinateur, tablette et mobile. Vous pouvez aussi l'ajouter à votre écran d'accueil comme une application.</p>
       </details>
       <details class="faq-item">
-        <summary>Comment sont gérées la comptabilité et les documents ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
+        <summary>Comment sont gérés les flux financiers et les documents ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></summary>
         <p class="faq-body">Dépenses, recettes et relevés sont centralisés, catégorisés et exportables en PDF. Un export comptable automatisé peut même être envoyé chaque début de mois à l'adresse de votre choix.</p>
       </details>
     </div>
@@ -537,10 +597,10 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
 <section style="padding-top:0">
   <div class="container">
     <div class="cta">
-      <h2>Prêt à reprendre le contrôle de votre activité&nbsp;?</h2>
-      <p>Rejoignez les médecins qui cotent, suivent et pilotent leur cabinet sans tableur. Gratuit pour démarrer, sans engagement.</p>
+      <h2>Prêt à reprendre le contrôle de votre cabinet&nbsp;?</h2>
+      <p>Votre logiciel médecin gère vos patients. Cabix.io gère tout le reste. Gratuit pour démarrer, sans engagement.</p>
       <a class="btn btn-accent" href="index.html">
-        Créer mon compte Medix.io
+        Créer mon cabinet sur Cabix.io
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
@@ -553,15 +613,15 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
     <div class="footer-grid">
       <div>
         <a class="logo" href="#">
-          <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
-          Medix<span style="color:#2BD4AE">.io</span>
+          <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M10 21v-6h4v6"/></svg></span>
+          Cabix<span style="color:#2BD4AE">.io</span>
         </a>
-        <p class="footer-tag">La plateforme tout-en-un du médecin libéral : cotation, activité, cabinet et remplacements.</p>
+        <p class="footer-tag">La plateforme de gestion des cabinets médicaux : flux financiers, dépenses, urgences, stocks et réunions.</p>
       </div>
       <div>
         <h4>Produit</h4>
         <ul>
-          <li><a href="#features">Fonctionnalités</a></li>
+          <li><a href="#modules">Modules</a></li>
           <li><a href="#how">Comment ça marche</a></li>
           <li><a href="#faq">FAQ</a></li>
         </ul>
@@ -569,8 +629,8 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
       <div>
         <h4>Profils</h4>
         <ul>
-          <li><a href="#">Médecins libéraux</a></li>
-          <li><a href="#">Remplaçants</a></li>
+          <li><a href="#">Cabinets médicaux</a></li>
+          <li><a href="#">Associés &amp; collaborateurs</a></li>
           <li><a href="#">Secrétariats</a></li>
         </ul>
       </div>
@@ -584,10 +644,10 @@ h2{font-size:clamp(2rem,4vw,2.9rem);margin-bottom:18px}
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2025 Medix.io — Tous droits réservés.</span>
+      <span>© 2025 Cabix.io — Tous droits réservés.</span>
       <div class="links">
         <a href="#">Données chiffrées · Hébergées en Europe</a>
-        <a href="#">Contact : contact@medix.io</a>
+        <a href="#">Contact : contact@cabix.io</a>
       </div>
     </div>
   </div>
