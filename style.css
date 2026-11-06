@@ -14003,3 +14003,62 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 [data-theme="dark"] #passage-add-modal .popup-header { background: rgba(79, 70, 229, 0.24); color: #cfcbff; }
 [data-theme="dark"] #passage-add-modal .popup-header h3 { color: #e4e1ff; }
 [data-theme="dark"] #passage-add-modal .popup-close { background: rgba(255, 255, 255, 0.14) !important; }
+
+/* ===== FLUX : solde bancaire d'ouverture (31/12) + solde bancaire fin de mois ===== */
+.fhero-bank {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+}
+.fhero-bank strong.pos { color: #0d8a5f; }
+.fhero-bank strong.neg { color: #d93036; }
+.fhero-bank em { font-style: normal; opacity: 0.8; }
+
+.flux-opening-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding: 8px 14px;
+    background: var(--md-surface-low);
+    border-radius: var(--md-radius-xl);
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+.flux-opening-row strong { color: var(--color-text); font-weight: 700; }
+.flux-opening-edit {
+    border: none;
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: transform 0.25s var(--md-spring), filter 0.15s ease;
+}
+.flux-opening-edit:hover { filter: brightness(1.05); }
+.flux-opening-edit:active { transform: scale(0.94); }
+
+.flux-month-bank {
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    padding-left: 8px;
+    border-left: 1px solid var(--color-border-subtle);
+}
+
+[data-theme="dark"] .flux-opening-row { background: var(--color-bg-subtle); }
+[data-theme="dark"] .fhero-bank strong.pos { color: #6ee7b7; }
+[data-theme="dark"] .fhero-bank strong.neg { color: #fca5a5; }
+
+@media (max-width: 760px) {
+    .flux-month-bank { display: none; }
+    .flux-opening-row { font-size: 0.72rem; padding: 7px 12px; }
+}

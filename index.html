@@ -972,9 +972,10 @@ window.attemptLogin = function() {
                     </div>
                     <div class="flux-hero-grid">
                         <div class="fhero-balance">
-                            <span class="fhero-balance-label">Solde du mois</span>
+                            <span class="fhero-balance-label">Balance du mois</span>
                             <strong id="flux-total-balance-hero" class="fhero-balance-value">+0,00 €</strong>
                             <span id="flux-hero-trend" class="fhero-trend"></span>
+                            <span id="flux-hero-bank" class="fhero-bank" title="Solde bancaire théorique à la fin du mois (ouvre sur le solde au 31/12)"></span>
                         </div>
                         <div class="fhero-kpi income">
                             <div>
@@ -995,6 +996,10 @@ window.attemptLogin = function() {
                             </div>
                         </div>
                         <div class="fhero-chart" id="flux-hero-chart" title="Flux net de chaque jour du mois"></div>
+                    </div>
+                    <div class="flux-opening-row">
+                        <span id="flux-opening-label">Solde bancaire au 31/12 — non renseigné</span>
+                        <button class="flux-opening-edit" onclick="fluxEditOpeningBalance()" title="Saisir le solde du compte au 31 décembre de l'année précédente">✎ Modifier</button>
                     </div>
                 </div>
 
