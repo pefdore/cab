@@ -14361,36 +14361,38 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     #reunionReportRow .action-btn { width: 100%; }
 }
 
-/* ---- Badges de notification (nav Cabinet + onglet Réunions) ---- */
-.nav-item[data-view="cabinet"],
-.mobile-nav-item[data-view="cabinet"],
-.cabinet-tab[data-tab="reunions"] { position: relative; }
-
+/* ---- Badges de notification (nav Cabinet + onglet Réunions) ----
+   Pilule inline, même moule que .replacement-sub-tabs .badge ---- */
 .nav-badge {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 999px;
-    background: #d93036;
-    color: #fff;
-    font-size: 0.66rem;
-    font-weight: 800;
-    line-height: 1;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(217, 48, 54, 0.45);
-    border: 2px solid var(--color-bg, #fff);
-    box-sizing: content-box;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: var(--color-danger, #d93036);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
     pointer-events: none;
     animation: md-pop 0.45s var(--md-spring) both;
 }
-.cabinet-tab .nav-badge {
-    top: -4px;
-    right: -4px;
-    border-color: var(--color-bg-elevated, var(--color-bg, #fff));
+.nav-item .nav-badge { margin-left: auto; }
+.cabinet-tab .nav-badge { padding: 1px 7px; font-size: 0.66rem; }
+
+/* Nav mobile (colonne) : pastille compacte en haut à droite de l'entrée */
+.mobile-nav-item[data-view="cabinet"] { position: relative; }
+.mobile-nav-item .nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    margin: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.6rem;
 }
-[data-theme="dark"] .nav-badge { background: #ff6b6b; border-color: #1e1e2e; }
+[data-theme="dark"] .nav-badge { background: var(--color-danger, #d93036); }
