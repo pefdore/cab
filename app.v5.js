@@ -11245,10 +11245,10 @@ async function reunionRenderList() {
                 + (proposals.length ? (iAnswered ? '✅ Vous avez donné votre avis sur les dates proposées' : '⚠️ Votre avis est en attente sur les dates proposées')
                     + (best ? ' · Pré-sélection : ' + reunionEsc(reunionFmt(best.p.date_proposee, best.p.heure_proposee)) + ' (' + best.dispo + '/' + total + ' dispo)' : '')
                     + (allAnswered ? ' · tout le monde a répondu' : '')
-                    : 'Ajoutez des dates via le sondage.')
+                    : 'Aucune date proposée pour le moment — ouvrez le sondage pour proposer des dates.')
                 + '</div>'
                 + '<div class="odj-vote-bar">'
-                + '<button class="action-btn odj-vote-btn" data-sondage="' + r.id + '">Participer au sondage</button>'
+                + '<button class="action-btn primary odj-vote-btn" data-sondage="' + r.id + '">Proposer / voter des dates</button>'
                 + '<button class="action-btn reunion-open-btn" data-reunion="' + r.id + '">Ouvrir la réunion</button>'
                 + '</div>'
                 + '</div>';
@@ -11347,6 +11347,8 @@ function reunionShowWizardSondage() {
 async function reunionStartSondage() {
     if (reunionSondageId) { reunionShowWizardSondage(); return; }
     const titre = reunionGetTitre();
+    const titreEl = document.getElementById('reunionSondageTitre');
+    if (titreEl) titreEl.textContent = titre;
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
     const unknownBtn = document.getElementById('reunionDateUnknownBtn');
@@ -11377,9 +11379,20 @@ async function reunionOpenSondage(reunionId) {
     section.style.display = 'block';
     const newBtn = document.getElementById('reunionNewDateBtn');
     if (newBtn) newBtn.style.display = 'none';
+    try {
+        const { data } = await supabaseClient
+            .from('reunions')
+            .select('titre')
+            .eq('id', reunionId)
+            .maybeSingle();
+        const titreEl = document.getElementById('reunionSondageTitre');
+        if (titreEl) titreEl.textContent = (data && data.titre) || 'Réunion';
+    } catch (e) {
+        console.error('[REUNIONS] sondage titre error:', e);
+    }
     reunionShowWizardSondage();
     await reunionRenderProposals();
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    section.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function reunionShowDateMode(fixe) {
@@ -11410,8 +11423,7 @@ async function reunionRenderProposals() {
         const votes = await reunionLoadDateVotes(data.map(p => p.id));
         const total = members.length || 1;
         const best = reunionBestProposal(data, votes);
-        const sondageTitre = reunionSondageTitre(data);
-        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">' + (sondageTitre ? reunionEsc(sondageTitre) + ' — d' : 'D') + 'ates proposées — indiquez votre disponibilité sur chaque date</h4>';
+        let html = '<div class="reunion-proposals"><h4 style="margin-bottom:10px;">Dates proposées — indiquez votre disponibilité sur chaque date</h4>';
         data.forEach(p => {
             const arr = votes[p.id] || [];
             const dispo = arr.filter(v => v.vote === 1).length;
