@@ -46,6 +46,76 @@ function fluxAddMonths(ref, count) {
     return out;
 }
 
+// ===== SOLDE BANCAIRE D'OUVERTURE (31/12 de l'année précédente) =====
+// Saisi une fois par an ; sert de point de départ au solde bancaire de fin
+// de mois, à comparer avec le solde affiché sur le relevé bancaire.
+const fluxOpeningBalances = new Map(); // annee -> montant au 31/12 de l'annee precedente
+let fluxOpeningLoaded = false;
+
+async function fluxLoadOpeningBalances() {
+    if (fluxOpeningLoaded) return;
+    if (typeof supabaseClient === 'undefined' || typeof currentUser === 'undefined' || !currentUser) return;
+    if (typeof getCabinetId !== 'function') return;
+    try {
+        const cabinetId = await getCabinetId();
+        if (!cabinetId) { fluxOpeningLoaded = true; return; }
+        const { data, error } = await supabaseClient
+            .from('cabinet_opening_balances')
+            .select('annee, montant')
+            .eq('cabinet_id', cabinetId);
+        if (error) throw error;
+        fluxOpeningBalances.clear();
+        (data || []).forEach(r => fluxOpeningBalances.set(parseInt(r.annee, 10), parseFloat(r.montant) || 0));
+    } catch (e) {
+        // table absente ou accès refusé : on continue sans solde d'ouverture
+    }
+    fluxOpeningLoaded = true;
+    if (typeof window.renderFluxView === 'function') window.renderFluxView();
+}
+
+function fluxHasOpeningBalance(year) {
+    return fluxOpeningBalances.has(year);
+}
+
+// Solde bancaire theorique a la fin du mois donne (year, monthIdx 0-based) :
+// solde au 31/12 precedent + tous les flux de janvier jusqu'a la fin du mois.
+function fluxBankBalanceAt(year, monthIdx) {
+    let bal = fluxOpeningBalances.get(year) || 0;
+    const inRange = (item) => {
+        const d = new Date(item.date);
+        return d.getFullYear() === year && d.getMonth() <= monthIdx;
+    };
+    cabinetRecettes.filter(inRange).forEach(r => { bal += r.amount; });
+    cabinetDepenses.filter(inRange).forEach(d => { bal -= d.amount; });
+    return bal;
+}
+
+async function fluxEditOpeningBalance() {
+    const year = fluxCurrentMonth.getFullYear();
+    const current = fluxHasOpeningBalance(year)
+        ? fluxOpeningBalances.get(year).toFixed(2).replace('.', ',')
+        : '';
+    const input = prompt('Solde du compte bancaire au 31/12/' + (year - 1) + ' (en €) :', current);
+    if (input === null) return;
+    const val = input.trim().replace(',', '.');
+    const montant = val === '' ? 0 : parseFloat(val);
+    if (isNaN(montant)) { alert('Montant invalide'); return; }
+    try {
+        const cabinetId = await getCabinetId();
+        if (!cabinetId) { alert('Aucun cabinet associé'); return; }
+        const { error } = await supabaseClient
+            .from('cabinet_opening_balances')
+            .upsert({ cabinet_id: cabinetId, user_id: currentUser.id, annee: year, montant: montant }, { onConflict: 'cabinet_id,annee' });
+        if (error) throw error;
+        fluxOpeningBalances.set(year, montant);
+        if (typeof showToast === 'function') showToast('Solde au 31/12/' + (year - 1) + ' enregistré');
+        if (typeof window.renderFluxView === 'function') window.renderFluxView();
+    } catch (err) {
+        alert('Erreur : ' + err.message);
+    }
+}
+window.fluxEditOpeningBalance = fluxEditOpeningBalance;
+
 function fluxSelectMonth(key) {
     const parts = key.split('-');
     fluxCurrentMonth = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
@@ -59,6 +129,8 @@ function renderFluxView() {
     if (catLabelEl) catLabelEl.textContent = FLUX_MONTH_NAMES[fluxCurrentMonth.getMonth()] + ' ' + fluxCurrentMonth.getFullYear();
 
     fluxInitCategorySelects();
+
+    if (!fluxOpeningLoaded && typeof fluxLoadOpeningBalances === 'function') fluxLoadOpeningBalances();
 
     if (typeof cabinetDepenses === 'undefined') cabinetDepenses = [];
     if (typeof cabinetRecettes === 'undefined') cabinetRecettes = [];
@@ -136,6 +208,24 @@ function renderFluxView() {
             trendEl.textContent = (diff >= 0 ? '▲ +' : '▼ ') + Math.abs(diff).toFixed(0) + ' € vs mois précédent';
             trendEl.className = 'fhero-trend ' + (diff >= 0 ? 'up' : 'down');
         }
+    }
+
+    // solde bancaire de fin de mois (cumul depuis le 31/12) + solde d'ouverture
+    const bankEl = document.getElementById('flux-hero-bank');
+    if (bankEl) {
+        if (fluxHasOpeningBalance(yearNow)) {
+            const bank = fluxBankBalanceAt(yearNow, fluxCurrentMonth.getMonth());
+            bankEl.innerHTML = 'Banque fin ' + FLUX_MONTH_NAMES[fluxCurrentMonth.getMonth()].toLowerCase()
+                + ' : <strong class="' + (bank < 0 ? 'neg' : 'pos') + '">' + bank.toFixed(2).replace('.', ',') + ' €</strong>';
+        } else {
+            bankEl.innerHTML = 'Solde au 31/12/' + (yearNow - 1) + ' non renseigné — <em>cliquer sur ✎ ci-dessous</em>';
+        }
+    }
+    const openingEl = document.getElementById('flux-opening-label');
+    if (openingEl) {
+        openingEl.innerHTML = fluxHasOpeningBalance(yearNow)
+            ? 'Solde bancaire au 31/12/' + (yearNow - 1) + ' : <strong>' + fluxOpeningBalances.get(yearNow).toFixed(2).replace('.', ',') + ' €</strong>'
+            : 'Solde bancaire au 31/12/' + (yearNow - 1) + ' : non renseigné';
     }
 
     // mini-graphe : flux net par jour du mois (barres)
@@ -271,6 +361,9 @@ function renderFluxView() {
             const dep = cabinetDepenses.filter(d => fluxSameMonth(d, m)).reduce((s, d) => s + d.amount, 0);
             const rec = cabinetRecettes.filter(r => fluxSameMonth(r, m)).reduce((s, r) => s + r.amount, 0);
             const bal = rec - dep;
+            const bank = fluxHasOpeningBalance(m.getFullYear())
+                ? fluxBankBalanceAt(m.getFullYear(), m.getMonth())
+                : null;
             return `
                 <div class="flux-month-row ${fluxMonthKey(m) === fluxMonthKey(fluxCurrentMonth) ? 'current' : ''}" onclick="fluxSelectMonth('${fluxMonthKey(m)}')">
                     <span class="flux-month-label">${FLUX_MONTH_NAMES[m.getMonth()]} ${m.getFullYear()}</span>
@@ -278,6 +371,7 @@ function renderFluxView() {
                         <span style="color:#10b981">+${rec.toFixed(2)}€</span>
                         <span style="color:#ef4444">-${dep.toFixed(2)}€</span>
                         <span style="font-weight:600;color:${bal >= 0 ? '#10b981' : '#ef4444'}">${bal.toFixed(2)}€</span>
+                        ${bank !== null ? `<span class="flux-month-bank" title="Solde bancaire théorique fin de mois">🏦 ${bank.toFixed(2).replace('.', ',')}€</span>` : ''}
                     </span>
                 </div>`;
         }).join('');

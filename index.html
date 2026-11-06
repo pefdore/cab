@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-ZMX7RfXf.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-fViH8o9E.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -972,9 +972,10 @@ window.attemptLogin = function() {
                     </div>
                     <div class="flux-hero-grid">
                         <div class="fhero-balance">
-                            <span class="fhero-balance-label">Solde du mois</span>
+                            <span class="fhero-balance-label">Balance du mois</span>
                             <strong id="flux-total-balance-hero" class="fhero-balance-value">+0,00 €</strong>
                             <span id="flux-hero-trend" class="fhero-trend"></span>
+                            <span id="flux-hero-bank" class="fhero-bank" title="Solde bancaire théorique à la fin du mois (ouvre sur le solde au 31/12)"></span>
                         </div>
                         <div class="fhero-kpi income">
                             <div>
@@ -988,7 +989,17 @@ window.attemptLogin = function() {
                                 <strong id="flux-total-depenses-hero" class="fhero-kpi-value">0 €</strong>
                             </div>
                         </div>
+                        <div class="fhero-kpi year">
+                            <div>
+                                <span class="fhero-kpi-label">Solde <em id="flux-year-label-hero2"></em></span>
+                                <strong id="flux-year-balance-hero" class="fhero-kpi-value">0 €</strong>
+                            </div>
+                        </div>
                         <div class="fhero-chart" id="flux-hero-chart" title="Flux net de chaque jour du mois"></div>
+                    </div>
+                    <div class="flux-opening-row">
+                        <span id="flux-opening-label">Solde bancaire au 31/12 — non renseigné</span>
+                        <button class="flux-opening-edit" onclick="fluxEditOpeningBalance()" title="Saisir le solde du compte au 31 décembre de l'année précédente">✎ Modifier</button>
                     </div>
                 </div>
 
@@ -1001,6 +1012,14 @@ window.attemptLogin = function() {
                         <div id="flux-category-summary"></div>
                         <div class="md-subsection-label" style="margin-top:12px;">Jour par jour</div>
                         <div id="flux-daily-list"></div>
+                    </div>
+
+                    <!-- Synthèse des six derniers mois -->
+                    <div class="module-card md-card">
+                        <div class="md-card-head">
+                            <h3>Six derniers mois</h3>
+                        </div>
+                        <div id="flux-months-summary"></div>
                     </div>
 
 
