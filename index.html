@@ -2078,15 +2078,20 @@ window.attemptLogin = function() {
                         <div id="reunionsList"></div>
                         <button class="action-btn primary" id="reunionNewDateBtn" style="margin-top:14px;">+ Nouveau processus de date</button>
                         <div id="reunionScheduleSection" style="display:none;">
-                            <div class="odj-section-label" style="margin-top:18px;">Titre de la réunion</div>
-                            <div class="form-group">
-                                <input type="text" id="reunionTitleInput" class="form-input" placeholder="Ex : Réunion de mai 2027">
+                            <div class="reunion-date-row" style="justify-content:flex-end;">
+                                <button class="action-btn" id="reunionWizardCloseBtn">Fermer</button>
                             </div>
-                            <div class="reunion-title-chips" id="reunionTitleChips"></div>
-                            <div class="odj-section-label" style="margin-top:18px;">La date est-elle déjà connue ?</div>
-                            <div class="reunion-date-row">
-                                <button class="action-btn reunion-date-mode-btn" id="reunionDateKnownBtn">Oui, je connais la date</button>
-                                <button class="action-btn reunion-date-mode-btn" id="reunionDateUnknownBtn">Non, proposer plusieurs dates (sondage)</button>
+                            <div id="reunionWizardIntro">
+                                <div class="odj-section-label" style="margin-top:18px;">Titre de la réunion</div>
+                                <div class="form-group">
+                                    <input type="text" id="reunionTitleInput" class="form-input" placeholder="Ex : Réunion de mai 2027">
+                                </div>
+                                <div class="reunion-title-chips" id="reunionTitleChips"></div>
+                                <div class="odj-section-label" style="margin-top:18px;">La date est-elle déjà connue ?</div>
+                                <div class="reunion-date-row">
+                                    <button class="action-btn reunion-date-mode-btn" id="reunionDateKnownBtn">Oui, je connais la date</button>
+                                    <button class="action-btn reunion-date-mode-btn" id="reunionDateUnknownBtn">Non, proposer plusieurs dates (sondage)</button>
+                                </div>
                             </div>
                             <div id="reunionFixBlock" style="display:none;">
                                 <div class="form-group">
