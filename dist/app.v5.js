@@ -11615,7 +11615,7 @@ async function reunionOpenDetail(reunionId) {
     if (!detailEl) return;
     if (listCard) listCard.style.display = 'none';
     detailEl.style.display = 'block';
-    detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     await reunionRenderDetail();
 }
 
@@ -11627,7 +11627,7 @@ async function reunionCloseDetail() {
     if (detailEl) { detailEl.style.display = 'none'; detailEl.innerHTML = ''; }
     if (listCard) listCard.style.display = 'block';
     await reunionRenderList();
-    if (listCard) listCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (listCard) listCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 async function reunionGetCurrent() {
