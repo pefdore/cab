@@ -14062,3 +14062,57 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .flux-month-bank { display: none; }
     .flux-opening-row { font-size: 0.72rem; padding: 7px 12px; }
 }
+
+/* ===== FLUX HERO : meta (tendance + banque) responsive ===== */
+/* Desktop : deux petites lignes sous la balance. Mobile : pilules empilables. */
+.fhero-meta { margin-top: 4px; min-width: 0; }
+.fhero-meta .fhero-bank { margin-top: 0; }
+.fhero-meta .fhero-bank em { font-style: normal; opacity: 0.75; }
+.fhero-trend:empty { display: none !important; }
+
+@media (max-width: 760px) {
+    /* La balance redevient une colonne propre : label / montant / meta en pilules */
+    .flux-hero-balance,
+    .fhero-balance {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        gap: 2px;
+        padding: 10px 14px 12px !important;
+    }
+    .fhero-balance-label { align-self: auto !important; margin: 0 !important; }
+    .fhero-balance-value { text-align: left !important; font-size: 1.6rem !important; white-space: nowrap; }
+    .fhero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 6px;
+        margin-top: 6px;
+        width: 100%;
+    }
+    .fhero-meta .fhero-trend,
+    .fhero-meta .fhero-bank {
+        display: inline-flex;
+        align-items: center;
+        margin: 0 !important;
+        margin-left: 0 !important;
+        padding: 4px 10px;
+        background: var(--md-surface-high);
+        border-radius: var(--radius-full);
+        font-size: 0.62rem !important;
+        line-height: 1.35;
+        max-width: 100%;
+    }
+    .fhero-meta .fhero-bank strong { font-weight: 800; }
+    [data-theme="dark"] .fhero-meta .fhero-trend,
+    [data-theme="dark"] .fhero-meta .fhero-bank { background: var(--md-surface-high); }
+}
+
+/* Très petits écrans : la meta passe en pile verticale pleine largeur */
+@media (max-width: 400px) {
+    .fhero-meta { flex-direction: column; align-items: stretch; gap: 4px; }
+    .fhero-meta .fhero-trend,
+    .fhero-meta .fhero-bank { justify-content: space-between; width: 100%; }
+}
+.fhero-meta .fhero-trend { margin-left: 0; align-self: flex-start; }
