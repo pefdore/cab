@@ -14173,7 +14173,7 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #reunionScheduleSection .form-input {
     border-radius: 14px !important;
     border: 1px solid var(--color-border-subtle) !important;
-    background: var(--md-surface-high) !important;
+    background: var(--md-surface-low) !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 #reunionScheduleSection .form-input:focus {
@@ -14305,7 +14305,7 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #reunionReportRow .form-input {
     border-radius: 14px !important;
     border: 1px solid var(--color-border-subtle) !important;
-    background: var(--md-surface-high) !important;
+    background: var(--md-surface-low) !important;
 }
 #reunionReportRow .action-btn.primary {
     background: var(--md-primary) !important;
@@ -14361,26 +14361,48 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     #reunionReportRow .action-btn { width: 100%; }
 }
 
-/* ---- Badges de notification (nav Cabinet + onglet Réunions) ----
-   Pilule tonale douce, même moule que .cab-nav-count / .cab-tile-pill ---- */
-.nav-badge {
+/* ---- Badges de notification ----
+   Nav : pastille tonale douce en haut à droite (mêmes couleurs que les compteurs Affaires/Plus)
+   Onglet Réunions : pilule rouge/blanc inline ---- */
+.nav-item[data-view="cabinet"] { position: relative; }
+.nav-item .nav-badge {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    margin: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 6px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 5px;
     border-radius: 999px;
     background: var(--color-danger-bg);
     color: var(--color-danger);
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+
+.cabinet-tab .nav-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--color-danger, #d93036);
+    color: #fff;
+    font-size: 0.66rem;
     font-weight: 700;
     line-height: 1;
     flex-shrink: 0;
     pointer-events: none;
     animation: md-pop 0.45s var(--md-spring) both;
 }
-.nav-item .nav-badge { margin-left: auto; }
 
 /* Nav mobile (colonne) : pastille compacte en haut à droite de l'entrée */
 .mobile-nav-item[data-view="cabinet"] { position: relative; }
@@ -14393,6 +14415,8 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     height: 16px;
     padding: 0 4px;
     font-size: 0.625rem;
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
 }
 
 /* ---- Vue détail d'une réunion (Propositions / ODJ / CR) — finition MD3 ---- */
@@ -14422,7 +14446,7 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #reunionDetailView textarea.form-input {
     border-radius: 14px !important;
     border: 1px solid var(--color-border-subtle) !important;
-    background: var(--md-surface-high) !important;
+    background: var(--md-surface-low) !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 #reunionDetailView .form-input:focus {
