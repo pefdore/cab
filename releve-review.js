@@ -1074,17 +1074,21 @@ window.resumeRemoteReview = async function() {
                 pageWidth: pd.pageWidth, pageHeight: pd.pageHeight
             });
         }
-        if (!window.relevePageThumbs.length && parsed.kind !== 'photos') {
-            // PDF : le reconstruire et le recharger via pdf.js
+        if (parsed.kind !== 'photos' && typeof buildRelevePageThumbs === 'function' && window.pdfjsLib) {
+            // PDF : toujours le recharger via pdf.js (haute resolution, zoom, extraits
+            // recadres) — les vignettes du payload ne sont qu'un filet de secours
             try {
                 const { data: pdfBlob } = await window.supabaseClient.storage.from('releves').download(base + '/releve.pdf');
-                if (pdfBlob && typeof buildRelevePageThumbs === 'function' && window.pdfjsLib) {
+                if (pdfBlob) {
                     window._relevePdfBytes = pdfBlob;
+                    window._reviewPdfIdbSavedFor = pdfBlob;
                     const pdf = await window.pdfjsLib.getDocument({ data: await pdfBlob.arrayBuffer() }).promise;
                     window._releveCurrentPdf = pdf;
                     await buildRelevePageThumbs(pdf);
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error('[REVIEW] resume remote pdf:', e);
+            }
         }
         document.getElementById('releve-upload-modal').style.display = 'none';
         openReleveReview();
