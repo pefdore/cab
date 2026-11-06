@@ -11155,18 +11155,6 @@ function reunionBestProposal(proposals, votes) {
     return best;
 }
 
-async function reunionRenderCabinetBanner() {
-    const banner = document.getElementById('reunionCabinetBanner');
-    if (!banner) return;
-    const cab = await reunionLoadMyCabinet();
-    const label = await reunionCabinetLabel(cab);
-    if (!label) {
-        banner.innerHTML = '<div class="odj-empty">⚠️ Aucun cabinet associé à votre profil : les réunions de cabinet ne sont pas disponibles. Associez votre compte à un cabinet (Plus > Profil > Mon cabinet).</div>';
-    } else {
-        banner.innerHTML = '<div class="reunion-cabinet-banner">Espace cabinet : <strong>' + reunionEsc(label) + '</strong></div>';
-    }
-}
-
 async function renderProfileCabinetBox() {
     const boxes = document.querySelectorAll('#profileCabinetBox');
     if (!boxes.length || !supabaseClient || !currentUser) return;
@@ -12136,7 +12124,6 @@ function downloadCR() {
 
 async function reunionInit() {
     if (!supabaseClient || !currentUser) return;
-    await reunionRenderCabinetBanner();
     await reunionRenderList();
     await reunionRenderProposals();
     reunionToggleSchedule(false);
