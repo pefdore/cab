@@ -11332,7 +11332,6 @@ function reunionToggleSchedule(show) {
         const vb = document.getElementById('reunionValidateBox');
         if (vb) vb.innerHTML = '';
         reunionRenderTitleChips();
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 
@@ -11346,9 +11345,12 @@ function reunionShowWizardSondage() {
 }
 
 async function reunionStartSondage() {
+    if (reunionSondageId) { reunionShowWizardSondage(); return; }
     const titre = reunionGetTitre();
     const cabinetId = await reunionGetCabinetId();
     if (!cabinetId) { alert('Aucun cabinet associé à votre profil.'); return; }
+    const unknownBtn = document.getElementById('reunionDateUnknownBtn');
+    if (unknownBtn) unknownBtn.disabled = true;
     try {
         const { data, error } = await supabaseClient
             .from('reunions')
@@ -11363,6 +11365,8 @@ async function reunionStartSondage() {
     } catch (e) {
         console.error('[REUNIONS] start sondage error:', e);
         alert('Erreur : ' + (e.message || e));
+    } finally {
+        if (unknownBtn) unknownBtn.disabled = false;
     }
 }
 
@@ -12100,6 +12104,8 @@ async function reunionInit() {
     await reunionRenderList();
     await reunionRenderProposals();
     reunionToggleSchedule(false);
+    if (reunionInitialized) return;
+    reunionInitialized = true;
 
     const proposeBtn = document.getElementById('reunionProposeBtn');
     if (proposeBtn) proposeBtn.addEventListener('click', reunionProposeDate);
