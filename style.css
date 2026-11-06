@@ -14114,3 +14114,249 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .fhero-meta .fhero-bank { justify-content: space-between; width: 100%; }
 }
 .fhero-meta .fhero-trend { margin-left: 0; align-self: flex-start; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODULE RÉUNIONS DE CABINET — finition MD3 Expressive + responsive
+   Même langage que le reste de l'app : surfaces tonales, grandes formes,
+   pilules, ressorts, hiérarchie claire des actions, thème sombre.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#cabinet-reunions .module-card {
+    border-radius: var(--md-radius-2xl) !important;
+    border: 1px solid var(--color-border-subtle, transparent) !important;
+    background: var(--md-surface-high) !important;
+}
+
+/* ---- Cartes de réunion : tuiles tonales, ressort au survol ---- */
+#cabinet-reunions .reunion-card {
+    border-radius: var(--md-radius-xl) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    background: var(--md-surface-high) !important;
+    box-shadow: var(--elev-1);
+    padding: 16px 18px !important;
+    transition: transform 0.3s var(--md-spring), box-shadow 0.2s ease;
+    animation: md-pop 0.5s var(--md-spring) both;
+}
+#cabinet-reunions .reunion-card:hover { transform: translateY(-2px); box-shadow: var(--elev-2); }
+#cabinet-reunions .reunion-card.fixed { border-left: 4px solid var(--md-primary) !important; }
+#cabinet-reunions .reunion-card.pending {
+    background: var(--md-surface-low) !important;
+    border-left: 4px solid transparent !important;
+    box-shadow: none;
+}
+#cabinet-reunions .reunion-card-title {
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+}
+#cabinet-reunions .reunion-card-date {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+#cabinet-reunions .odj-vote-count { font-size: 0.78rem; color: var(--color-text-tertiary); }
+#cabinet-reunions .reunion-card .action-btn { white-space: nowrap; }
+
+/* ---- Assistant de date : panneau tonal interne ---- */
+#reunionScheduleSection {
+    background: var(--md-surface-low);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--md-radius-2xl);
+    padding: 16px 18px 18px;
+    margin-top: 14px;
+    animation: md-pop 0.45s var(--md-spring) both;
+}
+#reunionScheduleSection .odj-section-label {
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+}
+#reunionScheduleSection .form-input {
+    border-radius: 14px !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    background: var(--md-surface-high) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+#reunionScheduleSection .form-input:focus {
+    outline: none;
+    border-color: var(--md-primary) !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* Thématiques proposées : pilules tonales au ressort */
+.reunion-title-chip {
+    border-radius: 999px !important;
+    background: var(--md-surface-high) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    font-weight: 600 !important;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease, border-color 0.15s ease !important;
+}
+.reunion-title-chip:hover {
+    background: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container) !important;
+    border-color: transparent !important;
+    transform: translateY(-1px) scale(1.04);
+}
+.reunion-title-chip:active { transform: scale(0.94); }
+
+/* Boutons « Oui / Non » : grosses pilules segmentées, sélection pleine */
+.reunion-date-mode-btn {
+    padding: 13px 22px !important;
+    font-weight: 700 !important;
+    font-size: 0.92rem !important;
+    transition: transform 0.3s var(--md-spring), background 0.15s ease, box-shadow 0.2s ease !important;
+}
+.reunion-date-mode-btn:hover { transform: translateY(-1px); }
+.reunion-date-mode-btn:active { transform: scale(0.97); }
+.reunion-date-row .reunion-date-mode-btn.selected,
+.reunion-date-row .reunion-date-mode-btn.selected:hover {
+    background: var(--md-primary) !important;
+    color: #fff !important;
+    border-color: var(--md-primary) !important;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+/* Dates proposées : tuiles empilées, vote en pilules */
+.reunion-proposals h4 { letter-spacing: -0.01em; }
+.reunion-proposal {
+    border-radius: 16px !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    background: var(--md-surface-high) !important;
+    padding: 12px 16px !important;
+    transition: transform 0.25s var(--md-spring), box-shadow 0.2s ease;
+}
+.reunion-proposal:hover { transform: translateX(3px); }
+.reunion-proposal.best {
+    background: var(--md-primary-container) !important;
+    border-color: transparent !important;
+    color: var(--md-on-primary-container);
+}
+.reunion-proposal.best .reunion-proposal-date { color: var(--md-on-primary-container); }
+.reunion-proposal.best .odj-vote-count { color: var(--md-on-primary-container); opacity: 0.8; }
+.reunion-proposal .odj-vote-btn {
+    border-radius: 999px !important;
+    font-weight: 700;
+    transition: transform 0.25s var(--md-spring), background 0.15s ease !important;
+}
+.reunion-proposal .odj-vote-btn:active { transform: scale(0.94); }
+.reunion-proposal .odj-vote-btn.voted { box-shadow: 0 4px 12px rgba(13, 138, 95, 0.28); }
+
+/* Bandeau de validation : surface tonale primaire */
+.reunion-cabinet-banner {
+    border-radius: 16px !important;
+    background: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container) !important;
+    border: none !important;
+    font-weight: 600;
+    animation: md-pop 0.4s var(--md-spring) both;
+}
+
+/* ---- Vue détail : en-tête clair, hiérarchie des actions ---- */
+#reunionDetailView .module-card { animation: md-pop 0.45s var(--md-spring) both; }
+.reunion-detail-header {
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+.reunion-detail-header h3 {
+    font-size: clamp(1.05rem, 3vw, 1.3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    flex: 1;
+    min-width: 200px;
+}
+.reunion-detail-header h3 .sujet-author { font-weight: 600; }
+
+/* Retour : bouton texte discret */
+#reunionDetailView #reunionDetailCloseBtn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--color-text-secondary) !important;
+    font-weight: 600;
+}
+#reunionDetailView #reunionDetailCloseBtn:hover { background: var(--color-bg-muted) !important; color: var(--color-text) !important; }
+
+/* Reporter : pilule tonale primaire */
+#reunionDetailView #reunionReportBtn {
+    background: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container) !important;
+    border: none !important;
+    font-weight: 700;
+}
+#reunionDetailView #reunionReportBtn:hover { filter: brightness(0.96); transform: translateY(-1px); }
+
+/* Supprimer : pilule tonale erreur, visuellement distincte */
+#reunionDetailView #reunionDeleteBtn {
+    background: #fde3e3 !important;
+    color: #b3261e !important;
+    border: none !important;
+    font-weight: 700;
+}
+#reunionDetailView #reunionDeleteBtn:hover { background: #f8c9c9 !important; transform: translateY(-1px); }
+
+/* Ligne de report : mêmes champs arrondis que l'assistant */
+#reunionReportRow {
+    background: var(--md-surface-low);
+    border-radius: 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border-subtle);
+    animation: md-pop 0.35s var(--md-spring) both;
+}
+#reunionReportRow .form-input {
+    border-radius: 14px !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    background: var(--md-surface-high) !important;
+}
+#reunionReportRow .action-btn.primary {
+    background: var(--md-primary) !important;
+    border-color: var(--md-primary) !important;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+/* ---- Thème sombre ---- */
+[data-theme="dark"] #cabinet-reunions .module-card { background: var(--color-bg-elevated) !important; }
+[data-theme="dark"] #cabinet-reunions .reunion-card { background: var(--color-bg-elevated) !important; }
+[data-theme="dark"] #cabinet-reunions .reunion-card.pending { background: var(--color-bg-subtle) !important; }
+[data-theme="dark"] #reunionScheduleSection { background: var(--color-bg-subtle); }
+[data-theme="dark"] #reunionScheduleSection .form-input,
+[data-theme="dark"] #reunionReportRow .form-input { background: var(--color-bg-elevated) !important; }
+[data-theme="dark"] .reunion-title-chip { background: var(--color-bg-elevated) !important; }
+[data-theme="dark"] .reunion-title-chip:hover { background: rgba(79, 70, 229, 0.24) !important; color: #e4e1ff !important; }
+[data-theme="dark"] .reunion-proposal { background: var(--color-bg-elevated) !important; }
+[data-theme="dark"] .reunion-proposal.best { background: rgba(79, 70, 229, 0.24) !important; color: #e4e1ff; }
+[data-theme="dark"] .reunion-proposal.best .reunion-proposal-date,
+[data-theme="dark"] .reunion-proposal.best .odj-vote-count { color: #e4e1ff; }
+[data-theme="dark"] .reunion-cabinet-banner { background: rgba(79, 70, 229, 0.24) !important; color: #e4e1ff !important; }
+[data-theme="dark"] #reunionDetailView #reunionReportBtn { background: rgba(79, 70, 229, 0.24) !important; color: #cfcbff !important; }
+[data-theme="dark"] #reunionDetailView #reunionReportBtn:hover { background: rgba(79, 70, 229, 0.36) !important; }
+[data-theme="dark"] #reunionDetailView #reunionDeleteBtn { background: rgba(217, 48, 54, 0.18) !important; color: #ffb4a9 !important; }
+[data-theme="dark"] #reunionDetailView #reunionDeleteBtn:hover { background: rgba(217, 48, 54, 0.3) !important; }
+[data-theme="dark"] #reunionReportRow { background: var(--color-bg-subtle); }
+
+/* ---- Responsive : mobile en colonnes, actions pleine largeur ---- */
+@media (max-width: 640px) {
+    #cabinet-reunions .reunion-card {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+    #cabinet-reunions .reunion-card .odj-vote-bar,
+    #cabinet-reunions .reunion-card .action-btn {
+        width: 100%;
+    }
+    #cabinet-reunions .reunion-card .odj-vote-bar { display: flex; gap: 8px; }
+    #cabinet-reunions .reunion-card .odj-vote-bar .action-btn { flex: 1; }
+    #reunionScheduleSection { padding: 14px; border-radius: var(--md-radius-xl); }
+    .reunion-date-row { flex-direction: column; align-items: stretch; }
+    .reunion-date-row .form-input { min-width: 0; }
+    .reunion-date-row .reunion-date-mode-btn { width: 100%; }
+    .reunion-proposal { flex-direction: column !important; align-items: stretch !important; }
+    .reunion-proposal .odj-vote-bar { display: flex; gap: 8px; }
+    .reunion-proposal .odj-vote-bar .odj-vote-btn { flex: 1; }
+    .reunion-detail-header { flex-direction: column !important; align-items: stretch !important; }
+    .reunion-detail-header > div { display: flex; gap: 8px; flex-wrap: wrap; }
+    .reunion-detail-header .action-btn { flex: 1; text-align: center; }
+    #reunionReportRow { flex-wrap: wrap; }
+    #reunionReportRow .form-input { min-width: 0; }
+    #reunionReportRow .action-btn { width: 100%; }
+}
