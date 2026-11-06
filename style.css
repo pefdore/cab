@@ -11187,6 +11187,18 @@ select.admin-search { min-width: 170px; }
     color: var(--color-primary);
     background: rgba(59,130,246,0.08);
 }
+/* Mobile : le menu de sous-categories doit rester visible et utilisable */
+@media (max-width: 760px) {
+    .souscat-chips {
+        max-height: 40vh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .souscat-chip { font-size: 0.78rem; padding: 7px 13px; }
+}
+/* ouverture au-dessus du champ quand il n'y a pas la place en dessous */
+.souscat-chips.up { top: auto; bottom: 100%; }
 
 /* ===== Barre d'action de la vue de revue (responsive) ===== */
 .review-topbar {
