@@ -8168,6 +8168,10 @@ async function processRelevéUpload(fileOrFiles) {
                 console.log('[RELEVÉ] Apprentissage appliqué:', t.description, '->', learned.category);
                 out.category = learned.category;
                 out.learned = true;
+            } else if (!learned) {
+                // pas d'apprentissage : dictionnaire d'enseignes courantes (cafe, urssaf, edf...)
+                const kw = keywordSuggestCategory(t.description, isDepense);
+                if (kw) { out.category = kw; out.keywordSuggested = true; }
             }
             const dup = findExistingDuplicate(out);
             if (dup) {
@@ -8878,7 +8882,7 @@ const SCM_SOUS_CATEGORIES = {
     assurance: ['Assurance RC professionnelle', 'Assurance local', 'Assurance matériel', 'Assurance homme-clé'],
     banque: ['Frais de tenue de compte', 'Frais de transaction', 'Intérêts agios'],
     remboursement_credit: ['Intérêts emprunt', 'Remboursement capital emprunt', 'Leasing matériel', 'Crédit-bail'],
-    reception: ['Réception & représentation', 'Formation du personnel', 'Publicité / communication', 'Frais postaux', 'Divers'],
+    reception: ['Réception & représentation', 'Formation du personnel', 'Publicité / communication', 'Frais postaux', 'Café / petite restauration', 'Divers'],
     autres_depenses: ['Divers'],
     // recettes
     participation_associe: ['Cotisation mensuelle associés (quote-part)', 'Cotisation Dr — quote-part',
@@ -9239,10 +9243,43 @@ function normalizeReleveLibelle(str) {
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .toUpperCase()
         .replace(/\b\d{2,}\b/g, ' ')
+        // bruit bancaire : la cle d'apprentissage porte le NOM de la societe,
+        // pas les mentions techniques (VIR, PRELVT, EMIS, CARTE...) ni les mois
+        .replace(/\b(VIR|VIREMENTS?|VRLMT|PRELVT|PRELEVEMENTS?|EMIS[ES]?|RECUE?|CARTES?|CB|PAIEMENTS?|ACHATS?|FACTURES?|REF|REFERENCE|REGLEMENT|SEPA|SDD|DONNEUR|ORDRE|BIC|IBAN)\b/g, ' ')
+        .replace(/\b(JANVIER|FEVRIER|MARS|AVRIL|MAI|JUIN|JUILLET|AOUT|SEPTEMBRE|OCTOBRE|NOVEMBRE|DECEMBRE)\b/g, ' ')
         .replace(/\b(DU|LE|LA|DE|DES|A|AU|ET|POUR|PAR|SUR|CHEZ|N°|N)\b/g, ' ')
         .replace(/[^A-Z ]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
+}
+
+// Dictionnaire d'enseignes / societes courantes -> categorie.
+// Sert de suggestion quand l'apprentissage n'a encore rien appris.
+const RELEVE_KEYWORD_CATEGORIES = [
+    { re: /\bCAFE?\b|COFFEE|STARBUCK|MCDO(NALD)?\b|QUICK\b|BRASSERIE|RESTAURANT|BAKERY|SANDWICH|BAGEL|PATISSERIE/, category: 'reception' },
+    { re: /URSSAF|CARSSAT|\bCIALE\b|RETRAITE|AGIRC|ARRCO|PREVOYANCE SALAR|MUTUELLE SALAR/, category: 'urssaf' },
+    { re: /DGFIP|IMPOTS?\b|TAXE FONCIERE|\bCFE\b|TEOM|ORDURES MENAGERES/, category: 'impots' },
+    { re: /BOUYGUES|\bORANGE\b|\bSFR\b|\bFREE\b|CORIOLIS|NUMERICABLE|ALTICE/, category: 'services' },
+    { re: /\bEDF\b|ENGIE|\bGDF\b|TOTAL ENERGIE|ENEDIS|GRDF|VEOLIA|\bSUEZ\b|LYONNAISE DES EAUX|ELECTRICITE DE|GAZ NATUREL/, category: 'charges' },
+    { re: /LOYER|BAILLEUR|FONCIER CLIENT|SCI\b/, category: 'charges' },
+    { re: /SALAIRES?|SALARIES|REMUNERATION|FEMME DE MENAGE|SECRETARIAT|VACATION/, category: 'masse_salariale' },
+    { re: /EXPERT COMPTABLE|COMPTABIL|AVOCAT|JURIDIQUE|GREFFE|HUISSIER/, category: 'comptabilite' },
+    { re: /ASSURANCE|\bAXA\b|\bMAIF\b|\bMMA\b|ALLIANZ|GROUPAMA|HARMONIE MUT/, category: 'assurance' },
+    { re: /FRAIS BANCAIRE|COMMISSION|AGIOS|COTISATION BANQUE|\bBNP\b|CREDIT (AGRICOLE|LYONNAIS|MUTUEL)|CAISSE D'EPARGNE|BANQUE POPULAIRE|LA BANQUE POSTALE|HELLO BANK|REVOLUT|BOURSORAMA|\bFORTIS\b|\bING\b/, category: 'banque' },
+    { re: /CREDIT ?(BAIL|RENT)|LEASING|EMPRUNT|PRET |INTERETS /, category: 'remboursement_credit' },
+    { re: /AMAZON|\bAPPLE\b|MICROSOFT|GOOGLE|\bOVH\b|GANDI|SCALEWAY|ADOBE|NOTION|DROPBOX|ICLOUD|\bZOOM\b|TEAMS|DOCTOLIB|MEDICACTU|SILAE|VISIONIC|APICRYPT|\bCVFE\b|SOPHIA/, category: 'logiciel' },
+    { re: /CARREFOUR|AUCHAN|LECLERC|INTERMARCHE|MONOPRIX|\bLIDL\b|\bALDI\b|PICARD|PHARMACIE|PARAPHARMACIE|GROSSISTE|MEDICAMENT|CONSOMMABLE/, category: 'consommables' },
+    { re: /IKEA|CONFORAMA|CASTORAMA|BRICOMARCHE|BRICODEPOT|POINT P\b|MAISON DU MONDE/, category: 'fournitures' },
+    { re: /REMBOURSEMENT|\bRBT\b/, category: 'remboursements' }
+];
+
+function keywordSuggestCategory(description, isDepense) {
+    const norm = normalizeReleveLibelle(description);
+    if (!norm) return null;
+    for (const kw of RELEVE_KEYWORD_CATEGORIES) {
+        if (kw.re.test(norm)) return normalizeFluxCategory(kw.category, isDepense);
+    }
+    return null;
 }
 
 let releveLearningCache = null;
@@ -12127,6 +12164,10 @@ async function getCabinetId() {
 async function getReleveMonthStatuses() {
     if (window._releveMonthStatuses) return window._releveMonthStatuses;
     const map = new Map();
+    const missingValidatedCol = (err) => {
+        const msg = String(err?.message || err || '');
+        return msg.includes('validated') || err?.code === 'PGRST204' || msg.includes('PGRST204');
+    };
     try {
         const { data, error } = await supabaseClient
             .from('releve_imports')
@@ -12140,15 +12181,34 @@ async function getReleveMonthStatuses() {
             map.set(r.month, prev);
         });
     } catch (e) {
-        // colonne validated pas encore migree : fallback legacy (tout import = valide)
-        try {
-            const { data } = await supabaseClient
-                .from('releve_imports')
-                .select('month')
-                .eq('user_id', currentUser.id);
-            (data || []).forEach(r => map.set(r.month, { imported: true, validated: true }));
-        } catch (e2) {
-            console.error('[RELEVÉ] getReleveMonthStatuses:', e2);
+        if (missingValidatedCol(e)) {
+            // colonne validated pas encore migree : prevenir clairement,
+            // la migration supabase-releve-validation.sql doit etre executee
+            console.warn('[RELEVÉ] Colonne validated absente : exécutez supabase-releve-validation.sql dans Supabase.');
+            if (!window._releveValidatedColWarned && typeof showToast === 'function') {
+                window._releveValidatedColWarned = true;
+                showToast('⚠️ Migration manquante : exécutez supabase-releve-validation.sql (validation des mois désactivée).', 'error');
+            }
+            try {
+                const { data } = await supabaseClient
+                    .from('releve_imports')
+                    .select('month')
+                    .eq('user_id', currentUser.id);
+                (data || []).forEach(r => map.set(r.month, { imported: true, validated: true }));
+            } catch (e2) {
+                console.error('[RELEVÉ] getReleveMonthStatuses:', e2);
+            }
+        } else {
+            // autre erreur (reseau...) : ne JAMAIS marquer les mois valides par defaut,
+            // ils restent « en cours » jusqu'a confirmation
+            console.error('[RELEVÉ] getReleveMonthStatuses:', e);
+            try {
+                const { data } = await supabaseClient
+                    .from('releve_imports')
+                    .select('month')
+                    .eq('user_id', currentUser.id);
+                (data || []).forEach(r => map.set(r.month, { imported: true, validated: false }));
+            } catch (e2) {}
         }
     }
     window._releveMonthStatuses = map;

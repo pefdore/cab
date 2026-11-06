@@ -105,6 +105,21 @@ function renderReminders() {
         } else {
             resumeZone.innerHTML = '';
             resumeZone.style.display = 'none';
+            // import lance sur un autre appareil (ex. photos prises sur le telephone)
+            if (typeof hasRemoteSavedReview === 'function' && typeof resumeRemoteReview === 'function') {
+                hasRemoteSavedReview().then(ok => {
+                    if (!ok || resumeZone.innerHTML) return;
+                    resumeZone.innerHTML = `
+                        <div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.4); border-radius:10px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <span style="font-size:0.8rem;">📱 <strong>Un import de relevé a été lancé sur un autre appareil</strong> — reprenez-le ici, les photos sont synchronisées.</span>
+                            <span style="display:flex; gap:8px;">
+                                <button class="action-btn primary" style="padding:6px 14px; font-size:0.78rem;" onclick="resumeSavedReview()">▶ Reprendre ici</button>
+                                <button class="action-btn" style="padding:6px 14px; font-size:0.78rem;" onclick="clearSavedReview(); renderReminders();">Abandonner</button>
+                            </span>
+                        </div>`;
+                    resumeZone.style.display = 'block';
+                });
+            }
         }
     }
 
