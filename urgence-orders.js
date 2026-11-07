@@ -249,13 +249,19 @@ function urgenceReceiveOrder(orderId) {
                 <strong>${urgenceEscapeHtml(i.name)}</strong>
                 <span class="urgence-pointage-sub">commandé : ${i.qty} ${urgenceEscapeHtml(i.unit)} · déjà reçu : ${already} · prix unitaire : ${i.unitPrice ? urgenceFmtEur(i.unitPrice) : '—'}</span>
             </div>
-            <div class="urgence-pointage-input">
-                <label class="urgence-receive-check">
-                    <input type="checkbox" class="urgence-receive-ok" data-pid="${i.productId}" checked>
-                    Arrivé
+            <div class="urgence-receive-line">
+                <div class="urgence-pointage-input">
+                    <label class="urgence-receive-check">
+                        <input type="checkbox" class="urgence-receive-ok" data-pid="${i.productId}" checked>
+                        Arrivé
+                    </label>
+                    <input type="number" min="0" max="${rest}" class="form-input urgence-receive-qty" data-pid="${i.productId}" value="${rest}">
+                    <span class="urgence-pointage-unit">${urgenceEscapeHtml(i.unit)}</span>
+                </div>
+                <label class="urgence-receive-price-label">€/unité facturé
+                    <input type="number" min="0" step="0.01" class="form-input urgence-receive-price" data-pid="${i.productId}" value="${i.unitPrice || ''}" placeholder="prix facture">
                 </label>
-                <input type="number" min="0" max="${rest}" class="form-input urgence-receive-qty" data-pid="${i.productId}" value="${rest}">
-                <span class="urgence-pointage-unit">${urgenceEscapeHtml(i.unit)}</span>
+                <span class="urgence-receive-line-total" data-linetotal="${i.productId}">${i.unitPrice ? urgenceFmtEur(rest * i.unitPrice) : '—'}</span>
             </div>
             <div class="urgence-receive-expiry-row">
                 <label>📅 Péremption</label>
@@ -276,11 +282,18 @@ function urgenceReceiveOrder(orderId) {
                 <button type="button" class="modal-close" onclick="urgenceCloseReceiveModal()" aria-label="Fermer">✕</button>
             </div>
             <div class="modal-body">
-                <p class="form-hint">Cochez « Arrivé » et ajustez la quantité reçue pour chaque référence livrée. Les références non cochées resteront « en attente de livraison » — vous pourrez les réceptionner plus tard (une commande peut être répartie sur plusieurs fournisseurs).</p>
+                <p class="form-hint">Avec la facture sous les yeux : cochez « Arrivé », ajustez la quantité reçue et le <strong>prix unitaire facturé</strong> de chaque référence. Les références non cochées resteront « en attente de livraison ».</p>
                 ${rows}
-                <div class="form-group" style="margin-top: 12px;">
-                    <label>Coût TTC de ce qui est reçu maintenant (€)</label>
-                    <input type="number" min="0" step="0.01" id="urgenceReceiveCost" class="form-input" value="${estRemaining ? estRemaining.toFixed(2) : ''}" placeholder="Ex : 45.90">
+                <div class="urgence-receive-totals">
+                    <div class="form-group">
+                        <label>Total TTC de la facture (€)</label>
+                        <input type="number" min="0" step="0.01" id="urgenceReceiveCost" class="form-input" value="${estRemaining ? estRemaining.toFixed(2) : ''}" placeholder="Ex : 45.90">
+                    </div>
+                    <div class="urgence-receive-sum">
+                        <span class="urgence-receive-sum-label">Somme des lignes</span>
+                        <strong id="urgenceReceiveLinesSum">—</strong>
+                        <span id="urgenceReceiveSumCheck" class="stock-chip neutral">à vérifier</span>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -292,12 +305,48 @@ function urgenceReceiveOrder(orderId) {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) urgenceCloseReceiveModal();
     });
+    const updateLinesSum = () => {
+        let sum = 0;
+        modal.querySelectorAll('.urgence-receive-ok').forEach(chk => {
+            if (!chk.checked) return;
+            const pid = chk.dataset.pid;
+            const qty = parseInt(modal.querySelector(`.urgence-receive-qty[data-pid="${pid}"]`)?.value, 10) || 0;
+            const price = parseFloat(modal.querySelector(`.urgence-receive-price[data-pid="${pid}"]`)?.value);
+            const lineTotal = modal.querySelector(`[data-linetotal="${pid}"]`);
+            if (lineTotal) lineTotal.textContent = (!isNaN(price) && price > 0) ? urgenceFmtEur(qty * price) : '—';
+            if (!isNaN(price) && price > 0) sum += qty * price;
+        });
+        const sumEl = document.getElementById('urgenceReceiveLinesSum');
+        const checkEl = document.getElementById('urgenceReceiveSumCheck');
+        if (sumEl) sumEl.textContent = sum > 0 ? urgenceFmtEur(sum) : '—';
+        if (checkEl) {
+            const cost = parseFloat(document.getElementById('urgenceReceiveCost')?.value);
+            if (sum <= 0 || isNaN(cost)) {
+                checkEl.textContent = 'à vérifier';
+                checkEl.className = 'stock-chip neutral';
+            } else if (Math.abs(cost - sum) < 0.005) {
+                checkEl.textContent = '✓ = facture';
+                checkEl.className = 'stock-chip success';
+            } else {
+                checkEl.textContent = `${cost > sum ? '+' : ''}${urgenceFmtEur(cost - sum)} d'écart`;
+                checkEl.className = 'stock-chip warning';
+            }
+        }
+    };
+
     modal.querySelectorAll('.urgence-receive-ok').forEach(chk => {
         chk.addEventListener('change', () => {
-            const qty = modal.querySelector(`.urgence-receive-qty[data-pid="${chk.dataset.pid}"]`);
+            const pid = chk.dataset.pid;
+            const qty = modal.querySelector(`.urgence-receive-qty[data-pid="${pid}"]`);
             if (qty) qty.disabled = !chk.checked;
+            updateLinesSum();
         });
     });
+    modal.querySelectorAll('.urgence-receive-qty, .urgence-receive-price').forEach(input => {
+        input.addEventListener('input', updateLinesSum);
+    });
+    document.getElementById('urgenceReceiveCost')?.addEventListener('input', updateLinesSum);
+    updateLinesSum();
 }
 
 function urgenceCloseReceiveModal() {
@@ -319,11 +368,14 @@ function urgenceConfirmReceive(orderId) {
         const item = order.items.find(i => i.productId === pid);
         if (!item) return;
         const already = urgenceItemReceivedQty(order, item);
+        const priceInput = document.querySelector(`.urgence-receive-price[data-pid="${pid}"]`);
+        const unitPrice = parseFloat(priceInput?.value);
         receivedItems.push({
             productId: pid,
             name: item.name,
             unit: item.unit,
-            qty: Math.min(qty, item.qty - already)
+            qty: Math.min(qty, item.qty - already),
+            unitPrice: (!isNaN(unitPrice) && unitPrice > 0) ? unitPrice : 0
         });
     });
 
@@ -393,7 +445,10 @@ function urgenceSpreadReceptionCost(order, reception) {
         if (!product) return;
         const item = order.items.find(x => x.productId === i.productId);
         let unitCost;
-        if (est > 0 && item?.unitPrice > 0) {
+        if (Number(i.unitPrice) > 0) {
+            // Prix unitaire facture saisi a la reception : la donnee la plus fiable
+            unitCost = Number(i.unitPrice);
+        } else if (est > 0 && item?.unitPrice > 0) {
             const share = (i.qty * item.unitPrice) / est;
             unitCost = reception.cost * share / Math.max(i.qty, 1);
         } else if (i.qty) {
