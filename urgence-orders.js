@@ -177,6 +177,10 @@ function urgenceReceiveOrder(orderId) {
                 <input type="number" min="0" max="${rest}" class="form-input urgence-receive-qty" data-pid="${i.productId}" value="${rest}">
                 <span class="urgence-pointage-unit">${urgenceEscapeHtml(i.unit)}</span>
             </div>
+            <div class="urgence-receive-expiry-row">
+                <label>📅 Péremption</label>
+                <input type="date" class="form-input urgence-receive-expiry" data-pid="${i.productId}" title="Date de péremption du lot reçu (facultatif)">
+            </div>
         </div>`;
     }).join('');
 
@@ -263,7 +267,10 @@ function urgenceConfirmReceive(orderId) {
     receivedItems.forEach(r => {
         const product = urgenceData.products.find(p => p.id === r.productId);
         if (product) {
-            product.quantity = (product.quantity || 0) + r.qty;
+            const expiryInput = document.querySelector(`.urgence-receive-expiry[data-pid="${r.productId}"]`);
+            const expiry = expiryInput?.value || null;
+            if (typeof urgenceAddStockQty === 'function') urgenceAddStockQty(product, r.qty, expiry);
+            else product.quantity = (product.quantity || 0) + r.qty;
             updatedQty += r.qty;
         }
     });
