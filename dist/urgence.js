@@ -864,6 +864,13 @@ function urgenceUpdateSuggestedDoses(w, isAdult) {
 
 
 
+function urgenceToggleCard(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    card.classList.toggle('collapsed');
+}
+
+window.urgenceToggleCard = urgenceToggleCard;
 window.urgenceDaysSinceLastPointage = urgenceDaysSinceLastPointage;
 
 // ---------- Chercheur de DAE (base GeoDAE officielle via proxy /api/dae) ----------
