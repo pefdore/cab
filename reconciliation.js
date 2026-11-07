@@ -64,6 +64,33 @@ function reconScoreMatch(depense, order) {
     return score;
 }
 
+// Meilleur rapprochement automatique : montant proche du cout reel d'une commande
+// non deja liee a une autre depense, avec fournisseur/date coherent(e).
+function reconBestMatch(depense) {
+    if (depense.order_ids && depense.order_ids.length) return null;
+    const orders = reconAllOrders().filter(o => o.status !== 'cancelled');
+    if (!orders.length) return null;
+
+    const linkedElsewhere = new Set();
+    cabinetDepenses.forEach(d => {
+        if (d.id === depense.id) return;
+        (d.order_ids || []).forEach(id => linkedElsewhere.add(id));
+    });
+
+    const amount = Number(depense.amount) || 0;
+    let best = null;
+    orders.forEach(o => {
+        const score = reconScoreMatch(depense, o);
+        const total = reconOrderTotal(o);
+        const amountOk = amount > 0 && total > 0 && Math.abs(amount - total) <= Math.max(0.02, total * 0.01);
+        if (!amountOk || score < 0.7) return;
+        const penalty = linkedElsewhere.has(o.id) ? 0.3 : 0;
+        const finalScore = score - penalty;
+        if (!best || finalScore > best.score) best = { order: o, score: finalScore };
+    });
+    return best;
+}
+
 function reconSuggestOrders(depense) {
     const orders = reconAllOrders().filter(o => o.status !== 'cancelled');
     return orders
@@ -129,6 +156,27 @@ window.openReconModal = async function(depenseId) {
     document.body.appendChild(modal);
 };
 
+// Rapprochement en un clic depuis la suggestion automatique
+window.reconQuickLink = async function(depenseId, orderId) {
+    const depense = cabinetDepenses.find(d => d.id === depenseId);
+    const order = reconAllOrders().find(o => o.id === orderId);
+    if (!depense || !order) return;
+    if (!confirm(`Rapprocher « ${depense.description || 'cette dépense'} » (${Number(depense.amount).toFixed(2)}€)\nde la commande « ${reconOrderLabel(order)} » ?`)) return;
+    try {
+        const { error } = await supabaseClient
+            .from('cabinet_depenses')
+            .update({ order_ids: [orderId] })
+            .eq('id', depenseId);
+        if (error) throw error;
+        depense.order_ids = [orderId];
+        if (typeof showToast === 'function') showToast('✨ Dépense rapprochée de sa commande');
+        if (typeof renderFluxView === 'function') renderFluxView();
+        if (typeof renderReconPending === 'function') renderReconPending();
+    } catch (e) {
+        alert('Erreur: ' + e.message);
+    }
+};
+
 window.closeReconModal = function() {
     document.getElementById('reconModal')?.remove();
 };
@@ -171,7 +219,9 @@ window.renderReconPending = function() {
             </div>
             <div id="recon-pending-body" style="display:${open ? 'block' : 'none'}; margin-top:8px;">
             <p class="module-desc" style="font-size:0.72rem; margin:0 0 8px;">Paiements fournisseurs du relevé probablement liés à des commandes passées dans la gestion des stocks (matériel, consommables). Rapprocher chaque dépense de sa commande pour suivre le coût réel du stock dans le dashboard.</p>
-            ${pending.slice(0, 8).map(d => `
+            ${pending.slice(0, 8).map(d => {
+                const best = reconBestMatch(d);
+                return `
                 <div class="depense-item flux-row">
                     <div class="flux-row-main">
                         <span class="category">${reconEscapeHtml(d.category || '')}</span>
@@ -182,7 +232,17 @@ window.renderReconPending = function() {
                         <span class="amount">-${Number(d.amount).toFixed(2)}€</span>
                         <button class="action-btn" onclick="openReconModal(${d.id})">Rapprocher</button>
                     </div>
-                </div>`).join('')}
+                    ${best ? `
+                    <div class="recon-suggest">
+                        <span class="recon-suggest-icon">✨</span>
+                        <span class="recon-suggest-label">${reconEscapeHtml(reconOrderLabel(best.order))}</span>
+                        <span class="recon-suggest-actions">
+                            <button class="action-btn primary" onclick="reconQuickLink(${d.id}, '${best.order.id}')">Rapprocher</button>
+                            <button class="action-btn" onclick="openReconModal(${d.id})">Voir le détail</button>
+                        </span>
+                    </div>` : ''}
+                </div>`;
+            }).join('')}
             ${pending.length > 8 ? `<div style="font-size:0.75rem; color:var(--color-text-secondary); padding:4px 2px;">+ ${pending.length - 8} autre(s)…</div>` : ''}
             </div>
         </div>`;
