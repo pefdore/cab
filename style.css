@@ -15556,6 +15556,7 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .urgence-order-actions { flex: 1 1 100%; }
     .urgence-order-actions .action-btn { flex: 1 1 40%; padding: 8px 10px !important; font-size: 0.75rem; }
     .urgence-order-actions .action-btn.stock-btn-ghost { flex: 0 1 auto; }
+}
 /* ===== FLUX HERO : disposition cohérente des inlines selon la largeur ===== */
 /* Toutes les tuiles partagent la même géométrie : même padding, valeurs
    tabulaires sur une seule ligne, libellés ellipsés proprement. */
