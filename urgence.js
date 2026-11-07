@@ -254,8 +254,89 @@ function renderUrgenceStocks() {
             }).join('');
     }
 
+    renderUrgenceStockCards();
     renderUrgenceAlerts();
 }
+
+function renderUrgenceStockCards() {
+    const grid = document.getElementById('cabinetUrgenceStockGrid');
+    if (!grid) return;
+
+    const filter = document.getElementById('urgenceStockFilter')?.value || '';
+    const products = urgenceData.products.filter(p => !filter || p.category === filter);
+
+    const expired = p => p.expiry && new Date(p.expiry) < new Date();
+    const soon = p => {
+        if (!p.expiry) return false;
+        const d = new Date(p.expiry) - new Date();
+        return d >= 0 && d < 90 * 86400000;
+    };
+
+    grid.innerHTML = products.length === 0
+        ? '<p class="urgence-empty">Aucun produit. Ajoutez-en avec le bouton « Ajouter un produit ».</p>'
+        : products.map(p => {
+            const state = urgenceStockState(p);
+            const stateLabel = state === 'rupture' ? 'Rupture' : (state === 'bas' ? 'À commander' : 'OK');
+            const priceHtml = p.unitPrice ? Number(p.unitPrice).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) + '<small>/' + urgenceEscapeHtml(p.unit) + '</small>' : '';
+            const expiryChip = expired(p)
+                ? '<span class="stock-chip danger">⏳ Périmé</span>'
+                : (soon(p) ? '<span class="stock-chip warning">⏳ Bientôt</span>' : '');
+            return `
+                <div class="stock-card ${state}">
+                    <div class="stock-card-top">
+                        <span class="stock-card-cat">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</span>
+                        <span class="stock-card-actions">
+                            <button class="stock-icon-btn" onclick="urgenceEditProduct('${p.id}')" title="Modifier" aria-label="Modifier">✏️</button>
+                            <button class="stock-icon-btn" onclick="urgenceDeleteProduct('${p.id}')" title="Supprimer" aria-label="Supprimer">🗑️</button>
+                        </span>
+                    </div>
+                    <div class="stock-card-name">${urgenceEscapeHtml(p.name)}</div>
+                    <div class="stock-card-qty">
+                        <span class="stock-card-num">${p.quantity}</span>
+                        <span class="stock-card-unit">${urgenceEscapeHtml(p.unit)}</span>
+                        <span class="stock-chip ${state === 'rupture' ? 'danger' : (state === 'bas' ? 'warning' : 'success')}">${stateLabel}</span>
+                    </div>
+                    <div class="stock-card-meta">
+                        <span>seuil ${p.minQuantity}</span>
+                        ${p.expiry ? `<span>• exp. ${urgenceEscapeHtml(new Date(p.expiry).toLocaleDateString('fr-FR'))}</span>` : ''}
+                        ${expiryChip}
+                    </div>
+                    ${priceHtml ? `<div class="stock-card-price">${priceHtml}</div>` : ''}
+                </div>`;
+        }).join('');
+
+    const kpisEl = document.getElementById('urgenceStockKpis');
+    if (kpisEl) {
+        const all = urgenceData.products;
+        const low = all.filter(p => p.quantity <= p.minQuantity);
+        const out = all.filter(p => !p.quantity);
+        const exp = all.filter(p => p.expiry && new Date(p.expiry) < new Date());
+        const soonN = all.filter(p => {
+            if (!p.expiry) return false;
+            const d = new Date(p.expiry) - new Date();
+            return d >= 0 && d < 90 * 86400000;
+        });
+        kpisEl.innerHTML = `
+            <div class="stock-kpi"><span class="stock-kpi-num">${all.length}</span><span class="stock-kpi-label">Références</span></div>
+            <div class="stock-kpi warn"><span class="stock-kpi-num">${low.length}</span><span class="stock-kpi-label">À recommander</span></div>
+            <div class="stock-kpi danger"><span class="stock-kpi-num">${out.length}</span><span class="stock-kpi-label">Ruptures</span></div>
+            <div class="stock-kpi exp"><span class="stock-kpi-num">${exp.length}${soonN.length ? `<small> +${soonN.length} bientôt</small>` : ''}</span><span class="stock-kpi-label">Périmés</span></div>`;
+    }
+}
+
+function urgenceToggleStockMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('urgenceStockMenu');
+    if (!menu) return;
+    menu.classList.toggle('open');
+}
+
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('urgenceStockMenu');
+    if (menu?.classList.contains('open') && !e.target.closest('.stock-menu-wrap')) {
+        menu.classList.remove('open');
+    }
+});
 
 function renderUrgenceAlerts() {
     const alertsEl = document.getElementById('urgenceStockAlerts');
@@ -456,23 +537,97 @@ function renderUrgencePointage() {
         }
     }
 
-    container.innerHTML = products.map(p => `
+    // Conserver les quantites saisies non enregistrees a travers le re-rendu (reordonnancement)
+    const draft = {};
+    container.querySelectorAll('.urgence-pointage-qty').forEach(i => { draft[i.dataset.id] = i.value; });
+
+    container.innerHTML = products.map((p, idx) => `
         <div class="urgence-pointage-row" data-id="${p.id}">
+            <div class="urgence-pointage-handle" title="Glisser pour réordonner">
+                <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+            </div>
             <div class="urgence-pointage-name">
                 <strong>${urgenceEscapeHtml(p.name)}</strong>
                 <span class="urgence-pointage-sub">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))} · stock actuel : ${p.quantity} ${urgenceEscapeHtml(p.unit)} (seuil ${p.minQuantity})</span>
             </div>
             <div class="urgence-pointage-input">
                 <label>Reste :</label>
-                <input type="number" min="0" class="form-input urgence-pointage-qty" data-id="${p.id}" value="${p.quantity}">
+                <input type="number" min="0" class="form-input urgence-pointage-qty" data-id="${p.id}" value="${draft[p.id] !== undefined ? urgenceEscapeHtml(draft[p.id]) : p.quantity}">
                 <span class="urgence-pointage-unit">${urgenceEscapeHtml(p.unit)}</span>
                 <span class="urgence-pointage-flag" data-flag="${p.id}"></span>
+            </div>
+            <div class="urgence-pointage-move">
+                <button class="stock-icon-btn" onclick="urgenceMovePointage('${p.id}', -1)" title="Monter" aria-label="Monter" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                <button class="stock-icon-btn" onclick="urgenceMovePointage('${p.id}', 1)" title="Descendre" aria-label="Descendre" ${idx === products.length - 1 ? 'disabled' : ''}>▼</button>
             </div>
         </div>`).join('');
 
     container.querySelectorAll('.urgence-pointage-qty').forEach(input => {
         input.addEventListener('input', () => urgenceUpdatePointageFlag(input));
+        urgenceUpdatePointageFlag(input);
     });
+
+    urgenceBindPointageDrag(container);
+}
+
+let _urgencePointageDragId = null;
+
+function urgenceBindPointageDrag(container) {
+    container.querySelectorAll('.urgence-pointage-row').forEach(row => {
+        const handle = row.querySelector('.urgence-pointage-handle');
+        if (!handle) return;
+
+        handle.addEventListener('pointerdown', () => { row.draggable = true; });
+        row.addEventListener('dragstart', (e) => {
+            _urgencePointageDragId = row.dataset.id;
+            row.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', row.dataset.id); } catch (err) {}
+        });
+        row.addEventListener('dragend', () => {
+            row.draggable = false;
+            row.classList.remove('dragging');
+            _urgencePointageDragId = null;
+            container.querySelectorAll('.urgence-pointage-row').forEach(r => r.classList.remove('drag-over'));
+        });
+        row.addEventListener('dragover', (e) => {
+            if (!_urgencePointageDragId || row.dataset.id === _urgencePointageDragId) return;
+            e.preventDefault();
+            row.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+        row.addEventListener('drop', (e) => {
+            e.preventDefault();
+            row.classList.remove('drag-over');
+            if (!_urgencePointageDragId || row.dataset.id === _urgencePointageDragId) return;
+            urgenceReorderProducts(_urgencePointageDragId, row.dataset.id);
+            _urgencePointageDragId = null;
+        });
+    });
+}
+
+function urgenceReorderProducts(dragId, targetId) {
+    const from = urgenceData.products.findIndex(p => p.id === dragId);
+    const target = urgenceData.products.findIndex(p => p.id === targetId);
+    if (from < 0 || target < 0) return;
+    const [moved] = urgenceData.products.splice(from, 1);
+    let to = urgenceData.products.findIndex(p => p.id === targetId);
+    if (from < target) to += 1;
+    urgenceData.products.splice(to, 0, moved);
+    saveUrgenceData();
+    renderUrgencePointage();
+    renderUrgenceStocks();
+}
+
+function urgenceMovePointage(id, dir) {
+    const idx = urgenceData.products.findIndex(p => p.id === id);
+    const to = idx + dir;
+    if (idx < 0 || to < 0 || to >= urgenceData.products.length) return;
+    const [moved] = urgenceData.products.splice(idx, 1);
+    urgenceData.products.splice(to, 0, moved);
+    saveUrgenceData();
+    renderUrgencePointage();
+    renderUrgenceStocks();
 }
 
 function urgenceUpdatePointageFlag(input) {
@@ -1779,6 +1934,8 @@ window.urgenceCloseProductModal = urgenceCloseProductModal;
 window.urgenceTTSPlay = urgenceTTSPlay;
 window.urgenceTTSStop = urgenceTTSStop;
 window.urgenceCopyOrderList = urgenceCopyOrderList;
+window.urgenceToggleStockMenu = urgenceToggleStockMenu;
+window.urgenceMovePointage = urgenceMovePointage;
 window.refreshUrgenceView = refreshUrgenceView;
 window.urgenceToggleProtocol = urgenceToggleProtocol;
 window.urgenceComputeDoses = urgenceComputeDoses;

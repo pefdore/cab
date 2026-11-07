@@ -14537,3 +14537,455 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     #reunionDetailView .odj-item,
     #reunionDetailView .sujet-item { padding: 13px 14px !important; }
 }
+
+/* ============================================================
+   STOCKS CABINET — Material Design 3 Expressive
+   (Gestion, Pointage, Commandes, Coûts)
+   ============================================================ */
+
+#cabinet-stocks {
+    --stock-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --stock-radius: 20px;
+    --stock-ok: #16a34a;
+    --stock-warn: #d97706;
+    --stock-danger: #dc2626;
+}
+
+/* --- Sous-onglets : pilules segmentées MD3 --- */
+#cabinet-stocks .sub-tabs {
+    gap: 8px;
+    margin-bottom: 22px;
+    padding: 4px;
+    background: var(--color-bg-muted);
+    border-radius: 999px;
+    border: 1px solid var(--color-border-subtle);
+}
+
+#cabinet-stocks .sub-tab {
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-size: 0.84rem;
+    transition: transform 0.3s var(--stock-spring), background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#cabinet-stocks .sub-tab:hover { background: var(--color-bg-elevated); transform: translateY(-1px); }
+
+#cabinet-stocks .sub-tab.active {
+    background: var(--color-bg-elevated);
+    color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+}
+
+[data-theme="dark"] #cabinet-stocks .sub-tab.active {
+    background: rgba(99, 102, 241, 0.22);
+    color: #c7d2fe;
+}
+
+/* --- Cartes module : surfaces plus douces --- */
+#cabinet-stocks .stock-md3-card {
+    border-radius: 24px;
+    padding: 22px;
+    animation: stock-pop 0.5s var(--stock-spring) both;
+}
+
+@keyframes stock-pop {
+    from { opacity: 0; transform: translateY(10px) scale(0.99); }
+    to { opacity: 1; transform: none; }
+}
+
+.stock-md3-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.stock-md3-head h3 { margin: 0 0 4px; font-size: 1.15rem; }
+
+.stock-md3-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.stock-md3-foot { margin-top: 16px; text-align: center; }
+.stock-md3-cta { min-width: 240px; border-radius: 999px !important; padding: 12px 24px !important; font-weight: 600; }
+
+.stock-section-title {
+    margin: 22px 0 10px;
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* --- Menu « ⋮ » --- */
+.stock-menu-wrap { position: relative; }
+
+.stock-menu-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.25s var(--stock-spring), background 0.15s ease;
+}
+
+.stock-menu-btn:hover { background: var(--color-bg-muted); transform: scale(1.08); }
+
+.stock-menu {
+    position: absolute;
+    top: 44px;
+    right: 0;
+    min-width: 240px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+    padding: 6px;
+    display: none;
+    z-index: 40;
+}
+
+.stock-menu.open {
+    display: block;
+    animation: stock-pop 0.3s var(--stock-spring) both;
+}
+
+.stock-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 11px 14px;
+    border: none;
+    background: transparent;
+    color: var(--color-text);
+    font-size: 0.85rem;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.stock-menu-item:hover:not(:disabled) { background: var(--color-bg-muted); }
+.stock-menu-item:disabled { color: var(--color-text-tertiary); cursor: default; }
+
+/* --- KPI : tuiles expressive --- */
+.stock-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.stock-kpi {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 16px 10px;
+    border-radius: var(--stock-radius);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    animation: stock-pop 0.5s var(--stock-spring) both;
+}
+
+.stock-kpi.warn { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+.stock-kpi.danger { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+.stock-kpi.exp { background: rgba(124, 58, 237, 0.12); color: #7c3aed; }
+
+.stock-kpi-num { font-size: 1.7rem; font-weight: 800; line-height: 1.1; }
+.stock-kpi-num small { font-size: 0.8rem; font-weight: 600; }
+.stock-kpi-label { font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
+
+[data-theme="dark"] .stock-kpi.warn { color: #fbbf24; }
+[data-theme="dark"] .stock-kpi.danger { color: #f87171; }
+[data-theme="dark"] .stock-kpi.exp { color: #c4b5fd; }
+
+/* --- Cartes produit --- */
+.stock-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.stock-card {
+    position: relative;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--stock-radius);
+    padding: 14px 16px 16px;
+    overflow: hidden;
+    transition: transform 0.3s var(--stock-spring), box-shadow 0.2s ease;
+    animation: stock-pop 0.45s var(--stock-spring) both;
+}
+
+.stock-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--stock-ok);
+}
+
+.stock-card.bas::before { background: var(--stock-warn); }
+.stock-card.rupture::before { background: var(--stock-danger); }
+
+.stock-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1); }
+
+.stock-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.stock-card-cat {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary);
+}
+
+.stock-card-actions { display: flex; gap: 2px; }
+
+.stock-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.25s var(--stock-spring);
+}
+
+.stock-icon-btn:hover:not(:disabled) { background: var(--color-bg-muted); transform: scale(1.12); }
+.stock-icon-btn:disabled { opacity: 0.3; cursor: default; }
+
+.stock-card-name { font-weight: 700; font-size: 0.92rem; line-height: 1.3; margin-bottom: 8px; }
+
+.stock-card-qty { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+
+.stock-card-num {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-text);
+}
+
+.stock-card-unit { font-size: 0.8rem; color: var(--color-text-secondary); }
+
+.stock-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.stock-chip.success { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
+.stock-chip.warning { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.stock-chip.danger { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+
+.stock-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+}
+
+.stock-card-price { margin-top: 6px; font-size: 0.8rem; font-weight: 700; color: var(--color-text); }
+.stock-card-price small { font-weight: 500; color: var(--color-text-tertiary); }
+
+/* --- Pointage : lignes simples et manipulables --- */
+.stock-drag-hint {
+    font-size: 0.78rem;
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    border-radius: 999px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    display: inline-block;
+}
+
+#cabinet-stocks .urgence-pointage-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: var(--color-bg);
+    margin-bottom: 8px;
+    transition: transform 0.25s var(--stock-spring), box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.15s ease;
+}
+
+#cabinet-stocks .urgence-pointage-row:hover { box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08); }
+
+#cabinet-stocks .urgence-pointage-row.dragging {
+    opacity: 0.45;
+    transform: scale(0.98) rotate(0.6deg);
+}
+
+#cabinet-stocks .urgence-pointage-row.drag-over {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.urgence-pointage-handle {
+    flex-shrink: 0;
+    width: 30px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    color: var(--color-text-tertiary);
+    border-radius: 8px;
+    touch-action: none;
+}
+
+.urgence-pointage-handle:hover { background: var(--color-bg-muted); color: var(--color-text); }
+.urgence-pointage-handle:active { cursor: grabbing; }
+.urgence-pointage-handle svg { width: 16px; height: 16px; }
+
+.urgence-pointage-move { display: flex; gap: 2px; flex-shrink: 0; }
+
+#cabinet-stocks .urgence-pointage-input .form-input {
+    width: 76px;
+    text-align: center;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+#cabinet-stocks .urgence-pointage-flag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    min-width: 0;
+    text-align: center;
+}
+
+#cabinet-stocks .urgence-pointage-flag.warning { background: rgba(245, 158, 11, 0.14); }
+#cabinet-stocks .urgence-pointage-flag.success { background: rgba(34, 197, 94, 0.13); }
+
+/* --- Commandes : cartes --- */
+#cabinet-stocks .urgence-order-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--stock-radius);
+    background: var(--color-bg);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    animation: stock-pop 0.45s var(--stock-spring) both;
+}
+
+#cabinet-stocks .urgence-order-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+#cabinet-stocks .urgence-order-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--color-border);
+}
+
+#cabinet-stocks .urgence-order-edit-row {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+#cabinet-stocks .urgence-order-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+#cabinet-stocks .action-btn { border-radius: 999px !important; }
+
+#cabinet-stocks .action-btn.primary {
+    transition: transform 0.25s var(--stock-spring), box-shadow 0.2s ease;
+}
+
+#cabinet-stocks .action-btn.primary:active { transform: scale(0.96); }
+
+/* --- Coûts --- */
+#cabinet-stocks .urgence-cost-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+#cabinet-stocks .urgence-cost-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 16px 10px;
+    border-radius: var(--stock-radius);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+}
+
+#cabinet-stocks .urgence-cost-value { font-size: 1.35rem; font-weight: 800; }
+#cabinet-stocks .urgence-cost-label { font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
+
+#cabinet-stocks .urgence-cost-bar { border-radius: 999px; }
+#cabinet-stocks .urgence-cost-cat { margin-bottom: 8px; }
+
+/* --- Mobile --- */
+@media (max-width: 640px) {
+    #cabinet-stocks .stock-md3-card { padding: 16px 14px; border-radius: 18px; }
+
+    #cabinet-stocks .sub-tab { padding: 8px 12px; font-size: 0.76rem; }
+    #cabinet-stocks .sub-tab span { max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+
+    .stock-md3-head { flex-direction: column; }
+    .stock-md3-head-actions { width: 100%; }
+    .stock-md3-head-actions .action-btn { flex: 1; }
+
+    .stock-card-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stock-card { padding: 12px; }
+    .stock-card-num { font-size: 1.5rem; }
+
+    .stock-kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stock-kpi { padding: 12px 8px; }
+    .stock-kpi-num { font-size: 1.4rem; }
+
+    #cabinet-stocks .urgence-pointage-row { flex-wrap: wrap; padding: 12px 10px; }
+    #cabinet-stocks .urgence-pointage-name { flex: 1 1 100%; order: 2; padding-left: 4px; }
+    #cabinet-stocks .urgence-pointage-handle { order: 1; }
+    #cabinet-stocks .urgence-pointage-input { order: 3; margin-left: auto; }
+    #cabinet-stocks .urgence-pointage-move { order: 4; }
+    #cabinet-stocks .urgence-pointage-flag { min-width: 0; }
+
+    .stock-md3-cta { width: 100%; min-width: 0; }
+}
+
+@media (max-width: 400px) {
+    .stock-card-grid { grid-template-columns: 1fr; }
+}
