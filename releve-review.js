@@ -197,6 +197,15 @@ function reviewUpdate(index, field, value) {
         renderReleveReview();
     } else {
         tr[field] = value;
+        if (field === 'sous_categorie' && value && value.trim()) {
+            const isDepense = tr.type === 'dépense' || tr.amount < 0;
+            const cat = (typeof categoryForSousCategorie === 'function') ? categoryForSousCategorie(value, isDepense) : null;
+            if (cat) {
+                tr.category = cat;
+                const catSelect = document.querySelector(`.review-line[data-index="${index}"] select[onchange*="'category'"]`);
+                if (catSelect) catSelect.value = cat;
+            }
+        }
         // champs inline : pas de re-render (le focus et la saisie seraient perdus)
     }
 }
@@ -205,8 +214,14 @@ window.reviewUpdate = reviewUpdate;
 function applyReviewSuggestion(index) {
     const tr = pendingTransactions[index];
     if (!tr) return;
-    const sug = suggestSousCategorie(tr.description, tr.type === 'dépense' || tr.amount < 0);
-    if (sug) { tr.sous_categorie = sug; renderReleveReview(); }
+    const isDepense = tr.type === 'dépense' || tr.amount < 0;
+    const sug = suggestSousCategorie(tr.description, isDepense);
+    if (sug) {
+        tr.sous_categorie = sug;
+        const cat = (typeof categoryForSousCategorie === 'function') ? categoryForSousCategorie(sug, isDepense) : null;
+        if (cat) tr.category = cat;
+        renderReleveReview();
+    }
 }
 window.applyReviewSuggestion = applyReviewSuggestion;
 
@@ -1174,6 +1189,11 @@ function pickSousCatChip(index, sc) {
     const tr = pendingTransactions[index];
     if (!tr) return;
     tr.sous_categorie = sc;
+    const isDepense = tr.type === 'dépense' || tr.amount < 0;
+    const cat = (typeof categoryForSousCategorie === 'function') ? categoryForSousCategorie(sc, isDepense) : null;
+    if (cat) tr.category = cat;
+    const catSelect = document.querySelector(`.review-line[data-index="${index}"] select[onchange*="'category'"]`);
+    if (catSelect && cat) catSelect.value = cat;
     const input = document.getElementById(`review-souscat-input-${index}`);
     if (input) input.value = sc;
     const chips = document.getElementById(`review-souscat-chips-${index}`);
