@@ -644,6 +644,18 @@ function urgenceRenderOrders() {
     datalist.innerHTML = (typeof urgenceSupplierOptionsHtml === 'function' ? urgenceSupplierOptionsHtml() : '');
 }
 
+function urgenceOrderHeaderHtml(o, chipLabel, chipClass) {
+    const dateStr = new Date(o.createdAt).toLocaleDateString('fr-FR');
+    return `
+    <div class="urgence-order-head">
+        <div class="urgence-order-title">
+            <strong class="urgence-order-supplier">${urgenceEscapeHtml(o.supplier || 'Sans fournisseur')}</strong>
+            <span class="urgence-order-date">Commande du ${dateStr} · ${(o.items || []).length} réf.</span>
+        </div>
+        <span class="urgence-state ${chipClass}">${chipLabel}</span>
+    </div>`;
+}
+
 function urgenceOrderEditCardHtml(o) {
     const dateStr = new Date(o.createdAt).toLocaleDateString('fr-FR');
     const rows = o.items.map((i, idx) => `
@@ -656,10 +668,10 @@ function urgenceOrderEditCardHtml(o) {
                 <label>Qté
                     <input type="number" min="1" class="form-input urgence-order-qty" data-idx="${idx}" value="${i.qty}">
                 </label>
-                <label>Coût TTC / ${urgenceEscapeHtml(i.unit)}
+                <label>€ / ${urgenceEscapeHtml(i.unit)}
                     <input type="number" min="0" step="0.01" class="form-input urgence-order-price" data-idx="${idx}" value="${i.unitPrice || ''}" placeholder="€">
                 </label>
-                <span class="urgence-order-line-total" data-linetotal="${idx}">${i.unitPrice ? urgenceFmtEur(i.qty * i.unitPrice) : '—'}</span>
+                <span class="urgence-order-line-total" data-linetotal="${idx}">= ${i.unitPrice ? urgenceFmtEur(i.qty * i.unitPrice) : '—'}</span>
                 <button class="stock-icon-btn" onclick="urgenceMoveOrderItem('${o.id}', ${idx})" title="Déplacer vers une autre commande / fournisseur">⇄</button>
                 <button class="stock-icon-btn" onclick="urgenceOrderRemoveItem('${o.id}', ${idx})" title="Retirer de la commande">🗑️</button>
             </div>
@@ -675,10 +687,7 @@ function urgenceOrderEditCardHtml(o) {
 
     return `
         <div class="urgence-order-card" data-order="${o.id}">
-            <div class="urgence-order-head">
-                <strong>Commande du ${dateStr} — en préparation</strong>
-                <span class="urgence-state warning">À passer / en attente</span>
-            </div>
+            ${urgenceOrderHeaderHtml(o, 'À passer', 'warning')}
             <div class="urgence-order-meta">
                 <label>Fournisseur
                     <input type="text" class="form-input urgence-order-meta-input" data-order="${o.id}" data-field="supplier" list="urgenceOrderSupplierDatalist" value="${urgenceEscapeHtml(o.supplier || '')}" placeholder="Ex : Cooper">
@@ -699,7 +708,7 @@ function urgenceOrderEditCardHtml(o) {
                 <p class="stock-price-hint">Prix pré-remplis avec la dernière valeur connue — ajustez-les si le fournisseur annonce un nouveau tarif.</p>
             </div>
             <div class="urgence-order-foot">
-                <span>Total TTC estimé : <strong class="urgence-order-total" data-ordertotal="${o.id}">${urgenceFmtEur(urgenceOrderTotal(o))}</strong></span>
+                <span class="urgence-order-total-wrap">Total TTC estimé : <strong class="urgence-order-total" data-ordertotal="${o.id}">${urgenceFmtEur(urgenceOrderTotal(o))}</strong></span>
                 <span class="urgence-order-actions">
                     <button class="action-btn" onclick="urgenceCopyOrder('${o.id}')" title="Copier le bon de commande pour le coller dans un mail">⠫ Copier</button>
                     <button class="action-btn" onclick="urgenceSendOrder('${o.id}')" title="Ouvrir un mail pré-rempli vers le fournisseur">✉ Envoyer</button>
@@ -893,10 +902,7 @@ function urgenceOrderOrderedCardHtml(o) {
         : '';
     return `
         <div class="urgence-order-card">
-            <div class="urgence-order-head">
-                <strong>Commande du ${dateStr}${o.supplier ? ` — ${urgenceEscapeHtml(o.supplier)}` : ''}</strong>
-                <span class="urgence-state warning">Commandée — en attente de livraison</span>
-            </div>
+            ${urgenceOrderHeaderHtml(o, 'Commandée — en livraison', 'warning')}
             <div class="urgence-order-edit-list">${rows}</div>
             ${receptionsHtml}
             <div class="urgence-order-foot">
@@ -924,10 +930,7 @@ function urgenceOrderCardHtml(o) {
     ).join('');
     return `
         <div class="urgence-order-card">
-            <div class="urgence-order-head">
-                <strong>Commande du ${dateStr}${o.supplier ? ` — ${urgenceEscapeHtml(o.supplier)}` : ''}</strong>
-                <span class="urgence-state ${statusClass}">${statusLabel}</span>
-            </div>
+            ${urgenceOrderHeaderHtml(o, statusLabel, statusClass)}
             <ul class="urgence-order-items">${items}</ul>
             ${receptionsHtml}
             <div class="urgence-order-foot">
