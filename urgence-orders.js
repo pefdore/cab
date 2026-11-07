@@ -646,10 +646,13 @@ function urgenceRenderOrders() {
 
 function urgenceOrderHeaderHtml(o, chipLabel, chipClass) {
     const dateStr = new Date(o.createdAt).toLocaleDateString('fr-FR');
+    const supplier = o.supplier || 'Sans fournisseur';
+    const initial = (o.supplier || '?').trim().charAt(0).toUpperCase() || '?';
     return `
     <div class="urgence-order-head">
+        <span class="urgence-order-avatar">${urgenceEscapeHtml(initial)}</span>
         <div class="urgence-order-title">
-            <strong class="urgence-order-supplier">${urgenceEscapeHtml(o.supplier || 'Sans fournisseur')}</strong>
+            <strong class="urgence-order-supplier">${urgenceEscapeHtml(supplier)}</strong>
             <span class="urgence-order-date">Commande du ${dateStr} · ${(o.items || []).length} réf.</span>
         </div>
         <span class="urgence-state ${chipClass}">${chipLabel}</span>
@@ -710,10 +713,10 @@ function urgenceOrderEditCardHtml(o) {
             <div class="urgence-order-foot">
                 <span class="urgence-order-total-wrap">Total TTC estimé : <strong class="urgence-order-total" data-ordertotal="${o.id}">${urgenceFmtEur(urgenceOrderTotal(o))}</strong></span>
                 <span class="urgence-order-actions">
-                    <button class="action-btn" onclick="urgenceCopyOrder('${o.id}')" title="Copier le bon de commande pour le coller dans un mail">⠫ Copier</button>
-                    <button class="action-btn" onclick="urgenceSendOrder('${o.id}')" title="Ouvrir un mail pré-rempli vers le fournisseur">✉ Envoyer</button>
-                    <button class="action-btn primary" onclick="urgenceMarkOrdered('${o.id}')">Marquer commandée</button>
-                    <button class="action-btn" onclick="urgenceCancelOrder('${o.id}')">Annuler</button>
+                    <button class="action-btn stock-btn-tonal" onclick="urgenceCopyOrder('${o.id}')" title="Copier le bon de commande pour le coller dans un mail">⠫ Copier</button>
+                    <button class="action-btn stock-btn-tonal" onclick="urgenceSendOrder('${o.id}')" title="Ouvrir un mail pré-rempli vers le fournisseur">✉ Envoyer</button>
+                    <button class="action-btn primary" onclick="urgenceMarkOrdered('${o.id}')">✓ Marquer commandée</button>
+                    <button class="action-btn stock-btn-ghost" onclick="urgenceCancelOrder('${o.id}')" title="Annuler la commande">Annuler</button>
                 </span>
             </div>
         </div>`;
@@ -898,7 +901,7 @@ function urgenceOrderOrderedCardHtml(o) {
     const receivedTotal = (o.receptions || []).reduce((s, r) => s + (r.cost || 0), 0);
     const total = receivedTotal > 0 ? urgenceFmtEur(receivedTotal) : `≈ ${urgenceFmtEur(urgenceOrderTotal(o))}`;
     const sendBtn = o.supplierEmail
-        ? `<button class="action-btn" onclick="urgenceSendOrder('${o.id}')" title="Renvoyer le bon de commande par mail">✉ Renvoyer</button>`
+        ? `<button class="action-btn stock-btn-tonal" onclick="urgenceSendOrder('${o.id}')" title="Renvoyer le bon de commande par mail">✉ Renvoyer</button>`
         : '';
     return `
         <div class="urgence-order-card">
@@ -909,8 +912,8 @@ function urgenceOrderOrderedCardHtml(o) {
                 <span>Total TTC : <strong>${total}</strong></span>
                 <span class="urgence-order-actions">
                     ${sendBtn}
-                    <button class="action-btn primary" onclick="urgenceReceiveOrder('${o.id}')">Réceptionner</button>
-                    <button class="action-btn" onclick="urgenceCancelOrder('${o.id}')">Annuler</button>
+                    <button class="action-btn primary" onclick="urgenceReceiveOrder('${o.id}')">📥 Réceptionner</button>
+                    <button class="action-btn stock-btn-ghost" onclick="urgenceCancelOrder('${o.id}')" title="Annuler la commande">Annuler</button>
                 </span>
             </div>
         </div>`;

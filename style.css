@@ -15472,3 +15472,88 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .urgence-order-total-wrap { flex: 1 1 100%; text-align: right; }
     .urgence-order-total-wrap strong { font-size: 1.1rem; }
 }
+
+/* --- Cartes commande : avatar fournisseur + pied de carte MD3 --- */
+.urgence-order-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.urgence-order-avatar {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    font-size: 1.15rem;
+    font-weight: 800;
+    transition: transform 0.3s var(--stock-spring, ease);
+}
+
+.urgence-order-card:hover .urgence-order-avatar { transform: scale(1.06); }
+
+[data-theme="dark"] .urgence-order-avatar { background: rgba(99, 102, 241, 0.2); color: #c7d2fe; }
+
+.urgence-order-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.urgence-order-head .urgence-state { flex-shrink: 0; }
+
+/* Total en pilule */
+.urgence-order-total-wrap {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: var(--color-primary-subtle);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.urgence-order-total-wrap strong { font-size: 1.12rem; color: var(--color-primary); }
+
+[data-theme="dark"] .urgence-order-total-wrap { background: rgba(99, 102, 241, 0.18); }
+[data-theme="dark"] .urgence-order-total-wrap strong { color: #c7d2fe; }
+
+/* Boutons hierarchises : tonal (rempli leger) / ghost (discret) */
+#cabinet-stocks .action-btn.stock-btn-tonal {
+    background: var(--color-bg-muted);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+#cabinet-stocks .action-btn.stock-btn-tonal:hover { background: var(--color-bg-subtle); }
+
+#cabinet-stocks .action-btn.stock-btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--color-text-tertiary);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+}
+
+#cabinet-stocks .action-btn.stock-btn-ghost:hover { color: #dc2626; background: transparent; }
+
+.urgence-order-foot {
+    align-items: center;
+    border-top: 1px solid var(--color-border-subtle);
+    margin-top: 12px;
+    padding-top: 12px;
+}
+
+@media (max-width: 640px) {
+    .urgence-order-avatar { width: 36px; height: 36px; font-size: 1rem; }
+    .urgence-order-head { gap: 10px; margin-bottom: 10px; padding-bottom: 10px; }
+    .urgence-order-total-wrap { flex: 1 1 100%; justify-content: space-between; padding: 8px 14px; }
+    .urgence-order-actions { flex: 1 1 100%; }
+    .urgence-order-actions .action-btn { flex: 1 1 40%; padding: 8px 10px !important; font-size: 0.75rem; }
+    .urgence-order-actions .action-btn.stock-btn-ghost { flex: 0 1 auto; }
+}
