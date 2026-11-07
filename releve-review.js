@@ -140,6 +140,7 @@ window.renderReleveReview = function() {
         const isCurrent = index === cur;
         const isDone = tr.confirmed || tr.rejected;
         const sousCatSuggestion = (typeof suggestSousCategorie === 'function') ? suggestSousCategorie(tr.description, isDepense) : null;
+        const commentSuggestion = (typeof suggestComment === 'function') ? suggestComment(tr.description, isDepense) : null;
         return `
         <div class="review-line ${isCurrent ? 'current' : ''} ${tr.confirmed ? 'confirmed' : ''} ${tr.rejected ? 'rejected' : ''} ${tr.duplicate ? 'dup' : ''}" data-index="${index}" onclick="setReviewCurrent(${index})">
             <div class="review-line-head">
@@ -176,8 +177,8 @@ window.renderReleveReview = function() {
                     </div>
                 </div>
                 <div class="review-field grow">
-                    <label>Commentaire</label>
-                    <input type="text" value="${reviewEscapeHtml(tr.comment || '')}" placeholder="＋ commentaire…" onchange="reviewUpdate(${index}, 'comment', this.value)">
+                    <label>Commentaire ${commentSuggestion ? `<button class="review-sug-btn" onclick="event.stopPropagation(); applyReviewCommentSuggestion(${index})">✨ ${reviewEscapeHtml(commentSuggestion)}</button>` : ''}</label>
+                    <input type="text" value="${reviewEscapeHtml(tr.comment || '')}" placeholder="${commentSuggestion ? 'Suggéré : ' + reviewEscapeHtml(commentSuggestion) : '＋ commentaire…'}" onchange="reviewUpdate(${index}, 'comment', this.value)">
                 </div>
             </div>` : ''}
         </div>`;
@@ -224,6 +225,14 @@ function applyReviewSuggestion(index) {
     }
 }
 window.applyReviewSuggestion = applyReviewSuggestion;
+
+function applyReviewCommentSuggestion(index) {
+    const tr = pendingTransactions[index];
+    if (!tr) return;
+    const sug = (typeof suggestComment === 'function') ? suggestComment(tr.description, tr.type === 'dépense' || tr.amount < 0) : null;
+    if (sug) { tr.comment = sug; renderReleveReview(); }
+}
+window.applyReviewCommentSuggestion = applyReviewCommentSuggestion;
 
 // Ajoute une ligne non detectee automatiquement (saisie manuelle dans la revue)
 window.reviewAddLine = function() {
