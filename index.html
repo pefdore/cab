@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=202611071000">
+    <link rel="stylesheet" href="style.css?v=202611081000">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -2158,7 +2158,6 @@ window.attemptLogin = function() {
                                     <div class="stock-menu-wrap">
                                         <button class="stock-menu-btn" id="urgenceStockMenuBtn" onclick="urgenceToggleStockMenu(event)" aria-label="Plus d'actions" title="Plus d'actions">⋮</button>
                                         <div class="stock-menu" id="urgenceStockMenu">
-                                            <button class="stock-menu-item" id="urgenceCopyOrderBtnCabinet" disabled>📋 Copier la liste à commander</button>
                                             <button class="stock-menu-item" id="urgenceExportStocksBtn">⬇️ Exporter CSV</button>
                                         </div>
                                     </div>
@@ -2177,9 +2176,7 @@ window.attemptLogin = function() {
                             </div>
                             <div class="stock-card-grid" id="cabinetUrgenceStockGrid"></div>
                             <div class="inventory-alerts" id="cabinetUrgenceStockAlerts"></div>
-                            <div class="stock-md3-foot">
-                                <button class="action-btn primary stock-md3-cta" id="urgenceCreateOrderBtn">Créer la commande à passer</button>
-                            </div>
+                            <p class="stock-order-hint">💡 Les commandes se génèrent depuis le <strong>Pointage</strong> (après l'état des lieux) ou depuis l'onglet <strong>Commandes & réception</strong>.</p>
                         </div>
                     </div>
 
@@ -2209,7 +2206,8 @@ window.attemptLogin = function() {
                                     <p class="module-desc">Générez la commande depuis le pointage, envoyez-la au fournisseur, puis réceptionnez : le stock est mis à jour automatiquement.</p>
                                 </div>
                                 <div class="stock-md3-head-actions">
-                                    <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">+ Créer la commande à passer</button>
+                                    <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">+ Commander le manquant</button>
+                                    <button class="action-btn" id="urgenceBlankOrderBtn" title="Créer une commande libre, hors pointage">Commande vierge</button>
                                 </div>
                             </div>
                             <h4 class="stock-section-title">Commandes en préparation (à passer)</h4>
@@ -3408,14 +3406,14 @@ window.attemptLogin = function() {
     <script src="app.v5.js?v=202611062000" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
-    <script src="urgence.js?v=202611071000" defer></script>
+    <script src="urgence.js?v=202611081000" defer></script>
     <script src="flux.js?v=2026110115000" defer></script>
     <script src="reconciliation.js?v=2026110115000" defer></script>
     <script src="reminders.js?v=202611062000" defer></script>
     <script src="affaires.js?v=202611071000" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
     <script src="releve-review.js?v=202611062200" defer></script>
-    <script src="urgence-orders.js?v=202611041000" defer></script>
+    <script src="urgence-orders.js?v=202611081000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
