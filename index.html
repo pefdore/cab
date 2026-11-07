@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=202611062000">
+    <link rel="stylesheet" href="style.css?v=2026110212000">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -2147,9 +2147,24 @@ window.attemptLogin = function() {
                     </div>
 
                     <div id="urgence-stock" class="sub-tab-content active">
-                        <div class="module-card">
-                            <h3>Stocks — Salle d'urgence</h3>
-                            <p class="module-desc">Inventaire du matériel et des médicaments de la salle d'urgence : consommables, petit matériel, injections/perfusion, médicaments.</p>
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Gestion des stocks</h3>
+                                    <p class="module-desc">Inventaire du matériel et des médicaments : consommables, petit matériel, injections/perfusion, médicaments.</p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn primary" id="urgenceAddProductBtn">+ Ajouter un produit</button>
+                                    <div class="stock-menu-wrap">
+                                        <button class="stock-menu-btn" id="urgenceStockMenuBtn" onclick="urgenceToggleStockMenu(event)" aria-label="Plus d'actions" title="Plus d'actions">⋮</button>
+                                        <div class="stock-menu" id="urgenceStockMenu">
+                                            <button class="stock-menu-item" id="urgenceCopyOrderBtnCabinet" disabled>📋 Copier la liste à commander</button>
+                                            <button class="stock-menu-item" id="urgenceExportStocksBtn">⬇️ Exporter CSV</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stock-kpi-row" id="urgenceStockKpis"></div>
                             <div class="inventory-filters">
                                 <select id="urgenceStockFilter" class="form-input">
                                     <option value="">Toutes catégories</option>
@@ -2159,65 +2174,56 @@ window.attemptLogin = function() {
                                     <option value="medicament">Médicaments</option>
                                     <option value="divers">Divers</option>
                                 </select>
-                                <button class="action-btn primary" id="urgenceAddProductBtn">Ajouter un produit</button>
-                                <button class="action-btn" id="urgenceExportStocksBtn">Exporter CSV</button>
                             </div>
-                            <div class="inventory-table urgence-stock-table">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Produit</th>
-                                            <th>Quantité</th>
-                                            <th>Seuil</th>
-                                            <th>Péremption</th>
-                                            <th>Coût TTC / unité</th>
-                                            <th>État</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="cabinetUrgenceStockBody"></tbody>
-                                </table>
-                            </div>
+                            <div class="stock-card-grid" id="cabinetUrgenceStockGrid"></div>
                             <div class="inventory-alerts" id="cabinetUrgenceStockAlerts"></div>
-                            <div style="margin-top: 12px;">
-                                <button class="action-btn" id="urgenceCopyOrderBtnCabinet" disabled>Copier la liste à commander</button>
-                                <button class="action-btn primary" id="urgenceCreateOrderBtn">Créer la commande à passer</button>
+                            <div class="stock-md3-foot">
+                                <button class="action-btn primary stock-md3-cta" id="urgenceCreateOrderBtn">Créer la commande à passer</button>
                             </div>
                         </div>
                     </div>
 
                     <div id="urgence-pointage" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Pointage hebdomadaire — Secrétariat</h3>
-                            <p class="module-desc">Cochez chaque semaine ce qu'il reste dans la salle d'urgence. La liste à recommander est générée automatiquement.</p>
-                            <div class="urgence-alert info" id="urgencePointageInfo"></div>
-                            <div id="urgencePointageList"></div>
-                            <div style="margin-top: 16px;">
-                                <button class="action-btn primary" id="urgenceSavePointageBtn">Enregistrer le pointage</button>
-                                <button class="action-btn" id="urgenceCreateOrderBtn2">Générer la commande à passer</button>
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Pointage hebdomadaire</h3>
+                                    <p class="module-desc">Notez chaque semaine ce qu'il reste. La liste à recommander est générée automatiquement.</p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn primary" id="urgenceSavePointageBtn">✓ Enregistrer le pointage</button>
+                                    <button class="action-btn" id="urgenceCreateOrderBtn2">Générer la commande</button>
+                                </div>
                             </div>
+                            <div class="urgence-alert info" id="urgencePointageInfo"></div>
+                            <div class="stock-drag-hint">⠿ Glissez les références avec la poignée pour les mettre dans l'ordre de vos armoires — l'ordre est mémorisé pour le cabinet.</div>
+                            <div id="urgencePointageList"></div>
                         </div>
                     </div>
 
                     <div id="urgence-orders" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Commandes & réception</h3>
-                            <p class="module-desc">Générez la commande depuis le pointage, envoyez-la au fournisseur, puis réceptionnez : le stock disponible est mis à jour automatiquement.</p>
-                            <div style="margin-bottom: 16px;">
-                                <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">Créer la commande à passer</button>
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Commandes & réception</h3>
+                                    <p class="module-desc">Générez la commande depuis le pointage, envoyez-la au fournisseur, puis réceptionnez : le stock est mis à jour automatiquement.</p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">+ Créer la commande à passer</button>
+                                </div>
                             </div>
-                            <h4>Commandes en préparation (à passer)</h4>
+                            <h4 class="stock-section-title">Commandes en préparation (à passer)</h4>
                             <div id="urgenceOrdersPending"></div>
-                            <h4 style="margin-top: 20px;">Commandées — en attente de livraison</h4>
+                            <h4 class="stock-section-title">Commandées — en attente de livraison</h4>
                             <div id="urgenceOrdersOrdered"></div>
-                            <h4 style="margin-top: 20px;">Historique</h4>
+                            <h4 class="stock-section-title">Historique</h4>
                             <div id="urgenceOrdersHistory"></div>
                         </div>
                     </div>
 
                     <div id="urgence-costs" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Coûts & budget — Fournitures salle d'urgence</h3>
+                        <div class="module-card stock-md3-card">
+                            <h3>Coûts & budget</h3>
                             <p class="module-desc">Visualisez ce qui coûte le plus cher pour prendre des décisions de cabinet : par produit et par catégorie.</p>
                             <div id="urgenceCostsPanel"></div>
                         </div>
@@ -3402,14 +3408,14 @@ window.attemptLogin = function() {
     <script src="app.v5.js?v=202611062000" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
-    <script src="urgence.js?v=2026110115000" defer></script>
+    <script src="urgence.js?v=2026110212000" defer></script>
     <script src="flux.js?v=2026110115000" defer></script>
     <script src="reconciliation.js?v=2026110115000" defer></script>
     <script src="reminders.js?v=202611062000" defer></script>
     <script src="affaires.js?v=202611071000" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
     <script src="releve-review.js?v=202611062200" defer></script>
-    <script src="urgence-orders.js?v=2026110115000" defer></script>
+    <script src="urgence-orders.js?v=2026110212000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
