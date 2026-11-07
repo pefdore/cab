@@ -14829,6 +14829,7 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
     padding: 12px 14px;
     border: 1px solid var(--color-border);
     border-radius: 16px;
@@ -14989,3 +14990,120 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 @media (max-width: 400px) {
     .stock-card-grid { grid-template-columns: 1fr; }
 }
+
+/* --- Lots de péremption : éditeur (modal produit), cartes, pointage, réception --- */
+.stock-lot-editor { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+.stock-lot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-bg-subtle);
+}
+
+.stock-lot-row .form-input { flex: 1; border-radius: 10px; }
+.stock-lot-row .stock-lot-qty { max-width: 90px; flex: 0 0 90px; text-align: center; font-weight: 700; }
+.stock-lot-row .stock-lot-remove { flex-shrink: 0; color: var(--color-text-tertiary); }
+.stock-lot-row .stock-lot-remove:hover { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+
+.stock-lot-add {
+    border-radius: 999px !important;
+    border-style: dashed !important;
+    width: 100%;
+    padding: 9px 14px !important;
+    color: var(--color-primary);
+}
+
+.stock-lot-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.stock-lot-chip.warning { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.stock-lot-chip.danger { background: rgba(239, 68, 68, 0.14); color: #dc2626; }
+
+.stock-chip.neutral { background: var(--color-bg-muted); color: var(--color-text-secondary); }
+
+.stock-lot-discard {
+    border: none;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: #dc2626;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.25s var(--stock-spring, ease), background 0.15s ease;
+}
+
+.stock-lot-discard:hover { background: #b91c1c; transform: scale(1.06); }
+
+.stock-card-lots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+/* Pointage : lignes de lot */
+.urgence-pointage-lots {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 100%;
+    order: 3;
+}
+
+.urgence-pointage-lot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 7px 10px;
+    border-radius: 12px;
+    background: var(--color-bg-subtle);
+}
+
+.urgence-pointage-lot.expired { background: rgba(239, 68, 68, 0.08); }
+
+.urgence-pointage-lot-date { font-size: 0.78rem; font-weight: 600; color: var(--color-text-secondary); }
+.urgence-pointage-lot.expired .urgence-pointage-lot-date { color: #dc2626; }
+
+.urgence-pointage-lot .urgence-pointage-lot-qty {
+    width: 72px;
+    text-align: center;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.urgence-pointage-lot .urgence-pointage-unit { font-size: 0.72rem; color: var(--color-text-secondary); }
+
+/* Réception : date de péremption par référence */
+.urgence-receive-expiry-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.urgence-receive-expiry-row label { font-size: 0.78rem; color: var(--color-text-secondary); white-space: nowrap; }
+.urgence-receive-expiry-row .form-input { max-width: 180px; border-radius: 10px; }
+
+@media (max-width: 640px) {
+    .urgence-pointage-lot { padding: 6px 8px; gap: 6px; }
+    .urgence-pointage-lot .urgence-pointage-lot-qty { width: 64px; }
+    .urgence-receive-expiry-row .form-input { max-width: 150px; }
+}
+
+#cabinet-stocks .urgence-pointage-name { flex: 1 1 160px; }
