@@ -14690,8 +14690,11 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
     gap: 2px;
-    padding: 16px 10px;
+    min-height: 72px;
+    padding: 12px 8px;
     border-radius: var(--stock-radius);
     background: var(--color-primary-subtle);
     color: var(--color-primary);
@@ -14702,9 +14705,9 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 .stock-kpi.danger { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
 .stock-kpi.exp { background: rgba(124, 58, 237, 0.12); color: #7c3aed; }
 
-.stock-kpi-num { font-size: 1.7rem; font-weight: 800; line-height: 1.1; }
-.stock-kpi-num small { font-size: 0.8rem; font-weight: 600; }
-.stock-kpi-label { font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
+.stock-kpi-num { font-size: 1.6rem; font-weight: 800; line-height: 1.05; }
+.stock-kpi-num small { display: block; font-size: 0.62rem; font-weight: 600; line-height: 1.2; }
+.stock-kpi-label { font-size: 0.7rem; font-weight: 600; line-height: 1.25; opacity: 0.85; white-space: normal; }
 
 [data-theme="dark"] .stock-kpi.warn { color: #fbbf24; }
 [data-theme="dark"] .stock-kpi.danger { color: #f87171; }
@@ -14814,6 +14817,46 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 .stock-card-price { margin-top: 6px; font-size: 0.8rem; font-weight: 700; color: var(--color-text); }
 .stock-card-price small { font-weight: 500; color: var(--color-text-tertiary); }
 
+/* --- Bloc d'alertes : cartes MD3, detache de la grille --- */
+#cabinet-stocks .inventory-alerts {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#cabinet-stocks .inventory-alerts .urgence-alert {
+    margin-top: 0;
+    border-radius: 16px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    border: 1px solid transparent;
+    animation: stock-pop 0.45s var(--stock-spring) both;
+}
+
+#cabinet-stocks .inventory-alerts .urgence-alert.danger {
+    background: rgba(239, 68, 68, 0.09);
+    border-color: rgba(239, 68, 68, 0.28);
+    color: #b91c1c;
+}
+
+#cabinet-stocks .inventory-alerts .urgence-alert.warning {
+    background: rgba(245, 158, 11, 0.09);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #b45309;
+}
+
+#cabinet-stocks .inventory-alerts .urgence-alert.success {
+    background: rgba(34, 197, 94, 0.09);
+    border-color: rgba(34, 197, 94, 0.28);
+    color: #15803d;
+}
+
+[data-theme="dark"] #cabinet-stocks .inventory-alerts .urgence-alert.danger { color: #fca5a5; }
+[data-theme="dark"] #cabinet-stocks .inventory-alerts .urgence-alert.warning { color: #fcd34d; }
+[data-theme="dark"] #cabinet-stocks .inventory-alerts .urgence-alert.success { color: #86efac; }
+
 /* --- Pointage : lignes simples et manipulables --- */
 .stock-drag-hint {
     font-size: 0.78rem;
@@ -14839,6 +14882,8 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 }
 
 #cabinet-stocks .urgence-pointage-row:hover { box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08); }
+
+#cabinet-stocks .urgence-pointage-name { flex: 1 1 160px; }
 
 #cabinet-stocks .urgence-pointage-row.dragging {
     opacity: 0.85;
@@ -15001,11 +15046,11 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .stock-lot-chip { font-size: 0.6rem; padding: 2px 3px 2px 7px; }
     .stock-icon-btn { width: 24px; height: 24px; font-size: 0.68rem; }
 
-    .stock-kpi-row { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .stock-kpi { padding: 8px 4px; }
+    .stock-kpi-row { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 6px; }
+    .stock-kpi { padding: 8px 4px; min-height: 64px; border-radius: 14px; }
     .stock-kpi-num { font-size: 1.05rem; }
-    .stock-kpi-num small { font-size: 0.62rem; }
-    .stock-kpi-label { font-size: 0.6rem; }
+    .stock-kpi-num small { font-size: 0.55rem; }
+    .stock-kpi-label { font-size: 0.58rem; }
 
     .stock-drag-hint { font-size: 0.66rem; padding: 5px 10px; margin-bottom: 8px; }
 
@@ -15152,5 +15197,3 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .urgence-pointage-lot .urgence-pointage-lot-qty { width: 54px; }
     .urgence-receive-expiry-row .form-input { max-width: 150px; }
 }
-
-#cabinet-stocks .urgence-pointage-name { flex: 1 1 160px; }
