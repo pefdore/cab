@@ -15307,3 +15307,50 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .stock-supplier-grid { grid-template-columns: 1fr; gap: 8px; }
     .stock-supplier-card { padding: 12px; }
 }
+
+/* --- Commandes : lignes compactes sur mobile + cibles de deplacement --- */
+.urgence-move-target { margin-bottom: 6px; font-weight: 600; }
+
+@media (max-width: 768px) {
+    .urgence-order-edit-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "name total"
+            "fields fields";
+        gap: 3px 8px;
+        padding: 6px 0;
+    }
+
+    .urgence-order-edit-name { grid-area: name; }
+    .urgence-order-edit-name strong { font-size: 0.8rem; line-height: 1.2; }
+    .urgence-order-edit-name .urgence-pointage-sub {
+        font-size: 0.62rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .urgence-order-edit-fields {
+        grid-area: fields;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .urgence-order-edit-fields label {
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.62rem;
+    }
+
+    .urgence-order-edit-fields .form-input { width: 58px; padding: 5px 2px; font-size: 0.85rem; }
+
+    .urgence-order-line-total { min-width: 0; font-size: 0.75rem; }
+
+    .urgence-order-add-row { margin: 6px 0; }
+    .urgence-order-add-row .form-input { max-width: none; }
+
+    .urgence-order-meta { grid-template-columns: 1fr 1fr; }
+}

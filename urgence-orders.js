@@ -605,7 +605,8 @@ function urgenceOrderEditCardHtml(o) {
                     <input type="number" min="0" step="0.01" class="form-input urgence-order-price" data-idx="${idx}" value="${i.unitPrice || ''}" placeholder="€">
                 </label>
                 <span class="urgence-order-line-total" data-linetotal="${idx}">${i.unitPrice ? urgenceFmtEur(i.qty * i.unitPrice) : '—'}</span>
-                <button class="action-btn" onclick="urgenceOrderRemoveItem('${o.id}', ${idx})" title="Retirer de la commande">🗑️</button>
+                <button class="stock-icon-btn" onclick="urgenceMoveOrderItem('${o.id}', ${idx})" title="Déplacer vers une autre commande / fournisseur">⇄</button>
+                <button class="stock-icon-btn" onclick="urgenceOrderRemoveItem('${o.id}', ${idx})" title="Retirer de la commande">🗑️</button>
             </div>
         </div>`).join('');
 
@@ -706,6 +707,85 @@ function urgenceBindOrderEditEvents(container) {
             if (sel.value) urgenceOrderAddItem(sel.dataset.order, sel.value);
         });
     });
+}
+
+// Deplacer une reference vers une autre commande (autre fournisseur) ou une nouvelle commande
+function urgenceMoveOrderItem(orderId, idx) {
+    const order = urgenceData.orders.find(o => o.id === orderId);
+    const item = order?.items?.[idx];
+    if (!order || !item) return;
+
+    const existing = document.getElementById('urgenceMoveItemModal');
+    if (existing) existing.remove();
+
+    const targets = urgenceData.orders.filter(o => o.id !== orderId && o.status === 'pending');
+    const product = urgenceData.products.find(p => p.id === item.productId);
+    const productSupplier = product?.supplier || '';
+
+    const targetsHtml = targets.length === 0
+        ? '<p class="urgence-empty">Pas d’autre commande en préparation.</p>'
+        : targets.map(t => `
+            <button type="button" class="stock-menu-item urgence-move-target" onclick="urgenceConfirmMoveItem('${orderId}', ${idx}, '${t.id}')">
+                ${t.supplier ? urgenceEscapeHtml(t.supplier) : 'Sans fournisseur'} — ${t.items.length} réf(s)
+            </button>`).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'urgenceMoveItemModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card urgence-modal-content">
+            <div class="modal-header">
+                <h3>Déplacer « ${urgenceEscapeHtml(item.name)} »</h3>
+                <button type="button" class="modal-close" onclick="urgenceCloseMoveItemModal()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="form-hint">Vers quelle commande déplacer cette référence ?</p>
+                ${targetsHtml}
+                <button type="button" class="stock-menu-item urgence-move-target" onclick="urgenceConfirmMoveItem('${orderId}', ${idx}, 'new')">
+                    ➕ Nouvelle commande${productSupplier ? ` pour ${urgenceEscapeHtml(productSupplier)}` : ''}
+                </button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) urgenceCloseMoveItemModal();
+    });
+}
+
+function urgenceCloseMoveItemModal() {
+    document.getElementById('urgenceMoveItemModal')?.remove();
+}
+
+function urgenceConfirmMoveItem(orderId, idx, targetId) {
+    const order = urgenceData.orders.find(o => o.id === orderId);
+    const item = order?.items?.[idx];
+    if (!order || !item) return;
+
+    let target;
+    if (targetId === 'new') {
+        const product = urgenceData.products.find(p => p.id === item.productId);
+        target = {
+            id: 'cmd' + Date.now() + Math.random().toString(36).slice(2, 5),
+            createdAt: new Date().toISOString(),
+            status: 'pending',
+            items: [],
+            supplier: product?.supplier || '',
+            supplierEmail: product?.supplierEmail || '',
+            shipping: 0,
+            discount: 0
+        };
+        urgenceData.orders.unshift(target);
+    } else {
+        target = urgenceData.orders.find(o => o.id === targetId);
+        if (!target || target.status !== 'pending') return;
+    }
+
+    order.items.splice(idx, 1);
+    target.items.push(item);
+    saveUrgenceData();
+    urgenceCloseMoveItemModal();
+    urgenceRenderOrders();
+    if (typeof showToast === 'function') showToast(`« ${item.name} » déplacé vers ${target.supplier ? target.supplier : 'la commande sans fournisseur'}`);
 }
 
 function urgenceOrderAddItem(orderId, productId) {
@@ -965,6 +1045,9 @@ window.urgenceShowSupplierModal = urgenceShowSupplierModal;
 window.urgenceCloseSupplierModal = urgenceCloseSupplierModal;
 window.urgenceSaveSupplier = urgenceSaveSupplier;
 window.urgenceDeleteSupplier = urgenceDeleteSupplier;
+window.urgenceMoveOrderItem = urgenceMoveOrderItem;
+window.urgenceCloseMoveItemModal = urgenceCloseMoveItemModal;
+window.urgenceConfirmMoveItem = urgenceConfirmMoveItem;
 window.urgenceReceiveOrder = urgenceReceiveOrder;
 window.urgenceConfirmReceive = urgenceConfirmReceive;
 window.urgenceCloseReceiveModal = urgenceCloseReceiveModal;
