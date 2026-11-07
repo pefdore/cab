@@ -402,6 +402,14 @@ function urgenceSpreadReceptionCost(order, reception) {
             return;
         }
         product.unitPrice = Math.round((unitCost + Number.EPSILON) * 100) / 100;
+        // Historique des prix : base du benchmark interne par fournisseur
+        if (!Array.isArray(product.priceHistory)) product.priceHistory = [];
+        product.priceHistory.push({
+            date: reception.date,
+            supplier: order.supplier || '',
+            unitPrice: product.unitPrice
+        });
+        if (product.priceHistory.length > 30) product.priceHistory = product.priceHistory.slice(-30);
     });
 }
 
@@ -508,6 +516,7 @@ function urgenceOrderEditCardHtml(o) {
             <div class="urgence-order-edit-list">${rows}</div>
             <div class="urgence-order-add-row">
                 ${addSelect}
+                <p class="stock-price-hint">Prix pré-remplis avec la dernière valeur connue — ajustez-les si le fournisseur annonce un nouveau tarif.</p>
             </div>
             <div class="urgence-order-foot">
                 <span>Total TTC estimé : <strong class="urgence-order-total" data-ordertotal="${o.id}">${urgenceFmtEur(urgenceOrderTotal(o))}</strong></span>
@@ -746,7 +755,50 @@ function urgenceRenderCosts() {
             </div>`).join('')}
         </div>`;
 
-    wrap.innerHTML = statsHtml + tableHtml + catHtml;
+    // Depense par fournisseur (basee sur le cout reel des receptions)
+    const supTotals = new Map();
+    received.forEach(o => {
+        const key = o.supplier || 'Sans fournisseur';
+        supTotals.set(key, (supTotals.get(key) || 0) + (Number(o.realCost) || 0));
+    });
+    const supRows = Array.from(supTotals.entries()).sort((a, b) => b[1] - a[1]);
+    const supMax = supRows.length ? supRows[0][1] : 1;
+    const supHtml = supRows.length === 0 ? '' : `
+        <h4 class="stock-section-title">Dépense par fournisseur</h4>
+        <div class="urgence-cost-cat-list">
+        ${supRows.map(([sup, tot]) => `
+            <div class="urgence-cost-cat">
+                <span class="urgence-cost-cat-label">${urgenceEscapeHtml(sup)}</span>
+                <div class="urgence-cost-cat-track"><div class="urgence-cost-bar primary" style="width:${Math.max((tot / supMax) * 100, 4)}%"></div></div>
+                <span class="urgence-cost-cat-val">${urgenceFmtEur(tot)}</span>
+            </div>`).join('')}
+        </div>`;
+
+    // Benchmark interne : evolution du prix reel par reference (au moins 2 achats)
+    const priceRows = [];
+    urgenceData.products.forEach(p => {
+        const h = Array.isArray(p.priceHistory) ? p.priceHistory : [];
+        if (h.length >= 2) {
+            const last = h[h.length - 1];
+            const prev = h[h.length - 2];
+            const delta = prev.unitPrice ? ((last.unitPrice - prev.unitPrice) / prev.unitPrice) * 100 : 0;
+            priceRows.push({ p, last, prev, delta });
+        }
+    });
+    priceRows.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    const priceHtml = priceRows.length === 0 ? '' : `
+        <h4 class="stock-section-title">Évolution des prix payés</h4>
+        <div class="stock-price-list">
+        ${priceRows.slice(0, 12).map(r => `
+            <div class="stock-price-row">
+                <span class="stock-price-name">${urgenceEscapeHtml(r.p.name)}</span>
+                <span class="stock-price-hist">${urgenceFmtEur(r.prev.unitPrice)} ${urgenceEscapeHtml(r.prev.supplier ? '· ' + r.prev.supplier : '')} → ${urgenceFmtEur(r.last.unitPrice)} ${urgenceEscapeHtml(r.last.supplier ? '· ' + r.last.supplier : '')}</span>
+                <span class="stock-chip ${r.delta > 2 ? 'danger' : (r.delta < -2 ? 'success' : 'neutral')}">${r.delta > 0 ? '▲' : (r.delta < 0 ? '▼' : '=')} ${Math.abs(r.delta).toFixed(0)} %</span>
+            </div>`).join('')}
+        </div>
+        <p class="stock-cost-note">💡 Les prix se mettent à jour automatiquement à chaque réception (coût réel payé, fournisseur par fournisseur) : c'est votre benchmark interne. Ajustez aussi le prix sur le bon de commande quand le fournisseur annonce un nouveau tarif.</p>`;
+
+    wrap.innerHTML = statsHtml + tableHtml + supHtml + catHtml + priceHtml;
 }
 
 // ---------- Init ----------
