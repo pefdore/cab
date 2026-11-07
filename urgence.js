@@ -679,49 +679,68 @@ function renderUrgencePointage() {
     urgenceBindPointageDrag(container);
 }
 
-let _urgencePointageDragId = null;
+let _urgencePointageDrag = null;
 
 function urgenceBindPointageDrag(container) {
     container.querySelectorAll('.urgence-pointage-row').forEach(row => {
         const handle = row.querySelector('.urgence-pointage-handle');
         if (!handle) return;
 
-        handle.addEventListener('pointerdown', () => { row.draggable = true; });
-        row.addEventListener('dragstart', (e) => {
-            _urgencePointageDragId = row.dataset.id;
+        handle.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            const rows = Array.from(container.querySelectorAll('.urgence-pointage-row'));
+            _urgencePointageDrag = {
+                row,
+                rows,
+                startIndex: rows.indexOf(row),
+                startY: e.clientY,
+                step: row.offsetHeight + 8,
+                pointerId: e.pointerId,
+                moved: false
+            };
             row.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            try { e.dataTransfer.setData('text/plain', row.dataset.id); } catch (err) {}
+            try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+            e.preventDefault();
         });
-        row.addEventListener('dragend', () => {
-            row.draggable = false;
+
+        handle.addEventListener('pointermove', (e) => {
+            const d = _urgencePointageDrag;
+            if (!d || d.row !== row) return;
+            const dy = e.clientY - d.startY;
+            if (Math.abs(dy) > 4) d.moved = true;
+            row.style.transform = `translateY(${dy}px)`;
+            const targetIdx = urgenceDragTargetIndex(d, dy);
+            d.rows.forEach((r, i) => {
+                if (r !== row) r.classList.toggle('drag-over', i === targetIdx);
+            });
+        });
+
+        const finish = (e) => {
+            const d = _urgencePointageDrag;
+            if (!d || d.row !== row) return;
+            _urgencePointageDrag = null;
             row.classList.remove('dragging');
-            _urgencePointageDragId = null;
-            container.querySelectorAll('.urgence-pointage-row').forEach(r => r.classList.remove('drag-over'));
-        });
-        row.addEventListener('dragover', (e) => {
-            if (!_urgencePointageDragId || row.dataset.id === _urgencePointageDragId) return;
-            e.preventDefault();
-            row.classList.add('drag-over');
-        });
-        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
-        row.addEventListener('drop', (e) => {
-            e.preventDefault();
-            row.classList.remove('drag-over');
-            if (!_urgencePointageDragId || row.dataset.id === _urgencePointageDragId) return;
-            urgenceReorderProducts(_urgencePointageDragId, row.dataset.id);
-            _urgencePointageDragId = null;
-        });
+            row.style.transform = '';
+            d.rows.forEach(r => r.classList.remove('drag-over'));
+            const dy = (e.clientY !== undefined ? e.clientY : d.startY) - d.startY;
+            const targetIdx = urgenceDragTargetIndex(d, dy);
+            if (d.moved && targetIdx !== d.startIndex) {
+                urgenceReorderIndex(d.startIndex, targetIdx);
+            }
+        };
+        handle.addEventListener('pointerup', finish);
+        handle.addEventListener('pointercancel', finish);
     });
 }
 
-function urgenceReorderProducts(dragId, targetId) {
-    const from = urgenceData.products.findIndex(p => p.id === dragId);
-    const target = urgenceData.products.findIndex(p => p.id === targetId);
-    if (from < 0 || target < 0) return;
+function urgenceDragTargetIndex(d, dy) {
+    const shift = Math.round(dy / d.step);
+    return Math.max(0, Math.min(d.rows.length - 1, d.startIndex + shift));
+}
+
+function urgenceReorderIndex(from, to) {
+    if (from === to || from < 0 || to < 0 || from >= urgenceData.products.length || to >= urgenceData.products.length) return;
     const [moved] = urgenceData.products.splice(from, 1);
-    let to = urgenceData.products.findIndex(p => p.id === targetId);
-    if (from < target) to += 1;
     urgenceData.products.splice(to, 0, moved);
     saveUrgenceData();
     renderUrgencePointage();

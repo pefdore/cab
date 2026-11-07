@@ -14841,8 +14841,13 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #cabinet-stocks .urgence-pointage-row:hover { box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08); }
 
 #cabinet-stocks .urgence-pointage-row.dragging {
-    opacity: 0.45;
-    transform: scale(0.98) rotate(0.6deg);
+    opacity: 0.85;
+    z-index: 5;
+    position: relative;
+    transition: none;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 #cabinet-stocks .urgence-pointage-row.drag-over {
@@ -14970,18 +14975,27 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .stock-md3-head-actions .action-btn { flex: 1; }
 
     .stock-card-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .stock-card { padding: 12px; }
-    .stock-card-num { font-size: 1.5rem; }
+    .stock-card { padding: 10px 12px 12px; }
+    .stock-card-top { margin-bottom: 2px; }
+    .stock-card-name { font-size: 0.82rem; margin-bottom: 4px; }
+    .stock-card-num { font-size: 1.35rem; }
+    .stock-card-meta { margin-top: 4px; font-size: 0.66rem; }
+    .stock-card-price { margin-top: 2px; font-size: 0.74rem; }
+    .stock-lot-chip { font-size: 0.64rem; padding: 2px 3px 2px 8px; }
+    .stock-icon-btn { width: 28px; height: 28px; font-size: 0.78rem; }
 
     .stock-kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
     .stock-kpi { padding: 12px 8px; }
     .stock-kpi-num { font-size: 1.4rem; }
 
-    #cabinet-stocks .urgence-pointage-row { flex-wrap: wrap; padding: 12px 10px; }
-    #cabinet-stocks .urgence-pointage-name { flex: 1 1 100%; order: 2; padding-left: 4px; }
-    #cabinet-stocks .urgence-pointage-handle { order: 1; }
-    #cabinet-stocks .urgence-pointage-input { order: 3; margin-left: auto; }
-    #cabinet-stocks .urgence-pointage-move { order: 4; }
+    #cabinet-stocks .urgence-pointage-row { flex-wrap: wrap; padding: 10px; gap: 8px; }
+    #cabinet-stocks .urgence-pointage-handle { order: 0; width: 26px; height: 100%; min-height: 34px; align-self: stretch; }
+    #cabinet-stocks .urgence-pointage-name { order: 0; flex: 1 1 auto; min-width: 0; }
+    #cabinet-stocks .urgence-pointage-name strong { font-size: 0.88rem; }
+    #cabinet-stocks .urgence-pointage-sub { font-size: 0.68rem; }
+    #cabinet-stocks .urgence-pointage-input { order: 0; margin-left: auto; }
+    #cabinet-stocks .urgence-pointage-move { order: 0; }
+    #cabinet-stocks .urgence-pointage-lots { order: 1; }
     #cabinet-stocks .urgence-pointage-flag { min-width: 0; }
 
     .stock-md3-cta { width: 100%; min-width: 0; }
