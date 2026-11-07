@@ -8941,6 +8941,7 @@ function renderTransactionsList() {
         
         const sousCatSuggestion = suggestSousCategorie(t.description, isDepense);
         const sousCatPlaceholder = sousCatSuggestion ? `Suggestion : ${sousCatSuggestion}` : 'Ex : frais SCM mensuel, EDF octobre…';
+        const commentSuggestion = (typeof suggestComment === 'function') ? suggestComment(t.description, isDepense) : null;
         
         return `
             <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.rejected ? 'opacity: 0.45; border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);' : (t.duplicate ? 'border-left: 3px solid #f59e0b;' : '')}">
@@ -8992,7 +8993,10 @@ function renderTransactionsList() {
                 <div class="transaction-row">
                     <div class="transaction-field transaction-field-desc">
                         <label>Commentaire</label>
-                        <input type="text" class="trans-comment" value="${t.comment || ''}" placeholder="＋ commentaire libre sur cette ligne…" onchange="updateTransaction(${index}, 'comment', this.value)" ${isConfirmed ? 'disabled' : ''}>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="text" class="trans-comment" value="${t.comment || ''}" placeholder="${commentSuggestion ? 'Suggéré : ' + commentSuggestion.replace(/"/g, '&quot;') : '＋ commentaire libre sur cette ligne…'}" onchange="updateTransaction(${index}, 'comment', this.value)" ${isConfirmed ? 'disabled' : ''} style="flex:1;">
+                            ${commentSuggestion && !t.comment && !isConfirmed ? `<button class="action-btn" style="padding:2px 8px; font-size:0.68rem; white-space:nowrap;" onclick="applyCommentSuggestion(${index})" title="Appliquer la suggestion">✨ ${commentSuggestion.length > 18 ? commentSuggestion.slice(0,18)+'…' : commentSuggestion}</button>` : ''}
+                        </div>
                     </div>
                 </div>
                 <div class="transaction-row">
@@ -12473,6 +12477,32 @@ function suggestSousCategorie(description, isDepense, category) {
     return best;
 }
 
+// Suggestion de commentaire par similarite avec l'historique :
+// la ligne du releve ressemble a une ligne deja enregistree -> on propose
+// le commentaire utilise la fois d'avent (champ note)
+function suggestComment(description, isDepense) {
+    const norm = normalizeLibelle(description);
+    if (!norm || norm.length < 4) return null;
+    const pool = isDepense ? cabinetDepenses : cabinetRecettes;
+    const words = norm.split(' ').filter(w => w.length > 2);
+    let best = null, bestScore = 0;
+    for (const e of (pool || [])) {
+        if (!e.note || !String(e.note).trim()) continue;
+        const eNorm = normalizeLibelle(e.releve_libelle || e.description);
+        if (!eNorm) continue;
+        const eWords = new Set(eNorm.split(' ').filter(w => w.length > 2));
+        let common = 0;
+        for (const w of words) if (eWords.has(w)) common++;
+        const score = common / Math.max(words.length, 1);
+        if (score > bestScore && score >= 0.5) {
+            bestScore = score;
+            best = String(e.note).trim();
+        }
+    }
+    return best;
+}
+window.suggestComment = suggestComment;
+
 // Toutes les sous-categories proches (pour la datalist)
 function getSousCatSuggestions(description, isDepense) {
     const pool = isDepense ? cabinetDepenses : cabinetRecettes;
@@ -12510,6 +12540,17 @@ function categoryForSousCategorie(sc, isDepense) {
     return null;
 }
 window.categoryForSousCategorie = categoryForSousCategorie;
+
+function applyCommentSuggestion(index) {
+    const t = pendingTransactions[index];
+    if (!t) return;
+    const sug = suggestComment(t.description, t.type === 'dépense' || t.amount < 0);
+    if (sug) {
+        t.comment = sug;
+        renderTransactionsList();
+    }
+}
+window.applyCommentSuggestion = applyCommentSuggestion;
 
 function applySousCatSuggestion(index) {
     const t = pendingTransactions[index];
