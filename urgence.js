@@ -225,6 +225,29 @@ function urgenceLotSoon(lot) {
     return (new Date(lot.expiry) - new Date()) < 90 * 86400000;
 }
 
+// Applique un comptage total (pointage) sur les lots d'un produit :
+// on retire d'abord les lots qui periment le plus tot (FEFO), on ajoute sur le lot sans date.
+function urgenceApplyCountToLots(p, newQty) {
+    if (!Array.isArray(p.lots)) { p.quantity = newQty; return; }
+    const diff = newQty - p.quantity;
+    if (diff > 0) {
+        const noDate = p.lots.find(l => !l.expiry);
+        if (noDate) noDate.qty += diff;
+        else p.lots.push({ id: urgenceLotId(), expiry: null, qty: diff });
+    } else if (diff < 0) {
+        let rem = -diff;
+        const sorted = p.lots.slice().sort((a, b) => String(a.expiry || '9999').localeCompare(String(b.expiry || '9999')));
+        for (const l of sorted) {
+            if (rem <= 0) break;
+            const take = Math.min(l.qty, rem);
+            l.qty -= take;
+            rem -= take;
+        }
+        p.lots = p.lots.filter(l => l.qty > 0);
+    }
+    urgenceSyncProductFromLots(p);
+}
+
 function urgenceAddStockQty(p, qty, expiry) {
     if (!p || !qty) return;
     urgenceEnsureLots(p);
@@ -627,33 +650,23 @@ function renderUrgencePointage() {
     // Conserver les quantites saisies non enregistrees a travers le re-rendu (reordonnancement)
     const draft = {};
     container.querySelectorAll('.urgence-pointage-qty').forEach(i => { draft[i.dataset.id] = i.value; });
-    container.querySelectorAll('.urgence-pointage-lot-qty').forEach(i => { draft[i.dataset.id + ':' + i.dataset.lot] = i.value; });
 
     container.innerHTML = products.map((p, idx) => {
         const lots = Array.isArray(p.lots) ? p.lots : [];
-        const inputHtml = lots.length > 0
+        // Pointage = comptage : une seule saisie par reference, les lots restent en lecture seule
+        // (dates et quantites par lot se gerent dans l'onglet Gestion des stocks)
+        const lotsHtml = lots.length > 0
             ? `<div class="urgence-pointage-lots">` + lots.map(l => {
                 const exp = urgenceLotExpired(l);
                 const soonFlag = urgenceLotSoon(l);
                 const dateStr = l.expiry ? new Date(l.expiry).toLocaleDateString('fr-FR') : 'sans date';
-                const chip = exp
-                    ? `<span class="stock-chip danger">Périmé</span><button class="stock-lot-discard" onclick="urgenceDiscardLot('${p.id}', '${l.id}')" title="Éliminer ce lot périmé du stock">Jeter</button>`
-                    : (soonFlag ? `<span class="stock-chip warning">Bientôt</span>` : `<span class="stock-chip neutral">${urgenceEscapeHtml(dateStr)}</span>`);
-                const draftKey = p.id + ':' + l.id;
-                return `
-                <div class="urgence-pointage-lot ${exp ? 'expired' : ''}">
-                    <span class="urgence-pointage-lot-date">📅 ${urgenceEscapeHtml(dateStr)}</span>
-                    ${chip}
-                    <input type="number" min="0" class="form-input urgence-pointage-lot-qty" data-id="${p.id}" data-lot="${l.id}" value="${draft[draftKey] !== undefined ? urgenceEscapeHtml(draft[draftKey]) : l.qty}">
-                    <span class="urgence-pointage-unit">${urgenceEscapeHtml(p.unit)}</span>
-                </div>`;
+                const cls = exp ? 'danger' : (soonFlag ? 'warning' : '');
+                const discard = exp
+                    ? `<button class="stock-lot-discard" onclick="urgenceDiscardLot('${p.id}', '${l.id}')" title="Éliminer ce lot périmé du stock">Jeter</button>`
+                    : '';
+                return `<span class="stock-lot-chip ${cls}">📅 ${urgenceEscapeHtml(dateStr)} ×${l.qty}${discard}</span>`;
             }).join('') + `</div>`
-            : `<div class="urgence-pointage-input">
-                <label>Reste :</label>
-                <input type="number" min="0" class="form-input urgence-pointage-qty" data-id="${p.id}" value="${draft[p.id] !== undefined ? urgenceEscapeHtml(draft[p.id]) : p.quantity}">
-                <span class="urgence-pointage-unit">${urgenceEscapeHtml(p.unit)}</span>
-                <span class="urgence-pointage-flag" data-flag="${p.id}"></span>
-            </div>`;
+            : '';
         return `
         <div class="urgence-pointage-row" data-id="${p.id}">
             <div class="urgence-pointage-handle" title="Glisser pour réordonner">
@@ -663,7 +676,13 @@ function renderUrgencePointage() {
                 <strong>${urgenceEscapeHtml(p.name)}</strong>
                 <span class="urgence-pointage-sub">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))} · stock actuel : ${p.quantity} ${urgenceEscapeHtml(p.unit)} (seuil ${p.minQuantity})</span>
             </div>
-            ${inputHtml}
+            <div class="urgence-pointage-input">
+                <label>Reste :</label>
+                <input type="number" min="0" class="form-input urgence-pointage-qty" data-id="${p.id}" value="${draft[p.id] !== undefined ? urgenceEscapeHtml(draft[p.id]) : p.quantity}">
+                <span class="urgence-pointage-unit">${urgenceEscapeHtml(p.unit)}</span>
+                <span class="urgence-pointage-flag" data-flag="${p.id}"></span>
+            </div>
+            ${lotsHtml}
             <div class="urgence-pointage-move">
                 <button class="stock-icon-btn" onclick="urgenceMovePointage('${p.id}', -1)" title="Monter" aria-label="Monter" ${idx === 0 ? 'disabled' : ''}>▲</button>
                 <button class="stock-icon-btn" onclick="urgenceMovePointage('${p.id}', 1)" title="Descendre" aria-label="Descendre" ${idx === products.length - 1 ? 'disabled' : ''}>▼</button>
@@ -775,8 +794,7 @@ function urgenceUpdatePointageFlag(input) {
 
 function urgenceSavePointage() {
     const inputs = document.querySelectorAll('.urgence-pointage-qty');
-    const lotInputs = document.querySelectorAll('.urgence-pointage-lot-qty');
-    if (inputs.length === 0 && lotInputs.length === 0) return;
+    if (inputs.length === 0) return;
 
     let changed = false;
     const snapshot = {};
@@ -787,27 +805,11 @@ function urgenceSavePointage() {
         const product = urgenceData.products.find(p => p.id === id);
         if (!product) return;
         if (product.quantity !== qty) {
-            if (Array.isArray(product.lots)) {
-                product.lots = qty > 0 ? [{ id: urgenceLotId(), expiry: null, qty }] : [];
-                urgenceSyncProductFromLots(product);
-            } else {
-                product.quantity = qty;
-            }
+            urgenceApplyCountToLots(product, qty);
             changed = true;
         }
         snapshot[id] = qty;
     });
-    lotInputs.forEach(input => {
-        const product = urgenceData.products.find(p => p.id === input.dataset.id);
-        const lot = product?.lots?.find(l => l.id === input.dataset.lot);
-        const qty = parseInt(input.value, 10);
-        if (!product || !lot || isNaN(qty) || qty < 0) return;
-        if (lot.qty !== qty) {
-            lot.qty = qty;
-            changed = true;
-        }
-    });
-    urgenceData.products.forEach(p => urgenceSyncProductFromLots(p));
     urgenceData.products.forEach(p => { if (!(p.id in snapshot)) snapshot[p.id] = p.quantity; });
 
     const now = new Date().toISOString();

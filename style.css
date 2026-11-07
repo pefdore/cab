@@ -15054,10 +15054,23 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 
     .stock-drag-hint { font-size: 0.66rem; padding: 5px 10px; margin-bottom: 8px; }
 
-    #cabinet-stocks .urgence-pointage-row { flex-wrap: wrap; padding: 6px 8px; gap: 5px; margin-bottom: 6px; border-radius: 12px; }
-    #cabinet-stocks .urgence-pointage-handle { order: 0; width: 20px; min-height: 26px; align-self: stretch; }
+    #cabinet-stocks .urgence-pointage-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            "handle name input"
+            "lots lots lots";
+        align-items: center;
+        padding: 6px 8px;
+        gap: 3px 6px;
+        margin-bottom: 6px;
+        border-radius: 12px;
+    }
+    #cabinet-stocks .urgence-pointage-row:has(.urgence-pointage-lots:empty),
+    #cabinet-stocks .urgence-pointage-row:not(:has(.urgence-pointage-lots)) { padding-bottom: 8px; }
+    #cabinet-stocks .urgence-pointage-handle { grid-area: handle; width: 20px; height: 26px; }
     #cabinet-stocks .urgence-pointage-handle svg { width: 13px; height: 13px; }
-    #cabinet-stocks .urgence-pointage-name { order: 0; flex: 1 1 auto; min-width: 0; }
+    #cabinet-stocks .urgence-pointage-name { grid-area: name; min-width: 0; }
     #cabinet-stocks .urgence-pointage-name strong { font-size: 0.8rem; line-height: 1.15; }
     #cabinet-stocks .urgence-pointage-sub {
         font-size: 0.62rem;
@@ -15065,15 +15078,12 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    #cabinet-stocks .urgence-pointage-input { order: 0; margin-left: auto; }
+    #cabinet-stocks .urgence-pointage-input { grid-area: input; margin-left: 0; }
     #cabinet-stocks .urgence-pointage-input .form-input { width: 58px; padding: 5px 2px; font-size: 0.88rem; }
     #cabinet-stocks .urgence-pointage-input label { display: none; }
     #cabinet-stocks .urgence-pointage-move { display: none; }
-    #cabinet-stocks .urgence-pointage-lots { order: 1; gap: 4px; }
-    #cabinet-stocks .urgence-pointage-lot { padding: 4px 6px; gap: 5px; }
-    #cabinet-stocks .urgence-pointage-lot-date { font-size: 0.64rem; }
-    #cabinet-stocks .urgence-pointage-lot .urgence-pointage-lot-qty { width: 54px; padding: 4px 2px; font-size: 0.85rem; }
-    #cabinet-stocks .urgence-pointage-lot .urgence-pointage-unit { font-size: 0.6rem; }
+    #cabinet-stocks .urgence-pointage-lots { grid-area: lots; order: 0; flex: 1 1 auto; gap: 4px; }
+    #cabinet-stocks .stock-lot-chip { font-size: 0.6rem; }
     #cabinet-stocks .urgence-pointage-flag { min-width: 0; font-size: 0.62rem; }
 
     .stock-md3-cta { width: 100%; min-width: 0; }
@@ -15148,38 +15158,14 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     margin-top: 8px;
 }
 
-/* Pointage : lignes de lot */
+/* Pointage : chips de lots en lecture seule (comptage = un seul champ par reference) */
 .urgence-pointage-lots {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 6px;
     flex: 1 1 100%;
     order: 3;
 }
-
-.urgence-pointage-lot {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    padding: 7px 10px;
-    border-radius: 12px;
-    background: var(--color-bg-subtle);
-}
-
-.urgence-pointage-lot.expired { background: rgba(239, 68, 68, 0.08); }
-
-.urgence-pointage-lot-date { font-size: 0.78rem; font-weight: 600; color: var(--color-text-secondary); }
-.urgence-pointage-lot.expired .urgence-pointage-lot-date { color: #dc2626; }
-
-.urgence-pointage-lot .urgence-pointage-lot-qty {
-    width: 72px;
-    text-align: center;
-    border-radius: 10px;
-    font-weight: 700;
-}
-
-.urgence-pointage-lot .urgence-pointage-unit { font-size: 0.72rem; color: var(--color-text-secondary); }
 
 /* Réception : date de péremption par référence */
 .urgence-receive-expiry-row {
@@ -15193,7 +15179,5 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 .urgence-receive-expiry-row .form-input { max-width: 180px; border-radius: 10px; }
 
 @media (max-width: 640px) {
-    .urgence-pointage-lot { padding: 4px 6px; gap: 5px; }
-    .urgence-pointage-lot .urgence-pointage-lot-qty { width: 54px; }
     .urgence-receive-expiry-row .form-input { max-width: 150px; }
 }
