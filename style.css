@@ -14965,7 +14965,11 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 
 /* --- Mobile --- */
 @media (max-width: 640px) {
-    #cabinet-stocks .stock-md3-card { padding: 16px 14px; border-radius: 18px; }
+    #cabinet-stocks .stock-md3-card { padding: 12px 10px; border-radius: 16px; }
+    #cabinet-stocks .stock-md3-head { margin-bottom: 10px; gap: 8px; }
+    #cabinet-stocks .stock-md3-head h3 { font-size: 1rem; }
+    #cabinet-stocks .stock-md3-head .module-desc { font-size: 0.72rem; }
+    #cabinet-stocks .stock-md3-head-actions .action-btn { padding: 8px 12px !important; font-size: 0.78rem; }
 
     #cabinet-stocks .sub-tab { padding: 8px 12px; font-size: 0.76rem; }
     #cabinet-stocks .sub-tab span { max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
@@ -14974,29 +14978,58 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .stock-md3-head-actions { width: 100%; }
     .stock-md3-head-actions .action-btn { flex: 1; }
 
-    .stock-card-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .stock-card { padding: 10px 12px 12px; }
-    .stock-card-top { margin-bottom: 2px; }
-    .stock-card-name { font-size: 0.82rem; margin-bottom: 4px; }
-    .stock-card-num { font-size: 1.35rem; }
-    .stock-card-meta { margin-top: 4px; font-size: 0.66rem; }
-    .stock-card-price { margin-top: 2px; font-size: 0.74rem; }
-    .stock-lot-chip { font-size: 0.64rem; padding: 2px 3px 2px 8px; }
-    .stock-icon-btn { width: 28px; height: 28px; font-size: 0.78rem; }
+    .stock-card-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .stock-card { padding: 8px 10px 9px; gap: 4px; }
+    .stock-card::before { width: 4px; }
+    .stock-card-top { margin-bottom: 0; }
+    .stock-card-cat { font-size: 0.58rem; }
+    .stock-card-name {
+        font-size: 0.76rem;
+        line-height: 1.15;
+        margin-bottom: 3px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .stock-card-num { font-size: 1.1rem; }
+    .stock-card-unit { font-size: 0.68rem; }
+    .stock-chip { font-size: 0.6rem; padding: 2px 7px; }
+    .stock-card-meta { display: none; }
+    .stock-card-price { margin-top: 1px; font-size: 0.68rem; }
+    .stock-card-lots { gap: 4px; margin-top: 4px; }
+    .stock-lot-chip { font-size: 0.6rem; padding: 2px 3px 2px 7px; }
+    .stock-icon-btn { width: 24px; height: 24px; font-size: 0.68rem; }
 
-    .stock-kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .stock-kpi { padding: 12px 8px; }
-    .stock-kpi-num { font-size: 1.4rem; }
+    .stock-kpi-row { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .stock-kpi { padding: 8px 4px; }
+    .stock-kpi-num { font-size: 1.05rem; }
+    .stock-kpi-num small { font-size: 0.62rem; }
+    .stock-kpi-label { font-size: 0.6rem; }
 
-    #cabinet-stocks .urgence-pointage-row { flex-wrap: wrap; padding: 10px; gap: 8px; }
-    #cabinet-stocks .urgence-pointage-handle { order: 0; width: 26px; height: 100%; min-height: 34px; align-self: stretch; }
+    .stock-drag-hint { font-size: 0.66rem; padding: 5px 10px; margin-bottom: 8px; }
+
+    #cabinet-stocks .urgence-pointage-row { flex-wrap: wrap; padding: 6px 8px; gap: 5px; margin-bottom: 6px; border-radius: 12px; }
+    #cabinet-stocks .urgence-pointage-handle { order: 0; width: 20px; min-height: 26px; align-self: stretch; }
+    #cabinet-stocks .urgence-pointage-handle svg { width: 13px; height: 13px; }
     #cabinet-stocks .urgence-pointage-name { order: 0; flex: 1 1 auto; min-width: 0; }
-    #cabinet-stocks .urgence-pointage-name strong { font-size: 0.88rem; }
-    #cabinet-stocks .urgence-pointage-sub { font-size: 0.68rem; }
+    #cabinet-stocks .urgence-pointage-name strong { font-size: 0.8rem; line-height: 1.15; }
+    #cabinet-stocks .urgence-pointage-sub {
+        font-size: 0.62rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     #cabinet-stocks .urgence-pointage-input { order: 0; margin-left: auto; }
-    #cabinet-stocks .urgence-pointage-move { order: 0; }
-    #cabinet-stocks .urgence-pointage-lots { order: 1; }
-    #cabinet-stocks .urgence-pointage-flag { min-width: 0; }
+    #cabinet-stocks .urgence-pointage-input .form-input { width: 58px; padding: 5px 2px; font-size: 0.88rem; }
+    #cabinet-stocks .urgence-pointage-input label { display: none; }
+    #cabinet-stocks .urgence-pointage-move { display: none; }
+    #cabinet-stocks .urgence-pointage-lots { order: 1; gap: 4px; }
+    #cabinet-stocks .urgence-pointage-lot { padding: 4px 6px; gap: 5px; }
+    #cabinet-stocks .urgence-pointage-lot-date { font-size: 0.64rem; }
+    #cabinet-stocks .urgence-pointage-lot .urgence-pointage-lot-qty { width: 54px; padding: 4px 2px; font-size: 0.85rem; }
+    #cabinet-stocks .urgence-pointage-lot .urgence-pointage-unit { font-size: 0.6rem; }
+    #cabinet-stocks .urgence-pointage-flag { min-width: 0; font-size: 0.62rem; }
 
     .stock-md3-cta { width: 100%; min-width: 0; }
 }
@@ -15115,8 +15148,8 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 .urgence-receive-expiry-row .form-input { max-width: 180px; border-radius: 10px; }
 
 @media (max-width: 640px) {
-    .urgence-pointage-lot { padding: 6px 8px; gap: 6px; }
-    .urgence-pointage-lot .urgence-pointage-lot-qty { width: 64px; }
+    .urgence-pointage-lot { padding: 4px 6px; gap: 5px; }
+    .urgence-pointage-lot .urgence-pointage-lot-qty { width: 54px; }
     .urgence-receive-expiry-row .form-input { max-width: 150px; }
 }
 
