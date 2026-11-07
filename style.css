@@ -15254,3 +15254,41 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .stock-price-name { flex: 1 1 100%; font-size: 0.78rem; }
     .stock-price-hist { flex: 1 1 100%; font-size: 0.7rem; }
 }
+
+/* --- Fournisseurs : cartes --- */
+.stock-supplier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.stock-supplier-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--stock-radius, 20px);
+    padding: 14px 16px;
+    animation: stock-pop 0.45s var(--stock-spring, ease) both;
+    transition: transform 0.3s var(--stock-spring, ease), box-shadow 0.2s ease;
+}
+
+.stock-supplier-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); }
+
+.stock-supplier-name { font-size: 0.95rem; }
+
+.stock-supplier-email { font-size: 0.78rem; color: var(--color-primary); margin: 4px 0 8px; word-break: break-all; }
+.stock-supplier-email.muted { color: var(--color-text-tertiary); font-style: italic; }
+
+.stock-supplier-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+    .stock-supplier-grid { grid-template-columns: 1fr; gap: 8px; }
+    .stock-supplier-card { padding: 12px; }
+}

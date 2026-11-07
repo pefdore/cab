@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cotation Médecin</title>
-    <link rel="stylesheet" href="style.css?v=202611091000">
+    <link rel="stylesheet" href="style.css?v=202611101000">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -2128,25 +2128,46 @@ window.attemptLogin = function() {
 <!-- Stocks -->
                 <div id="cabinet-stocks" class="cabinet-tab-content">
                     <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="urgence-stock">
+                        <button class="sub-tab active" data-subtab="urgence-overview">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            <span>Vue d'ensemble</span>
+                        </button>
+                        <button class="sub-tab" data-subtab="urgence-stock">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                            <span>Gestion des stocks</span>
+                            <span>Inventaire</span>
                         </button>
                         <button class="sub-tab" data-subtab="urgence-pointage">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                            <span>Pointage hebdomadaire</span>
+                            <span>Pointage</span>
                         </button>
                         <button class="sub-tab" data-subtab="urgence-orders">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            <span>Commandes & réception</span>
+                            <span>Commandes</span>
                         </button>
                         <button class="sub-tab" data-subtab="urgence-costs">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            <span>Coûts & budget</span>
+                            <span>Coûts & fournisseurs</span>
                         </button>
                     </div>
 
-                    <div id="urgence-stock" class="sub-tab-content active">
+                    <div id="urgence-overview" class="sub-tab-content active">
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Vue d'ensemble</h3>
+                                    <p class="module-desc" id="urgenceOverviewNext"></p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn primary" id="urgenceGoPointageBtn">✓ Faire le pointage</button>
+                                    <button class="action-btn" id="urgenceGoOrderBtn">＋ Commander le manquant</button>
+                                </div>
+                            </div>
+                            <div class="stock-kpi-row" id="urgenceOverviewKpis"></div>
+                            <div id="urgenceOverviewAlerts"></div>
+                        </div>
+                    </div>
+
+                    <div id="urgence-stock" class="sub-tab-content">
                         <div class="module-card stock-md3-card">
                             <div class="stock-md3-head">
                                 <div>
@@ -2221,8 +2242,17 @@ window.attemptLogin = function() {
 
                     <div id="urgence-costs" class="sub-tab-content">
                         <div class="module-card stock-md3-card">
-                            <h3>Coûts & budget</h3>
-                            <p class="module-desc">Visualisez ce qui coûte le plus cher pour prendre des décisions de cabinet : par produit et par catégorie.</p>
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Coûts & fournisseurs</h3>
+                                    <p class="module-desc">Ce que coûtent vos achats — par fournisseur, par produit, par catégorie — et l'évolution des prix payés.</p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn" id="urgenceAddSupplierBtn">＋ Fournisseur</button>
+                                </div>
+                            </div>
+                            <h4 class="stock-section-title">Fournisseurs</h4>
+                            <div class="stock-supplier-grid" id="urgenceSuppliersPanel"></div>
                             <div id="urgenceCostsPanel"></div>
                         </div>
                     </div>
@@ -3406,14 +3436,14 @@ window.attemptLogin = function() {
     <script src="app.v5.js?v=202611062000" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=2026110115000" defer></script>
-    <script src="urgence.js?v=202611081000" defer></script>
+    <script src="urgence.js?v=202611101000" defer></script>
     <script src="flux.js?v=2026110115000" defer></script>
     <script src="reconciliation.js?v=2026110115000" defer></script>
     <script src="reminders.js?v=202611062000" defer></script>
     <script src="affaires.js?v=202611071000" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
     <script src="releve-review.js?v=202611062200" defer></script>
-    <script src="urgence-orders.js?v=202611091000" defer></script>
+    <script src="urgence-orders.js?v=202611101000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
