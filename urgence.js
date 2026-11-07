@@ -45,6 +45,7 @@ function loadUrgenceData() {
             if (!Array.isArray(urgenceData.products)) urgenceData.products = URGENCE_DEFAULT_PRODUCTS.slice();
             if (!Array.isArray(urgenceData.pointages)) urgenceData.pointages = [];
             if (!Array.isArray(urgenceData.orders)) urgenceData.orders = [];
+            if (!Array.isArray(urgenceData.suppliers)) urgenceData.suppliers = [];
             if (!urgenceData.lastPointage) urgenceData.lastPointage = null;
             urgenceData.products.forEach(urgenceEnsureLots);
         } else {
@@ -139,6 +140,7 @@ async function urgenceSyncPull(force) {
             if (!Array.isArray(urgenceData.products)) urgenceData.products = URGENCE_DEFAULT_PRODUCTS.slice();
             if (!Array.isArray(urgenceData.pointages)) urgenceData.pointages = [];
             if (!Array.isArray(urgenceData.orders)) urgenceData.orders = [];
+            if (!Array.isArray(urgenceData.suppliers)) urgenceData.suppliers = [];
             urgenceData.products.forEach(urgenceEnsureLots);
             localStorage.setItem(URGENCE_STORAGE_KEY, JSON.stringify(urgenceData));
             localStorage.setItem(URGENCE_STORAGE_KEY + '_ts', String(remoteAt));
@@ -246,6 +248,36 @@ function urgenceApplyCountToLots(p, newQty) {
         p.lots = p.lots.filter(l => l.qty > 0);
     }
     urgenceSyncProductFromLots(p);
+}
+
+// ---------- Fournisseurs (memorises pour eviter de les ressaisir) ----------
+
+function urgenceKnownSuppliers() {
+    if (!urgenceData) return [];
+    if (!Array.isArray(urgenceData.suppliers)) urgenceData.suppliers = [];
+    return urgenceData.suppliers;
+}
+
+function urgenceRememberSupplier(name, email) {
+    name = String(name || '').trim();
+    if (!name) return;
+    const list = urgenceKnownSuppliers();
+    let s = list.find(x => x.name.toLowerCase() === name.toLowerCase());
+    if (!s) {
+        s = { name, email: String(email || '').trim() };
+        list.push(s);
+    } else if (email) {
+        s.email = String(email).trim();
+    }
+}
+
+function urgenceSupplierEmail(name) {
+    const s = urgenceKnownSuppliers().find(x => x.name.toLowerCase() === String(name || '').trim().toLowerCase());
+    return s?.email || '';
+}
+
+function urgenceSupplierOptionsHtml() {
+    return urgenceKnownSuppliers().map(s => `<option value="${urgenceEscapeHtml(s.name)}">${urgenceEscapeHtml(s.email || '')}</option>`).join('');
 }
 
 function urgenceAddStockQty(p, qty, expiry) {
@@ -382,6 +414,7 @@ function renderUrgenceStockCards() {
                     ${lotsHtml ? `<div class="stock-card-lots">${lotsHtml}</div>` : ''}
                     <div class="stock-card-meta">
                         <span>seuil ${p.minQuantity}</span>
+                        ${p.supplier ? `<span>• ${urgenceEscapeHtml(p.supplier)}</span>` : ''}
                     </div>
                     ${priceHtml ? `<div class="stock-card-price">${priceHtml}</div>` : ''}
                 </div>`;
@@ -511,6 +544,17 @@ function urgenceShowProductModal(product) {
                 <label>Coût TTC par ${urgenceEscapeHtml(product ? product.unit : 'unité')} (€, facultatif)</label>
                 <input type="number" min="0" step="0.01" id="urgenceProductPrice" class="form-input" value="${product && product.unitPrice ? product.unitPrice : ''}" placeholder="Ex : 4.50">
             </div>
+            <div class="urgence-form-row">
+                <div class="form-group">
+                    <label>Fournisseur habituel</label>
+                    <input type="text" id="urgenceProductSupplier" class="form-input" list="urgenceSupplierDatalist" value="${product && product.supplier ? urgenceEscapeHtml(product.supplier) : ''}" placeholder="Ex : Cooper">
+                    <datalist id="urgenceSupplierDatalist">${urgenceSupplierOptionsHtml()}</datalist>
+                </div>
+                <div class="form-group">
+                    <label>Email du fournisseur (facultatif)</label>
+                    <input type="email" id="urgenceProductSupplierEmail" class="form-input" value="${product && product.supplierEmail ? urgenceEscapeHtml(product.supplierEmail) : ''}" placeholder="commandes@fournisseur.fr">
+                </div>
+            </div>
             </div>
             <div class="modal-footer">
                 <button class="action-btn" onclick="urgenceCloseProductModal()">Annuler</button>
@@ -575,6 +619,8 @@ function urgenceSaveProduct(productId) {
     const lots = urgenceCollectProductLots() || [];
     const priceRaw = document.getElementById('urgenceProductPrice')?.value;
     const unitPrice = priceRaw !== '' && priceRaw !== undefined && priceRaw !== null ? (parseFloat(priceRaw) || 0) : null;
+    const supplier = document.getElementById('urgenceProductSupplier')?.value?.trim() || '';
+    const supplierEmail = document.getElementById('urgenceProductSupplierEmail')?.value?.trim() || '';
 
     if (!name) {
         if (typeof showToast === 'function') showToast('Le nom du produit est obligatoire', 'error');
@@ -587,6 +633,8 @@ function urgenceSaveProduct(productId) {
             p.name = name; p.category = category; p.unit = unit;
             p.minQuantity = min; p.lots = lots;
             urgenceSyncProductFromLots(p);
+            p.supplier = supplier;
+            p.supplierEmail = supplierEmail;
             if (unitPrice !== null) p.unitPrice = unitPrice;
         }
     } else {
@@ -594,11 +642,13 @@ function urgenceSaveProduct(productId) {
             id: 'p' + Date.now(),
             name, category, unit,
             minQuantity: min, lots,
+            supplier, supplierEmail,
             unitPrice: unitPrice !== null ? unitPrice : undefined
         };
         urgenceSyncProductFromLots(p);
         urgenceData.products.push(p);
     }
+    urgenceRememberSupplier(supplier, supplierEmail);
 
     saveUrgenceData();
     urgenceCloseProductModal();
@@ -832,8 +882,8 @@ function urgenceSavePointage() {
     if (typeof showToast === 'function') showToast(msg);
     else alert(msg);
 
-    if (toOrder.length > 0 && confirm(`Générer la liste à commander (${toOrder.length} produit(s)) ?\n\nVous pourrez la copier pour le fournisseur.`)) {
-        urgenceCopyOrderList();
+    if (toOrder.length > 0 && confirm(`Générer les bons de commande (${toOrder.length} référence(s) à recommander) ?\n\nIls seront créés dans l'onglet « Commandes & réception », groupés par fournisseur.`)) {
+        if (typeof urgenceBuildOrderFromNeeds === 'function') urgenceBuildOrderFromNeeds();
     }
 }
 

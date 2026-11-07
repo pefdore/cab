@@ -15181,3 +15181,40 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 @media (max-width: 640px) {
     .urgence-receive-expiry-row .form-input { max-width: 150px; }
 }
+
+/* --- Commandes : meta fournisseur / port / remise --- */
+.urgence-order-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    padding: 12px;
+    background: var(--color-bg-subtle);
+    border-radius: 14px;
+    margin-bottom: 12px;
+}
+
+.urgence-order-meta label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.urgence-order-meta .form-input { border-radius: 10px; }
+
+.stock-order-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-top: 16px;
+    text-align: center;
+    background: var(--color-bg-muted);
+    border-radius: 999px;
+    padding: 8px 14px;
+}
+
+@media (max-width: 640px) {
+    .urgence-order-meta { grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+    .stock-order-hint { font-size: 0.68rem; }
+}

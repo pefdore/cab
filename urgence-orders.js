@@ -18,6 +18,23 @@ function urgenceOrdersData() {
     return urgenceData;
 }
 
+function urgenceOrderTotal(o) {
+    return urgenceOrderEstimatedTotal(o)
+        + (Number(o.shipping) || 0)
+        - (Number(o.discount) || 0);
+}
+
+function urgenceOrderText(o) {
+    const lines = o.items.map(i => `- ${i.name} : ${i.qty} ${i.unit}` + (i.unitPrice ? ` (≈ ${urgenceFmtEur(i.qty * i.unitPrice)})` : ''));
+    const extras = [];
+    if (o.shipping) extras.push(`Frais de port : ${urgenceFmtEur(o.shipping)}`);
+    if (o.discount) extras.push(`Remise : -${urgenceFmtEur(o.discount)}`);
+    let text = `Commande${o.supplier ? ` pour ${o.supplier}` : ''} (${new Date(o.createdAt).toLocaleDateString('fr-FR')}) :\n` + lines.join('\n');
+    if (extras.length) text += '\n' + extras.join('\n');
+    text += `\nTotal TTC estimé : ${urgenceFmtEur(urgenceOrderTotal(o))}`;
+    return text;
+}
+
 function urgenceFmtEur(n) {
     const v = Number(n) || 0;
     return v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
@@ -37,6 +54,7 @@ function urgenceSuggestedQty(p) {
     return qty > 0 ? qty : 0;
 }
 
+// Genere un bon de commande par fournisseur a partir du manquant (apres pointage ou bouton Commander le manquant)
 function urgenceBuildOrderFromNeeds() {
     urgenceOrdersData();
     const needs = urgenceData.products.filter(p => p.quantity <= p.minQuantity);
@@ -44,30 +62,70 @@ function urgenceBuildOrderFromNeeds() {
         if (typeof showToast === 'function') showToast('Rien à commander : tous les stocks sont au-dessus des seuils ✅');
         return;
     }
-    const items = needs.map(p => ({
-        productId: p.id,
-        name: p.name,
-        unit: p.unit,
-        qty: urgenceSuggestedQty(p),
-        unitPrice: urgenceProductUnitPrice(p)
-    })).filter(i => i.qty > 0);
 
-    if (items.length === 0) {
+    const groups = new Map();
+    needs.forEach(p => {
+        const key = (p.supplier || '').trim() || 'Sans fournisseur';
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(p);
+    });
+
+    let ordersCount = 0;
+    let itemsCount = 0;
+    groups.forEach((prods, supplier) => {
+        const items = prods.map(p => ({
+            productId: p.id,
+            name: p.name,
+            unit: p.unit,
+            qty: urgenceSuggestedQty(p),
+            unitPrice: urgenceProductUnitPrice(p)
+        })).filter(i => i.qty > 0);
+        if (items.length === 0) return;
+        const named = supplier !== 'Sans fournisseur';
+        const email = named && typeof urgenceSupplierEmail === 'function' ? urgenceSupplierEmail(supplier) : '';
+        urgenceData.orders.unshift({
+            id: 'cmd' + Date.now() + Math.random().toString(36).slice(2, 5),
+            createdAt: new Date().toISOString(),
+            status: 'pending',
+            items,
+            supplier: named ? supplier : '',
+            supplierEmail: email,
+            shipping: 0,
+            discount: 0
+        });
+        ordersCount++;
+        itemsCount += items.length;
+    });
+
+    if (ordersCount === 0) {
         if (typeof showToast === 'function') showToast('Aucune quantité à commander', 'error');
         return;
     }
 
-    const order = {
-        id: 'cmd' + Date.now(),
-        createdAt: new Date().toISOString(),
-        status: 'pending',
-        items
-    };
-    urgenceData.orders.unshift(order);
     saveUrgenceData();
     urgenceRenderOrders();
-    urgenceRenderCosts();
-    if (typeof showToast === 'function') showToast(`Commande créée : ${items.length} produit(s), estimation ${urgenceFmtEur(urgenceOrderEstimatedTotal(order))}`);
+    if (typeof showToast === 'function') showToast(`${ordersCount} bon(s) de commande créé(s) — ${itemsCount} référence(s), groupés par fournisseur`);
+    document.querySelector('#cabinet-stocks .sub-tab[data-subtab="urgence-orders"]')?.click();
+}
+
+// Commande libre, hors pointage : on ajoute ensuite les references a la main
+function urgenceCreateBlankOrder() {
+    urgenceOrdersData();
+    urgenceData.orders.unshift({
+        id: 'cmd' + Date.now() + Math.random().toString(36).slice(2, 5),
+        createdAt: new Date().toISOString(),
+        status: 'pending',
+        items: [],
+        supplier: '',
+        supplierEmail: '',
+        shipping: 0,
+        discount: 0
+    });
+    saveUrgenceData();
+    urgenceRenderOrders();
+    if (typeof showToast === 'function') showToast('Commande vierge créée — ajoutez les références et le fournisseur');
+    const sel = document.querySelector('.urgence-order-add-select');
+    if (sel) sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function urgenceOrderEstimatedTotal(order) {
@@ -77,14 +135,25 @@ function urgenceOrderEstimatedTotal(order) {
 function urgenceCopyOrder(orderId) {
     const order = urgenceData.orders.find(o => o.id === orderId);
     if (!order) return;
-    const lines = order.items.map(i => `- ${i.name} : ${i.qty} ${i.unit}` + (i.unitPrice ? ` (≈ ${urgenceFmtEur(i.qty * i.unitPrice)})` : ''));
-    const text = `Commande salle d'urgence (${new Date(order.createdAt).toLocaleDateString('fr-FR')}) :\n` + lines.join('\n');
+    const text = urgenceOrderText(order);
     navigator.clipboard.writeText(text).then(() => {
-        if (typeof showToast === 'function') showToast('Commande copiée dans le presse-papiers');
+        if (typeof showToast === 'function') showToast('Bon de commande copié dans le presse-papiers');
     }).catch(() => alert(text));
 }
 
-// ---------- Réception ----------
+// Envoi direct par mail si l'adresse du fournisseur est connue
+function urgenceSendOrder(orderId) {
+    const order = urgenceData.orders.find(o => o.id === orderId);
+    if (!order) return;
+    const email = (order.supplierEmail || (typeof urgenceSupplierEmail === 'function' ? urgenceSupplierEmail(order.supplier) : '') || '').trim();
+    if (!email) {
+        if (typeof showToast === 'function') showToast("Pas d'email enregistré pour ce fournisseur — utilisez « Copier » ou renseignez l'email dans la fiche produit", 'error');
+        return;
+    }
+    const subject = encodeURIComponent(`Commande ${order.supplier || ''} — ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`);
+    const body = encodeURIComponent(urgenceOrderText(order) + '\n\n--\nEnvoyé depuis la gestion des stocks du cabinet');
+    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`;
+}
 
 function urgenceMarkOrdered(orderId) {
     const order = urgenceData.orders.find(o => o.id === orderId);
@@ -105,7 +174,11 @@ function urgenceMarkOrdered(orderId) {
             <div class="modal-body">
                 <div class="form-group">
                     <label>Fournisseur (facultatif)</label>
-                    <input type="text" id="urgenceOrderSupplier" class="form-input" value="${order.supplier ? urgenceEscapeHtml(order.supplier) : ''}" placeholder="Ex : Cooper, Phocépharma…">
+                    <input type="text" id="urgenceOrderSupplier" class="form-input" list="urgenceOrderSupplierDatalist" value="${order.supplier ? urgenceEscapeHtml(order.supplier) : ''}" placeholder="Ex : Cooper, Phocépharma…">
+                </div>
+                <div class="form-group">
+                    <label>Email du fournisseur (facultatif)</label>
+                    <input type="email" id="urgenceOrderSupplierEmail" class="form-input" value="${order.supplierEmail ? urgenceEscapeHtml(order.supplierEmail) : ''}" placeholder="commandes@fournisseur.fr">
                 </div>
                 <p class="form-hint">La commande passera en « Commandée — en attente de livraison ». Vous pourrez réceptionner chaque référence séparément, quand elle arrive.</p>
             </div>
@@ -128,8 +201,15 @@ function urgenceCloseOrderedModal() {
 function urgenceConfirmOrdered(orderId) {
     const order = urgenceData.orders.find(o => o.id === orderId);
     if (!order || order.status !== 'pending') return;
+    if (!order.items || order.items.length === 0) {
+        if (typeof showToast === 'function') showToast('Commande vide : ajoutez au moins une référence avant de la marquer commandée', 'error');
+        return;
+    }
     const supplierInput = document.getElementById('urgenceOrderSupplier');
+    const supplierEmailInput = document.getElementById('urgenceOrderSupplierEmail');
     order.supplier = supplierInput ? supplierInput.value.trim() : '';
+    order.supplierEmail = supplierEmailInput ? supplierEmailInput.value.trim() : '';
+    if (typeof urgenceRememberSupplier === 'function') urgenceRememberSupplier(order.supplier, order.supplierEmail);
     order.status = 'ordered';
     order.orderedAt = new Date().toISOString();
     if (!order.receptions) order.receptions = [];
@@ -366,6 +446,15 @@ function urgenceRenderOrders() {
     }
 
     if (pendingEl) urgenceBindOrderEditEvents(pendingEl);
+
+    // Datalist partage des fournisseurs connus (memorises)
+    let datalist = document.getElementById('urgenceOrderSupplierDatalist');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'urgenceOrderSupplierDatalist';
+        document.body.appendChild(datalist);
+    }
+    datalist.innerHTML = (typeof urgenceSupplierOptionsHtml === 'function' ? urgenceSupplierOptionsHtml() : '');
 }
 
 function urgenceOrderEditCardHtml(o) {
@@ -402,14 +491,29 @@ function urgenceOrderEditCardHtml(o) {
                 <strong>Commande du ${dateStr} — en préparation</strong>
                 <span class="urgence-state warning">À passer / en attente</span>
             </div>
+            <div class="urgence-order-meta">
+                <label>Fournisseur
+                    <input type="text" class="form-input urgence-order-meta-input" data-order="${o.id}" data-field="supplier" list="urgenceOrderSupplierDatalist" value="${urgenceEscapeHtml(o.supplier || '')}" placeholder="Ex : Cooper">
+                </label>
+                <label>Email
+                    <input type="email" class="form-input urgence-order-meta-input" data-order="${o.id}" data-field="supplierEmail" value="${urgenceEscapeHtml(o.supplierEmail || '')}" placeholder="commandes@fournisseur.fr">
+                </label>
+                <label>Frais de port €
+                    <input type="number" min="0" step="0.01" class="form-input urgence-order-meta-input" data-order="${o.id}" data-field="shipping" value="${o.shipping || ''}" placeholder="0">
+                </label>
+                <label>Remise €
+                    <input type="number" min="0" step="0.01" class="form-input urgence-order-meta-input" data-order="${o.id}" data-field="discount" value="${o.discount || ''}" placeholder="0">
+                </label>
+            </div>
             <div class="urgence-order-edit-list">${rows}</div>
             <div class="urgence-order-add-row">
                 ${addSelect}
             </div>
             <div class="urgence-order-foot">
-                <span>Total TTC estimé : <strong class="urgence-order-total" data-ordertotal="${o.id}">${urgenceFmtEur(urgenceOrderEstimatedTotal(o))}</strong></span>
+                <span>Total TTC estimé : <strong class="urgence-order-total" data-ordertotal="${o.id}">${urgenceFmtEur(urgenceOrderTotal(o))}</strong></span>
                 <span class="urgence-order-actions">
-                    <button class="action-btn" onclick="urgenceCopyOrder('${o.id}')">Copier</button>
+                    <button class="action-btn" onclick="urgenceCopyOrder('${o.id}')" title="Copier le bon de commande pour le coller dans un mail">⠫ Copier</button>
+                    <button class="action-btn" onclick="urgenceSendOrder('${o.id}')" title="Ouvrir un mail pré-rempli vers le fournisseur">✉ Envoyer</button>
                     <button class="action-btn primary" onclick="urgenceMarkOrdered('${o.id}')">Marquer commandée</button>
                     <button class="action-btn" onclick="urgenceCancelOrder('${o.id}')">Annuler</button>
                 </span>
@@ -439,6 +543,29 @@ function urgenceBindOrderEditEvents(container) {
         };
         qtyInput.addEventListener('input', update);
         priceInput.addEventListener('input', update);
+    });
+
+    container.querySelectorAll('.urgence-order-meta-input').forEach(input => {
+        const orderId = input.dataset.order;
+        const field = input.dataset.field;
+        const apply = () => {
+            const order = urgenceData.orders.find(o => o.id === orderId);
+            if (!order) return;
+            if (field === 'shipping' || field === 'discount') {
+                const v = parseFloat(input.value);
+                order[field] = isNaN(v) || v < 0 ? 0 : v;
+            } else {
+                order[field] = input.value.trim();
+                if (field === 'supplier' && typeof urgenceRememberSupplier === 'function') {
+                    urgenceRememberSupplier(order.supplier, order.supplierEmail);
+                }
+            }
+            const totalEl = container.querySelector(`[data-ordertotal="${orderId}"]`);
+            if (totalEl) totalEl.textContent = urgenceFmtEur(urgenceOrderTotal(order));
+            saveUrgenceData();
+        };
+        input.addEventListener('input', apply);
+        input.addEventListener('change', apply);
     });
 
     container.querySelectorAll('.urgence-order-add-select').forEach(sel => {
@@ -492,7 +619,10 @@ function urgenceOrderOrderedCardHtml(o) {
         `<div class="urgence-reception-note">📦 Réception du ${new Date(r.date).toLocaleDateString('fr-FR')} : ${r.items.map(x => `${urgenceEscapeHtml(x.name)} ×${x.qty}`).join(', ')}${r.cost ? ` — ${urgenceFmtEur(r.cost)}` : ''}</div>`
     ).join('');
     const receivedTotal = (o.receptions || []).reduce((s, r) => s + (r.cost || 0), 0);
-    const total = receivedTotal > 0 ? urgenceFmtEur(receivedTotal) : `≈ ${urgenceFmtEur(urgenceOrderEstimatedTotal(o))}`;
+    const total = receivedTotal > 0 ? urgenceFmtEur(receivedTotal) : `≈ ${urgenceFmtEur(urgenceOrderTotal(o))}`;
+    const sendBtn = o.supplierEmail
+        ? `<button class="action-btn" onclick="urgenceSendOrder('${o.id}')" title="Renvoyer le bon de commande par mail">✉ Renvoyer</button>`
+        : '';
     return `
         <div class="urgence-order-card">
             <div class="urgence-order-head">
@@ -504,6 +634,7 @@ function urgenceOrderOrderedCardHtml(o) {
             <div class="urgence-order-foot">
                 <span>Total TTC : <strong>${total}</strong></span>
                 <span class="urgence-order-actions">
+                    ${sendBtn}
                     <button class="action-btn primary" onclick="urgenceReceiveOrder('${o.id}')">Réceptionner</button>
                     <button class="action-btn" onclick="urgenceCancelOrder('${o.id}')">Annuler</button>
                 </span>
@@ -632,6 +763,9 @@ function initUrgenceOrdersModule() {
     const createOrderBtn3 = document.getElementById('urgenceCreateOrderBtnOrders');
     if (createOrderBtn3) createOrderBtn3.addEventListener('click', urgenceBuildOrderFromNeeds);
 
+    const blankOrderBtn = document.getElementById('urgenceBlankOrderBtn');
+    if (blankOrderBtn) blankOrderBtn.addEventListener('click', urgenceCreateBlankOrder);
+
     urgenceRenderOrders();
     urgenceRenderCosts();
 }
@@ -639,6 +773,8 @@ function initUrgenceOrdersModule() {
 document.addEventListener('DOMContentLoaded', initUrgenceOrdersModule);
 
 window.urgenceBuildOrderFromNeeds = urgenceBuildOrderFromNeeds;
+window.urgenceCreateBlankOrder = urgenceCreateBlankOrder;
+window.urgenceSendOrder = urgenceSendOrder;
 window.urgenceReceiveOrder = urgenceReceiveOrder;
 window.urgenceConfirmReceive = urgenceConfirmReceive;
 window.urgenceCloseReceiveModal = urgenceCloseReceiveModal;
