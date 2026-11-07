@@ -15218,3 +15218,39 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .urgence-order-meta { grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
     .stock-order-hint { font-size: 0.68rem; }
 }
+
+/* --- Coûts : evolution des prix payes (benchmark interne) --- */
+.stock-price-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.stock-price-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--color-bg-subtle);
+}
+
+.stock-price-name { font-weight: 700; font-size: 0.82rem; flex: 1 1 160px; }
+.stock-price-hist { font-size: 0.75rem; color: var(--color-text-secondary); flex: 2 1 200px; }
+
+.stock-cost-note, .stock-price-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+    margin: 8px 0 0;
+}
+
+.stock-price-hint { margin: 8px 0 0; font-style: italic; }
+
+@media (max-width: 640px) {
+    .stock-price-row { padding: 7px 9px; gap: 6px; }
+    .stock-price-name { flex: 1 1 100%; font-size: 0.78rem; }
+    .stock-price-hist { flex: 1 1 100%; font-size: 0.7rem; }
+}
