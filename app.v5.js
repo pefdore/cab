@@ -9234,6 +9234,12 @@ function updateTransaction(index, field, value) {
             pendingTransactions[index].amount = isDepense ? -Math.abs(amount) : Math.abs(amount);
         } else {
             pendingTransactions[index][field] = value;
+            if (field === 'sous_categorie' && value && value.trim()) {
+                const t = pendingTransactions[index];
+                const isDepense = t.type === 'dépense' || t.amount < 0;
+                const cat = categoryForSousCategorie(value, isDepense);
+                if (cat) t.category = cat;
+            }
         }
         renderTransactionsList();
     }
@@ -12471,12 +12477,36 @@ function getSousCatSuggestions(description, isDepense) {
     return result.slice(0, 5);
 }
 
+// Categorie parente d'une sous-categorie : historique du cabinet d'abord,
+// puis mapping statique SCM_SOUS_CATEGORIES (si non ambigu)
+function categoryForSousCategorie(sc, isDepense) {
+    const target = String(sc || '').trim().toLowerCase();
+    if (!target) return null;
+    const pool = isDepense ? cabinetDepenses : cabinetRecettes;
+    for (const e of (pool || [])) {
+        if (e.sous_categorie && String(e.sous_categorie).trim().toLowerCase() === target && e.category) {
+            return normalizeFluxCategory(e.category, isDepense);
+        }
+    }
+    if (typeof SCM_SOUS_CATEGORIES !== 'undefined') {
+        const matches = Object.entries(SCM_SOUS_CATEGORIES)
+            .filter(([cat, list]) => (list || []).some(s => String(s).trim().toLowerCase() === target))
+            .map(([cat]) => normalizeFluxCategory(cat, isDepense));
+        if (matches.length === 1) return matches[0];
+    }
+    return null;
+}
+window.categoryForSousCategorie = categoryForSousCategorie;
+
 function applySousCatSuggestion(index) {
     const t = pendingTransactions[index];
     if (!t) return;
-    const sug = suggestSousCategorie(t.description, t.type === 'dépense' || t.amount < 0);
+    const isDepense = t.type === 'dépense' || t.amount < 0;
+    const sug = suggestSousCategorie(t.description, isDepense);
     if (sug) {
         t.sous_categorie = sug;
+        const cat = categoryForSousCategorie(sug, isDepense);
+        if (cat) t.category = cat;
         renderTransactionsList();
     }
 }

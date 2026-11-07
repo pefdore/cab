@@ -15557,3 +15557,56 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .urgence-order-actions .action-btn { flex: 1 1 40%; padding: 8px 10px !important; font-size: 0.75rem; }
     .urgence-order-actions .action-btn.stock-btn-ghost { flex: 0 1 auto; }
 }
+/* ===== FLUX HERO : disposition cohérente des inlines selon la largeur ===== */
+/* Toutes les tuiles partagent la même géométrie : même padding, valeurs
+   tabulaires sur une seule ligne, libellés ellipsés proprement. */
+.flux-hero-grid { max-width: 100%; }
+.flux-hero-grid > * { min-width: 0; }
+.fhero-balance, .fhero-kpi, .fhero-chart { padding: 10px 14px !important; }
+.fhero-kpi > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+}
+.fhero-kpi-label, .fhero-balance-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.fhero-kpi-value, .fhero-balance-value { white-space: nowrap; }
+
+/* Largeur intermédiaire (761-1000px) : la balance prend toute la ligne,
+   les 4 tuiles restantes se répartissent uniformément — plus d'écrasement */
+@media (min-width: 761px) and (max-width: 1000px) {
+    .flux-hero-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    .fhero-balance {
+        grid-column: 1 / -1;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 12px;
+    }
+    .fhero-balance-label { margin: 0 !important; flex-shrink: 0; }
+    .fhero-balance-value { font-size: 1.45rem !important; }
+    .fhero-meta { margin: 0 0 0 auto; }
+    .fhero-meta .fhero-trend,
+    .fhero-meta .fhero-bank {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        background: var(--md-surface-high);
+        border-radius: var(--radius-full);
+        font-size: 0.64rem !important;
+    }
+}
+
+/* Mobile : la tuile année reste lisible, pas de tuile orpheline écrasée */
+@media (max-width: 760px) {
+    .flux-hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .fhero-balance, .fhero-chart { grid-column: 1 / -1; }
+    .fhero-kpi { padding: 8px 12px !important; }
+}
