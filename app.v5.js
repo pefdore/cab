@@ -9306,7 +9306,7 @@ async function loadReleveLearning(force) {
     try {
         const { data, error } = await supabaseClient
             .from('releve_learning')
-            .select('libelle_norm, category, is_depense, weight');
+            .select('libelle_norm, category, is_depense, weight, updated_at');
         if (error) throw error;
         releveLearningCache = data || [];
         releveLearningLoadedAt = now;
@@ -9324,6 +9324,8 @@ function bestLearnedCategory(description, isDepense) {
     const rows = releveLearningCache || [];
     let best = null;
     let bestScore = 0;
+    let recent = null;
+    let recentAt = 0;
     for (const row of rows) {
         if (row.is_depense !== isDepense) continue;
         if (!row.libelle_norm) continue;
@@ -9336,7 +9338,18 @@ function bestLearnedCategory(description, isDepense) {
         } else if (norm.includes(row.libelle_norm) && row.libelle_norm.length >= 6) {
             const score = (row.weight || 1) + row.libelle_norm.length;
             if (score > bestScore) { bestScore = score; best = row; }
+        } else {
+            continue;
         }
+        // la ligne la plus recemment confirmee pour ce libelle (toutes categories)
+        const at = Date.parse(row.updated_at || '') || 0;
+        if (at > recentAt) { recentAt = at; recent = row; }
+    }
+    // correction utilisateur : une nouvelle categorisation confirmee au moins
+    // 2 fois prend le dessus sur l'ancienne, meme si l'ancienne est plus lourde.
+    // Sans ca, une premiere categorisation erronee resterait suggeree pour toujours.
+    if (recent && (recent.weight || 1) >= 2 && best && recent.category !== best.category) {
+        best = recent;
     }
     return best ? { category: normalizeFluxCategory(best.category, isDepense), score: bestScore } : null;
 }
