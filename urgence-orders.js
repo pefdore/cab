@@ -425,6 +425,130 @@ function urgenceCancelOrder(orderId) {
     if (typeof showToast === 'function') showToast('Commande annulée');
 }
 
+// ---------- Gestion des fournisseurs ----------
+
+function urgenceRenderSuppliers() {
+    urgenceOrdersData();
+    const wrap = document.getElementById('urgenceSuppliersPanel');
+    if (!wrap) return;
+
+    const yearStart = new Date(new Date().getFullYear(), 0, 1);
+    const list = (typeof urgenceKnownSuppliers === 'function' ? urgenceKnownSuppliers() : []).slice();
+
+    if (list.length === 0) {
+        wrap.innerHTML = '<p class="urgence-empty">Aucun fournisseur enregistré. Ajoutez-en un, ou renseignez le fournisseur habituel dans une fiche produit.</p>';
+        return;
+    }
+
+    wrap.innerHTML = list.map(s => {
+        const orders = urgenceData.orders.filter(o => (o.supplier || '') === s.name);
+        const yearOrders = orders.filter(o => new Date(o.receivedAt || o.orderedAt || o.createdAt) >= yearStart);
+        const spent = orders.filter(o => o.status === 'received').reduce((sum, o) => sum + (Number(o.realCost) || 0), 0);
+        const yearSpent = yearOrders.filter(o => o.status === 'received').reduce((sum, o) => sum + (Number(o.realCost) || 0), 0);
+        const refs = urgenceData.products.filter(p => (p.supplier || '') === s.name);
+        const lastOrder = orders.length
+            ? new Date(Math.max(...orders.map(o => new Date(o.receivedAt || o.orderedAt || o.createdAt).getTime()))).toLocaleDateString('fr-FR')
+            : null;
+        return `
+            <div class="stock-supplier-card">
+                <div class="stock-card-top">
+                    <strong class="stock-supplier-name">${urgenceEscapeHtml(s.name)}</strong>
+                    <span class="stock-card-actions">
+                        <button class="stock-icon-btn" onclick="urgenceShowSupplierModal('${urgenceEscapeHtml(s.name)}')" title="Modifier" aria-label="Modifier">✏️</button>
+                        <button class="stock-icon-btn" onclick="urgenceDeleteSupplier('${urgenceEscapeHtml(s.name)}')" title="Supprimer" aria-label="Supprimer">🗑️</button>
+                    </span>
+                </div>
+                ${s.email ? `<div class="stock-supplier-email">✉ ${urgenceEscapeHtml(s.email)}</div>` : '<div class="stock-supplier-email muted">Pas d\u2019email enregistré</div>'}
+                <div class="stock-supplier-meta">
+                    <span>${yearOrders.length} commande(s) cette année</span>
+                    <span>· ${urgenceFmtEur(yearSpent)} payés cette année</span>
+                    ${spent !== yearSpent ? `<span>· ${urgenceFmtEur(spent)} au total</span>` : ''}
+                </div>
+                <div class="stock-supplier-meta">
+                    <span>${refs.length} référence(s) attachée(s)</span>
+                    ${lastOrder ? `<span>· dernier échange : ${lastOrder}</span>` : ''}
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function urgenceShowSupplierModal(name) {
+    const existing = document.getElementById('urgenceSupplierModal');
+    if (existing) existing.remove();
+
+    const s = name ? urgenceKnownSuppliers().find(x => x.name === name) : null;
+
+    const modal = document.createElement('div');
+    modal.id = 'urgenceSupplierModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card urgence-modal-content">
+            <div class="modal-header">
+                <h3>${s ? 'Modifier le fournisseur' : 'Ajouter un fournisseur'}</h3>
+                <button type="button" class="modal-close" onclick="urgenceCloseSupplierModal()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nom du fournisseur *</label>
+                    <input type="text" id="urgenceSupplierName" class="form-input" value="${s ? urgenceEscapeHtml(s.name) : ''}" placeholder="Ex : Cooper">
+                </div>
+                <div class="form-group">
+                    <label>Email (pour l'envoi direct des bons de commande)</label>
+                    <input type="email" id="urgenceSupplierEmail" class="form-input" value="${s && s.email ? urgenceEscapeHtml(s.email) : ''}" placeholder="commandes@fournisseur.fr">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="urgenceCloseSupplierModal()">Annuler</button>
+                <button class="action-btn primary" onclick="urgenceSaveSupplier(${s ? `'${urgenceEscapeHtml(s.name)}'` : 'null'})">${s ? 'Enregistrer' : 'Ajouter'}</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) urgenceCloseSupplierModal();
+    });
+    setTimeout(() => document.getElementById('urgenceSupplierName')?.focus(), 50);
+}
+
+function urgenceCloseSupplierModal() {
+    document.getElementById('urgenceSupplierModal')?.remove();
+}
+
+function urgenceSaveSupplier(originalName) {
+    const name = document.getElementById('urgenceSupplierName')?.value?.trim();
+    const email = document.getElementById('urgenceSupplierEmail')?.value?.trim() || '';
+    if (!name) {
+        if (typeof showToast === 'function') showToast('Le nom du fournisseur est obligatoire', 'error');
+        return;
+    }
+    const list = urgenceKnownSuppliers();
+    let s = originalName ? list.find(x => x.name === originalName) : list.find(x => x.name.toLowerCase() === name.toLowerCase());
+    if (s) {
+        const renamed = originalName && s.name !== name;
+        s.name = name;
+        s.email = email;
+        if (renamed) {
+            urgenceData.products.forEach(p => { if (p.supplier === originalName) p.supplier = name; });
+            urgenceData.orders.forEach(o => { if (o.supplier === originalName) o.supplier = name; });
+        }
+    } else {
+        list.push({ name, email });
+    }
+    saveUrgenceData();
+    urgenceCloseSupplierModal();
+    urgenceRenderSuppliers();
+    urgenceRenderCosts();
+    if (typeof showToast === 'function') showToast(originalName ? 'Fournisseur modifié' : 'Fournisseur ajouté');
+}
+
+function urgenceDeleteSupplier(name) {
+    const refs = urgenceData.products.filter(p => p.supplier === name).length;
+    if (!confirm(`Supprimer « ${name} » de la liste des fournisseurs ?` + (refs ? `\n\n${refs} référence(s) y restent rattachée(s) : vous pourrez les réaffecter dans leur fiche produit.` : ''))) return;
+    urgenceData.suppliers = urgenceKnownSuppliers().filter(s => s.name !== name);
+    saveUrgenceData();
+    urgenceRenderSuppliers();
+    if (typeof showToast === 'function') showToast('Fournisseur supprimé');
+}
+
 // ---------- Rendu : Commandes ----------
 
 function urgenceRenderOrders() {
@@ -713,8 +837,14 @@ function urgenceRenderCosts() {
     const rows = Array.from(byProduct.values()).sort((a, b) => b.total - a.total);
     const max = rows.length ? rows[0].total : 1;
 
+    const yearStart = new Date(new Date().getFullYear(), 0, 1);
+    const totalYear = received.filter(o => new Date(o.receivedAt) >= yearStart)
+        .reduce((s, o) => s + (Number(o.realCost) || 0), 0);
+
     const statsHtml = `
+        <h4 class="stock-section-title">Coûts des achats</h4>
         <div class="urgence-cost-stats">
+            <div class="urgence-cost-stat"><span class="urgence-cost-value">${urgenceFmtEur(totalYear)}</span><span class="urgence-cost-label">Cette année</span></div>
             <div class="urgence-cost-stat"><span class="urgence-cost-value">${urgenceFmtEur(totalMonth)}</span><span class="urgence-cost-label">Ce mois-ci</span></div>
             <div class="urgence-cost-stat"><span class="urgence-cost-value">${urgenceFmtEur(totalSpent)}</span><span class="urgence-cost-label">Total cumulé</span></div>
             <div class="urgence-cost-stat"><span class="urgence-cost-value">${received.length}</span><span class="urgence-cost-label">Commandes reçues</span></div>
@@ -818,8 +948,12 @@ function initUrgenceOrdersModule() {
     const blankOrderBtn = document.getElementById('urgenceBlankOrderBtn');
     if (blankOrderBtn) blankOrderBtn.addEventListener('click', urgenceCreateBlankOrder);
 
+    const addSupplierBtn = document.getElementById('urgenceAddSupplierBtn');
+    if (addSupplierBtn) addSupplierBtn.addEventListener('click', () => urgenceShowSupplierModal(null));
+
     urgenceRenderOrders();
     urgenceRenderCosts();
+    urgenceRenderSuppliers();
 }
 
 document.addEventListener('DOMContentLoaded', initUrgenceOrdersModule);
@@ -827,6 +961,10 @@ document.addEventListener('DOMContentLoaded', initUrgenceOrdersModule);
 window.urgenceBuildOrderFromNeeds = urgenceBuildOrderFromNeeds;
 window.urgenceCreateBlankOrder = urgenceCreateBlankOrder;
 window.urgenceSendOrder = urgenceSendOrder;
+window.urgenceShowSupplierModal = urgenceShowSupplierModal;
+window.urgenceCloseSupplierModal = urgenceCloseSupplierModal;
+window.urgenceSaveSupplier = urgenceSaveSupplier;
+window.urgenceDeleteSupplier = urgenceDeleteSupplier;
 window.urgenceReceiveOrder = urgenceReceiveOrder;
 window.urgenceConfirmReceive = urgenceConfirmReceive;
 window.urgenceCloseReceiveModal = urgenceCloseReceiveModal;

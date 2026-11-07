@@ -368,6 +368,7 @@ function renderUrgenceStocks() {
 
     renderUrgenceStockCards();
     renderUrgenceAlerts();
+    renderUrgenceOverview();
 }
 
 function renderUrgenceStockCards() {
@@ -421,22 +422,44 @@ function renderUrgenceStockCards() {
         }).join('');
 
     const kpisEl = document.getElementById('urgenceStockKpis');
-    if (kpisEl) {
-        const all = urgenceData.products;
-        const low = all.filter(p => p.quantity <= p.minQuantity);
-        const out = all.filter(p => !p.quantity);
-        const exp = all.filter(p => p.expiry && new Date(p.expiry) < new Date());
-        const soonN = all.filter(p => {
-            if (!p.expiry) return false;
-            const d = new Date(p.expiry) - new Date();
-            return d >= 0 && d < 90 * 86400000;
-        });
-        kpisEl.innerHTML = `
-            <div class="stock-kpi"><span class="stock-kpi-num">${all.length}</span><span class="stock-kpi-label">Références</span></div>
-            <div class="stock-kpi warn"><span class="stock-kpi-num">${low.length}</span><span class="stock-kpi-label">À recommander</span></div>
-            <div class="stock-kpi danger"><span class="stock-kpi-num">${out.length}</span><span class="stock-kpi-label">Ruptures</span></div>
-            <div class="stock-kpi exp"><span class="stock-kpi-num">${exp.length}${soonN.length ? `<small> +${soonN.length} bientôt</small>` : ''}</span><span class="stock-kpi-label">Périmés</span></div>`;
+    if (kpisEl) kpisEl.innerHTML = urgenceStockKpisHtml();
+}
+
+function urgenceStockKpisHtml() {
+    const all = urgenceData.products;
+    const low = all.filter(p => p.quantity <= p.minQuantity);
+    const out = all.filter(p => !p.quantity);
+    const exp = all.filter(p => p.expiry && new Date(p.expiry) < new Date());
+    const soonN = all.filter(p => {
+        if (!p.expiry) return false;
+        const d = new Date(p.expiry) - new Date();
+        return d >= 0 && d < 90 * 86400000;
+    });
+    return `
+        <div class="stock-kpi"><span class="stock-kpi-num">${all.length}</span><span class="stock-kpi-label">Références</span></div>
+        <div class="stock-kpi warn"><span class="stock-kpi-num">${low.length}</span><span class="stock-kpi-label">À recommander</span></div>
+        <div class="stock-kpi danger"><span class="stock-kpi-num">${out.length}</span><span class="stock-kpi-label">Ruptures</span></div>
+        <div class="stock-kpi exp"><span class="stock-kpi-num">${exp.length}${soonN.length ? `<small> +${soonN.length} bientôt</small>` : ''}</span><span class="stock-kpi-label">Périmés</span></div>`;
+}
+
+// ---------- Vue d'ensemble ----------
+
+function renderUrgenceOverview() {
+    const kpisEl = document.getElementById('urgenceOverviewKpis');
+    if (kpisEl) kpisEl.innerHTML = urgenceStockKpisHtml();
+
+    const nextEl = document.getElementById('urgenceOverviewNext');
+    if (nextEl) {
+        const days = urgenceDaysSinceLastPointage();
+        if (days === null) nextEl.textContent = 'Premier pointage à faire — cochez ce qu’il reste dans la salle d’urgence.';
+        else if (days >= 7) nextEl.innerHTML = `<strong>⚠️ Pointage à faire :</strong> dernier pointage il y a ${days} jours.`;
+        else nextEl.textContent = `Dernier pointage il y a ${days} jour(s) — prochain conseillé dans ${7 - days} jour(s).`;
     }
+}
+
+function urgenceGoSubTab(subtab) {
+    document.querySelector(`#cabinet-stocks .sub-tab[data-subtab="${subtab}"]`)?.click();
+    document.getElementById(`cabinet-stocks`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function urgenceToggleStockMenu(e) {
@@ -474,6 +497,11 @@ function renderUrgenceAlerts() {
 
     const cabinetAlertsEl = document.getElementById('cabinetUrgenceStockAlerts');
     if (cabinetAlertsEl && cabinetAlertsEl !== alertsEl) cabinetAlertsEl.innerHTML = html;
+
+    const overviewAlertsEl = document.getElementById('urgenceOverviewAlerts');
+    if (overviewAlertsEl) {
+        overviewAlertsEl.innerHTML = html ? `<div class="inventory-alerts">${html}</div>` : '';
+    }
 
     const orderBtn = document.getElementById('urgenceCopyOrderBtn');
     if (orderBtn) orderBtn.disabled = toOrder.length === 0;
@@ -2075,6 +2103,14 @@ function initUrgenceModule() {
     const exportBtn = document.getElementById('urgenceExportStocksBtn');
     if (exportBtn) exportBtn.addEventListener('click', urgenceExportStocks);
 
+    const goPointageBtn = document.getElementById('urgenceGoPointageBtn');
+    if (goPointageBtn) goPointageBtn.addEventListener('click', () => urgenceGoSubTab('urgence-pointage'));
+
+    const goOrderBtn = document.getElementById('urgenceGoOrderBtn');
+    if (goOrderBtn) goOrderBtn.addEventListener('click', () => {
+        if (typeof urgenceBuildOrderFromNeeds === 'function') urgenceBuildOrderFromNeeds();
+    });
+
     renderUrgenceStocks();
     renderUrgencePointage();
     renderUrgenceProtocols();
@@ -2136,6 +2172,7 @@ window.urgenceToggleStockMenu = urgenceToggleStockMenu;
 window.urgenceMovePointage = urgenceMovePointage;
 window.urgenceDiscardLot = urgenceDiscardLot;
 window.urgenceAddLotRow = urgenceAddLotRow;
+window.urgenceGoSubTab = urgenceGoSubTab;
 window.refreshUrgenceView = refreshUrgenceView;
 window.urgenceToggleProtocol = urgenceToggleProtocol;
 window.urgenceComputeDoses = urgenceComputeDoses;
