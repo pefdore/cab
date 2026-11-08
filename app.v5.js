@@ -8540,7 +8540,49 @@ async function analyzeRelevéWithAI(text) {
     return parseRelevéLocalement(text);
 }
 
+// Decoupe le texte du releve en lots de pages tenant dans la limite du modele.
+// Sans ca, substring(0, 8000) coupait les pages 7+ d'un releve de plusieurs photos :
+// l'IA ne voyait jamais la fin du document.
+function splitRelevéTextForAI(text, maxChars) {
+    const limit = maxChars || 8000;
+    const raw = String(text || '');
+    if (raw.length <= limit) return [raw];
+    const pageParts = raw.split(/(?=<<<PAGE \d+>>>)/);
+    const chunks = [];
+    let cur = '';
+    for (const part of pageParts) {
+        if (part.length > limit) {
+            if (cur) { chunks.push(cur); cur = ''; }
+            // page seule trop longue : couper par lignes
+            let lines = '';
+            for (const line of part.split(/\r?\n/)) {
+                if ((lines + line).length > limit) { chunks.push(lines); lines = ''; }
+                lines += line + '\n';
+            }
+            if (lines) chunks.push(lines);
+        } else if ((cur + part).length > limit) {
+            chunks.push(cur);
+            cur = part;
+        } else {
+            cur += part;
+        }
+    }
+    if (cur) chunks.push(cur);
+    return chunks.filter(c => c.trim());
+}
+
 async function analyzeRelevéWithGroq(text, apiKey) {
+    const chunks = splitRelevéTextForAI(text, 8000);
+    const all = [];
+    for (let i = 0; i < chunks.length; i++) {
+        console.log('[RELEVÉ] Analyse IA lot ' + (i + 1) + '/' + chunks.length + ' (' + chunks[i].length + ' caractères)');
+        const transactions = await analyzeRelevéChunkWithGroq(chunks[i], apiKey);
+        all.push(...transactions);
+    }
+    return all;
+}
+
+async function analyzeRelevéChunkWithGroq(text, apiKey) {
     
     const prompt = `Analyse ce relevé bancaire et extrais chaque transaction. Pour chaque ligne, retourne un objet JSON avec:
 - date: la date de l'opération (format YYYY-MM-DD)
@@ -8561,9 +8603,9 @@ Retourne UNIQUEMENT un tableau JSON valide sans texte supplémentaire.`;
             model: 'llama-3.1-8b-instant',
             messages: [
                 { role: 'system', content: prompt },
-                { role: 'user', content: text.substring(0, 8000) }
+                { role: 'user', content: text }
             ],
-            max_tokens: 2048
+            max_tokens: 4096
         })
     });
     
