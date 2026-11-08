@@ -7877,9 +7877,24 @@ let pendingTransactions = [];
 function showRelevéUploadOptions() {
     const modal = document.getElementById('relevéUploadModal');
     if (modal) {
+        syncRelevePrivateMode();
         modal.style.display = 'flex';
     }
 }
+
+// Mode prive : analyse 100 locale (OCR + parseur), sans envoyer le releve a une IA externe
+function isRelevePrivateMode() {
+    try { return localStorage.getItem('releve_private_mode') === '1'; } catch (e) { return false; }
+}
+
+function syncRelevePrivateMode() {
+    const cb = document.getElementById('relevePrivateMode');
+    if (cb) cb.checked = isRelevePrivateMode();
+}
+
+window.toggleRelevePrivateMode = function(checked) {
+    try { localStorage.setItem('releve_private_mode', checked ? '1' : '0'); } catch (e) {}
+};
 
 function closeRelevéModal() {
     const modal = document.getElementById('relevéUploadModal');
@@ -8528,6 +8543,10 @@ async function getAPIKeyForUpload() {
 }
 
 async function analyzeRelevéWithAI(text) {
+    if (isRelevePrivateMode()) {
+        console.log('[RELEVÉ] Mode privé : analyse locale (OCR seul, sans IA)');
+        return parseRelevéLocalement(text);
+    }
     const apiKey = await getAPIKeyForUpload();
     if (apiKey) {
         try {
