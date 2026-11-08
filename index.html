@@ -325,6 +325,10 @@ window.attemptLogin = function() {
                         </div>
                     </div>
                     <p class="releve-upload-sub">Comment importer votre relevé bancaire ?</p>
+                    <label style="display:flex; align-items:center; gap:8px; margin:0 0 14px; font-size:0.75rem; color:var(--color-text-secondary); cursor:pointer; user-select:none;">
+                        <input type="checkbox" id="relevePrivateMode" onchange="toggleRelevePrivateMode(this.checked)" style="accent-color:var(--color-primary); width:16px; height:16px; cursor:pointer;">
+                        <span><strong>Mode privé</strong> — analyse 100 % locale (OCR seul, sans IA) : rien n'est envoyé à un service externe, mais la détection des lignes est moins précise.</span>
+                    </label>
                     <input type="file" id="releveFileInputGlobal" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleRelevéUpload(event)">
                     <input type="file" id="releveCameraInputGlobal" accept="image/*" capture="environment" style="display:none" onchange="handleRelevéUpload(event)">
                     <div id="releveMonthPanel" class="releve-month-panel" style="display:none;">
