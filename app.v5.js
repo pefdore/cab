@@ -8318,7 +8318,7 @@ async function extractTextFromPDF(file) {
     }
     
     const arrayBuffer = await file.arrayBuffer();
-    window._relevePdfBytes = file.type === 'application/pdf' ? new Blob([arrayBuffer]) : null;
+    window._relevePdfBytes = file.type === 'application/pdf' ? new Blob([arrayBuffer], { type: 'application/pdf' }) : null;
     const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
         cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/cmaps/',
@@ -12278,11 +12278,41 @@ function countMonthDuplicates(transactions) {
 
 
 // ===== Archivage du PDF de relevé importé (bucket Supabase "releves") =====
+// Assemble un PDF multi-pages a partir des photos du releve (import JPG) :
+// permet d'archiver et de revoir le releve photographie comme un PDF classique.
+async function buildPdfFromRelevePhotos() {
+    try {
+        const jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        const thumbs = (window.relevePageThumbs || []).filter(pd => pd.hiresDataUrl || pd.thumb);
+        if (!jsPDFCls || !thumbs.length) return null;
+        let doc = null;
+        for (const pd of thumbs) {
+            const dataUrl = pd.hiresDataUrl || pd.thumb;
+            const w = pd.pageWidth || 1240, h = pd.pageHeight || 1754;
+            const orientation = w > h ? 'landscape' : 'portrait';
+            if (!doc) {
+                doc = new jsPDFCls({ unit: 'px', format: [w, h], orientation, compress: true });
+            } else {
+                doc.addPage([w, h], orientation);
+            }
+            doc.addImage(dataUrl, 'JPEG', 0, 0, w, h);
+        }
+        return doc ? doc.output('blob') : null;
+    } catch (e) {
+        console.error('[RELEV\u00c9] buildPdfFromRelevePhotos:', e);
+        return null;
+    }
+}
+window.buildPdfFromRelevePhotos = buildPdfFromRelevePhotos;
+
 async function saveRelevePdfToStorage(depenses, recettes) {
     try {
-        // import photo : pas d'archivage PDF (les photos restent en local via IndexedDB)
-        if (window._releveIsPhotos) return;
-        const blob = window._relevePdfBytes || (window._releveCurrentFile instanceof Blob ? window._releveCurrentFile : null);
+        // import photo : assembler un PDF a partir des pages photographiees
+        // (avant, rien n'etait archive et le bouton \u00ab PDF \u00bb de la checklist echouait)
+        let blob = window._relevePdfBytes || (window._releveCurrentFile instanceof Blob ? window._releveCurrentFile : null);
+        if (!blob && window._releveIsPhotos) {
+            blob = await buildPdfFromRelevePhotos();
+        }
         if (!blob || !supabaseClient || !currentUser?.id) return;
         const all = [...(depenses || []), ...(recettes || [])];
         const monthKeys = [...new Set(all.map(t => (t.date || '').slice(0, 7)))].filter(Boolean).sort();
