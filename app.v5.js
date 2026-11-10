@@ -5846,7 +5846,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             const recHeight = (m.recettes / maxValue) * 100;
             const labelCls = idx === currentMonthIdx ? 'bar-label current-month' : 'bar-label';
             return `
-                <div class="bar-group" onclick="showBarTooltip(event, ${idx})" style="cursor:pointer">
+                <div class="bar-group" data-month-idx="${idx}" style="cursor:pointer">
                     <div class="bar-wrapper">
                         <div class="bar expense" style="height: ${depHeight}%"></div>
                         <div class="bar income" style="height: ${recHeight}%"></div>
@@ -5855,6 +5855,40 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                 </div>
             `;
         }).join('');
+        
+        // Tooltips au survol (plus intelligible qu'un clic)
+        barContainer.querySelectorAll('.bar-group').forEach(grp => {
+            const idx = parseInt(grp.dataset.monthIdx, 10);
+            grp.addEventListener('mouseenter', function(e) { showBarTooltip(e, idx, true); });
+            grp.addEventListener('mouseleave', function() { removeBarTooltip(); });
+        });
+        
+        // Synthese intelligible : trésorerie atteinte, meilleur mois, moyennes
+        const summaryEl = document.getElementById('evolutionSummary');
+        if (summaryEl) {
+            const withData = monthlyValues.filter(m => m.depenses > 0 || m.recettes > 0);
+            const last = withData.length ? withData[withData.length - 1] : null;
+            const elapsed = currentMonthIdx + 1;
+            const avgDep = elapsed > 0 ? chartMonths.reduce((sm, m) => sm + m.depenses, 0) / elapsed : 0;
+            const avgRec = elapsed > 0 ? chartMonths.reduce((sm, m) => sm + m.recettes, 0) / elapsed : 0;
+            const best = chartMonths.reduce((a, b) => (b.recettes > a.recettes ? b : a), chartMonths[0]);
+            const eur = n => (Number(n) || 0).toFixed(2).replace('.', ',') + ' \u20ac';
+            summaryEl.innerHTML = last ? `
+                <div class="evol-chip">
+                    <span class="evol-chip-label">Tr\u00e9sorerie \u00e0 fin ${last.label}</span>
+                    <span class="evol-chip-value" style="color:${last.tresorerie >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}">${eur(last.tresorerie)}</span>
+                </div>
+                <div class="evol-chip">
+                    <span class="evol-chip-label">Moyenne mensuelle</span>
+                    <span class="evol-chip-value">${eur(avgRec)}<small> recettes</small> / ${eur(avgDep)}<small> d\u00e9penses</small></span>
+                </div>
+                ${best.recettes > 0 ? `
+                <div class="evol-chip">
+                    <span class="evol-chip-label">Meilleur mois (recettes)</span>
+                    <span class="evol-chip-value">${best.label} \u00b7 ${eur(best.recettes)}</span>
+                </div>` : ''}
+            ` : '<div class="evol-chip"><span class="evol-chip-label">Aucune \u00e9criture en ' + currentYear + ' pour le moment</span></div>';
+        }
     }
     
     // Store monthly data for tooltip
@@ -5970,7 +6004,13 @@ function renderConsommablesChart() {
 }
 
 // ===== BAR TOOLTIP FUNCTION =====
-function showBarTooltip(event, idx) {
+function removeBarTooltip() {
+    const t = document.querySelector('.bar-tooltip');
+    if (t) t.remove();
+}
+window.removeBarTooltip = removeBarTooltip;
+
+function showBarTooltip(event, idx, hover) {
     event.stopPropagation();
     
     const monthlyData = window._monthlyData;
@@ -5981,10 +6021,8 @@ function showBarTooltip(event, idx) {
     
     const m = values[idx];
     const existingTooltip = document.querySelector('.bar-tooltip');
-    if (existingTooltip) {
-        existingTooltip.remove();
-        return;
-    }
+    if (existingTooltip) existingTooltip.remove();
+    if (!hover) return;
     
     const tooltip = document.createElement('div');
     tooltip.className = 'bar-tooltip';
@@ -5993,7 +6031,6 @@ function showBarTooltip(event, idx) {
         <div class="tooltip-amount" style="color:var(--color-danger)">Dépenses: ${m.depenses.toFixed(2)}€</div>
         <div class="tooltip-amount" style="color:var(--color-success)">Recettes: ${m.recettes.toFixed(2)}€</div>
         <div class="tooltip-amount" style="color:#3b82f6">Trésorerie (solde): ${m.tresorerie.toFixed(2)}€</div>
-        <div style="font-size:0.625rem;color:var(--color-text-tertiary);margin-top:4px">Cliquez pour fermer</div>
     `;
     
     const rect = event.currentTarget.getBoundingClientRect();
@@ -6012,16 +6049,18 @@ function showBarTooltip(event, idx) {
     tooltip.style.top = top + 'px';
     document.body.appendChild(tooltip);
     
-    const closeTooltip = function(e) {
-        if (!tooltip.contains(e.target)) {
-            tooltip.remove();
-            document.removeEventListener('click', closeTooltip);
-        }
-    };
-    
-    setTimeout(() => {
-        document.addEventListener('click', closeTooltip);
-    }, 100);
+    if (!hover) {
+        const closeTooltip = function(e) {
+            if (!tooltip.contains(e.target)) {
+                tooltip.remove();
+                document.removeEventListener('click', closeTooltip);
+            }
+        };
+        
+        setTimeout(() => {
+            document.addEventListener('click', closeTooltip);
+        }, 100);
+    }
 }
 
 window.showBarTooltip = showBarTooltip;
