@@ -5996,13 +5996,58 @@ function renderConsommablesChart() {
     }).join('') + `<div class="conso-total" style="text-align:center;font-size:0.75rem;color:var(--color-text-secondary);margin-top:8px;">Total ${yearTotal.toFixed(2)}\u20ac TTC re\u00e7us en ${year}</div>`;
     
     if (topContainer) {
-        const top = Array.from(supTotals.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
-        topContainer.innerHTML = top.length ? top.map(([sup, tot]) => `
-            <div class="category-item">
-                <span class="cat-label">${sup}</span>
-                <span class="cat-amount">${tot.toFixed(2)}€</span>
-            </div>
-        `).join('') : '';
+        // Classement des references les plus couteuses (cout reel reparti au
+        // prorata des lignes de commande) + lecture Pareto pour les economies.
+        const byProduct = new Map();
+        let yearRefTotal = 0;
+        received.forEach(o => {
+            const dRef = new Date(o.receivedAt || o.createdAt);
+            if (dRef.getFullYear() !== year) return;
+            const realCost = Number(o.realCost) || 0;
+            if (realCost <= 0) return;
+            yearRefTotal += realCost;
+            const est = (o.items || []).reduce((sm, i) => sm + (i.qty || 0) * (i.unitPrice || 0), 0);
+            (o.items || []).forEach(i => {
+                const cost = est > 0 && i.unitPrice > 0
+                    ? realCost * ((i.qty || 0) * (i.unitPrice || 0)) / est
+                    : realCost / Math.max((o.items || []).length, 1);
+                const cur = byProduct.get(i.productId) || { name: i.name || i.productId, total: 0, qty: 0 };
+                cur.total += cost;
+                cur.qty += (i.receivedQty !== undefined ? i.receivedQty : i.qty) || 0;
+                byProduct.set(i.productId, cur);
+            });
+        });
+        const refRows = Array.from(byProduct.values()).sort((a, b) => b.total - a.total);
+        const topRefs = refRows.slice(0, 8);
+        const maxRef = topRefs.length ? topRefs[0].total : 1;
+        const pareto3 = refRows.length >= 3
+            ? (refRows.slice(0, 3).reduce((sm, r) => sm + r.total, 0) / (yearRefTotal || 1)) * 100
+            : null;
+        const eur = n => (Number(n) || 0).toFixed(2).replace('.', ',') + ' \u20ac';
+        
+        const refsHtml = topRefs.length ? `
+            <div class="conso-refs-head">R\u00e9f\u00e9rences qui co\u00fbtent le plus</div>
+            ${pareto3 !== null ? `
+            <div class="conso-pareto">
+                <span class="conso-pareto-value">${pareto3.toFixed(0)}%</span>
+                <span class="conso-pareto-text">des d\u00e9penses consommables viennent des <strong>3 premi\u00e8res r\u00e9f\u00e9rences</strong> \u2014 c'est l\u00e0 que les \u00e9conomies sont les plus faciles.</span>
+            </div>` : ''}
+            <div class="conso-ref-list">
+                ${topRefs.map((r, k) => `
+                    <div class="conso-ref-row">
+                        <span class="conso-ref-rank">${k + 1}</span>
+                        <span class="conso-ref-name">${r.name}</span>
+                        <span class="conso-ref-bar"><span style="width:${Math.max((r.total / maxRef) * 100, 4).toFixed(1)}%"></span></span>
+                        <span class="conso-ref-amount">${eur(r.total)}<small> \u00b7 ${yearRefTotal > 0 ? ((r.total / yearRefTotal) * 100).toFixed(1) : 0}%</small></span>
+                    </div>
+                `).join('')}
+            </div>` : '';
+        
+        const topSup = Array.from(supTotals.entries()).sort((a, b) => b[1] - a[1]).slice(0, 2);
+        const supHtml = topSup.length ? `
+            <div class="conso-sup-line">Fournisseurs principaux : ${topSup.map(([sup, tot]) => `<strong>${sup}</strong> (${eur(tot)})`).join(' \u00b7 ')}</div>` : '';
+        
+        topContainer.innerHTML = refsHtml + supHtml;
     }
 }
 
