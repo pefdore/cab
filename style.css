@@ -15854,3 +15854,41 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     margin: 6px 0 10px 14px;
     border-radius: 14px;
 }
+
+/* ---- Deux donuts côte à côte (catégories + sous-catégories) ---- */
+#cabinet-dashboard .donut-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+#cabinet-dashboard .donut-sub-hero {
+    width: 140px;
+    height: 140px;
+    margin: 0;
+    animation: md-pop 0.45s var(--md-spring, ease) both;
+}
+#cabinet-dashboard .donut-sub-hero .donut-chart {
+    width: 140px;
+    height: 140px;
+}
+#cabinet-dashboard .donut-sub-hero .donut-chart::after {
+    width: 86px;
+    height: 86px;
+}
+#cabinet-dashboard .donut-sub-hero .donut-center-value {
+    font-size: 0.85rem;
+}
+#cabinet-dashboard .donut-sub-hero .donut-center-label {
+    font-size: 0.55rem;
+    max-width: 78px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .donut-row {
+        gap: 0;
+    }
+}

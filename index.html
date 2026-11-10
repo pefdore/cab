@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-CSoQr26l.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-ypsXL6r6.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -809,11 +809,20 @@ window.attemptLogin = function() {
                         </div>
                         <div class="chart-card cab-donut-card">
                             <h3 id="depensesDonutTitle">O&ugrave; vont les d&eacute;penses</h3>
-                            <div class="donut-hero">
-                                <div class="donut-chart" id="depensesPieChart"></div>
-                                <div class="donut-center">
-                                    <span class="donut-center-value" id="donutCenterTotal">0&euro;</span>
-                                    <span class="donut-center-label">Total d&eacute;penses</span>
+                            <div class="donut-row">
+                                <div class="donut-hero">
+                                    <div class="donut-chart" id="depensesPieChart"></div>
+                                    <div class="donut-center">
+                                        <span class="donut-center-value" id="donutCenterTotal">0&euro;</span>
+                                        <span class="donut-center-label">Total d&eacute;penses</span>
+                                    </div>
+                                </div>
+                                <div class="donut-hero donut-sub-hero" id="depensesSubHero" style="display:none;">
+                                    <div class="donut-chart" id="depensesSubPieChart"></div>
+                                    <div class="donut-center">
+                                        <span class="donut-center-value" id="donutSubCenterTotal">0&euro;</span>
+                                        <span class="donut-center-label" id="donutSubCenterLabel">Cat&eacute;gorie</span>
+                                    </div>
                                 </div>
                             </div>
                             <div id="topCategories"></div>

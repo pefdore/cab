@@ -5654,7 +5654,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     // Clic sur un onglet : dropdown du détail des sous-catégories juste dessous.
     const topCatContainer = document.getElementById('topCategories');
     if (topCatContainer && totalDepenses > 0) {
-        const topCats = sortedCats.slice(0, 5);
+        const topCats = sortedCats;
         const mdPalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
         topCatContainer.innerHTML = topCats.map(([cat, amount], i) => {
             const pct = ((amount / totalDepenses) * 100).toFixed(1);
@@ -5677,34 +5677,24 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                 if (!item) return;
                 const subsEl = document.getElementById('topcat-subs-' + idx);
                 if (!subsEl) return;
-                const donutEl = document.getElementById('depensesPieChart');
-                const donutTitleEl = document.getElementById('depensesDonutTitle');
+                const subHero = document.getElementById('depensesSubHero');
+                const subDonutEl = document.getElementById('depensesSubPieChart');
+                const subCenterTotal = document.getElementById('donutSubCenterTotal');
+                const subCenterLabel = document.getElementById('donutSubCenterLabel');
                 const baseColor = mdPalette[idx % mdPalette.length];
                 const shadeColor = (hex, t) => {
                     const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
                     const c = ch => Math.round(ch + (255 - ch) * t);
                     return `rgb(${c(r)},${c(g)},${c(b)})`;
                 };
-                const renderSubsDonut = (subs) => {
-                    if (!donutEl) return;
-                    let g = '', cum = 0;
-                    subs.forEach(([sub, amt], k) => {
-                        const pct = item[1] > 0 ? (amt / item[1]) * 100 : 0;
-                        const t = subs.length > 1 ? (k / (subs.length - 1)) * 0.72 : 0;
-                        g += `${shadeColor(baseColor, t)} ${cum}% ${(cum + pct).toFixed(2)}%, `;
-                        cum += pct;
-                    });
-                    g += `#e5e7eb ${Math.min(cum, 100)}% 100%`;
-                    donutEl.style.background = `conic-gradient(${g.replace(/, $/, '')})`;
-                };
-                const restoreCategoryDonut = () => {
-                    if (donutTitleEl) donutTitleEl.textContent = 'O\u00f9 vont les d\u00e9penses';
-                    if (typeof renderComptaSummary === 'function') renderComptaSummary();
+                const hideSubDonut = () => {
+                    if (subHero) subHero.style.display = 'none';
+                    if (subDonutEl) subDonutEl.style.background = '';
                 };
                 if (subsEl.classList.contains('open')) {
                     subsEl.classList.remove('open');
                     subsEl.innerHTML = '';
-                    restoreCategoryDonut();
+                    hideSubDonut();
                     return;
                 }
                 topCatContainer.querySelectorAll('.top-cat-subs.open').forEach(s => {
@@ -5720,6 +5710,8 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                     subTotals.set(sub, (subTotals.get(sub) || 0) + d.amount);
                 });
                 const subs = Array.from(subTotals.entries()).sort((a, b) => b[1] - a[1]);
+                subsEl.style.borderLeftColor = baseColor;
+                subsEl.style.background = shadeColor(baseColor, 0.93);
                 subsEl.innerHTML = subs.length
                     ? subs.map(([sub, amt]) => {
                         const subPct = item[1] > 0 ? (amt / item[1]) * 100 : 0;
@@ -5727,14 +5719,29 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                             <div class="donut-sub-item">
                                 <span class="donut-sub-name">${sub}</span>
                                 <span class="donut-sub-amount">${amt.toFixed(2)}\u20ac \u00b7 ${subPct.toFixed(1)}%</span>
-                                <span class="donut-sub-bar"><span style="width:${subPct.toFixed(1)}%"></span></span>
+                                <span class="donut-sub-bar"><span style="width:${subPct.toFixed(1)}%; background:${baseColor};"></span></span>
                             </div>
                         `;
                     }).join('')
                     : '<div class="donut-sub-item"><span class="donut-sub-name">Aucune sous-cat\u00e9gorie renseign\u00e9e</span></div>';
                 subsEl.classList.add('open');
-                renderSubsDonut(subs);
-                if (donutTitleEl) donutTitleEl.textContent = 'O\u00f9 vont les d\u00e9penses \u00b7 ' + item[0];
+                // Second donut : sous-cat\u00e9gories en teintes de la couleur de la cat\u00e9gorie
+                if (subDonutEl && subs.length) {
+                    let g = '', cum = 0;
+                    subs.forEach(([sub, amt], k) => {
+                        const pct = item[1] > 0 ? (amt / item[1]) * 100 : 0;
+                        const t = subs.length > 1 ? (k / (subs.length - 1)) * 0.72 : 0;
+                        g += `${shadeColor(baseColor, t)} ${cum}% ${(cum + pct).toFixed(2)}%, `;
+                        cum += pct;
+                    });
+                    g += `#e5e7eb ${Math.min(cum, 100).toFixed(2)}% 100%`;
+                    subDonutEl.style.background = `conic-gradient(${g.replace(/, $/, '')})`;
+                    if (subHero) subHero.style.display = '';
+                    if (subCenterTotal) subCenterTotal.textContent = item[1].toFixed(2) + '\u20ac';
+                    if (subCenterLabel) subCenterLabel.textContent = item[0];
+                } else {
+                    hideSubDonut();
+                }
             });
         });
     }
