@@ -1005,6 +1005,14 @@ window.handleRegisterSubmit = async function() {
         return;
     }
     
+    // Cabinet deja choisi dans la modale (avant completion du formulaire)
+    if (window.preSelectedCabinetId) {
+        const chosenCabinetId = window.preSelectedCabinetId;
+        window.preSelectedCabinetId = null;
+        doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress, chosenCabinetId);
+        return;
+    }
+    
     // Check if address already exists for medecin/secretaire
     if (cabinetAddress && (role === 'medecin_installe' || role === 'secretaire')) {
         console.log('[REGISTER] Checking for existing cabinet at address...');
@@ -1174,7 +1182,6 @@ function createCabinetModal() {
 }
 
 window.joinExistingCabinet = function(cabinetId) {
-    alert('Cabinet cliqué: ' + cabinetId);
     console.log('[JOIN] joinExistingCabinet called, cabinetId:', cabinetId);
     var data = window.pendingRegistrationData;
     var address = window.pendingCabinetAddress;
@@ -1186,10 +1193,21 @@ window.joinExistingCabinet = function(cabinetId) {
         return;
     }
     
-    if (data) {
+    // Si le formulaire n'est pas encore complet (la modale s'ouvre des la
+    // selection de l'adresse, avant la saisie de l'email/mot de passe), on
+    // memorise juste le cabinet choisi : l'inscription partira a la
+    // soumission du formulaire, sans alerte prematuree.
+    if (!data.email || !data.password || !data.firstName || !data.lastName) {
+        window.preSelectedCabinetId = cabinetId;
         closeModal('cabinet-select-modal');
-        doSignUp(data.email, data.password, data.firstName, data.lastName, data.role, data.replaceMedecinId, address, cabinetId);
+        if (typeof showToast === 'function') {
+            showToast('Cabinet sélectionné. Complétez vos identifiants puis cliquez sur Créer mon compte.', 'success');
+        }
+        return;
     }
+    
+    closeModal('cabinet-select-modal');
+    doSignUp(data.email, data.password, data.firstName, data.lastName, data.role, data.replaceMedecinId, address, cabinetId);
     
     window.pendingRegistrationData = null;
     window.pendingCabinetAddress = null;
