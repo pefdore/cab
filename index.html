@@ -799,10 +799,11 @@ window.attemptLogin = function() {
                     <!-- Graphiques : histogramme mensuel + camembert des d&eacute;penses -->
                     <div class="charts-grid">
                         <div class="chart-card">
-                            <h3>D&eacute;penses &amp; recettes par mois</h3>
+                            <h3 id="evolutionChartTitle">D&eacute;penses &amp; recettes par mois</h3>
                             <div class="chart-legend">
                                 <span class="legend-item"><span class="legend-dot expense"></span>D&eacute;penses</span>
                                 <span class="legend-item"><span class="legend-dot income"></span>Recettes</span>
+                                <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Tr&eacute;sorerie (cumul)</span>
                             </div>
                             <div class="bar-chart" id="evolutionChart"></div>
                         </div>

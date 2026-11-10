@@ -5690,17 +5690,58 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
         donutLegendContainer.innerHTML = '';
     }
     
-    // Evolution mensuelle - Bar chart (12 derniers mois) - click to show amounts
-    const monthlyValues = Object.values(monthlyData);
-    console.log('[COMPTAB] monthlyValues:', monthlyValues);
+    // Graphique : annee EN COURS, de janvier a decembre, avec courbe de
+    // tresorerie cumulee (recettes - depenses, cumul depuis le 1er janvier)
+    const chartMonths = [];
+    for (let m = 0; m < 12; m++) {
+        const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
+        const label = new Date(currentYear, m, 1).toLocaleDateString('fr-FR', { month: 'short' });
+        chartMonths.push({ key, label, depenses: 0, recettes: 0, tresorerie: 0 });
+    }
+    cabinetDepenses.forEach(d => {
+        const k = d.date ? String(d.date).substring(0, 7) : null;
+        const cm = chartMonths.find(c => c.key === k);
+        if (cm) cm.depenses += d.amount;
+    });
+    cabinetRecettes.forEach(r => {
+        const k = r.date ? String(r.date).substring(0, 7) : null;
+        const cm = chartMonths.find(c => c.key === k);
+        if (cm) cm.recettes += r.amount;
+    });
+    let tresorerieCumul = 0;
+    chartMonths.forEach(cm => {
+        tresorerieCumul += cm.recettes - cm.depenses;
+        cm.tresorerie = tresorerieCumul;
+    });
+    
+    const monthlyValues = chartMonths;
     const maxValue = Math.max(...monthlyValues.map(m => Math.max(m.depenses, m.recettes)), 1);
-    console.log('[COMPTAB] maxValue for chart:', maxValue);
+    
+    const elChartTitle = document.getElementById('evolutionChartTitle');
+    if (elChartTitle) elChartTitle.textContent = `D\u00e9penses & recettes ${currentYear} \u2014 tr\u00e9sorerie cumul\u00e9e`;
     
     const barContainer = document.getElementById('evolutionChart');
-    console.log('[COMPTAB] barContainer found:', !!barContainer);
     if (barContainer) {
-        console.log('[COMPTAB] Rendering bar chart with', monthlyValues.length, 'months');
-        barContainer.innerHTML = monthlyValues.map((m, idx) => {
+        barContainer.style.position = 'relative';
+        // Courbe de tresorerie : SVG en overlay, echelle propre au cumul
+        const maxT = Math.max(...monthlyValues.map(m => Math.abs(m.tresorerie)), 1);
+        const pts = monthlyValues.map((m, idx) => {
+            const x = ((idx + 0.5) / 12) * 100;
+            const y = 96 - ((m.tresorerie + maxT) / (2 * maxT)) * 88;
+            return `${x.toFixed(2)},${y.toFixed(2)}`;
+        }).join(' ');
+        const zeroY = (96 - ((0 + maxT) / (2 * maxT)) * 88).toFixed(2);
+        const curveSvg = `
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
+                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="#94a3b8" stroke-width="0.4" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>
+                <polyline points="${pts}" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                ${monthlyValues.map((m, idx) => {
+                    const x = ((idx + 0.5) / 12) * 100;
+                    const y = 96 - ((m.tresorerie + maxT) / (2 * maxT)) * 88;
+                    return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="1.1" fill="#3b82f6"/>`;
+                }).join('')}
+            </svg>`;
+        barContainer.innerHTML = curveSvg + monthlyValues.map((m, idx) => {
             const depHeight = (m.depenses / maxValue) * 100;
             const recHeight = (m.recettes / maxValue) * 100;
             return `
@@ -5716,7 +5757,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     }
     
     // Store monthly data for tooltip
-    window._monthlyData = monthlyData;
+    window._monthlyData = monthlyValues;
     
     // Dashboard - catégories
     const dashCatContainer = document.getElementById('dashDepensesParCategorie');
@@ -5763,7 +5804,7 @@ function showBarTooltip(event, idx) {
     const monthlyData = window._monthlyData;
     if (!monthlyData) return;
     
-    const values = Object.values(monthlyData);
+    const values = Array.isArray(monthlyData) ? monthlyData : Object.values(monthlyData);
     if (!values[idx]) return;
     
     const m = values[idx];
@@ -5779,6 +5820,7 @@ function showBarTooltip(event, idx) {
         <div><strong>${m.label}</strong></div>
         <div class="tooltip-amount" style="color:var(--color-danger)">Dépenses: ${m.depenses.toFixed(2)}€</div>
         <div class="tooltip-amount" style="color:var(--color-success)">Recettes: ${m.recettes.toFixed(2)}€</div>
+        <div class="tooltip-amount" style="color:#3b82f6">Trésorerie (cumul): ${m.tresorerie.toFixed(2)}€</div>
         <div style="font-size:0.625rem;color:var(--color-text-tertiary);margin-top:4px">Cliquez pour fermer</div>
     `;
     
