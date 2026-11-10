@@ -5675,9 +5675,35 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                 if (!item) return;
                 const subsEl = document.getElementById('topcat-subs-' + idx);
                 if (!subsEl) return;
+                const donutEl = document.getElementById('depensesPieChart');
+                const donutTitleEl = document.getElementById('depensesDonutTitle');
+                const donutPalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+                const baseColor = donutPalette[idx % donutPalette.length];
+                const shadeColor = (hex, t) => {
+                    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+                    const c = ch => Math.round(ch + (255 - ch) * t);
+                    return `rgb(${c(r)},${c(g)},${c(b)})`;
+                };
+                const renderSubsDonut = (subs) => {
+                    if (!donutEl) return;
+                    let g = '', cum = 0;
+                    subs.forEach(([sub, amt], k) => {
+                        const pct = item[1] > 0 ? (amt / item[1]) * 100 : 0;
+                        const t = subs.length > 1 ? (k / (subs.length - 1)) * 0.72 : 0;
+                        g += `${shadeColor(baseColor, t)} ${cum}% ${(cum + pct).toFixed(2)}%, `;
+                        cum += pct;
+                    });
+                    g += `#e5e7eb ${Math.min(cum, 100)}% 100%`;
+                    donutEl.style.background = `conic-gradient(${g.replace(/, $/, '')})`;
+                };
+                const restoreCategoryDonut = () => {
+                    if (donutTitleEl) donutTitleEl.textContent = 'O\u00f9 vont les d\u00e9penses';
+                    if (typeof renderComptaSummary === 'function') renderComptaSummary();
+                };
                 if (subsEl.classList.contains('open')) {
                     subsEl.classList.remove('open');
                     subsEl.innerHTML = '';
+                    restoreCategoryDonut();
                     return;
                 }
                 topCatContainer.querySelectorAll('.top-cat-subs.open').forEach(s => {
@@ -5706,6 +5732,8 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                     }).join('')
                     : '<div class="donut-sub-item"><span class="donut-sub-name">Aucune sous-cat\u00e9gorie renseign\u00e9e</span></div>';
                 subsEl.classList.add('open');
+                renderSubsDonut(subs);
+                if (donutTitleEl) donutTitleEl.textContent = 'O\u00f9 vont les d\u00e9penses \u00b7 ' + item[0];
             });
         });
     }
