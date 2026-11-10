@@ -5109,11 +5109,12 @@ async function loadDepenses(userCabinetId) {
         
         // If user has a cabinet, also load depenses from other doctors in same cabinet
         if (userCabinetId) {
-            // Get other users in the same cabinet
+            // Get other installed doctors in the same cabinet (not secretaries)
             const { data: cabinetMembers } = await supabaseClient
                 .from('profiles')
                 .select('id')
                 .eq('cabinet_id', userCabinetId)
+                .in('role', ['medecin_installe', 'admin'])
                 .neq('id', currentUser.id);
             
             if (cabinetMembers && cabinetMembers.length > 0) {
@@ -5164,6 +5165,7 @@ async function loadRecettes(userCabinetId) {
                 .from('profiles')
                 .select('id')
                 .eq('cabinet_id', userCabinetId)
+                .in('role', ['medecin_installe', 'admin'])
                 .neq('id', currentUser.id);
             
             if (cabinetMembers && cabinetMembers.length > 0) {
