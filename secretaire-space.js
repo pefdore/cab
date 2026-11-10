@@ -328,6 +328,10 @@ function secResetUiOnLogout() {
     if (secSpace) secSpace.style.display = 'none';
     const banner = document.getElementById('secPendingApprovalBanner');
     if (banner) banner.style.display = 'none';
+    const doctorPanel = document.getElementById('doctorPendingPanel');
+    if (doctorPanel) doctorPanel.style.display = 'none';
+    const spaceHeader = document.getElementById('secSpaceHeader');
+    if (spaceHeader) spaceHeader.style.display = '';
     const joinBanner = document.getElementById('secJoinRequestsBanner');
     if (joinBanner) { joinBanner.style.display = 'none'; joinBanner.innerHTML = ''; }
     ['secNavBadge', 'secNavBadgeMobile'].forEach(id => {
@@ -396,7 +400,35 @@ function secApplySecretarySpace() {
     if (!isSecretary && !secIsMemberLocked()) {
         secSpace.style.display = 'none';
         secApplyRoleTexts();
+        const dp = document.getElementById('doctorPendingPanel');
+        if (dp) dp.style.display = 'none';
+        const sh = document.getElementById('secSpaceHeader');
+        if (sh) sh.style.display = '';
         return;
+    }
+
+    // Medecin en attente : carte explicative dediee (ni en-tete secretariat ni bandeau redondant)
+    const lockedDoctor = !isSecretary && secIsMemberLocked();
+    const spaceHeader = document.getElementById('secSpaceHeader');
+    const doctorPanel = document.getElementById('doctorPendingPanel');
+    const lockedBanner = document.getElementById('secPendingApprovalBanner');
+    if (lockedDoctor) {
+        if (spaceHeader) spaceHeader.style.display = 'none';
+        if (lockedBanner) lockedBanner.style.display = 'none';
+        if (doctorPanel) {
+            doctorPanel.style.display = 'block';
+            const t = document.getElementById('doctorPendingTitle');
+            if (t) {
+                const meta = window.currentUser?.user_metadata || {};
+                const fn = window.currentProfile?.first_name || meta.first_name || '';
+                const ln = window.currentProfile?.last_name || meta.last_name || '';
+                const who = String(ln || fn || '').trim();
+                t.textContent = who ? ('Bienvenue Dr ' + who) : 'Bienvenue';
+            }
+        }
+    } else {
+        if (spaceHeader) spaceHeader.style.display = '';
+        if (doctorPanel) doctorPanel.style.display = 'none';
     }
 
     secApplyRoleTexts();
