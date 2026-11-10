@@ -5132,6 +5132,33 @@ async function loadCabinetData() {
     }
 }
 
+// Ids des medecins installes/admins du cabinet (hors soi-meme). La lecture
+// directe de profiles est bloquee par RLS entre membres : RPC SECURITY DEFINER.
+async function getCabinetDoctorIds(userCabinetId) {
+    try {
+        const { data: ids, error: rpcErr } = await supabaseClient
+            .rpc('cabinet_medecins_ids', { p_cabinet_id: userCabinetId, p_exclude_uid: currentUser.id });
+        if (!rpcErr && Array.isArray(ids)) {
+            return ids.map(r => r.user_id || r).filter(Boolean);
+        }
+        console.error('[COMPTAB] cabinet_medecins_ids RPC error:', rpcErr?.message);
+    } catch (e) {
+        console.error('[COMPTAB] cabinet_medecins_ids exception:', e);
+    }
+    // Fallback : lecture directe (fonctionne si la RLS profiles l'autorise)
+    try {
+        const { data: members } = await supabaseClient
+            .from('profiles')
+            .select('id')
+            .eq('cabinet_id', userCabinetId)
+            .in('role', ['medecin_installe', 'admin'])
+            .neq('id', currentUser.id);
+        return (members || []).map(m => m.id);
+    } catch (e) {
+        return [];
+    }
+}
+
 async function loadDepenses(userCabinetId) {
     console.log('[COMPTAB] loadDepenses called, user:', currentUser?.id);
     try {
@@ -5151,16 +5178,9 @@ async function loadDepenses(userCabinetId) {
         
         // If user has a cabinet, also load depenses from other doctors in same cabinet
         if (userCabinetId) {
-            // Get other installed doctors in the same cabinet (not secretaries)
-            const { data: cabinetMembers } = await supabaseClient
-                .from('profiles')
-                .select('id')
-                .eq('cabinet_id', userCabinetId)
-                .in('role', ['medecin_installe', 'admin'])
-                .neq('id', currentUser.id);
+            const memberIds = await getCabinetDoctorIds(userCabinetId);
             
-            if (cabinetMembers && cabinetMembers.length > 0) {
-                const memberIds = cabinetMembers.map(m => m.id);
+            if (memberIds && memberIds.length > 0) {
                 
                 const { data: sharedDepenses } = await supabaseClient
                     .from('cabinet_depenses')
@@ -5203,15 +5223,9 @@ async function loadRecettes(userCabinetId) {
         
         // If user has a cabinet, also load recettes from other doctors in same cabinet
         if (userCabinetId) {
-            const { data: cabinetMembers } = await supabaseClient
-                .from('profiles')
-                .select('id')
-                .eq('cabinet_id', userCabinetId)
-                .in('role', ['medecin_installe', 'admin'])
-                .neq('id', currentUser.id);
+            const memberIds = await getCabinetDoctorIds(userCabinetId);
             
-            if (cabinetMembers && cabinetMembers.length > 0) {
-                const memberIds = cabinetMembers.map(m => m.id);
+            if (memberIds && memberIds.length > 0) {
                 
                 const { data: sharedRecettes } = await supabaseClient
                     .from('cabinet_recettes')

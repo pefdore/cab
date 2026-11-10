@@ -96,3 +96,22 @@ ORDER BY tablename, cmd, policyname;
 -- Verifier que les 3 medecins du cabinet partagent le meme cabinet_id :
 -- SELECT first_name, last_name, role, cabinet_id FROM profiles
 -- WHERE role IN ('medecin_installe','admin');
+
+-- ------------------------------------------------------------
+-- 5) RPC : ids des medecins installes/admins du cabinet
+--    La lecture directe de profiles est bloquee par RLS entre membres :
+--    l'app qui charge les depenses/recettes partagees doit passer par
+--    une RPC SECURITY DEFINER (meme pattern que cabinet_associes_public).
+-- ------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.cabinet_medecins_ids(p_cabinet_id UUID, p_exclude_uid UUID DEFAULT NULL)
+RETURNS TABLE(user_id UUID)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT p.id
+    FROM profiles p
+    WHERE p.cabinet_id = p_cabinet_id
+      AND p.role IN ('medecin_installe','admin')
+      AND (p_exclude_uid IS NULL OR p.id <> p_exclude_uid);
+$$;
+
+GRANT EXECUTE ON FUNCTION public.cabinet_medecins_ids(UUID, UUID) TO authenticated;
