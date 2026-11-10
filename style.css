@@ -15768,3 +15768,89 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #cabinet-dashboard .top-cat-subs.open {
     display: flex;
 }
+
+/* ---- Carte "Où vont les dépenses" : MD3 expressif ---- */
+#cabinet-dashboard .cab-donut-card {
+    border-radius: var(--md-radius-2xl, 24px);
+}
+#cabinet-dashboard .donut-hero {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    margin: 18px auto 22px;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    width: 170px;
+    height: 170px;
+    transition: transform 0.45s var(--md-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+#cabinet-dashboard .cab-donut-card .donut-chart::after {
+    width: 106px;
+    height: 106px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+#cabinet-dashboard .cab-donut-card:hover .donut-chart {
+    transform: scale(1.045) rotate(1.5deg);
+}
+#cabinet-dashboard .donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+}
+#cabinet-dashboard .donut-center-value {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+}
+#cabinet-dashboard .donut-center-label {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+    margin-top: 2px;
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable {
+    border-radius: 14px;
+    padding: 10px 14px;
+    background: var(--color-bg-muted);
+    transition: background 0.2s ease, transform 0.25s var(--md-spring, ease), box-shadow 0.2s ease;
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.08));
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:active {
+    transform: translateY(0) scale(0.985);
+}
+#cabinet-dashboard .top-cat-wrap:has(.top-cat-subs.open) .top-cat-item {
+    background: var(--color-primary-light, #eef4ff);
+}
+#cabinet-dashboard .top-cat-dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+#cabinet-dashboard .top-cat-item {
+    gap: 0;
+}
+#cabinet-dashboard .top-cat-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#cabinet-dashboard .top-cat-subs {
+    animation: md-pop 0.4s var(--md-spring, ease) both;
+    margin: 6px 0 10px 14px;
+    border-radius: 14px;
+}

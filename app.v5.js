@@ -5655,11 +5655,13 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     const topCatContainer = document.getElementById('topCategories');
     if (topCatContainer && totalDepenses > 0) {
         const topCats = sortedCats.slice(0, 5);
+        const mdPalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
         topCatContainer.innerHTML = topCats.map(([cat, amount], i) => {
             const pct = ((amount / totalDepenses) * 100).toFixed(1);
             return `
                 <div class="top-cat-wrap">
                     <div class="top-cat-item top-cat-clickable" data-topcat-idx="${i}">
+                        <span class="top-cat-dot" style="background:${mdPalette[i % mdPalette.length]}"></span>
                         <span class="top-cat-name">${cat}</span>
                         <span class="top-cat-right"><span class="top-cat-pct">${pct}%</span><span class="top-cat-chevron">\u25be</span></span>
                     </div>
@@ -5677,8 +5679,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                 if (!subsEl) return;
                 const donutEl = document.getElementById('depensesPieChart');
                 const donutTitleEl = document.getElementById('depensesDonutTitle');
-                const donutPalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
-                const baseColor = donutPalette[idx % donutPalette.length];
+                const baseColor = mdPalette[idx % mdPalette.length];
                 const shadeColor = (hex, t) => {
                     const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
                     const c = ch => Math.round(ch + (255 - ch) * t);
@@ -5741,7 +5742,8 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     // Donut Chart - Répartition dépenses (clic sur une catégorie :
     // détail des sous-catégories dans un dropdown sous l'élément)
     const donutContainer = document.getElementById('depensesPieChart');
-    const donutLegendContainer = document.getElementById('depensesPieLegend');
+    const donutCenterTotal = document.getElementById('donutCenterTotal');
+    if (donutCenterTotal) donutCenterTotal.textContent = totalDepenses.toFixed(2) + '\u20ac';
     if (donutContainer && totalDepenses > 0) {
         const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
         let gradient = '';
@@ -5757,18 +5759,6 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
         gradient += `#e5e7eb ${cumulative}% 100%`;
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
         
-        if (donutLegendContainer) {
-            donutLegendContainer.innerHTML = legendItems.map(item => `
-                <div class="donut-legend-item">
-                    <span class="donut-legend-color" style="background: ${item.color}"></span>
-                    <span class="donut-legend-name">${item.cat}</span>
-                    <span class="donut-legend-pct">${item.pct.toFixed(1)}%</span>
-                </div>
-            `).join('');
-        }
-
-    } else if (donutLegendContainer) {
-        donutLegendContainer.innerHTML = '';
     }
     
     // Graphique : annee EN COURS, de janvier a decembre, avec courbe de
