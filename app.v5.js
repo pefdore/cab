@@ -5725,32 +5725,48 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
         barContainer.style.position = 'relative';
         // Courbe de tresorerie : SVG en overlay, echelle propre au cumul
         const maxT = Math.max(...monthlyValues.map(m => Math.abs(m.tresorerie)), 1);
-        const pts = monthlyValues.map((m, idx) => {
-            const x = ((idx + 0.5) / 12) * 100;
-            const y = 96 - ((m.tresorerie + maxT) / (2 * maxT)) * 88;
-            return `${x.toFixed(2)},${y.toFixed(2)}`;
-        }).join(' ');
-        const zeroY = (96 - ((0 + maxT) / (2 * maxT)) * 88).toFixed(2);
+        const tY = t => 96 - ((t + maxT) / (2 * maxT)) * 88;
+        const coords = monthlyValues.map((m, idx) => ({
+            x: ((idx + 0.5) / 12) * 100,
+            y: tY(m.tresorerie)
+        }));
+        const pts = coords.map(c => `${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(' ');
+        const zeroY = tY(0).toFixed(2);
+        const currentMonthIdx = new Date().getMonth();
         const curveSvg = `
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
-                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="#94a3b8" stroke-width="0.4" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>
-                <polyline points="${pts}" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-                ${monthlyValues.map((m, idx) => {
-                    const x = ((idx + 0.5) / 12) * 100;
-                    const y = 96 - ((m.tresorerie + maxT) / (2 * maxT)) * 88;
-                    return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="1.1" fill="#3b82f6"/>`;
-                }).join('')}
+                <defs>
+                    <linearGradient id="tresoStroke" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#3b82f6"/>
+                        <stop offset="100%" stop-color="#8b5cf6"/>
+                    </linearGradient>
+                    <linearGradient id="tresoArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="rgba(99,102,241,0.30)"/>
+                        <stop offset="100%" stop-color="rgba(99,102,241,0)"/>
+                    </linearGradient>
+                </defs>
+                <line x1="0" y1="25" x2="100" y2="25" stroke="currentColor" stroke-opacity="0.12" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" stroke-opacity="0.12" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="75" x2="100" y2="75" stroke="currentColor" stroke-opacity="0.12" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <polygon points="0,${zeroY} ${pts} 100,${zeroY}" fill="url(#tresoArea)" stroke="none"/>
+                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.7" vector-effect="non-scaling-stroke"/>
+                <polyline points="${pts}" fill="none" stroke="rgba(59,130,246,0.25)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                <polyline points="${pts}" fill="none" stroke="url(#tresoStroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
             </svg>`;
-        barContainer.innerHTML = curveSvg + monthlyValues.map((m, idx) => {
+        const tresoDots = coords.map(c =>
+            `<span class="treso-dot" style="left:${c.x.toFixed(2)}%; top:${c.y.toFixed(2)}%;"></span>`
+        ).join('');
+        barContainer.innerHTML = curveSvg + tresoDots + monthlyValues.map((m, idx) => {
             const depHeight = (m.depenses / maxValue) * 100;
             const recHeight = (m.recettes / maxValue) * 100;
+            const labelCls = idx === currentMonthIdx ? 'bar-label current-month' : 'bar-label';
             return `
                 <div class="bar-group" onclick="showBarTooltip(event, ${idx})" style="cursor:pointer">
                     <div class="bar-wrapper">
                         <div class="bar expense" style="height: ${depHeight}%"></div>
                         <div class="bar income" style="height: ${recHeight}%"></div>
                     </div>
-                    <span class="bar-label">${m.label}</span>
+                    <span class="${labelCls}">${m.label}</span>
                 </div>
             `;
         }).join('');

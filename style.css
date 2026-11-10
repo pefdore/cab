@@ -15617,3 +15617,27 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     .fhero-balance, .fhero-chart { grid-column: 1 / -1; }
     .fhero-kpi { padding: 8px 12px !important; }
 }
+
+/* ---- Graphique cabinet : courbe de tresorerie + barres polies ---- */
+#cabinet-dashboard .bar-chart .treso-dot {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #3b82f6;
+    box-shadow: 0 1px 5px rgba(59, 130, 246, 0.45);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 3;
+}
+#cabinet-dashboard .bar-chart .bar {
+    transition: height 0.6s var(--md-spring, ease), filter 0.15s ease, transform 0.2s ease;
+}
+#cabinet-dashboard .bar-chart .bar-group:hover .bar {
+    transform: translateY(-3px);
+}
+#cabinet-dashboard .bar-chart .bar-label.current-month {
+    color: var(--color-primary, #2563eb);
+    font-weight: 700;
+}
