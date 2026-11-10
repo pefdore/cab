@@ -357,6 +357,37 @@ function secResetUiOnLogout() {
     });
 }
 
+function secApplyRoleTexts() {
+    const isSecretary = secIsSecretary();
+    const locked = !isSecretary && secIsMemberLocked();
+    const spaceTitle = document.getElementById('secSpaceTitle');
+    const spaceSub = document.getElementById('secSpaceSubtitle');
+    const pendTitle = document.querySelector('#secPendingApprovalBanner .sec-pending-title');
+    const pendText = document.querySelector('#secPendingApprovalBanner .sec-pending-text');
+    const cabTitle = document.getElementById('cabinetPageTitle');
+    const cabSub = document.getElementById('cabinetPageSubtitle');
+    if (locked) {
+        if (spaceTitle) spaceTitle.textContent = 'Compte médecin en attente';
+        if (spaceSub) spaceSub.textContent = "Votre demande d'accès au cabinet est en attente de validation par un médecin associé.";
+        if (pendTitle) pendTitle.textContent = 'Accès médecin en attente de validation';
+        if (pendText) pendText.textContent = "Votre inscription a bien été enregistrée. Un médecin associé du cabinet doit valider votre demande pour activer votre accès médecin.";
+        if (cabTitle) cabTitle.textContent = 'Espace médecin en attente';
+        if (cabSub) cabSub.textContent = "Votre accès sera actif dès la validation de votre demande par un médecin associé du cabinet.";
+    } else {
+        if (spaceTitle) spaceTitle.textContent = 'Espace Secrétariat';
+        if (spaceSub) spaceSub.textContent = "Bonjour ! Voici vos tâches et l'état des stocks du cabinet.";
+        if (pendTitle) pendTitle.textContent = 'Accès en attente de validation';
+        if (pendText) pendText.textContent = 'Votre demande a bien été envoyée. Un médecin associé du cabinet doit la valider pour activer votre espace.';
+        if (isSecretary) {
+            if (cabTitle) cabTitle.textContent = 'Espace Cabinet';
+            if (cabSub) cabSub.textContent = 'Suivi des stocks et tâches du cabinet.';
+        } else {
+            if (cabTitle) cabTitle.textContent = 'Gestion Cabinet';
+            if (cabSub) cabSub.textContent = 'Ressources humaines, réunions, stocks et remplacements du cabinet';
+        }
+    }
+}
+
 function secApplySecretarySpace() {
     const secSpace = document.getElementById('secretarySpace');
     if (!secSpace) return;
@@ -364,8 +395,11 @@ function secApplySecretarySpace() {
     const isSecretary = secIsSecretary();
     if (!isSecretary && !secIsMemberLocked()) {
         secSpace.style.display = 'none';
+        secApplyRoleTexts();
         return;
     }
+
+    secApplyRoleTexts();
 
     // Toute secretaire (validee ou non) est soustraite aux vues medecin :
     // dashboard cotation/finances, flux, documents, urgence.
@@ -790,5 +824,7 @@ if (typeof window !== 'undefined') {
     window.secCreateJoinRequest = secCreateJoinRequest;
     window.secRefreshSpace = secRefreshSpace;
     window.secApplySecretarySpace = secApplySecretarySpace;
+    window.secApplyRoleTexts = secApplyRoleTexts;
+    window.secCheckApproval = secCheckApproval;
     window.secResetUiOnLogout = secResetUiOnLogout;
 }

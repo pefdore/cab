@@ -120,7 +120,7 @@ async function onAuthSuccess() {
     // attendre le chargement complet : evite le flash du dashboard medecin
     // pendant 1-2 s a l'arrivee depuis le lien de validation email
     if (typeof secApplySecretarySpace === 'function' &&
-        (currentUser?.user_metadata?.role === 'secretaire')) {
+        (currentUser?.user_metadata?.role === 'secretaire' || currentUser?.user_metadata?.role === 'medecin_installe')) {
         secApplySecretarySpace();
     }
     
@@ -152,6 +152,17 @@ try {
         console.log('[AUTH] loadCabinetData completed, depenses:', cabinetDepenses.length);
     } catch (e) {
         console.error('[AUTH] loadCabinetData error:', e);
+    }
+    
+    // Membre potentiellement en attente de validation (medecin ayant rejoint
+    // un cabinet OU secretaire) : verifier l'approbation AVANT d'afficher une
+    // vue - sinon le dashboard medecin flashe une seconde puis page blanche,
+    // et il fallait recharger pour voir le bandeau d'attente.
+    const earlyRole = currentUser?.user_metadata?.role || currentProfile?.role;
+    if (typeof window.secCheckApproval === 'function' &&
+        (earlyRole === 'medecin_installe' || earlyRole === 'secretaire')) {
+        try { await window.secCheckApproval(); } catch (e) { console.error('[AUTH] checkApproval error:', e); }
+        if (typeof secApplySecretarySpace === 'function') secApplySecretarySpace();
     }
     
     // NOW switch to the view the user was on before reload (dashboard by default) - data is ready
