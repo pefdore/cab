@@ -15994,3 +15994,44 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     font-size: 0.66rem;
     letter-spacing: 0.02em;
 }
+
+/* ---- FLAT MD3 : override final du graphique évolution ---- */
+#cabinet-dashboard .cab-evol-card .bar-chart .bar {
+    border-radius: 6px 6px 0 0;
+    box-shadow: none;
+    transition: height 0.5s var(--md-spring, ease), opacity 0.15s ease;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.income {
+    background: #10b981;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.expense {
+    background: #ef4444;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar:hover {
+    transform: none;
+    opacity: 0.82;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover .bar {
+    transform: none;
+    opacity: 0.82;
+}
+#cabinet-dashboard .bar-chart .treso-dot {
+    width: 9px;
+    height: 9px;
+    border: 2px solid #6366f1;
+    background: #fff;
+    box-shadow: none;
+    animation: none;
+    transition: transform 0.2s var(--md-spring, ease);
+}
+#cabinet-dashboard .bar-chart .bar-group:hover .treso-dot {
+    transform: translate(-50%, -50%) scale(1.25);
+    box-shadow: none;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group.is-current {
+    background: rgba(99, 102, 241, 0.08);
+    box-shadow: none;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover {
+    background: rgba(0, 0, 0, 0.035);
+}

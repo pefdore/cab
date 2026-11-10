@@ -5834,24 +5834,12 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             + ` L ${coords[0].x.toFixed(2)} ${zeroY} Z`;
         const curveSvg = `
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
-                <defs>
-                    <linearGradient id="tresoStroke" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stop-color="#3b82f6"/>
-                        <stop offset="50%" stop-color="#6366f1"/>
-                        <stop offset="100%" stop-color="#8b5cf6"/>
-                    </linearGradient>
-                    <linearGradient id="tresoArea" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="rgba(99,102,241,0.34)"/>
-                        <stop offset="100%" stop-color="rgba(99,102,241,0)"/>
-                    </linearGradient>
-                </defs>
-                <line x1="0" y1="25" x2="100" y2="25" stroke="currentColor" stroke-opacity="0.07" stroke-width="1" stroke-dasharray="1 4" vector-effect="non-scaling-stroke"/>
-                <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" stroke-opacity="0.07" stroke-width="1" stroke-dasharray="1 4" vector-effect="non-scaling-stroke"/>
-                <line x1="0" y1="75" x2="100" y2="75" stroke="currentColor" stroke-opacity="0.07" stroke-width="1" stroke-dasharray="1 4" vector-effect="non-scaling-stroke"/>
-                <path d="${areaD}" fill="url(#tresoArea)" stroke="none"/>
-                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.55" vector-effect="non-scaling-stroke"/>
-                <path d="${curveD}" fill="none" stroke="rgba(99,102,241,0.22)" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-                <path d="${curveD}" fill="none" stroke="url(#tresoStroke)" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="25" x2="100" y2="25" stroke="currentColor" stroke-opacity="0.06" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" stroke-opacity="0.06" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="75" x2="100" y2="75" stroke="currentColor" stroke-opacity="0.06" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <path d="${areaD}" fill="rgba(99,102,241,0.07)" stroke="none"/>
+                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="#cbd5e1" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <path d="${curveD}" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
             </svg>`;
         const tresoDots = coords.map(c =>
             `<span class="treso-dot" style="left:${c.x.toFixed(2)}%; top:${c.y.toFixed(2)}%;"></span>`
