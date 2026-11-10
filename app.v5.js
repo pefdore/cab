@@ -5672,8 +5672,9 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             const subTotals = new Map();
             let catTotal = 0;
             cabinetDepenses.forEach(d => {
-                const cat = d.category || 'Autre';
-                if (cat !== activeFilter) return;
+                const catDef = CABINET_CATEGORIES[d.category];
+                const catLabel = catDef ? catDef.label : (d.category || 'Autre');
+                if (catLabel !== activeFilter) return;
                 catTotal += d.amount;
                 const sub = (d.sous_categorie || '').trim() || 'Non précisé';
                 subTotals.set(sub, (subTotals.get(sub) || 0) + d.amount);
