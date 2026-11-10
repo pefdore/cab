@@ -174,7 +174,7 @@ async function secRenderJoinRequestsBanner() {
     if (emptyEl) emptyEl.style.display = 'none';
     wrap.innerHTML =
         '<h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L11.6 1.6a1.5 1.5 0 0 1 2.63 0l1.31 2.26 2.55.38a1.5 1.5 0 0 1 .83 2.56l-1.85 1.8.44 2.54a1.5 1.5 0 0 1-2.17 1.58L12 11.6l-2.29 1.2a1.5 1.5 0 0 1-2.17-1.58l.44-2.54-1.85-1.8a1.5 1.5 0 0 1 .83-2.56l2.55-.38z"/></svg> Demandes d\'acc\u00e8s en attente</h3>' +
-        '<p class="sec-banner-desc">Ces secr\u00e9taires demandent \u00e0 rejoindre l\'espace cabinet. Approuvez pour leur donner acc\u00e8s.</p>' +
+        '<p class="sec-banner-desc">Ces membres (secr\u00e9taires, m\u00e9decins) demandent \u00e0 rejoindre l\'espace cabinet. Approuvez pour leur donner acc\u00e8s.</p>' +
         requests.map(r =>
             '<div class="sec-request-card" data-request="' + r.id + '" data-requester="' + (r.requester_id || '') + '">' +
                 '<div class="sec-request-info">' +
@@ -191,14 +191,28 @@ async function secRenderJoinRequestsBanner() {
 }
 
 async function secDecideRequest(requestId, approve) {
+    // Feedback immediat : desactiver les boutons de la carte pendant le traitement
+    const card = document.querySelector('.sec-request-card[data-request="' + requestId + '"]');
+    const setCardBusy = (busy) => {
+        if (!card) return;
+        card.querySelectorAll('button').forEach(b => {
+            b.disabled = busy;
+            b.style.opacity = busy ? '0.55' : '';
+            b.style.pointerEvents = busy ? 'none' : '';
+        });
+        const primary = card.querySelector('.action-btn.primary');
+        if (primary) primary.textContent = busy ? (approve ? 'Validation…' : 'Refus…') : 'Approuver';
+    };
+    setCardBusy(true);
     try {
         const { data: req, error: fetchErr } = await supabaseClient
             .from('cabinet_join_requests')
-            .select('id, cabinet_id, requester_id')
+            .select('id, cabinet_id, requester_id, requester_name')
             .eq('id', requestId)
             .single();
         if (fetchErr || !req) throw fetchErr || new Error('Demande introuvable');
         const requesterId = req.requester_id;
+        const requesterName = (req.requester_name || '').trim() || 'ce membre';
         const cabinetId = req.cabinet_id;
 
         const { error } = await supabaseClient
@@ -221,11 +235,12 @@ async function secDecideRequest(requestId, approve) {
         if (typeof reunionMyCabinet !== 'undefined') reunionMyCabinet = null;
 
         if (typeof showToast === 'function') {
-            showToast(approve ? 'Acc\u00e8s cabinet accord\u00e9 au secr\u00e9taire' : 'Demande refus\u00e9e', 'success');
+            showToast(approve ? ('Acc\u00e8s cabinet accord\u00e9 \u00e0 ' + requesterName) : ('Demande de ' + requesterName + ' refus\u00e9e'), 'success');
         }
-        secRenderJoinRequestsBanner();
+        await secRenderJoinRequestsBanner();
     } catch (e) {
         console.error('[SEC-SPACE] decideRequest:', e);
+        setCardBusy(false);
         if (typeof showToast === 'function') showToast('Erreur lors de la validation : ' + e.message, 'error');
     }
 }
