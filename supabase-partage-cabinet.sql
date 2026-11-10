@@ -166,3 +166,18 @@ SELECT tablename, policyname, cmd, qual
 FROM pg_policies
 WHERE tablename IN ('cabinet_depenses','cabinet_recettes') AND cmd = 'SELECT'
 ORDER BY tablename;
+
+-- ------------------------------------------------------------
+-- 7) CHECKLIST "RELEVES A INTEGRER" PARTAGEE ENTRE MEDECINS
+--    releve_imports etait lisible uniquement par son proprietaire :
+--    la checklist de l'onglet Affaires differait selon le medecin.
+-- ------------------------------------------------------------
+
+DROP POLICY IF EXISTS "releve_imports_select" ON releve_imports;
+
+CREATE POLICY "own_or_cabinet_doctors_releve_imports"
+ON releve_imports FOR SELECT
+USING (
+    releve_imports.user_id = auth.uid()
+    OR public.medecin_cabinet_peut_lire(releve_imports.user_id)
+);

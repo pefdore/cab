@@ -12532,10 +12532,24 @@ async function getReleveMonthStatuses() {
         return msg.includes('validated') || err?.code === 'PGRST204' || msg.includes('PGRST204');
     };
     try {
+        // Checklist partagee entre medecins du cabinet : les releves importes
+        // par un associe comptent pour tous (l'import est une tache de cabinet).
+        let releveUserIds = [currentUser.id];
+        try {
+            const { data: prof } = await supabaseClient
+                .from('profiles')
+                .select('cabinet_id')
+                .eq('id', currentUser.id)
+                .single();
+            if (prof?.cabinet_id) {
+                const associeIds = await getCabinetDoctorIds(prof.cabinet_id);
+                if (Array.isArray(associeIds)) releveUserIds = releveUserIds.concat(associeIds);
+            }
+        } catch (e) { console.error('[RELEVÉ] cabinet ids:', e); }
         const { data, error } = await supabaseClient
             .from('releve_imports')
-            .select('month, validated')
-            .eq('user_id', currentUser.id);
+            .select('user_id, month, validated')
+            .in('user_id', releveUserIds);
         if (error) throw error;
         (data || []).forEach(r => {
             const prev = map.get(r.month) || { imported: false, validated: false };
@@ -12556,7 +12570,7 @@ async function getReleveMonthStatuses() {
                 const { data } = await supabaseClient
                     .from('releve_imports')
                     .select('month')
-                    .eq('user_id', currentUser.id);
+                    .in('user_id', releveUserIds);
                 (data || []).forEach(r => map.set(r.month, { imported: true, validated: true }));
             } catch (e2) {
                 console.error('[RELEVÉ] getReleveMonthStatuses:', e2);
