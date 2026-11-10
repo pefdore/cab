@@ -16334,3 +16334,62 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     box-shadow: none;
     border: 1px solid var(--color-border);
 }
+
+/* ============================================================
+   UNIFICATION MD3 — système chromatique tonal du dashboard cabinet
+   Pattern Google (dashboards Material) :
+   - barres en tons "container" pâles (primary-container / tertiary-container)
+   - courbe de trésorerie en primary = élément héros
+   - palette catégorielle tonale (primary, tertiary, tons étendus)
+   - plus aucune couleur saturée de sémantique red/green
+   ============================================================ */
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.income {
+    background: color-mix(in srgb, var(--color-primary) 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.expense {
+    background: color-mix(in srgb, #7d5260 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-dot.income {
+    background: color-mix(in srgb, var(--color-primary) 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-dot.expense {
+    background: color-mix(in srgb, #7d5260 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .bar-chart .treso-dot {
+    border: 2px solid var(--color-primary);
+    background: var(--color-bg-elevated);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group.is-current {
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar:hover,
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover .bar {
+    opacity: 1;
+    filter: none;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover {
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+/* Consommables : ambre tonal unifié */
+#cabinet-dashboard .bar-chart .bar.conso {
+    background: color-mix(in srgb, #b45309 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .conso-ref-bar > span {
+    background: #b45309;
+}
+#cabinet-dashboard .conso-ref-row:nth-child(1) .conso-ref-rank {
+    background: #b45309;
+}
+#cabinet-dashboard .conso-pareto {
+    background: color-mix(in srgb, #b45309 8%, transparent);
+}
+#cabinet-dashboard .conso-pareto-value {
+    color: #7c4a0e;
+}
+
+/* Donut : centre sur la couleur du conteneur de carte, trou net */
+#cabinet-dashboard .cab-donut-card .donut-chart::after {
+    background: var(--color-bg-muted);
+    box-shadow: none;
+}

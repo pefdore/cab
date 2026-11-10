@@ -5615,7 +5615,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     const topCatContainer = document.getElementById('topCategories');
     if (topCatContainer && totalDepenses > 0) {
         const topCats = sortedCats;
-        const mdPalette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+        const mdPalette = ['#6366f1', '#7d5260', '#3a6f6b', '#8a6d4b', '#5b6b8c', '#8c5a7a', '#3b7a5e', '#6d5e80'];
         topCatContainer.innerHTML = topCats.map(([cat, amount], i) => {
             const pct = ((amount / totalDepenses) * 100).toFixed(1);
             return `
@@ -5712,7 +5712,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     const donutCenterTotal = document.getElementById('donutCenterTotal');
     if (donutCenterTotal) donutCenterTotal.textContent = totalDepenses.toFixed(2) + '\u20ac';
     if (donutContainer && totalDepenses > 0) {
-        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+        const colors = ['#6366f1', '#7d5260', '#3a6f6b', '#8a6d4b', '#5b6b8c', '#8c5a7a', '#3b7a5e', '#6d5e80'];
         let gradient = '';
         let cumulative = 0;
         const legendItems = [];
@@ -5794,12 +5794,9 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             + ` L ${coords[0].x.toFixed(2)} ${zeroY} Z`;
         const curveSvg = `
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
-                <line x1="0" y1="25" x2="100" y2="25" stroke="currentColor" stroke-opacity="0.06" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" stroke-opacity="0.06" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <line x1="0" y1="75" x2="100" y2="75" stroke="currentColor" stroke-opacity="0.06" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <path d="${areaD}" fill="rgba(99,102,241,0.07)" stroke="none"/>
-                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="#cbd5e1" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <path d="${curveD}" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                <path d="${areaD}" fill="rgba(99,102,241,0.06)" stroke="none"/>
+                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="var(--color-border)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <path d="${curveD}" fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
             </svg>`;
         const tresoDots = coords.map(c =>
             `<span class="treso-dot" style="left:${c.x.toFixed(2)}%; top:${c.y.toFixed(2)}%;"></span>`
