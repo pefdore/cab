@@ -16035,3 +16035,102 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover {
     background: rgba(0, 0, 0, 0.035);
 }
+
+/* ---- Consommables : classement des références (flat MD3) ---- */
+#cabinet-dashboard .conso-refs-head {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-secondary);
+    margin: 14px 0 8px;
+}
+#cabinet-dashboard .conso-pareto {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(245, 158, 11, 0.10);
+    margin-bottom: 10px;
+}
+#cabinet-dashboard .conso-pareto-value {
+    flex: none;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #b45309;
+}
+#cabinet-dashboard .conso-pareto-text {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
+}
+#cabinet-dashboard .conso-ref-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+#cabinet-dashboard .conso-ref-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 12px;
+    transition: background 0.15s ease;
+}
+#cabinet-dashboard .conso-ref-row:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.04));
+}
+#cabinet-dashboard .conso-ref-rank {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+    font-size: 0.66rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#cabinet-dashboard .conso-ref-row:nth-child(1) .conso-ref-rank {
+    background: #f59e0b;
+    color: #fff;
+}
+#cabinet-dashboard .conso-ref-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    min-width: 90px;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#cabinet-dashboard .conso-ref-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--color-bg-muted);
+    overflow: hidden;
+}
+#cabinet-dashboard .conso-ref-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: #f59e0b;
+}
+#cabinet-dashboard .conso-ref-amount {
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+#cabinet-dashboard .conso-ref-amount small {
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+}
+#cabinet-dashboard .conso-sup-line {
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    margin-top: 10px;
+}
