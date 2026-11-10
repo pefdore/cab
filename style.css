@@ -15650,3 +15650,14 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #cabinet-dashboard .bar-chart .bar.conso:hover {
     filter: brightness(1.15);
 }
+
+/* ---- Donut dépenses : drill-down sous-catégories ---- */
+#cabinet-dashboard .donut-legend-item.donut-clickable {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+    transition: background 0.15s ease;
+}
+#cabinet-dashboard .donut-legend-item.donut-clickable:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.05));
+}
