@@ -2370,7 +2370,7 @@ window.attemptLogin = function() {
                      validees par un medecin associe du cabinet)
                      ============================================================ -->
                 <div id="secretarySpace" class="secretary-space" style="display:none;">
-                    <div class="secretary-header">
+                    <div class="secretary-header" id="secSpaceHeader">
                         <div class="secretary-title">
                             <span class="secretary-icon">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -2388,6 +2388,46 @@ window.attemptLogin = function() {
                         <div>
                             <span class="sec-pending-title">Accès en attente de validation</span>
                             <span class="sec-pending-text">Votre demande a bien été envoyée. Un médecin associé du cabinet doit la valider pour activer votre espace.</span>
+                        </div>
+                    </div>
+
+                    <!-- Medecin installé en attente de validation : carte explicative -->
+                    <div id="doctorPendingPanel" style="display:none;">
+                        <div class="module-card" style="max-width:680px;margin:0 auto;padding:36px 32px;text-align:center;">
+                            <div style="width:72px;height:72px;margin:0 auto 20px;border-radius:20px;background:var(--color-primary-light,#eef4ff);display:flex;align-items:center;justify-content:center;">
+                                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary,#2563eb)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L11.6 1.6a1.5 1.5 0 0 1 2.63 0l1.31 2.26 2.55.38a1.5 1.5 0 0 1 .83 2.56l-1.85 1.8.44 2.54a1.5 1.5 0 0 1-2.17 1.58L12 11.6l-2.29 1.2a1.5 1.5 0 0 1-2.17-1.58l.44-2.54-1.85-1.8a1.5 1.5 0 0 1 .83-2.56l2.55-.38z"/><path d="M12 15v6"/></svg>
+                            </div>
+                            <h2 id="doctorPendingTitle" style="margin:0 0 10px;font-size:1.4rem;">Bienvenue</h2>
+                            <p style="margin:0 0 28px;color:var(--color-text-secondary,#64748b);font-size:0.95rem;line-height:1.5;">
+                                Votre compte médecin a bien été créé. Pour des raisons de confidentialité médicale,
+                                l'accès complet au cabinet est activé uniquement après validation par un médecin associé.
+                            </p>
+                            <div style="display:flex;flex-direction:column;gap:14px;text-align:left;margin-bottom:28px;">
+                                <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--color-border,#e2e8f0);border-radius:12px;">
+                                    <span style="flex:none;width:34px;height:34px;border-radius:50%;background:#dcfce7;color:#16a34a;display:flex;align-items:center;justify-content:center;font-weight:600;">✓</span>
+                                    <div>
+                                        <div style="font-weight:600;">Inscription enregistrée</div>
+                                        <div style="font-size:0.82rem;color:var(--color-text-secondary,#64748b);">Votre compte et votre demande d'affiliation au cabinet sont bien enregistrés.</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:2px solid var(--color-primary,#2563eb);border-radius:12px;background:var(--color-primary-light,#eef4ff);">
+                                    <span style="flex:none;width:34px;height:34px;border-radius:50%;background:var(--color-primary,#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;">2</span>
+                                    <div>
+                                        <div style="font-weight:600;">Validation par un médecin associé — en cours</div>
+                                        <div style="font-size:0.82rem;color:var(--color-text-secondary,#64748b);">Un médecin associé du cabinet doit accepter votre demande dans la rubrique « Demandes d'accès en attente » de son compte.</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--color-border,#e2e8f0);border-radius:12px;opacity:0.65;">
+                                    <span style="flex:none;width:34px;height:34px;border-radius:50%;background:var(--color-border,#e2e8f0);color:var(--color-text-secondary,#64748b);display:flex;align-items:center;justify-content:center;font-weight:600;">3</span>
+                                    <div>
+                                        <div style="font-weight:600;">Accès complet au cabinet</div>
+                                        <div style="font-size:0.82rem;color:var(--color-text-secondary,#64748b);">Dashboard partagé du cabinet, dépenses et recettes, stocks, réunions… La cotation reste votre espace personnel.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p style="margin:0;font-size:0.82rem;color:var(--color-text-secondary,#64748b);line-height:1.5;">
+                                ℹ️ Aucune action n'est nécessaire de votre côté. Dès que votre demande est validée, votre accès est activé automatiquement — reconnectez-vous simplement pour profiter de l'espace cabinet.
+                            </p>
                         </div>
                     </div>
 
