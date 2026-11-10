@@ -5659,66 +5659,81 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
         }).join('');
     }
     
-    // Donut Chart - Répartition dépenses (clic sur une catégorie : détail des sous-catégories)
+    // Donut Chart - Répartition dépenses (clic sur une catégorie :
+    // détail des sous-catégories dans un dropdown sous l'élément)
     const donutContainer = document.getElementById('depensesPieChart');
     const donutLegendContainer = document.getElementById('depensesPieLegend');
     if (donutContainer && totalDepenses > 0) {
         const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
-        const activeFilter = window._depensesDonutFilter || null;
-        
-        let slices = [];
-        if (activeFilter) {
-            // Drill-down : sous-catégories de la catégorie sélectionnée
-            const subTotals = new Map();
-            let catTotal = 0;
-            cabinetDepenses.forEach(d => {
-                const catDef = CABINET_CATEGORIES[d.category];
-                const catLabel = catDef ? catDef.label : (d.category || 'Autre');
-                if (catLabel !== activeFilter) return;
-                catTotal += d.amount;
-                const sub = (d.sous_categorie || '').trim() || 'Non précisé';
-                subTotals.set(sub, (subTotals.get(sub) || 0) + d.amount);
-            });
-            slices = Array.from(subTotals.entries()).sort((a, b) => b[1] - a[1]);
-            donutContainer.dataset.totalRef = catTotal || 1;
-        } else {
-            slices = sortedCats.slice(0, 6);
-            donutContainer.dataset.totalRef = totalDepenses;
-        }
-        
-        const totalRef = parseFloat(donutContainer.dataset.totalRef) || 1;
         let gradient = '';
         let cumulative = 0;
         const legendItems = [];
-        slices.forEach(([label, amount], i) => {
-            const pct = (amount / totalRef) * 100;
+        sortedCats.slice(0, 6).forEach(([cat, amount], i) => {
+            const pct = (amount / totalDepenses) * 100;
             const end = cumulative + pct;
             gradient += `${colors[i % colors.length]} ${cumulative}% ${end}%, `;
             cumulative = end;
-            legendItems.push({ label, pct, amount, color: colors[i % colors.length] });
+            legendItems.push({ cat, pct, amount, color: colors[i % colors.length] });
         });
         gradient += `#e5e7eb ${cumulative}% 100%`;
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
         
         if (donutLegendContainer) {
-            const backBtn = activeFilter
-                ? `<div class="donut-legend-item donut-back" onclick="window._depensesDonutFilter=null; if (typeof renderComptaSummary === 'function') renderComptaSummary();" style="cursor:pointer; font-weight:600; color:var(--color-primary, #2563eb);">
-                        <span class="donut-legend-color" style="background:transparent; border:1.5px solid var(--color-primary, #2563eb); display:flex; align-items:center; justify-content:center; font-size:0.6rem;">\u2190</span>
-                        <span class="donut-legend-name">Toutes les catégories</span>
-                        <span class="donut-legend-pct"></span>
-                    </div>`
-                : '';
-            donutLegendContainer.innerHTML = backBtn + legendItems.map((item, i) => `
-                <div class="donut-legend-item${activeFilter ? '' : ' donut-clickable'}"${activeFilter ? '' : ` onclick="window._depensesDonutFilter='${item.label.replace(/'/g, "\\'")}'; if (typeof renderComptaSummary === 'function') renderComptaSummary();"`}>
-                    <span class="donut-legend-color" style="background: ${item.color}"></span>
-                    <span class="donut-legend-name">${item.label}</span>
-                    <span class="donut-legend-pct">${item.pct.toFixed(1)}%</span>
+            donutLegendContainer.innerHTML = legendItems.map((item, i) => `
+                <div class="donut-item-wrap">
+                    <div class="donut-legend-item donut-clickable" data-donut-idx="${i}">
+                        <span class="donut-legend-color" style="background: ${item.color}"></span>
+                        <span class="donut-legend-name">${item.cat}</span>
+                        <span class="donut-legend-pct">${item.pct.toFixed(1)}%</span>
+                        <span class="donut-chevron">\u25be</span>
+                    </div>
+                    <div class="donut-subs" id="donut-subs-${i}"></div>
                 </div>
-            `).join('') + (activeFilter ? `<div style="font-size:0.68rem;color:var(--color-text-tertiary);margin-top:6px;">Sous-catégories de « ${activeFilter} » — ${totalRef.toFixed(2)}€ au total</div>` : '');
+            `).join('');
+            
+            donutLegendContainer.querySelectorAll('.donut-clickable').forEach(el => {
+                el.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.donutIdx, 10);
+                    const item = legendItems[idx];
+                    if (!item) return;
+                    const subsEl = document.getElementById('donut-subs-' + idx);
+                    if (!subsEl) return;
+                    if (subsEl.classList.contains('open')) {
+                        subsEl.classList.remove('open');
+                        subsEl.innerHTML = '';
+                        return;
+                    }
+                    donutLegendContainer.querySelectorAll('.donut-subs.open').forEach(s => {
+                        s.classList.remove('open');
+                        s.innerHTML = '';
+                    });
+                    const subTotals = new Map();
+                    cabinetDepenses.forEach(d => {
+                        const catDef = CABINET_CATEGORIES[d.category];
+                        const catLabel = catDef ? catDef.label : (d.category || 'Autre');
+                        if (catLabel !== item.cat) return;
+                        const sub = (d.sous_categorie || '').trim() || 'Non pr\u00e9cis\u00e9';
+                        subTotals.set(sub, (subTotals.get(sub) || 0) + d.amount);
+                    });
+                    const subs = Array.from(subTotals.entries()).sort((a, b) => b[1] - a[1]);
+                    subsEl.innerHTML = subs.length
+                        ? subs.map(([sub, amt]) => {
+                            const subPct = item.amount > 0 ? (amt / item.amount) * 100 : 0;
+                            return `
+                                <div class="donut-sub-item">
+                                    <span class="donut-sub-name">${sub}</span>
+                                    <span class="donut-sub-bar"><span style="width:${subPct.toFixed(1)}%"></span></div>
+                                    <span class="donut-sub-amount">${amt.toFixed(2)}\u20ac \u00b7 ${subPct.toFixed(1)}%</span>
+                                </div>
+                            `;
+                        }).join('')
+                        : '<div class="donut-sub-item"><span class="donut-sub-name">Aucune sous-cat\u00e9gorie renseign\u00e9e</span></div>';
+                    subsEl.classList.add('open');
+                });
+            });
         }
     } else if (donutLegendContainer) {
         donutLegendContainer.innerHTML = '';
-        donutLegendContainer.onclick = null;
     }
     
     // Graphique : annee EN COURS, de janvier a decembre, avec courbe de
