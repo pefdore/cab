@@ -407,23 +407,37 @@ function secApplySecretarySpace() {
         return;
     }
 
-    // Medecin en attente : carte explicative dediee (ni en-tete secretariat ni bandeau redondant)
+    // Membre en attente (medecin installé OU secretaire) : carte explicative
+    // dediee unique (ni en-tete secretariat ni bandeau redondant)
     const lockedDoctor = !isSecretary && secIsMemberLocked();
+    const pendingSecretary = isSecretary && !secIsApproved();
+    const pendingMember = lockedDoctor || pendingSecretary;
     const spaceHeader = document.getElementById('secSpaceHeader');
     const doctorPanel = document.getElementById('doctorPendingPanel');
     const lockedBanner = document.getElementById('secPendingApprovalBanner');
-    if (lockedDoctor) {
+    if (pendingMember) {
         if (spaceHeader) spaceHeader.style.display = 'none';
         if (lockedBanner) lockedBanner.style.display = 'none';
         if (doctorPanel) {
             doctorPanel.style.display = 'block';
+            const meta = window.currentUser?.user_metadata || {};
+            const fn = String(window.currentProfile?.first_name || meta.first_name || '').trim();
+            const ln = String(window.currentProfile?.last_name || meta.last_name || '').trim();
             const t = document.getElementById('doctorPendingTitle');
-            if (t) {
-                const meta = window.currentUser?.user_metadata || {};
-                const fn = window.currentProfile?.first_name || meta.first_name || '';
-                const ln = window.currentProfile?.last_name || meta.last_name || '';
-                const who = String(ln || fn || '').trim();
-                t.textContent = who ? ('Bienvenue Dr ' + who) : 'Bienvenue';
+            const intro = document.getElementById('doctorPendingIntro');
+            const s3t = document.getElementById('doctorPendingStep3Title');
+            const s3d = document.getElementById('doctorPendingStep3Desc');
+            if (lockedDoctor) {
+                const who = (ln || fn);
+                if (t) t.textContent = who ? ('Bienvenue Dr ' + who) : 'Bienvenue';
+                if (intro) intro.textContent = "Votre compte médecin a bien été créé. Pour des raisons de confidentialité médicale, l'accès complet au cabinet est activé uniquement après validation par un médecin associé.";
+                if (s3t) s3t.textContent = 'Accès complet au cabinet';
+                if (s3d) s3d.textContent = 'Dashboard partagé du cabinet, dépenses et recettes, stocks, réunions… La cotation reste votre espace personnel.';
+            } else {
+                if (t) t.textContent = fn ? ('Bienvenue ' + fn) : 'Bienvenue';
+                if (intro) intro.textContent = "Votre compte secrétaire a bien été créé. L'accès à l'espace secrétariat est activé uniquement après validation par un médecin associé du cabinet.";
+                if (s3t) s3t.textContent = "Accès à l'espace secrétariat";
+                if (s3d) s3d.textContent = 'Tâches partagées du cabinet et gestion des stocks.';
             }
         }
     } else {
