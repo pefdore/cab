@@ -15661,3 +15661,70 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #cabinet-dashboard .donut-legend-item.donut-clickable:hover {
     background: var(--color-bg-subtle, rgba(0, 0, 0, 0.05));
 }
+
+/* ---- Donut dépenses : dropdown sous-catégories ---- */
+#cabinet-dashboard .donut-item-wrap {
+    display: flex;
+    flex-direction: column;
+}
+#cabinet-dashboard .donut-legend-item.donut-clickable {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+    transition: background 0.15s ease;
+}
+#cabinet-dashboard .donut-legend-item.donut-clickable:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.05));
+}
+#cabinet-dashboard .donut-chevron {
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    transition: transform 0.2s ease;
+}
+#cabinet-dashboard .donut-item-wrap:has(.donut-subs.open) .donut-chevron {
+    transform: rotate(180deg);
+}
+#cabinet-dashboard .donut-subs {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    margin: 4px 4px 8px 26px;
+    padding: 8px 10px;
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.04));
+    border-radius: 8px;
+}
+#cabinet-dashboard .donut-subs.open {
+    display: flex;
+}
+#cabinet-dashboard .donut-sub-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "name amount" "bar bar";
+    gap: 2px 8px;
+    align-items: center;
+}
+#cabinet-dashboard .donut-sub-name {
+    grid-area: name;
+    font-size: 0.72rem;
+    color: var(--color-text);
+}
+#cabinet-dashboard .donut-sub-amount {
+    grid-area: amount;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+#cabinet-dashboard .donut-sub-bar {
+    grid-area: bar;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+#cabinet-dashboard .donut-sub-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #6366f1, #818cf8);
+}
