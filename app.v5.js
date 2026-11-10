@@ -5821,6 +5821,77 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             </div>
         `).join('') || '<div class="no-entries">Aucune</div>';
     }
+    
+    if (typeof renderConsommablesChart === 'function') renderConsommablesChart();
+}
+
+// ===== CONSOMMABLES : depenses des bons de commande (module urgence) =====
+function renderConsommablesChart() {
+    const container = document.getElementById('consommablesChart');
+    const topContainer = document.getElementById('consommablesTop');
+    const titleEl = document.getElementById('consommablesTitle');
+    if (!container) return;
+    
+    const year = new Date().getFullYear();
+    if (titleEl) titleEl.textContent = `Consommables ${year} \u2014 bons de commande`;
+    
+    const orders = (typeof urgenceData !== 'undefined' && Array.isArray(urgenceData.orders))
+        ? urgenceData.orders
+        : [];
+    
+    // Commandes recues : le cout reel TTC saisi a la reception fait foi.
+    // Le mois de reference est la reception (le colis arrive, la depense est reelle).
+    const received = orders.filter(o => o.status === 'received');
+    const months = [];
+    for (let m = 0; m < 12; m++) {
+        months.push({
+            label: new Date(year, m, 1).toLocaleDateString('fr-FR', { month: 'short' }),
+            total: 0,
+            orders: 0
+        });
+    }
+    const supTotals = new Map();
+    received.forEach(o => {
+        const dateRef = o.receivedAt || o.createdAt;
+        const d = new Date(dateRef);
+        const cost = Number(o.realCost) || 0;
+        if (d.getFullYear() === year && cost > 0) {
+            months[d.getMonth()].total += cost;
+            months[d.getMonth()].orders++;
+        }
+        if (cost > 0) {
+            const sup = (o.supplier || 'Fournisseur non pr\u00e9cis\u00e9').trim();
+            supTotals.set(sup, (supTotals.get(sup) || 0) + cost);
+        }
+    });
+    
+    const yearTotal = months.reduce((s, m) => s + m.total, 0);
+    const maxVal = Math.max(...months.map(m => m.total), 1);
+    const currentMonthIdx = new Date().getMonth();
+    
+    container.style.position = 'relative';
+    container.innerHTML = months.map((m, idx) => {
+        const h = (m.total / maxVal) * 100;
+        const labelCls = idx === currentMonthIdx ? 'bar-label current-month' : 'bar-label';
+        return `
+            <div class="bar-group conso-group" style="cursor:default">
+                <div class="bar-wrapper">
+                    <div class="bar conso" style="height: ${h}%" title="${m.total.toFixed(2)}\u20ac (${m.orders} commande${m.orders > 1 ? 's' : ''})"></div>
+                </div>
+                <span class="${labelCls}">${m.label}</span>
+            </div>
+        `;
+    }).join('') + `<div class="conso-total" style="text-align:center;font-size:0.75rem;color:var(--color-text-secondary);margin-top:8px;">Total ${yearTotal.toFixed(2)}\u20ac TTC re\u00e7us en ${year}</div>`;
+    
+    if (topContainer) {
+        const top = Array.from(supTotals.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        topContainer.innerHTML = top.length ? top.map(([sup, tot]) => `
+            <div class="category-item">
+                <span class="cat-label">${sup}</span>
+                <span class="cat-amount">${tot.toFixed(2)}€</span>
+            </div>
+        `).join('') : '';
+    }
 }
 
 // ===== BAR TOOLTIP FUNCTION =====

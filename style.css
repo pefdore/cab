@@ -15641,3 +15641,12 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     color: var(--color-primary, #2563eb);
     font-weight: 700;
 }
+
+/* ---- Consommables : barres ambre des bons de commande ---- */
+#cabinet-dashboard .bar-chart .bar.conso {
+    background: linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%);
+    border-radius: 6px 6px 0 0;
+}
+#cabinet-dashboard .bar-chart .bar.conso:hover {
+    filter: brightness(1.15);
+}
