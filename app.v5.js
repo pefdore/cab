@@ -5815,28 +5815,43 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             x: ((idx + 0.5) / 12) * 100,
             y: tY(m.tresorerie)
         }));
-        const pts = coords.map(c => `${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(' ');
         const zeroY = tY(0).toFixed(2);
         const currentMonthIdx = new Date().getMonth();
+        // Courbe lissee (bezier) : MD3 expressif, pas de polyligne anguleuse
+        const smoothPath = (arr) => {
+            if (!arr.length) return '';
+            let d = `M ${arr[0].x.toFixed(2)} ${arr[0].y.toFixed(2)}`;
+            for (let k = 0; k < arr.length - 1; k++) {
+                const p0 = arr[k], p1 = arr[k + 1];
+                const dx = (p1.x - p0.x) * 0.42;
+                d += ` C ${(p0.x + dx).toFixed(2)} ${p0.y.toFixed(2)}, ${(p1.x - dx).toFixed(2)} ${p1.y.toFixed(2)}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+            }
+            return d;
+        };
+        const curveD = smoothPath(coords);
+        const areaD = curveD
+            + ` L ${coords[coords.length - 1].x.toFixed(2)} ${zeroY}`
+            + ` L ${coords[0].x.toFixed(2)} ${zeroY} Z`;
         const curveSvg = `
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
                 <defs>
                     <linearGradient id="tresoStroke" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stop-color="#3b82f6"/>
+                        <stop offset="50%" stop-color="#6366f1"/>
                         <stop offset="100%" stop-color="#8b5cf6"/>
                     </linearGradient>
                     <linearGradient id="tresoArea" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="rgba(99,102,241,0.30)"/>
+                        <stop offset="0%" stop-color="rgba(99,102,241,0.34)"/>
                         <stop offset="100%" stop-color="rgba(99,102,241,0)"/>
                     </linearGradient>
                 </defs>
-                <line x1="0" y1="25" x2="100" y2="25" stroke="currentColor" stroke-opacity="0.12" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" stroke-opacity="0.12" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <line x1="0" y1="75" x2="100" y2="75" stroke="currentColor" stroke-opacity="0.12" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <polygon points="0,${zeroY} ${pts} 100,${zeroY}" fill="url(#tresoArea)" stroke="none"/>
-                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.7" vector-effect="non-scaling-stroke"/>
-                <polyline points="${pts}" fill="none" stroke="rgba(59,130,246,0.25)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-                <polyline points="${pts}" fill="none" stroke="url(#tresoStroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="25" x2="100" y2="25" stroke="currentColor" stroke-opacity="0.07" stroke-width="1" stroke-dasharray="1 4" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" stroke-opacity="0.07" stroke-width="1" stroke-dasharray="1 4" vector-effect="non-scaling-stroke"/>
+                <line x1="0" y1="75" x2="100" y2="75" stroke="currentColor" stroke-opacity="0.07" stroke-width="1" stroke-dasharray="1 4" vector-effect="non-scaling-stroke"/>
+                <path d="${areaD}" fill="url(#tresoArea)" stroke="none"/>
+                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 4" stroke-opacity="0.55" vector-effect="non-scaling-stroke"/>
+                <path d="${curveD}" fill="none" stroke="rgba(99,102,241,0.22)" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                <path d="${curveD}" fill="none" stroke="url(#tresoStroke)" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
             </svg>`;
         const tresoDots = coords.map(c =>
             `<span class="treso-dot" style="left:${c.x.toFixed(2)}%; top:${c.y.toFixed(2)}%;"></span>`
@@ -5846,7 +5861,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             const recHeight = (m.recettes / maxValue) * 100;
             const labelCls = idx === currentMonthIdx ? 'bar-label current-month' : 'bar-label';
             return `
-                <div class="bar-group" data-month-idx="${idx}" style="cursor:pointer">
+                <div class="bar-group${idx === currentMonthIdx ? ' is-current' : ''}" data-month-idx="${idx}" style="cursor:pointer">
                     <div class="bar-wrapper">
                         <div class="bar expense" style="height: ${depHeight}%"></div>
                         <div class="bar income" style="height: ${recHeight}%"></div>
