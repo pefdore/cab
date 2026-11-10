@@ -111,6 +111,13 @@ async function onAuthSuccess() {
     if (loginScreen) loginScreen.style.display = 'none';
     if (appContainer) appContainer.style.display = 'flex';
     
+    // Voile anti-flash : le dashboard est la vue active par defaut du HTML.
+    // On la desactive immediatement - la bonne vue ne sera revelee qu'apres
+    // la verification du statut de validation (un membre en attente ne doit
+    // JAMAIS voir le dashboard cotation ou cabinet, meme une seconde).
+    const defaultActiveView = document.getElementById('view-dashboard');
+    if (defaultActiveView) defaultActiveView.classList.remove('active');
+    
     // Initialize UI first
     updateMonthDisplay();
     setDefaultDate();
@@ -158,7 +165,13 @@ try {
     // un cabinet OU secretaire) : verifier l'approbation AVANT d'afficher une
     // vue - sinon le dashboard medecin flashe une seconde puis page blanche,
     // et il fallait recharger pour voir le bandeau d'attente.
-    const earlyRole = currentUser?.user_metadata?.role || currentProfile?.role;
+    let earlyRole = currentUser?.user_metadata?.role || currentProfile?.role;
+    if (!earlyRole && supabaseClient && currentUser?.id) {
+        try {
+            const { data: p } = await supabaseClient.from('profiles').select('role').eq('id', currentUser.id).single();
+            earlyRole = p?.role || null;
+        } catch (e) { console.error('[AUTH] role fetch error:', e); }
+    }
     if (typeof window.secCheckApproval === 'function' &&
         (earlyRole === 'medecin_installe' || earlyRole === 'secretaire')) {
         try { await window.secCheckApproval(); } catch (e) { console.error('[AUTH] checkApproval error:', e); }
