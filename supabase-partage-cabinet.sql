@@ -115,3 +115,54 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.cabinet_medecins_ids(UUID, UUID) TO authenticated;
+
+-- ------------------------------------------------------------
+-- 6) CORRECTIF RLS : policies via fonction SECURITY DEFINER
+--    Les sous-requetes d'une policy restent soumises a la RLS de la
+--    table referencee (profiles) : le EXISTS sur le profil du
+--    proprietaire de la ligne echouait silencieusement. Une fonction
+--    SECURITY DEFINER contourne la RLS de profiles.
+-- ------------------------------------------------------------
+
+DROP POLICY IF EXISTS "own_or_cabinet_doctors_depenses"  ON cabinet_depenses;
+DROP POLICY IF EXISTS "own_or_cabinet_doctors_recettes"  ON cabinet_recettes;
+DROP POLICY IF EXISTS "Cabinet access depenses"          ON cabinet_depenses;
+
+CREATE OR REPLACE FUNCTION public.medecin_cabinet_peut_lire(p_owner_uid UUID)
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM profiles me
+        WHERE me.id = auth.uid()
+          AND me.role IN ('medecin_installe','admin')
+          AND me.cabinet_id IS NOT NULL
+          AND me.cabinet_id = (SELECT p.cabinet_id FROM profiles p WHERE p.id = p_owner_uid)
+          AND EXISTS (
+              SELECT 1 FROM profiles o
+              WHERE o.id = p_owner_uid
+                AND o.role IN ('medecin_installe','admin')
+          )
+    );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.medecin_cabinet_peut_lire(UUID) TO authenticated;
+
+CREATE POLICY "own_or_cabinet_doctors_depenses"
+ON cabinet_depenses FOR SELECT
+USING (
+    cabinet_depenses.user_id = auth.uid()
+    OR public.medecin_cabinet_peut_lire(cabinet_depenses.user_id)
+);
+
+CREATE POLICY "own_or_cabinet_doctors_recettes"
+ON cabinet_recettes FOR SELECT
+USING (
+    cabinet_recettes.user_id = auth.uid()
+    OR public.medecin_cabinet_peut_lire(cabinet_recettes.user_id)
+);
+
+-- Verification : les deux policies SELECT doivent apparaitre avec la fonction
+SELECT tablename, policyname, cmd, qual
+FROM pg_policies
+WHERE tablename IN ('cabinet_depenses','cabinet_recettes') AND cmd = 'SELECT'
+ORDER BY tablename;
