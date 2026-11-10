@@ -16393,3 +16393,109 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     background: var(--color-bg-muted);
     box-shadow: none;
 }
+
+/* ============================================================
+   MD3 — ICÔNES TONALES, BANDEAU SANTÉ, FOCUS, RESPONSIVE (cabinet)
+   ============================================================ */
+
+/* Icônes de stats : tons container + icône de la même famille (pas de blanc) */
+#cabinet-dashboard .stats-grid .stat-card .stat-icon {
+    background: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg-elevated));
+    color: var(--color-primary);
+    border-radius: 100px;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(2) .stat-icon {
+    background: color-mix(in srgb, #7d5260 14%, var(--color-bg-elevated));
+    color: #7d5260;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(3) .stat-icon {
+    background: color-mix(in srgb, #3a6f6b 14%, var(--color-bg-elevated));
+    color: #3a6f6b;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(4) .stat-icon {
+    background: color-mix(in srgb, #8a6d4b 14%, var(--color-bg-elevated));
+    color: #8a6d4b;
+}
+
+/* Bandeau santé : filled card MD3 — ni bordure, ni barre latérale, ni blob décoratif */
+#cabinet-dashboard .cab-health-wrap {
+    background: var(--color-bg-muted);
+    border: none;
+    border-radius: var(--md-shape-l);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+#cabinet-dashboard .cab-health-wrap::before,
+#cabinet-dashboard .cab-health-wrap::after {
+    display: none;
+}
+#cabinet-dashboard .cab-health-pulse {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+/* Chips KPI : cartes remplies, pas de bordure */
+#cabinet-dashboard .cab-kpi-mini {
+    background: var(--color-bg-subtle);
+    border: none;
+    border-radius: var(--md-shape-m);
+    box-shadow: none;
+}
+
+/* États de focus MD3 : anneau primary 2dp, offset 2dp */
+#cabinet-dashboard .top-cat-clickable:focus-visible,
+#cabinet-dashboard .action-btn:focus-visible,
+#cabinet-dashboard .chart-legend .legend-item:focus-visible,
+#cabinet-dashboard .bar-group:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Responsive MD3 : les grilles respirent sur petit écran */
+@media (max-width: 1024px) {
+    #cabinet-dashboard .stats-grid,
+    #cabinet-dashboard .charts-grid {
+        gap: 12px;
+    }
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    #cabinet-dashboard .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    #cabinet-dashboard .stat-card {
+        padding: 12px;
+    }
+    #cabinet-dashboard .stat-value {
+        font-size: 22px;
+        line-height: 28px;
+    }
+    #cabinet-dashboard .stat-icon {
+        width: 40px;
+        height: 40px;
+    }
+    #cabinet-dashboard .evol-chip {
+        flex: 1 1 100%;
+    }
+    #cabinet-dashboard .cab-evol-card .bar-label {
+        font-size: 10px;
+    }
+    #cabinet-dashboard .donut-hero {
+        width: 140px;
+        height: 140px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart {
+        width: 140px;
+        height: 140px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart::after {
+        width: 86px;
+        height: 86px;
+    }
+}
