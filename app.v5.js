@@ -5116,6 +5116,9 @@ async function loadCabinetData() {
         
         await loadDepenses(userCabinetId);
         await loadRecettes(userCabinetId);
+        if (typeof window.fluxLoadOpeningBalances === 'function') {
+            await window.fluxLoadOpeningBalances();
+        }
         console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
         renderAddDepensesRecettes();
@@ -5708,17 +5711,24 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
         const cm = chartMonths.find(c => c.key === k);
         if (cm) cm.recettes += r.amount;
     });
+    // Tresorerie = solde bancaire : part du solde au 31/12 de l'annee
+    // precedente (cabinet_opening_balances), puis +- les flux de chaque mois.
+    const useFluxBalance = typeof fluxBankBalanceAt === 'function';
     let tresorerieCumul = 0;
-    chartMonths.forEach(cm => {
-        tresorerieCumul += cm.recettes - cm.depenses;
-        cm.tresorerie = tresorerieCumul;
+    chartMonths.forEach((cm, mIdx) => {
+        if (useFluxBalance) {
+            cm.tresorerie = fluxBankBalanceAt(currentYear, mIdx);
+        } else {
+            tresorerieCumul += cm.recettes - cm.depenses;
+            cm.tresorerie = tresorerieCumul;
+        }
     });
     
     const monthlyValues = chartMonths;
     const maxValue = Math.max(...monthlyValues.map(m => Math.max(m.depenses, m.recettes)), 1);
     
     const elChartTitle = document.getElementById('evolutionChartTitle');
-    if (elChartTitle) elChartTitle.textContent = `D\u00e9penses & recettes ${currentYear} \u2014 tr\u00e9sorerie cumul\u00e9e`;
+    if (elChartTitle) elChartTitle.textContent = `D\u00e9penses & recettes ${currentYear} \u2014 tr\u00e9sorerie (solde bancaire)`;
     
     const barContainer = document.getElementById('evolutionChart');
     if (barContainer) {
@@ -5836,7 +5846,7 @@ function showBarTooltip(event, idx) {
         <div><strong>${m.label}</strong></div>
         <div class="tooltip-amount" style="color:var(--color-danger)">Dépenses: ${m.depenses.toFixed(2)}€</div>
         <div class="tooltip-amount" style="color:var(--color-success)">Recettes: ${m.recettes.toFixed(2)}€</div>
-        <div class="tooltip-amount" style="color:#3b82f6">Trésorerie (cumul): ${m.tresorerie.toFixed(2)}€</div>
+        <div class="tooltip-amount" style="color:#3b82f6">Trésorerie (solde): ${m.tresorerie.toFixed(2)}€</div>
         <div style="font-size:0.625rem;color:var(--color-text-tertiary);margin-top:4px">Cliquez pour fermer</div>
     `;
     
