@@ -5650,13 +5650,64 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     if (elAvgRecettes) elAvgRecettes.textContent = `${avgRecettes.toFixed(2)}€`;
     if (elNbDepenses) elNbDepenses.textContent = nbDepenses;
     
-    // Top catégories - reuse sortedCats computed earlier
+    // Top catégories - reuse sortedCats computed earlier.
+    // Clic sur un onglet : dropdown du détail des sous-catégories juste dessous.
     const topCatContainer = document.getElementById('topCategories');
     if (topCatContainer && totalDepenses > 0) {
-        topCatContainer.innerHTML = sortedCats.slice(0, 5).map(([cat, amount]) => {
+        const topCats = sortedCats.slice(0, 5);
+        topCatContainer.innerHTML = topCats.map(([cat, amount], i) => {
             const pct = ((amount / totalDepenses) * 100).toFixed(1);
-            return `<div class="top-cat-item"><span class="top-cat-name">${cat}</span><span class="top-cat-pct">${pct}%</span></div>`;
+            return `
+                <div class="top-cat-wrap">
+                    <div class="top-cat-item top-cat-clickable" data-topcat-idx="${i}">
+                        <span class="top-cat-name">${cat}</span>
+                        <span class="top-cat-right"><span class="top-cat-pct">${pct}%</span><span class="top-cat-chevron">\u25be</span></span>
+                    </div>
+                    <div class="top-cat-subs" id="topcat-subs-${i}"></div>
+                </div>
+            `;
         }).join('');
+        
+        topCatContainer.querySelectorAll('.top-cat-clickable').forEach(el => {
+            el.addEventListener('click', function() {
+                const idx = parseInt(this.dataset.topcatIdx, 10);
+                const item = topCats[idx];
+                if (!item) return;
+                const subsEl = document.getElementById('topcat-subs-' + idx);
+                if (!subsEl) return;
+                if (subsEl.classList.contains('open')) {
+                    subsEl.classList.remove('open');
+                    subsEl.innerHTML = '';
+                    return;
+                }
+                topCatContainer.querySelectorAll('.top-cat-subs.open').forEach(s => {
+                    s.classList.remove('open');
+                    s.innerHTML = '';
+                });
+                const subTotals = new Map();
+                cabinetDepenses.forEach(d => {
+                    const catDef = CABINET_CATEGORIES[d.category];
+                    const catLabel = catDef ? catDef.label : (d.category || 'Autre');
+                    if (catLabel !== item[0]) return;
+                    const sub = (d.sous_categorie || '').trim() || 'Non pr\u00e9cis\u00e9';
+                    subTotals.set(sub, (subTotals.get(sub) || 0) + d.amount);
+                });
+                const subs = Array.from(subTotals.entries()).sort((a, b) => b[1] - a[1]);
+                subsEl.innerHTML = subs.length
+                    ? subs.map(([sub, amt]) => {
+                        const subPct = item[1] > 0 ? (amt / item[1]) * 100 : 0;
+                        return `
+                            <div class="donut-sub-item">
+                                <span class="donut-sub-name">${sub}</span>
+                                <span class="donut-sub-amount">${amt.toFixed(2)}\u20ac \u00b7 ${subPct.toFixed(1)}%</span>
+                                <span class="donut-sub-bar"><span style="width:${subPct.toFixed(1)}%"></span></span>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<div class="donut-sub-item"><span class="donut-sub-name">Aucune sous-cat\u00e9gorie renseign\u00e9e</span></div>';
+                subsEl.classList.add('open');
+            });
+        });
     }
     
     // Donut Chart - Répartition dépenses (clic sur une catégorie :
@@ -5679,59 +5730,15 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
         
         if (donutLegendContainer) {
-            donutLegendContainer.innerHTML = legendItems.map((item, i) => `
-                <div class="donut-item-wrap">
-                    <div class="donut-legend-item donut-clickable" data-donut-idx="${i}">
-                        <span class="donut-legend-color" style="background: ${item.color}"></span>
-                        <span class="donut-legend-name">${item.cat}</span>
-                        <span class="donut-legend-pct">${item.pct.toFixed(1)}%</span>
-                        <span class="donut-chevron">\u25be</span>
-                    </div>
-                    <div class="donut-subs" id="donut-subs-${i}"></div>
+            donutLegendContainer.innerHTML = legendItems.map(item => `
+                <div class="donut-legend-item">
+                    <span class="donut-legend-color" style="background: ${item.color}"></span>
+                    <span class="donut-legend-name">${item.cat}</span>
+                    <span class="donut-legend-pct">${item.pct.toFixed(1)}%</span>
                 </div>
             `).join('');
-            
-            donutLegendContainer.querySelectorAll('.donut-clickable').forEach(el => {
-                el.addEventListener('click', function() {
-                    const idx = parseInt(this.dataset.donutIdx, 10);
-                    const item = legendItems[idx];
-                    if (!item) return;
-                    const subsEl = document.getElementById('donut-subs-' + idx);
-                    if (!subsEl) return;
-                    if (subsEl.classList.contains('open')) {
-                        subsEl.classList.remove('open');
-                        subsEl.innerHTML = '';
-                        return;
-                    }
-                    donutLegendContainer.querySelectorAll('.donut-subs.open').forEach(s => {
-                        s.classList.remove('open');
-                        s.innerHTML = '';
-                    });
-                    const subTotals = new Map();
-                    cabinetDepenses.forEach(d => {
-                        const catDef = CABINET_CATEGORIES[d.category];
-                        const catLabel = catDef ? catDef.label : (d.category || 'Autre');
-                        if (catLabel !== item.cat) return;
-                        const sub = (d.sous_categorie || '').trim() || 'Non pr\u00e9cis\u00e9';
-                        subTotals.set(sub, (subTotals.get(sub) || 0) + d.amount);
-                    });
-                    const subs = Array.from(subTotals.entries()).sort((a, b) => b[1] - a[1]);
-                    subsEl.innerHTML = subs.length
-                        ? subs.map(([sub, amt]) => {
-                            const subPct = item.amount > 0 ? (amt / item.amount) * 100 : 0;
-                            return `
-                                <div class="donut-sub-item">
-                                    <span class="donut-sub-name">${sub}</span>
-                                    <span class="donut-sub-bar"><span style="width:${subPct.toFixed(1)}%"></span></div>
-                                    <span class="donut-sub-amount">${amt.toFixed(2)}\u20ac \u00b7 ${subPct.toFixed(1)}%</span>
-                                </div>
-                            `;
-                        }).join('')
-                        : '<div class="donut-sub-item"><span class="donut-sub-name">Aucune sous-cat\u00e9gorie renseign\u00e9e</span></div>';
-                    subsEl.classList.add('open');
-                });
-            });
         }
+
     } else if (donutLegendContainer) {
         donutLegendContainer.innerHTML = '';
     }
