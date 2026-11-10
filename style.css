@@ -15892,3 +15892,63 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
         gap: 0;
     }
 }
+
+/* ---- Carte évolution : MD3 expressif + synthèse ---- */
+#cabinet-dashboard .cab-evol-card {
+    border-radius: var(--md-radius-2xl, 24px);
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--color-bg-muted);
+    font-size: 0.72rem;
+    transition: transform 0.2s var(--md-spring, ease);
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-item:hover {
+    transform: translateY(-1px);
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+#cabinet-dashboard .evol-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+#cabinet-dashboard .evol-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--color-bg-muted);
+    flex: 1 1 160px;
+    animation: md-pop 0.45s var(--md-spring, ease) both;
+}
+#cabinet-dashboard .evol-chip-label {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-text-tertiary);
+}
+#cabinet-dashboard .evol-chip-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+#cabinet-dashboard .evol-chip-value small {
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-size: 0.68rem;
+}
+#cabinet-dashboard .bar-tooltip {
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+    animation: md-pop 0.25s var(--md-spring, ease) both;
+}
