@@ -138,28 +138,13 @@ async function onAuthSuccess() {
     loadUserProfile();
     loadUserSettings();
     
-try {
-        console.log('[AUTH] Calling loadData...');
-        await loadData();
-        console.log('[AUTH] loadData completed, entries:', entries.length);
-    } catch (e) {
-        console.error('[AUTH] loadData error:', e);
-    }
-    
-    try {
-        await loadPatients();
-        console.log('[AUTH] loadPatients completed, patients:', patients.length);
-    } catch (e) {
-        console.error('[AUTH] loadPatients error:', e);
-    }
-    
-    // Pre-load cabinet data (depenses/recettes) for autocomplete
-    try {
-        await loadCabinetData();
-        console.log('[AUTH] loadCabinetData completed, depenses:', cabinetDepenses.length);
-    } catch (e) {
-        console.error('[AUTH] loadCabinetData error:', e);
-    }
+// Chargement parallel : cotation (entries), patients et cabinet etaient
+    // sequentiels et rendaient le dashboard long a apparaitre.
+    const results = await Promise.allSettled([loadData(), loadPatients(), loadCabinetData()]);
+    results.forEach((r, i) => {
+        if (r.status === 'rejected') console.error('[AUTH] load error (' + ['entries', 'patients', 'cabinet'][i] + '):', r.reason);
+    });
+    console.log('[AUTH] parallel loads done, entries:', entries.length, 'depenses:', cabinetDepenses.length);
     
     // Membre potentiellement en attente de validation (medecin ayant rejoint
     // un cabinet OU secretaire) : verifier l'approbation AVANT d'afficher une
@@ -589,10 +574,19 @@ function applyCotationVisibility() {
     
     document.querySelectorAll('#cotationEnabledCheckbox').forEach(cb => { cb.checked = cotationEnabled; });
     
+    // Le mode choisi au toggle (cabinet/cotation) PREVAUT sur le defaut.
+    // Avant, cette fonction forcait l'affichage selon la case "cotation
+    // active" et ecrasait le choix de l'utilisateur : toggle "cabinet"
+    // actif mais page cotation affichee.
+    let savedDashMode = null;
+    try { savedDashMode = sessionStorage.getItem('cab_dashboard_mode'); } catch (e) {}
+    let dashMode = savedDashMode || (cotationEnabled ? 'cotation' : 'cabinet');
+    if (dashMode === 'cotation' && !cotationEnabled) dashMode = 'cabinet';
+    
     if (cotationDash) {
-        console.log('[COTATION] Setting cotation-dashboard display to:', cotationEnabled ? 'block' : 'none');
-        cotationDash.style.display = cotationEnabled ? 'block' : 'none';
-        cotationDash.style.visibility = cotationEnabled ? 'visible' : 'hidden';
+        console.log('[COTATION] Setting cotation-dashboard display to:', dashMode === 'cotation' ? 'block' : 'none');
+        cotationDash.style.display = dashMode === 'cotation' ? 'block' : 'none';
+        cotationDash.style.visibility = dashMode === 'cotation' ? 'visible' : 'hidden';
     }
     
     if (addPassagesSection) {
@@ -619,32 +613,29 @@ function applyCotationVisibility() {
     //     cotationSettingsSection.style.display = cotationEnabled ? 'block' : 'none';
     // }
     
-    // If cotation is disabled, switch to cabinet dashboard by default
-    if (!cotationEnabled) {
-        const cabinetDash = document.getElementById('cabinet-dashboard');
-        if (cabinetDash) {
-            cabinetDash.style.display = 'block';
-            cabinetDash.style.visibility = 'visible';
-        }
-        if (typeof renderCabinetLifeDashboard === 'function') {
-            renderCabinetLifeDashboard();
-        }
-    } else {
-        const cabinetDash = document.getElementById('cabinet-dashboard');
-        if (cabinetDash) {
-            cabinetDash.style.display = 'none';
-            cabinetDash.style.visibility = 'hidden';
-        }
+    const cabinetDash2 = document.getElementById('cabinet-dashboard');
+    if (cabinetDash2) {
+        cabinetDash2.style.display = dashMode === 'cabinet' ? 'block' : 'none';
+        cabinetDash2.style.visibility = dashMode === 'cabinet' ? 'visible' : 'hidden';
+    }
+    if (dashMode === 'cabinet' && typeof renderCabinetLifeDashboard === 'function') {
+        renderCabinetLifeDashboard();
     }
     
-    // Update toggle button state
-    updateToggleButton();
+    // Synchroniser les boutons du toggle avec le mode reellement affiche
+    document.querySelectorAll('.switch-btn').forEach(btn => {
+        if (btn.getAttribute('data-mode') === dashMode) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
     
     console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);
 }
 
 async function saveCotationSetting(enabled) {
     console.log('[COTATION] saveCotationSetting called with:', enabled);
+    // La case "cotation active" definit le mode par defaut : on oublie le
+    // choix precedent du toggle pour que l'affichage suive la case.
+    try { sessionStorage.removeItem('cab_dashboard_mode'); } catch (e) {}
     console.log('[COTATION] currentUser:', currentUser ? currentUser.id : 'null');
     
     const value = enabled ? 'true' : 'false';
@@ -830,43 +821,10 @@ function initCotationVisibility() {
 }
 
 function updateToggleButton() {
-    const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-    document.querySelectorAll('#cotationEnabledCheckbox').forEach(cb => { cb.checked = isEnabled; });
-    
-    const cotationDash = document.getElementById('cotation-dashboard');
-    const addPassagesSection = document.getElementById('add-passages-section');
-    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
-    const fabAddPassage = document.getElementById('fab-add-passage');
-    const cabinetDash = document.getElementById('cabinet-dashboard');
-    
-    if (cotationDash) {
-        cotationDash.style.display = isEnabled ? 'block' : 'none';
-        cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
-    }
-    
-    if (addPassagesSection) {
-        addPassagesSection.style.display = isEnabled ? 'block' : 'none';
-    }
-    
-    if (addPassagesSectionModal) {
-        addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
-    }
-    
-    if (dashboardSwitcher) {
-        dashboardSwitcher.style.display = isEnabled ? 'flex' : 'none';
-    }
-    
-    if (fabAddPassage) {
-        fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
-    }
-    
-    // Don't hide settings section - user needs to be able to toggle back
-    
-    if (cabinetDash) {
-        cabinetDash.style.display = isEnabled ? 'none' : 'block';
-        cabinetDash.style.visibility = isEnabled ? 'hidden' : 'visible';
-    }
+    // Ne force plus l'affichage des dashboards : le mode choisi au toggle
+    // (sessionStorage cab_dashboard_mode) prevaut, gere par
+    // applyCotationVisibility / switchDashboardMode.
+    if (typeof applyCotationVisibility === 'function') applyCotationVisibility();
 }
 
 window.updateToggleButton = updateToggleButton;
@@ -1379,6 +1337,7 @@ const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
 
 function switchDashboardMode(mode) {
     console.log('[TOGGLE] switchDashboardMode called with mode:', mode);
+    try { sessionStorage.setItem('cab_dashboard_mode', mode); } catch (e) {}
     
     // Toggle buttons
     var btns = document.querySelectorAll('.switch-btn');
@@ -1421,7 +1380,7 @@ function switchDashboardMode(mode) {
             cabinetDash.style.visibility = 'visible';
             console.log('[TOGGLE] cabinet-dashboard shown');
             if (typeof mdArmAnimations === 'function') mdArmAnimations();
-            loadCabinetData();
+            if (!window._cabDataLoaded) loadCabinetData();
             renderCabinetLifeDashboard();
         }
     }
@@ -5114,11 +5073,12 @@ async function loadCabinetData() {
         const userCabinetId = profile?.cabinet_id;
         console.log('[LOAD] User cabinet_id:', userCabinetId);
         
-        await loadDepenses(userCabinetId);
-        await loadRecettes(userCabinetId);
-        if (typeof window.fluxLoadOpeningBalances === 'function') {
-            await window.fluxLoadOpeningBalances();
-        }
+        await Promise.allSettled([
+            loadDepenses(userCabinetId),
+            loadRecettes(userCabinetId),
+            (typeof window.fluxLoadOpeningBalances === 'function') ? window.fluxLoadOpeningBalances() : Promise.resolve()
+        ]);
+        window._cabDataLoaded = true;
         console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
         renderAddDepensesRecettes();
