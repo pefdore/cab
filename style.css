@@ -16134,3 +16134,203 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     color: var(--color-text-tertiary);
     margin-top: 10px;
 }
+
+/* ============================================================
+   CABINET DASHBOARD — CONFORMITÉ MD3 (m3.material.io)
+   Tokens et règles appliqués à la lettre :
+   - Type scale : Title M 16/24 w500, Headline S 24/32, Headline M 28/36,
+     Body S 12/16, Label L 14/20 w500, Label M 12/16 w500, Label S 11/16 w500
+   - Shape scale : xs 4, s 8, m 12, l 16, xl 28 (cartes = 16, chips = 8,
+     boutons = full round, panneaux = 12)
+   - Cartes remplies : surface-container, élévation niveau 0 (aucune ombre)
+   - State layers : survol 8%, pressé 12% (couleur on-surface)
+   - Motion : standard cubic-bezier(0.2, 0, 0, 1), durées courtes 200ms
+   - Grille d'espacement 4dp
+   ============================================================ */
+:root {
+    --md-shape-xs: 4px;
+    --md-shape-s: 8px;
+    --md-shape-m: 12px;
+    --md-shape-l: 16px;
+    --md-shape-xl: 28px;
+    --md-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --md-ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --md-state-hover: 8%;
+    --md-state-pressed: 12%;
+}
+
+/* ---- Cartes remplies (filled cards) : forme large 16dp, élévation 0 ---- */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card {
+    background: var(--color-bg-muted);
+    border: none;
+    box-shadow: none;
+    border-radius: var(--md-shape-l);
+    padding: 16px;
+    transition: box-shadow 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .stat-card:hover,
+#cabinet-dashboard .chart-card:hover {
+    box-shadow: none;
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent));
+}
+#cabinet-dashboard .chart-card h3 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+    letter-spacing: 0.15px;
+    margin: 0 0 16px;
+}
+
+/* ---- Bandeau santé : Headline Small 24/32, overline = Label Small 11/16 w500 ---- */
+#cabinet-dashboard .cab-health-title {
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+#cabinet-dashboard .cab-health-overline {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: none;
+}
+#cabinet-dashboard .cab-health-sub {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--color-text-secondary);
+}
+
+/* ---- Indicateurs : valeur Headline Medium 28/36, libellé Body Small 12/16 ---- */
+#cabinet-dashboard .stat-value {
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+#cabinet-dashboard .stat-label {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--color-text-secondary);
+}
+#cabinet-dashboard .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--md-shape-l);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---- Chips (légende, synthèse) : forme small 8dp, Label Medium 12/16 w500,
+     state layer 8% au survol — pas de majuscules (MD3 : sentence case) ---- */
+#cabinet-dashboard .chart-legend .legend-item {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    border-radius: var(--md-shape-s);
+    padding: 4px 12px;
+    transition: background-color 200ms var(--md-ease-standard), transform 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .chart-legend .legend-item:hover {
+    transform: none;
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent));
+}
+#cabinet-dashboard .evol-chip {
+    border-radius: var(--md-shape-m);
+    padding: 12px 16px;
+    background: var(--color-bg-subtle);
+}
+#cabinet-dashboard .evol-chip-label {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.1px;
+}
+#cabinet-dashboard .evol-chip-value {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+    letter-spacing: 0.15px;
+}
+#cabinet-dashboard .donut-center-label {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.5px;
+}
+#cabinet-dashboard .conso-refs-head {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.1px;
+}
+
+/* ---- Onglets catégories : state layers 8%/12%, forme 12dp ---- */
+#cabinet-dashboard .top-cat-item.top-cat-clickable {
+    border-radius: var(--md-shape-m);
+    background: var(--color-bg-subtle);
+    box-shadow: none;
+    transition: background-color 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:hover {
+    transform: none;
+    box-shadow: none;
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent));
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:active {
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-pressed), transparent), color-mix(in srgb, var(--color-text) var(--md-state-pressed), transparent));
+}
+#cabinet-dashboard .top-cat-subs,
+#cabinet-dashboard .donut-subs {
+    border-radius: var(--md-shape-m);
+}
+
+/* ---- Labels du graphique : Label Small 11/16 w500 ---- */
+#cabinet-dashboard .bar-label {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+}
+
+/* ---- Boutons : full round, hauteur 40dp, Label Large 14/20 w500,
+     state layers 8%/12% sur la couleur on-primary ---- */
+#cabinet-dashboard .action-btn,
+#cabinet-dashboard .top-cat-item button {
+    border-radius: 999px;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    transition: background-color 200ms var(--md-ease-standard), box-shadow 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .action-btn.primary {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+#cabinet-dashboard .action-btn.primary:hover {
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text-inverse) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text-inverse) var(--md-state-hover), transparent));
+}
+#cabinet-dashboard .action-btn.primary:active {
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text-inverse) var(--md-state-pressed), transparent), color-mix(in srgb, var(--color-text-inverse) var(--md-state-pressed), transparent));
+}
+
+/* ---- Grille d'espacement 4dp ---- */
+#cabinet-dashboard .stats-grid,
+#cabinet-dashboard .charts-grid {
+    gap: 16px;
+}
+
+/* ---- Tooltips : forme extra-small 4dp, Body Small 12/16 ---- */
+#cabinet-dashboard .bar-tooltip {
+    border-radius: var(--md-shape-xs);
+    font-size: 12px;
+    line-height: 16px;
+    box-shadow: none;
+    border: 1px solid var(--color-border);
+}
