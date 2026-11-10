@@ -2398,10 +2398,7 @@ window.attemptLogin = function() {
                                 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary,#2563eb)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L11.6 1.6a1.5 1.5 0 0 1 2.63 0l1.31 2.26 2.55.38a1.5 1.5 0 0 1 .83 2.56l-1.85 1.8.44 2.54a1.5 1.5 0 0 1-2.17 1.58L12 11.6l-2.29 1.2a1.5 1.5 0 0 1-2.17-1.58l.44-2.54-1.85-1.8a1.5 1.5 0 0 1 .83-2.56l2.55-.38z"/><path d="M12 15v6"/></svg>
                             </div>
                             <h2 id="doctorPendingTitle" style="margin:0 0 10px;font-size:1.4rem;">Bienvenue</h2>
-                            <p style="margin:0 0 28px;color:var(--color-text-secondary,#64748b);font-size:0.95rem;line-height:1.5;">
-                                Votre compte médecin a bien été créé. Pour des raisons de confidentialité médicale,
-                                l'accès complet au cabinet est activé uniquement après validation par un médecin associé.
-                            </p>
+                            <p id="doctorPendingIntro" style="margin:0 0 28px;color:var(--color-text-secondary,#64748b);font-size:0.95rem;line-height:1.5;">
                             <div style="display:flex;flex-direction:column;gap:14px;text-align:left;margin-bottom:28px;">
                                 <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--color-border,#e2e8f0);border-radius:12px;">
                                     <span style="flex:none;width:34px;height:34px;border-radius:50%;background:#dcfce7;color:#16a34a;display:flex;align-items:center;justify-content:center;font-weight:600;">✓</span>
@@ -2420,8 +2417,8 @@ window.attemptLogin = function() {
                                 <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--color-border,#e2e8f0);border-radius:12px;opacity:0.65;">
                                     <span style="flex:none;width:34px;height:34px;border-radius:50%;background:var(--color-border,#e2e8f0);color:var(--color-text-secondary,#64748b);display:flex;align-items:center;justify-content:center;font-weight:600;">3</span>
                                     <div>
-                                        <div style="font-weight:600;">Accès complet au cabinet</div>
-                                        <div style="font-size:0.82rem;color:var(--color-text-secondary,#64748b);">Dashboard partagé du cabinet, dépenses et recettes, stocks, réunions… La cotation reste votre espace personnel.</div>
+                                        <div id="doctorPendingStep3Title" style="font-weight:600;">Accès complet au cabinet</div>
+                                        <div id="doctorPendingStep3Desc" style="font-size:0.82rem;color:var(--color-text-secondary,#64748b);">Dashboard partagé du cabinet, dépenses et recettes, stocks, réunions… La cotation reste votre espace personnel.</div>
                                     </div>
                                 </div>
                             </div>
