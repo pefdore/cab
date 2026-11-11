@@ -1,11 +1,11 @@
 {
-  "name": "Cotation Médecin",
-  "short_name": "Cotation",
-  "description": "Gestion des passages et honoraires médicaux",
+  "name": "Cabix.io",
+  "short_name": "Cabix",
+  "description": "Tout ce que votre logiciel médecin ne fait pas : flux financiers, urgences, stocks, réunions et secretariat de votre cabinet médical",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFBFC",
-  "theme_color": "#5B4BFF",
+  "background_color": "#F7FAF9",
+  "theme_color": "#0B1F1A",
   "orientation": "portrait-primary",
   "icons": [
     {
