@@ -680,22 +680,36 @@ function urgenceHandleCsvFile(input) {
 // ---------- Import Excel (.xlsx / .xls) via SheetJS charge a la demande ----------
 
 let _xlsxLoading = false;
-function urgenceEnsureXlsxLoaded() {
+function urgenceLoadScriptOnce(url) {
     return new Promise((resolve, reject) => {
-        if (window.XLSX) return resolve();
-        if (_xlsxLoading) {
-            const check = setInterval(() => {
-                if (window.XLSX) { clearInterval(check); resolve(); }
-            }, 100);
-            return;
-        }
-        _xlsxLoading = true;
         const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.10/dist/xlsx.full.min.js';
+        s.src = url;
         s.onload = () => resolve();
-        s.onerror = () => reject(new Error('Impossible de charger le lecteur Excel (SheetJS). Vérifiez la connexion, ou exportez le fichier en CSV.'));
+        s.onerror = () => { s.remove(); reject(new Error('echec ' + url)); };
         document.head.appendChild(s);
     });
+}
+
+async function urgenceEnsureXlsxLoaded() {
+    if (window.XLSX) return;
+    if (_xlsxLoading) {
+        while (!window.XLSX) await new Promise(r => setTimeout(r, 100));
+        return;
+    }
+    _xlsxLoading = true;
+    // cdnjs d'abord (deja utilise par l'app pour jsPDF), puis replis
+    const urls = [
+        'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+        'https://cdn.jsdelivr.net/npm/xlsx@0.18.10/dist/xlsx.full.min.js',
+        'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+    ];
+    for (const url of urls) {
+        try {
+            await urgenceLoadScriptOnce(url);
+            if (window.XLSX) return;
+        } catch (e) { /* essai suivant */ }
+    }
+    throw new Error('Impossible de charger le lecteur Excel. Vérifiez la connexion internet, ou exportez votre fichier en CSV (Fichier > Télécharger > CSV) et importez-le — le CSV ne nécessite aucune librairie.');
 }
 
 async function urgenceReadExcelFile(file) {

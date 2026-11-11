@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cotation-v202611261000';
+const CACHE_NAME = 'cotation-v202611271000';
 const ASSETS = [
   '/',
   '/index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   '/urgence-orders.js?v=202611161000',
   '/style.css?v=202611201000',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
 self.addEventListener('install', event => {
