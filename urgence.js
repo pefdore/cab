@@ -564,6 +564,25 @@ function urgenceImportCsvClick() {
     document.getElementById('urgenceImportCsvInput')?.click();
 }
 
+// Modele CSV : en-tete + lignes d'exemple (une ligne par date de peremption)
+function urgenceDownloadCsvTemplate() {
+    const template = [
+        'nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur',
+        'Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;3;3;2026-05-01;4,50;Cooper;commandes@cooper.fr',
+        'Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;2;3;2027-01-01;4,50;Cooper;commandes@cooper.fr',
+        'Gants stériles;Suture / petit matériel;G-052;paquet de 50;paire;6;4;;;Cera;',
+        'Compresses stériles 10x10;Désinfection;D-010;sachet de 20;paquet;4;2;2026-12-01;;Phocépharma;'
+    ].join('\n');
+    const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modele_inventaire.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    if (typeof showToast === 'function') showToast('Modèle CSV téléchargé — remplissez-le puis importez-le depuis ce même menu');
+}
+
 function urgenceHandleCsvFile(input) {
     const file = input.files && input.files[0];
     input.value = '';
@@ -2327,6 +2346,9 @@ function initUrgenceModule() {
     const importBtn = document.getElementById('urgenceImportStocksBtn');
     if (importBtn) importBtn.addEventListener('click', urgenceImportCsvClick);
 
+    const templateBtn = document.getElementById('urgenceCsvTemplateBtn');
+    if (templateBtn) templateBtn.addEventListener('click', urgenceDownloadCsvTemplate);
+
     const importInput = document.getElementById('urgenceImportCsvInput');
     if (importInput) importInput.addEventListener('change', (e) => urgenceHandleCsvFile(e.target));
 
@@ -2403,6 +2425,7 @@ window.urgenceDiscardLot = urgenceDiscardLot;
 window.urgenceAddLotRow = urgenceAddLotRow;
 window.urgenceGoSubTab = urgenceGoSubTab;
 window.urgenceImportCsvClick = urgenceImportCsvClick;
+window.urgenceDownloadCsvTemplate = urgenceDownloadCsvTemplate;
 window.urgenceHandleCsvFile = urgenceHandleCsvFile;
 window.urgenceShowImportPreview = urgenceShowImportPreview;
 window.urgenceCloseImportModal = urgenceCloseImportModal;
