@@ -415,6 +415,8 @@ function renderUrgenceStockCards() {
                     ${lotsHtml ? `<div class="stock-card-lots">${lotsHtml}</div>` : ''}
                     <div class="stock-card-meta">
                         <span>seuil ${p.minQuantity}</span>
+                        ${p.reference ? `<span>• réf. ${urgenceEscapeHtml(p.reference)}</span>` : ''}
+                        ${p.packaging ? `<span>• ${urgenceEscapeHtml(p.packaging)}</span>` : ''}
                         ${p.supplier ? `<span>• ${urgenceEscapeHtml(p.supplier)}</span>` : ''}
                     </div>
                     ${priceHtml ? `<div class="stock-card-price">${priceHtml}</div>` : ''}
@@ -460,6 +462,211 @@ function renderUrgenceOverview() {
 function urgenceGoSubTab(subtab) {
     document.querySelector(`#cabinet-stocks .sub-tab[data-subtab="${subtab}"]`)?.click();
     document.getElementById(`cabinet-stocks`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---------- Import CSV (inventaire complementaire ou complet) ----------
+
+function urgenceCsvNormDate(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return s;
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) return `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+    return null;
+}
+
+function urgenceCsvNum(raw) {
+    if (raw === undefined || raw === null || String(raw).trim() === '') return null;
+    const v = parseFloat(String(raw).replace(',', '.'));
+    return isNaN(v) ? null : v;
+}
+
+function urgenceCsvCategory(raw) {
+    const s = String(raw || '').trim().toLowerCase();
+    if (!s) return 'divers';
+    const byId = URGENCE_CATEGORIES.find(c => c.id === s);
+    if (byId) return byId.id;
+    const byLabel = URGENCE_CATEGORIES.find(c => c.label.toLowerCase() === s);
+    return byLabel ? byLabel.id : 'divers';
+}
+
+function urgenceParseCsv(text) {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return { products: [], errors: ['Fichier vide ou sans ligne de données.'] };
+
+    const header = lines[0];
+    const sep = [';', '\t', ','].sort((a, b) => header.split(b).length - header.split(a).length)[0];
+    const cols = header.split(sep).map(c => c.trim().toLowerCase().replace(/^["']|["']$/g, ''));
+    const idx = (names) => cols.findIndex(c => names.includes(c));
+    const map = {
+        name: idx(['nom', 'name', 'produit']),
+        category: idx(['categorie', 'catégorie', 'category']),
+        reference: idx(['reference', 'référence', 'ref', 'code']),
+        packaging: idx(['conditionnement', 'packaging']),
+        unit: idx(['unite', 'unité', 'unit']),
+        qty: idx(['quantite', 'quantité', 'qty', 'quantite']),
+        min: idx(['seuil', 'min', 'seuil_alerte']),
+        expiry: idx(['peremption', 'péremption', 'expiration', 'date_peremption']),
+        price: idx(['prix', 'prix_unitaire', 'cout', 'cout_unitaire']),
+        supplier: idx(['fournisseur', 'supplier']),
+        supplierEmail: idx(['email_fournisseur', 'email', 'email fournisseur'])
+    };
+    const errors = [];
+    if (map.name < 0) {
+        errors.push('Colonne « nom » introuvable : ajoutez une ligne d\u2019en-tête (nom;categorie;reference;...).');
+        return { products: [], errors };
+    }
+
+    const products = [];
+    const byKey = new Map();
+    lines.slice(1).forEach((line, n) => {
+        const cells = line.split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+        const get = (i) => (i >= 0 && i < cells.length ? cells[i] : '');
+        const name = get(map.name);
+        if (!name) { errors.push(`Ligne ${n + 2} ignorée : nom manquant.`); return; }
+        const reference = get(map.reference);
+        const key = reference || name.toLowerCase();
+        const lot = {
+            id: urgenceLotId(),
+            expiry: urgenceCsvNormDate(get(map.expiry)),
+            qty: Math.max(0, parseInt(get(map.qty), 10) || 0)
+        };
+        let p = byKey.get(key);
+        if (!p) {
+            p = {
+                id: 'p' + Date.now() + '_' + products.length,
+                name,
+                category: urgenceCsvCategory(get(map.category)),
+                reference,
+                packaging: get(map.packaging),
+                unit: get(map.unit) || 'unité',
+                minQuantity: Math.max(0, parseInt(get(map.min), 10) || 0),
+                lots: [],
+                supplier: get(map.supplier),
+                supplierEmail: get(map.supplierEmail),
+                unitPrice: urgenceCsvNum(get(map.price))
+            };
+            byKey.set(key, p);
+            products.push(p);
+        }
+        if (lot.qty > 0) p.lots.push(lot);
+    });
+
+    products.forEach(p => {
+        if (!p.lots.length) p.lots = [];
+        urgenceSyncProductFromLots(p);
+    });
+    return { products, errors };
+}
+
+function urgenceImportCsvClick() {
+    document.getElementById('urgenceImportCsvInput')?.click();
+}
+
+function urgenceHandleCsvFile(input) {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => urgenceShowImportPreview(String(reader.result), file.name);
+    reader.onerror = () => alert('Impossible de lire le fichier.');
+    reader.readAsText(file, 'utf-8');
+}
+
+function urgenceShowImportPreview(csvText, fileName) {
+    const parsed = urgenceParseCsv(csvText);
+    document.getElementById('urgenceImportModal')?.remove();
+
+    if (parsed.errors.length && parsed.products.length === 0) {
+        alert('Erreurs dans le fichier CSV :\n\n' + parsed.errors.slice(0, 5).join('\n'));
+        return;
+    }
+
+    window._urgenceImportData = parsed;
+
+    const rowsPreview = parsed.products.slice(0, 8).map(p => `
+        <div class="stock-price-row">
+            <span class="stock-price-name">${urgenceEscapeHtml(p.name)}</span>
+            <span class="stock-price-hist">${p.quantity} ${urgenceEscapeHtml(p.unit)}${p.lots.length > 1 ? ` · ${p.lots.length} lots` : ''}${p.supplier ? ` · ${urgenceEscapeHtml(p.supplier)}` : ''}</span>
+        </div>`).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'urgenceImportModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card urgence-modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3>Importer un inventaire</h3>
+                <button type="button" class="modal-close" onclick="urgenceCloseImportModal()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="form-hint"><strong>${parsed.products.length} produit(s)</strong> détecté(s) dans « ${urgenceEscapeHtml(fileName)} »${parsed.errors.length ? ` · ${parsed.errors.length} ligne(s) ignorée(s)` : ''}.</p>
+                ${rowsPreview}
+                ${parsed.products.length > 8 ? `<p class="form-hint">+ ${parsed.products.length - 8} autre(s)…</p>` : ''}
+                <div class="form-group" style="margin-top:12px;">
+                    <label>Mode d'import</label>
+                    <label class="urgence-import-mode"><input type="radio" name="urgenceImportMode" value="merge" checked> <span><strong>Compléter l'inventaire existant</strong> — les quantités s'ajoutent aux produits déjà présents (reconnus par référence ou par nom), les nouveaux produits sont créés.</span></label>
+                    <label class="urgence-import-mode"><input type="radio" name="urgenceImportMode" value="replace"> <span><strong>Remplacer tout l'inventaire</strong> — l'inventaire actuel est effacé et remplacé par le fichier.</span></label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="urgenceCloseImportModal()">Annuler</button>
+                <button class="action-btn primary" onclick="urgenceApplyImport()">Importer</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) urgenceCloseImportModal();
+    });
+}
+
+function urgenceCloseImportModal() {
+    document.getElementById('urgenceImportModal')?.remove();
+    window._urgenceImportData = null;
+}
+
+function urgenceApplyImport() {
+    const parsed = window._urgenceImportData;
+    if (!parsed || !parsed.products.length) return;
+    const mode = document.querySelector('input[name="urgenceImportMode"]:checked')?.value || 'merge';
+
+    if (mode === 'replace') {
+        if (!confirm(`Remplacer TOUT l'inventaire actuel (${urgenceData.products.length} produit(s)) par les ${parsed.products.length} produit(s) du fichier ?`)) return;
+        urgenceData.products = parsed.products;
+    } else {
+        let created = 0, updated = 0;
+        parsed.products.forEach(cp => {
+            let existing = cp.reference ? urgenceData.products.find(p => p.reference === cp.reference) : null;
+            if (!existing) existing = urgenceData.products.find(p => p.name.toLowerCase() === cp.name.toLowerCase());
+            if (existing) {
+                cp.lots.forEach(l => {
+                    const lot = existing.lots.find(x => (x.expiry || null) === (l.expiry || null));
+                    if (lot) lot.qty += l.qty;
+                    else existing.lots.push(l);
+                });
+                if (cp.supplier && !existing.supplier) { existing.supplier = cp.supplier; existing.supplierEmail = existing.supplierEmail || cp.supplierEmail; }
+                if (cp.reference && !existing.reference) existing.reference = cp.reference;
+                if (cp.packaging && !existing.packaging) existing.packaging = cp.packaging;
+                if (cp.unitPrice !== null && cp.unitPrice > 0) existing.unitPrice = cp.unitPrice;
+                if (cp.minQuantity > 0 && existing.minQuantity === 0) existing.minQuantity = cp.minQuantity;
+                urgenceSyncProductFromLots(existing);
+                updated++;
+            } else {
+                urgenceData.products.push(cp);
+                created++;
+            }
+        });
+        if (typeof showToast === 'function') showToast(`Import : ${created} produit(s) créé(s), ${updated} mis à jour`);
+    }
+
+    parsed.products.forEach(p => urgenceRememberSupplier(p.supplier, p.supplierEmail));
+    saveUrgenceData();
+    urgenceCloseImportModal();
+    renderUrgenceStocks();
+    renderUrgencePointage();
+    if (typeof urgenceRenderOrders === 'function') urgenceRenderOrders();
+    if (mode === 'replace' && typeof showToast === 'function') showToast(`Inventaire remplacé : ${parsed.products.length} produit(s)`);
 }
 
 function urgenceToggleStockMenu(e) {
@@ -544,23 +751,33 @@ function urgenceShowProductModal(product) {
                 <button type="button" class="modal-close" onclick="urgenceCloseProductModal()" aria-label="Fermer">✕</button>
             </div>
             <div class="modal-body">
-            <div class="form-group">
-                <label>Nom du produit *</label>
-                <input type="text" id="urgenceProductName" class="form-input" value="${product ? urgenceEscapeHtml(product.name) : ''}" placeholder="Ex : Adrénaline 1 mg/mL">
+            <div class="urgence-form-row">
+                <div class="form-group">
+                    <label>Nom du produit *</label>
+                    <input type="text" id="urgenceProductName" class="form-input" value="${product ? urgenceEscapeHtml(product.name) : ''}" placeholder="Ex : Adrénaline 1 mg/mL">
+                </div>
+                <div class="form-group">
+                    <label>Référence fournisseur</label>
+                    <input type="text" id="urgenceProductRef" class="form-input" value="${product && product.reference ? urgenceEscapeHtml(product.reference) : ''}" placeholder="Ex : C-1234">
+                </div>
+            </div>
+            <div class="urgence-form-row">
+                <div class="form-group">
+                    <label>Conditionnement</label>
+                    <input type="text" id="urgenceProductPackaging" class="form-input" value="${product && product.packaging ? urgenceEscapeHtml(product.packaging) : ''}" placeholder="Ex : boîte de 50">
+                </div>
+                <div class="form-group">
+                    <label>Unité</label>
+                    <input type="text" id="urgenceProductUnit" class="form-input" value="${product ? urgenceEscapeHtml(product.unit) : 'unité'}" placeholder="flacon, ampoule, kit...">
+                </div>
             </div>
             <div class="form-group">
                 <label>Catégorie</label>
                 <select id="urgenceProductCategory" class="form-input">${cats}</select>
             </div>
-            <div class="urgence-form-row">
-                <div class="form-group">
-                    <label>Unité</label>
-                    <input type="text" id="urgenceProductUnit" class="form-input" value="${product ? urgenceEscapeHtml(product.unit) : 'unité'}" placeholder="flacon, ampoule, kit...">
-                </div>
-                <div class="form-group">
-                    <label>Seuil d'alerte</label>
-                    <input type="number" id="urgenceProductMin" class="form-input" min="0" value="${product ? product.minQuantity : 1}">
-                </div>
+            <div class="form-group">
+                <label>Seuil d'alerte</label>
+                <input type="number" id="urgenceProductMin" class="form-input" min="0" value="${product ? product.minQuantity : 1}">
             </div>
             <div class="form-group">
                 <label>Stock détaillé — quantité par date de péremption</label>
@@ -649,6 +866,8 @@ function urgenceSaveProduct(productId) {
     const unitPrice = priceRaw !== '' && priceRaw !== undefined && priceRaw !== null ? (parseFloat(priceRaw) || 0) : null;
     const supplier = document.getElementById('urgenceProductSupplier')?.value?.trim() || '';
     const supplierEmail = document.getElementById('urgenceProductSupplierEmail')?.value?.trim() || '';
+    const reference = document.getElementById('urgenceProductRef')?.value?.trim() || '';
+    const packaging = document.getElementById('urgenceProductPackaging')?.value?.trim() || '';
 
     if (!name) {
         if (typeof showToast === 'function') showToast('Le nom du produit est obligatoire', 'error');
@@ -663,6 +882,8 @@ function urgenceSaveProduct(productId) {
             urgenceSyncProductFromLots(p);
             p.supplier = supplier;
             p.supplierEmail = supplierEmail;
+            p.reference = reference;
+            p.packaging = packaging;
             if (unitPrice !== null) p.unitPrice = unitPrice;
         }
     } else {
@@ -670,7 +891,7 @@ function urgenceSaveProduct(productId) {
             id: 'p' + Date.now(),
             name, category, unit,
             minQuantity: min, lots,
-            supplier, supplierEmail,
+            supplier, supplierEmail, reference, packaging,
             unitPrice: unitPrice !== null ? unitPrice : undefined
         };
         urgenceSyncProductFromLots(p);
@@ -2103,6 +2324,12 @@ function initUrgenceModule() {
     const exportBtn = document.getElementById('urgenceExportStocksBtn');
     if (exportBtn) exportBtn.addEventListener('click', urgenceExportStocks);
 
+    const importBtn = document.getElementById('urgenceImportStocksBtn');
+    if (importBtn) importBtn.addEventListener('click', urgenceImportCsvClick);
+
+    const importInput = document.getElementById('urgenceImportCsvInput');
+    if (importInput) importInput.addEventListener('change', (e) => urgenceHandleCsvFile(e.target));
+
     const goPointageBtn = document.getElementById('urgenceGoPointageBtn');
     if (goPointageBtn) goPointageBtn.addEventListener('click', () => urgenceGoSubTab('urgence-pointage'));
 
@@ -2138,15 +2365,17 @@ function refreshUrgenceView() {
 
 function urgenceExportStocks() {
     const rows = [
-        ['Produit', 'Catégorie', 'Quantité', 'Unité', 'Seuil', 'Péremption', 'État'].join(';')
+        ['nom', 'categorie', 'reference', 'conditionnement', 'unite', 'quantite', 'seuil', 'peremption', 'prix', 'fournisseur', 'email_fournisseur'].join(';')
     ];
     urgenceData.products.forEach(p => {
-        const state = urgenceStockState(p);
-        const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'À commander' : 'OK');
-        const exp = p.expiry ? new Date(p.expiry).toLocaleDateString('fr-FR') : '';
-        rows.push([
-            `"${p.name}"`, urgenceCategoryLabel(p.category), p.quantity, p.unit, p.minQuantity, exp, stateLabel
-        ].join(';'));
+        (p.lots && p.lots.length ? p.lots : [{ id: null, expiry: null, qty: p.quantity }]).forEach(l => {
+            rows.push([
+                `"${p.name}"`, urgenceCategoryLabel(p.category),
+                p.reference || '', p.packaging || '', p.unit,
+                l.qty || 0, p.minQuantity, l.expiry || '',
+                p.unitPrice || '', p.supplier || '', p.supplierEmail || ''
+            ].join(';'));
+        });
     });
     const csv = rows.join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
@@ -2173,6 +2402,11 @@ window.urgenceMovePointage = urgenceMovePointage;
 window.urgenceDiscardLot = urgenceDiscardLot;
 window.urgenceAddLotRow = urgenceAddLotRow;
 window.urgenceGoSubTab = urgenceGoSubTab;
+window.urgenceImportCsvClick = urgenceImportCsvClick;
+window.urgenceHandleCsvFile = urgenceHandleCsvFile;
+window.urgenceShowImportPreview = urgenceShowImportPreview;
+window.urgenceCloseImportModal = urgenceCloseImportModal;
+window.urgenceApplyImport = urgenceApplyImport;
 window.refreshUrgenceView = refreshUrgenceView;
 window.urgenceToggleProtocol = urgenceToggleProtocol;
 window.urgenceComputeDoses = urgenceComputeDoses;
