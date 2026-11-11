@@ -16809,3 +16809,64 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #cabinet-dashboard .cab-evol-card .bar-chart .bar-wrapper {
     width: 100%;
 }
+
+/* ============================================================
+   ANIMATIONS DE DESSIN AU SCROLL (remplacent les fade-ins)
+   - Courbe : se dessine de janvier à décembre (stroke-dashoffset)
+   - Donut : balayage horaire (masque conique animé via @property)
+   - Barres : poussent en cascade (déjà en place)
+   ============================================================ */
+@property --donut-reveal {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+/* Courbe de trésorerie : dessin progressif */
+#cabinet-dashboard .chart-card .treso-curve {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-curve {
+    transition: stroke-dashoffset 1.2s var(--md-ease-standard) 350ms;
+    stroke-dashoffset: 0;
+}
+/* Aire : se voile après le passage du tracé ; ligne zéro : apparaît avec les barres */
+#cabinet-dashboard .chart-card .treso-area {
+    opacity: 0;
+    transition: opacity 700ms var(--md-ease-standard) 1.3s;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-area {
+    opacity: 1;
+}
+#cabinet-dashboard .chart-card .treso-zero {
+    opacity: 0;
+    transition: opacity 400ms var(--md-ease-standard) 200ms;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-zero {
+    opacity: 1;
+}
+
+/* Donut : balayage horaire au scroll */
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    -webkit-mask: conic-gradient(#000 var(--donut-reveal), transparent 0);
+    mask: conic-gradient(#000 var(--donut-reveal), transparent 0);
+}
+#cabinet-dashboard .cab-donut-card.chart-in-view .donut-chart {
+    animation: donut-sweep 1s var(--md-ease-standard) 150ms both;
+}
+@keyframes donut-sweep {
+    from { --donut-reveal: 0deg; }
+    to { --donut-reveal: 360deg; }
+}
+
+/* Neutraliser les anciens fade-ins (svg entier / hero donut) */
+#cabinet-dashboard .chart-card .bar-chart > svg {
+    opacity: 1;
+    transition: none;
+}
+#cabinet-dashboard .cab-donut-card .donut-hero {
+    opacity: 1;
+    transform: none;
+    transition: none;
+}
