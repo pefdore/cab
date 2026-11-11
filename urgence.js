@@ -276,6 +276,58 @@ function urgenceSupplierEmail(name) {
     return s?.email || '';
 }
 
+// Autocompletion fournisseur : suggestions filtres + creation a la volee
+function urgenceAttachSupplierAuto(input) {
+    if (!input) return;
+    const host = input.parentElement;
+    if (!host) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+
+    let dd = host.querySelector('.stock-autocomplete');
+    if (!dd) {
+        dd = document.createElement('div');
+        dd.className = 'stock-autocomplete';
+        host.appendChild(dd);
+    }
+
+    const render = () => {
+        const raw = input.value.trim();
+        const q = raw.toLowerCase();
+        if (q.length < 2) { dd.classList.remove('open'); dd.innerHTML = ''; return; }
+        const all = urgenceKnownSuppliers();
+        const matches = all.filter(s => s.name.toLowerCase().includes(q)).slice(0, 6);
+        let html = matches.map(s =>
+            `<button type="button" class="stock-autocomplete-item" data-name="${urgenceEscapeHtml(s.name)}">${urgenceEscapeHtml(s.name)}${s.email ? ` <small>${urgenceEscapeHtml(s.email)}</small>` : ''}</button>`
+        ).join('');
+        const exact = all.some(s => s.name.toLowerCase() === q);
+        if (!exact && raw.length >= 2) {
+            html += `<button type="button" class="stock-autocomplete-item new" data-name="${urgenceEscapeHtml(raw)}">➕ Créer « ${urgenceEscapeHtml(raw)} »</button>`;
+        }
+        if (!html) { dd.classList.remove('open'); dd.innerHTML = ''; return; }
+        dd.innerHTML = html;
+        dd.classList.add('open');
+    };
+
+    input.addEventListener('input', render);
+    input.addEventListener('focus', render);
+    dd.addEventListener('mousedown', (e) => {
+        const btn = e.target.closest('.stock-autocomplete-item');
+        if (!btn) return;
+        e.preventDefault();
+        input.value = btn.dataset.name;
+        if (btn.classList.contains('new')) {
+            urgenceRememberSupplier(input.value.trim(), '');
+            saveUrgenceData();
+            if (typeof showToast === 'function') showToast(`Fournisseur « ${input.value.trim()} » créé — complétez son email dans l'onglet Coûts & fournisseurs`);
+        }
+        dd.classList.remove('open');
+        input.dispatchEvent(new Event('input', { bubbles: false }));
+        input.focus();
+    });
+    const close = (e) => { if (!host.contains(e.target)) dd.classList.remove('open'); };
+    document.addEventListener('click', close);
+}
+
 function urgenceSupplierOptionsHtml() {
     return urgenceKnownSuppliers().map(s => `<option value="${urgenceEscapeHtml(s.name)}">${urgenceEscapeHtml(s.email || '')}</option>`).join('');
 }
@@ -1004,6 +1056,7 @@ function urgenceShowProductModal(product) {
         ? product.lots
         : [{ id: null, expiry: null, qty: product ? product.quantity : 0 }];
     lotRows.forEach(l => urgenceAddLotRow(l.id, l.expiry, l.qty));
+    urgenceAttachSupplierAuto(document.getElementById('urgenceProductSupplier'));
     setTimeout(() => document.getElementById('urgenceProductName')?.focus(), 50);
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cotation-v202612031000';
+const CACHE_NAME = 'cotation-v202612041000';
 const ASSETS = [
   '/',
   '/index.html',
