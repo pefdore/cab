@@ -16960,3 +16960,29 @@ body:has(#view-dashboard.active) {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================================
+   POLISH MD3 EXPRESSIVE — définition des bords, fond de page
+   ============================================================ */
+
+/* Fond de page : teinte plus affirmée pour faire ressortir les cartes */
+body:has(#view-dashboard.active) {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
+}
+
+/* Cartes : bords nets (contour outline-variant 1dp) + élévation niveau 1
+   plus lisible — les angles ET les côtés se détachent du fond teinté */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card,
+#cabinet-dashboard .cab-health-wrap {
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+#cabinet-dashboard .stat-card:hover,
+#cabinet-dashboard .chart-card:hover {
+    box-shadow: 0 2px 6px 2px rgba(0, 0, 0, 0.09), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Neutraliser les anciennes règles de la rangée KPI supprimée */
+#cabinet-dashboard .cab-kpi-strip { display: none; }

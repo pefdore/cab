@@ -5847,6 +5847,14 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                     <span class="evol-chip-label">Meilleur mois (recettes)</span>
                     <span class="evol-chip-value">${best.label} \u00b7 ${eur(best.recettes)}</span>
                 </div>` : ''}
+                <div class="evol-chip">
+                    <span class="evol-chip-label">Taux de marge</span>
+                    <span class="evol-chip-value" style="color:${tauxMarge >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}">${(Number(tauxMarge) || 0).toFixed(1).replace('.', ',')}%</span>
+                </div>
+                <div class="evol-chip">
+                    <span class="evol-chip-label">R\u00e9serve de tr\u00e9sorerie</span>
+                    <span class="evol-chip-value" style="color:${reserveMois >= 3 ? 'var(--color-success)' : reserveMois >= 1 ? 'var(--color-warning)' : 'var(--color-danger)'}">${reserveMois >= 0 ? reserveMois + ' mois' : 'N\u00e9gatif'}</span>
+                </div>
             ` : '<div class="evol-chip"><span class="evol-chip-label">Aucune \u00e9criture en ' + currentYear + ' pour le moment</span></div>';
         }
     }
