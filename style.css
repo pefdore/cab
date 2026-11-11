@@ -16790,3 +16790,22 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 #cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(6) { animation-delay: 290ms; }
 #cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(7) { animation-delay: 340ms; }
 #cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(8) { animation-delay: 390ms; }
+
+/* ---- Fix largeurs de barres + alignement exact des points de trésorerie ---- */
+/* min-width:auto (défaut flex) laissait les labels larges ("juil.", "sept.")
+   élargir leur colonne : toutes les colonnes doivent faire exactement 1/12. */
+#cabinet-dashboard .bar-chart .bar-group {
+    min-width: 0;
+}
+/* Espacement géré en padding DANS les groupes (pas en gap sur le conteneur) :
+   le conteneur fait alors exactement 12 colonnes de W/12, et la formule
+   (idx+0.5)/12 des points et de la courbe tombe pile au centre des barres. */
+#cabinet-dashboard .cab-evol-card .bar-chart {
+    gap: 0;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group {
+    padding: 0 3px;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-wrapper {
+    width: 100%;
+}
