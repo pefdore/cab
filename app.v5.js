@@ -5702,7 +5702,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                     g += `#e5e7eb ${Math.min(cum, 100).toFixed(2)}% 100%`;
                     subDonutEl.style.background = `conic-gradient(${g.replace(/, $/, '')})`;
                     if (subHero) subHero.style.display = '';
-                    if (subCenterTotal) subCenterTotal.textContent = item[1].toFixed(2) + '\u20ac';
+                    if (subCenterTotal) subCenterTotal.textContent = formatCompactEur(item[1]);
                     if (subCenterLabel) subCenterLabel.textContent = item[0];
                 } else {
                     hideSubDonut();
@@ -5715,7 +5715,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     // détail des sous-catégories dans un dropdown sous l'élément)
     const donutContainer = document.getElementById('depensesPieChart');
     const donutCenterTotal = document.getElementById('donutCenterTotal');
-    if (donutCenterTotal) donutCenterTotal.textContent = totalDepenses.toFixed(2) + '\u20ac';
+    if (donutCenterTotal) donutCenterTotal.textContent = formatCompactEur(totalDepenses);
     if (donutContainer && totalDepenses > 0) {
         const colors = ['#6366f1', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6', '#10b981', '#f43f5e', '#84cc16'];
         let gradient = '';
@@ -5848,14 +5848,10 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                     <span class="evol-chip-label">Moyenne mensuelle</span>
                     <span class="evol-chip-value">${eur(avgRec)}<small> recettes</small> / ${eur(avgDep)}<small> d\u00e9penses</small></span>
                 </div>
-                ${best.recettes > 0 ? `
                 <div class="evol-chip">
-                    <span class="evol-chip-label">Meilleur mois (recettes)</span>
-                    <span class="evol-chip-value">${best.label} \u00b7 ${eur(best.recettes)}</span>
-                </div>` : ''}
-                <div class="evol-chip">
-                    <span class="evol-chip-label">Taux de marge</span>
+                    <span class="evol-chip-label">Taux de marge <span class="info-i" tabindex="0" role="button" aria-label="Explication du taux de marge">\u24d8</span></span>
                     <span class="evol-chip-value" style="color:${tauxMarge >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}">${(Number(tauxMarge) || 0).toFixed(1).replace('.', ',')}%</span>
+                    <span class="info-i-tip">Le taux de marge mesure la part des recettes qui reste apr\u00e8s le paiement des d\u00e9penses du cabinet : (recettes \u2212 d\u00e9penses) \u00f7 recettes \u00d7 100. Au-dessus de 30 %, le cabinet est confortable ; en dessous de 10 %, surveillez vos charges.</span>
                 </div>
                 <div class="evol-chip">
                     <span class="evol-chip-label">R\u00e9serve de tr\u00e9sorerie</span>
@@ -5952,6 +5948,16 @@ function resetChartAnimations() {
     if (typeof observeChartAnimations === 'function') observeChartAnimations();
 }
 window.resetChartAnimations = resetChartAnimations;
+
+// Format compact pour les centres de donuts : "12,4 k\u20ac" au lieu de
+// "12 450,00 \u20ac" qui debordait du trou sur mobile.
+function formatCompactEur(n) {
+    const v = Number(n) || 0;
+    if (Math.abs(v) >= 10000) return (v / 1000).toFixed(1).replace('.', ',') + ' k\u20ac';
+    if (Math.abs(v) >= 1000) return (v / 1000).toFixed(2).replace('.', ',') + ' k\u20ac';
+    return v.toFixed(0) + ' \u20ac';
+}
+window.formatCompactEur = formatCompactEur;
 
 // ===== CONSOMMABLES : depenses des bons de commande (module urgence) =====
 function renderConsommablesChart() {
