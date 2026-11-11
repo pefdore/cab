@@ -17481,34 +17481,58 @@ body:has(#view-dashboard.active) {
     margin-top: 8px;
 }
 
-/* --- Modales : feuille plein ecran sur telephone, boutons toujours visibles --- */
+/* --- Modales sur telephone : carte centree, CORPS scrollable, pied toujours visible --- */
+/* Regle cles (tous ecrans) : le corps doit pouvoir se reduire (min-height: 0),
+   sinon il pousse l'en-tete et le pied hors de la carte -> boutons coupes. */
+.modal-card {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow: hidden;
+}
+
+.modal-header { flex-shrink: 0; }
+
+.modal-body {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal-footer {
+    flex-shrink: 0;
+    background: var(--color-bg-elevated);
+    flex-wrap: wrap;
+}
+
 @media (max-width: 640px) {
     .modal-overlay {
-        align-items: flex-end;
+        align-items: center;
+        padding: 10px;
+        overflow-y: auto;
     }
 
     .modal-card {
         width: 100%;
         max-width: 100%;
-        max-height: 92vh;
-        max-height: 92dvh;
-        border-radius: 20px 20px 0 0;
-        border-bottom: none;
+        max-height: 88vh;
+        max-height: 88dvh;
+        border-radius: 18px;
     }
 
     .modal-body { padding: 14px; }
 
     .modal-footer {
-        position: sticky;
-        bottom: 0;
-        background: var(--color-bg-elevated);
-        flex-wrap: wrap;
         padding: 12px 14px;
         padding-bottom: max(12px, env(safe-area-inset-bottom));
         gap: 8px;
     }
 
-    .modal-footer .action-btn {
+    .modal-footer .action-btn,
+    .modal-footer .btn-primary,
+    .modal-footer .btn-secondary {
         flex: 1 1 40%;
         min-height: 44px;
         justify-content: center;
