@@ -2162,8 +2162,10 @@ window.attemptLogin = function() {
                                     <div class="stock-menu-wrap">
                                         <button class="stock-menu-btn" id="urgenceStockMenuBtn" onclick="urgenceToggleStockMenu(event)" aria-label="Plus d'actions" title="Plus d'actions">⋮</button>
                                         <div class="stock-menu" id="urgenceStockMenu">
+                                            <button class="stock-menu-item" id="urgenceImportStocksBtn">⬆️ Importer un inventaire (CSV)</button>
                                             <button class="stock-menu-item" id="urgenceExportStocksBtn">⬇️ Exporter CSV</button>
                                         </div>
+                                        <input type="file" id="urgenceImportCsvInput" accept=".csv,text/csv,text/plain" style="display:none;">
                                     </div>
                                 </div>
                             </div>
@@ -3456,7 +3458,7 @@ window.attemptLogin = function() {
     <script src="app.v5.js?v=202611102230" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=202611102230" defer></script>
-    <script src="urgence.js?v=202611101000" defer></script>
+    <script src="urgence.js?v=202611171000" defer></script>
     <script src="flux.js?v=202611102230" defer></script>
     <script src="reconciliation.js?v=202611141000" defer></script>
     <script src="reminders.js?v=202611062000" defer></script>

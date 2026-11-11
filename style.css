@@ -17296,3 +17296,22 @@ body:has(#view-dashboard.active) {
 #cabinet-dashboard .info-i:focus-visible + .evol-chip-value + .info-i-tip {
     display: block;
 }
+
+/* --- Import CSV : modes --- */
+.urgence-import-mode {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.urgence-import-mode:hover { background: var(--color-bg-subtle); }
+.urgence-import-mode input { margin-top: 3px; }
+.urgence-import-mode span { color: var(--color-text-secondary); }
+.urgence-import-mode strong { color: var(--color-text); }
