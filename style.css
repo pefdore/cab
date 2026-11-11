@@ -17564,3 +17564,61 @@ body:has(#view-dashboard.active) {
         justify-content: center;
     }
 }
+
+/* ============================================================
+   TITRES DE PAGES UNIFIÉS — modèle : page « Plus » (paramètres)
+   Titre : 2rem / 600 / tracking -0.03em (base h2)
+   Sous-titre : 0.8125rem, texte secondaire
+   ============================================================ */
+
+/* Flux : remplace le md-headline clampé (2.1rem/800) par le titre unifié */
+#view-flux .md-section-head .md-headline {
+    font-size: var(--text-3xl);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    color: var(--color-text);
+}
+#view-flux .md-headline-sub {
+    font-size: 0.8125rem;
+    margin: 0;
+}
+
+/* Affaires : titre + sous-titre unifiés */
+#view-affaires .page-header-card h2 {
+    margin: 0 0 6px;
+}
+#view-affaires .page-subtitle,
+.page-subtitle {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+}
+
+/* Urgence : sous-titre aligné */
+#view-urgence .urgence-page-desc {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    max-width: 640px;
+}
+
+/* Cabinet : sous-titre aligné */
+#view-cabinet .cabinet-page-title p {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+/* Espacement de tête de page cohérent partout */
+#view-urgence > h2,
+#view-history > h2,
+#view-admin > h2 {
+    margin-bottom: 6px;
+}
+
+/* Sécurité donut : marge basse franche avant les onglets */
+#cabinet-dashboard .donut-row {
+    margin-bottom: 24px;
+}
