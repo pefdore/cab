@@ -16627,3 +16627,99 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     background: var(--color-bg-elevated);
     box-shadow: none;
 }
+
+/* ============================================================
+   EXPRESSIVE LAYER — la signature MD3 Expressive proprement dite
+   1. Formes généreuses : cartes extra-large 28dp, chips 12dp, barres pill
+   2. Motion emphatique : easing (0.05,0.7,0.1,1), rebond au survol,
+      morphing au clic (scale), entrées md-pop
+   3. Chiffres héros : Display/Headline surdimensionnés
+   ============================================================ */
+
+/* 1. Formes extra-large */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card,
+#cabinet-dashboard .cab-health-wrap {
+    border-radius: var(--md-shape-xl);
+}
+#cabinet-dashboard .evol-chip,
+#cabinet-dashboard .cab-kpi-mini,
+#cabinet-dashboard .top-cat-subs,
+#cabinet-dashboard .donut-subs,
+#cabinet-dashboard .conso-pareto {
+    border-radius: 12px;
+}
+#cabinet-dashboard .conso-ref-bar,
+#cabinet-dashboard .conso-ref-bar > span,
+#cabinet-dashboard .donut-sub-bar,
+#cabinet-dashboard .donut-sub-bar > span {
+    border-radius: 999px;
+    height: 10px;
+}
+#cabinet-dashboard .donut-sub-bar {
+    height: 6px;
+}
+
+/* 2. Motion emphatique — survol, clic, entrées */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card {
+    transition: transform 300ms var(--md-ease-emphasized), box-shadow 300ms var(--md-ease-emphasized);
+}
+#cabinet-dashboard .stat-card:hover,
+#cabinet-dashboard .chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px 2px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+    background-image: none;
+}
+#cabinet-dashboard .stat-card:active,
+#cabinet-dashboard .chart-card:active {
+    transform: translateY(0) scale(0.985);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable,
+#cabinet-dashboard .action-btn,
+#cabinet-dashboard .chart-legend .legend-item {
+    transition: transform 250ms var(--md-ease-emphasized), background-color 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:hover {
+    transform: translateY(-1px);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:active {
+    transform: scale(0.97);
+}
+#cabinet-dashboard .action-btn:active {
+    transform: scale(0.94);
+}
+#cabinet-dashboard .chart-legend .legend-item:hover {
+    transform: translateY(-1px);
+}
+#cabinet-dashboard .cab-donut-card:hover .donut-chart {
+    transform: scale(1.045) rotate(1.5deg);
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    transition: transform 450ms var(--md-ease-emphasized);
+}
+#cabinet-dashboard .bar-chart .treso-dot {
+    animation: md-pop 0.45s var(--md-spring) both;
+    transition: transform 250ms var(--md-ease-emphasized);
+}
+#cabinet-dashboard .evol-summary .evol-chip:nth-child(2) { animation-delay: 60ms; }
+#cabinet-dashboard .evol-summary .evol-chip:nth-child(3) { animation-delay: 120ms; }
+
+/* 3. Chiffres héros */
+#cabinet-dashboard .stat-value {
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+}
+#cabinet-dashboard .donut-center-value {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .stat-value {
+        font-size: 24px;
+        line-height: 32px;
+    }
+}
