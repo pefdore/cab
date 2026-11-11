@@ -168,6 +168,8 @@ async function onAuthSuccess() {
     // Porte abonnement : non bloquante, redirige vers paiement.html si l'essai
     // du cabinet est expire et qu'aucun abonnement n'est actif.
     cabixBillingGate();
+    // Carte 'Abonnement' du menu Parametres : affiche l'etat sans l'ouvrir
+    loadBillingStatus();
     
 // Chargement parallel : cotation (entries), patients et cabinet etaient
     // sequentiels et rendaient le dashboard long a apparaitre.
@@ -4265,6 +4267,8 @@ function showOverlaySettingsPage(overlay, pageName) {
         renderSettingsCotationList();
     } else if (pageName === 'donnees') {
         loadDataCounters();
+    } else if (pageName === 'abonnement') {
+        loadBillingStatus();
     }
 }
 
@@ -4291,7 +4295,8 @@ const SETTINGS_PAGES = {
     'pdf': { title: 'PDF & Documents', subtitle: 'Logo, signature et options du PDF' },
     'preferences': { title: 'Préférences', subtitle: 'Thème, cotation hors cabinet et notifications' },
     'integrations': { title: 'Intégrations', subtitle: 'Validation des demandes d\'accès des nouveaux membres du cabinet' },
-    'donnees': { title: 'Données', subtitle: 'Compteur, export et suppression de vos données' }
+    'donnees': { title: 'Données', subtitle: 'Compteur, export et suppression de vos données' },
+    'abonnement': { title: 'Abonnement', subtitle: 'Essai, formule du cabinet, facturation et renouvellement' }
 };
 
 function updateSettingsHeader(pageName, inOverlay) {
@@ -4353,8 +4358,111 @@ async function openSettingsPage(pageName) {
         loadGoogleSheetsSettings();
     } else if (pageName === 'donnees') {
         loadDataCounters();
+    } else if (pageName === 'abonnement') {
+        loadBillingStatus();
     }
 }
+
+// ===== Page Parametres > Abonnement =====
+async function loadBillingStatus() {
+    const badge = document.getElementById('subStateBadge');
+    const stateText = document.getElementById('subStateText');
+    const renewalText = document.getElementById('subRenewalText');
+    const menuValue = document.getElementById('menuAbonnementValue');
+    const modeSel = document.getElementById('subBillingMode');
+    const nameInput = document.getElementById('subBillingName');
+    if (!badge || !stateText) return;
+
+    try {
+        const profile = window.currentProfile || null;
+        let cabinetId = profile?.cabinet_id || null;
+        if (!cabinetId && currentUser?.id && supabaseClient) {
+            const { data: p } = await supabaseClient.from('profiles')
+                .select('cabinet_id').eq('id', currentUser.id).single();
+            cabinetId = p?.cabinet_id || null;
+        }
+
+        // Preferences de facturation sauvegardees localement
+        try {
+            const mode = localStorage.getItem('cabix_billing_mode');
+            if (modeSel && mode) modeSel.value = mode;
+            const name = localStorage.getItem('cabix_billing_name');
+            if (nameInput && name) nameInput.value = name;
+        } catch (e) {}
+        syncBillingNameVisibility();
+
+        if (!cabinetId) {
+            badge.textContent = 'Sans cabinet';
+            badge.style.background = '#F1F5F4'; badge.style.color = '#6A817B';
+            stateText.textContent = "Aucun cabinet rattaché — l'abonnement concerne les cabinets.";
+            if (renewalText) renewalText.textContent = '';
+            if (menuValue) menuValue.textContent = '—';
+            return;
+        }
+
+        const { data: access, error } = await supabaseClient
+            .rpc('cabix_cabinet_access', { p_cabinet_id: cabinetId });
+        if (error) throw error;
+
+        const fmtDate = d => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        const green = () => { badge.style.background = '#DCF2EC'; badge.style.color = '#087457'; };
+        const red = () => { badge.style.background = '#F9E9E9'; badge.style.color = '#8A2E2E'; };
+        const gold = () => { badge.style.background = '#F7EFDC'; badge.style.color = '#B98A2F'; };
+
+        if (access.reason === 'trial') {
+            badge.textContent = 'Essai gratuit'; green();
+            const left = access.trial_days_left;
+            stateText.textContent = left + " jour" + (left > 1 ? 's' : '') + " d'essai restant" + (left > 1 ? 's' : '') + " pour tout le cabinet.";
+            if (renewalText) renewalText.textContent = 'Fin de l\u2019essai : ' + fmtDate(access.trial_ends_at) + ' — choisissez ensuite une formule (ou saisissez un code offert).';
+            if (menuValue) menuValue.textContent = 'Essai · ' + left + ' j';
+        } else if (access.reason === 'active') {
+            badge.textContent = 'Pro'; green();
+            const planLabels = { solo: 'Solo', cabinet: 'Cabinet', groupe: 'Groupe', structure: 'Structure' };
+            stateText.textContent = 'Formule ' + (planLabels[access.plan] || access.plan) + ' active — tous les membres du cabinet sont couverts.';
+            if (renewalText) renewalText.textContent = access.current_period_end ? 'Prochain renouvellement : ' + fmtDate(access.current_period_end) : '';
+            if (menuValue) menuValue.textContent = 'Pro · ' + (planLabels[access.plan] || access.plan);
+        } else if (access.reason === 'free') {
+            badge.textContent = 'Accès offert'; gold();
+            stateText.textContent = 'Ce cabinet bénéficie d\u2019un accès gratuit' + (access.free_until ? ' jusqu\u2019au ' + fmtDate(access.free_until) : ' illimité') + '.';
+            if (renewalText) renewalText.textContent = '';
+            if (menuValue) menuValue.textContent = 'Offert';
+        } else {
+            badge.textContent = 'Paiement requis'; red();
+            stateText.textContent = "L'essai est terminé — réglez l'abonnement du cabinet pour réactiver l'accès de toute l'équipe.";
+            if (renewalText) renewalText.textContent = '';
+            if (menuValue) menuValue.textContent = 'À régler';
+        }
+    } catch (e) {
+        console.error('[BILLING] loadBillingStatus error:', e);
+        badge.textContent = 'Erreur';
+        badge.style.background = '#F1F5F4'; badge.style.color = '#6A817B';
+        stateText.textContent = "Impossible de charger l'état de l'abonnement pour le moment.";
+    }
+}
+window.loadBillingStatus = loadBillingStatus;
+
+function syncBillingNameVisibility() {
+    const modeSel = document.getElementById('subBillingMode');
+    const group = document.getElementById('subBillingNameGroup');
+    if (modeSel && group) group.style.display = (modeSel.value === 'cabinet') ? '' : 'none';
+}
+
+function saveBillingPrefs() {
+    try {
+        const modeSel = document.getElementById('subBillingMode');
+        const nameInput = document.getElementById('subBillingName');
+        if (modeSel) localStorage.setItem('cabix_billing_mode', modeSel.value);
+        if (nameInput) localStorage.setItem('cabix_billing_name', nameInput.value.trim());
+        syncBillingNameVisibility();
+    } catch (e) {}
+}
+window.saveBillingPrefs = saveBillingPrefs;
+
+function goToPaiement() {
+    saveBillingPrefs();
+    location.href = 'paiement.html';
+}
+window.goToPaiement = goToPaiement;
 
 function closeSettingsPage() {
     const menu = document.getElementById('settings-menu');

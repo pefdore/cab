@@ -70,7 +70,7 @@ export default async function handler(req, res) {
 
     let payload = {};
     try { payload = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch (e) {}
-    const { plan, interval = 'yearly', promo_code, email, cabinet_id, supabase_access_token } = payload;
+    const { plan, interval = 'yearly', promo_code, email, cabinet_id, billing_mode, billing_name, supabase_access_token } = payload;
 
     if (!PLANS[plan]) return json(res, 400, { error: 'plan_invalide' });
     if (!['monthly', 'yearly'].includes(interval)) return json(res, 400, { error: 'intervalle_invalide' });
@@ -125,10 +125,28 @@ export default async function handler(req, res) {
     const unit = interval === 'monthly' ? PLANS[plan].monthly : PLANS[plan].yearly;
     const unitAmount = Math.round(unit * (100 - percentOff) / 100);
 
+    // Facturation : cree un client Stripe au nom du cabinet/SCM si demande,
+    // sinon la facture est adressee au membre qui regle (email perso).
+    let customerId;
+    const invoiceName = (billing_mode === 'cabinet' && billing_name) ? billing_name : null;
+    if (invoiceName) {
+        try {
+            const cust = await stripePost('customers', {
+                email: email || user.email || undefined,
+                name: invoiceName,
+                'metadata[cabinet_id]': cabinet_id,
+                'metadata[billing_mode]': 'cabinet'
+            }, STRIPE_KEY);
+            customerId = cust.id;
+        } catch (e) {
+            // Client non cree : on retombe sur customer_email
+        }
+    }
+
     try {
         const session = await stripePost('checkout/sessions', {
             mode: 'subscription',
-            customer_email: email || user.email || undefined,
+            ...(customerId ? { customer: customerId } : { customer_email: email || user.email || undefined }),
             client_reference_id: cabinet_id,
             'line_items[0][quantity]': 1,
             'line_items[0][price_data][currency]': 'eur',

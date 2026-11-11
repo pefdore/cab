@@ -1252,6 +1252,21 @@ window.attemptLogin = function() {
                             <path d="M9 18l6-6-6-6"/>
                         </svg>
                     </button>
+                    <button type="button" class="settings-card" data-settings-page="abonnement" onclick="openSettingsPage('abonnement')">
+                        <div class="settings-card-icon" style="background: linear-gradient(135deg, #0E9F7E, #0BC2A0);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                            </svg>
+                        </div>
+                        <div class="settings-card-content">
+                            <h3>Abonnement</h3>
+                            <p>Essai, formule du cabinet et renouvellement</p>
+                            <span class="settings-card-value" id="menuAbonnementValue">…</span>
+                        </div>
+                        <svg class="settings-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
                 </div>
                                 <!-- Profil Page -->
                 <div id="settings-page-profil" class="settings-page" style="display: none;">
@@ -1621,6 +1636,49 @@ window.attemptLogin = function() {
                                 Supprimer toutes les données
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Abonnement Page -->
+                <div id="settings-page-abonnement" class="settings-page" style="display: none;">
+                    <div class="settings-section">
+                        <h3>État de votre cabinet</h3>
+                        <p class="settings-desc">Chaque membre du cabinet voit ici l'état de l'abonnement partagé.</p>
+                        <div style="display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--color-border, #E2ECE8);border-radius:14px;background:var(--color-bg-elevated, #F7FAF9);">
+                            <span id="subStateBadge" style="display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:999px;background:#EEF5F3;color:#087457;">…</span>
+                            <div>
+                                <div id="subStateText" style="font-weight:600;">Chargement…</div>
+                                <div id="subRenewalText" style="font-size:.82rem;color:var(--color-text-secondary, #6A817B);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Régler pour le cabinet</h3>
+                        <p class="settings-desc">N'importe quel associé peut régler l'abonnement : la formule couvre automatiquement tous les membres du cabinet, quel que soit celui qui paie.</p>
+                        <div class="form-group">
+                            <label>Facturation au nom de</label>
+                            <select id="subBillingMode" onchange="saveBillingPrefs()">
+                                <option value="cabinet">Le cabinet / la SCM (défaut)</option>
+                                <option value="personnel">Moi-même (facturation individuelle)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="subBillingNameGroup">
+                            <label>Nom sur la facture</label>
+                            <input type="text" id="subBillingName" placeholder="Ex. SCM du Docteur X" oninput="saveBillingPrefs()">
+                        </div>
+                        <button type="button" class="action-btn primary" onclick="goToPaiement()">
+                            Choisir une formule et régler
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </button>
+                        <p class="settings-desc" style="margin-top:10px;">Paiement sécurisé Stripe — mensuel ou annuel, sans engagement. Le mois d'essai en cours reste gratuit jusqu'à son terme.</p>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Comment ça marche</h3>
+                        <p class="settings-desc" style="margin-bottom:8px;">• <strong>Un seul abonnement par cabinet</strong> : tous les associés, salariés et secrétaires sont inclus, aucun paiement individuel requis.</p>
+                        <p class="settings-desc" style="margin-bottom:8px;">• <strong>Essai gratuit de 30 jours</strong> au moment de la création du cabinet, pour toute l'équipe.</p>
+                        <p class="settings-desc">• Un code d'accès offert peut être saisi sur la page de paiement (partenaires, cabinets pilotes).</p>
                     </div>
                 </div>
                 <button class="mobile-logout-btn" id="mobileLogoutBtn" style="display: none;">
@@ -3569,7 +3627,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202612061100" defer></script>
+    <script src="app.v5.js?v=202612061500" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=202612011000" defer></script>
     <script src="urgence.js?v=202611291000" defer></script>
