@@ -1366,6 +1366,11 @@ function switchDashboardMode(mode) {
             console.log('[TOGGLE] cotation-dashboard shown');
             // Load cotation data when showing
             if (typeof updateStats === 'function') updateStats();
+            // Les lignes du graphique n'etaient pas tracees si le dashboard
+            // cotation etait cache au rendu initial (rect = 0) : retracer.
+            requestAnimationFrame(function() {
+                if (typeof window.drawMonthlyLines === 'function') window.drawMonthlyLines();
+            });
         }
     } else {
         // Hide cotation, show cabinet
@@ -5783,14 +5788,21 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
         }));
         const zeroY = tY(0).toFixed(2);
         const currentMonthIdx = new Date().getMonth();
-        // Courbe lissee (bezier) : MD3 expressif, pas de polyligne anguleuse
+        // Courbe lissee : MEME spline Catmull-Rom que le dashboard cotation
+        // (points de controle calcules sur les voisins, /6) - douceur identique.
         const smoothPath = (arr) => {
-            if (!arr.length) return '';
+            if (arr.length < 2) return arr.length ? `M ${arr[0].x.toFixed(2)} ${arr[0].y.toFixed(2)}` : '';
             let d = `M ${arr[0].x.toFixed(2)} ${arr[0].y.toFixed(2)}`;
-            for (let k = 0; k < arr.length - 1; k++) {
-                const p0 = arr[k], p1 = arr[k + 1];
-                const dx = (p1.x - p0.x) * 0.42;
-                d += ` C ${(p0.x + dx).toFixed(2)} ${p0.y.toFixed(2)}, ${(p1.x - dx).toFixed(2)} ${p1.y.toFixed(2)}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+            for (let i = 0; i < arr.length - 1; i++) {
+                const p0 = arr[i - 1] || arr[i];
+                const p1 = arr[i];
+                const p2 = arr[i + 1];
+                const p3 = arr[i + 2] || p2;
+                const c1x = p1.x + (p2.x - p0.x) / 6;
+                const c1y = p1.y + (p2.y - p0.y) / 6;
+                const c2x = p2.x - (p3.x - p1.x) / 6;
+                const c2y = p2.y - (p3.y - p1.y) / 6;
+                d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
             }
             return d;
         };
@@ -7341,6 +7353,7 @@ function renderCharts() {
         
         monthlyChartContainer.appendChild(svg);
     };
+    window.drawMonthlyLines = drawMonthlyLines;
     requestAnimationFrame(drawMonthlyLines);
     
     if (!window.__monthlyChartResizeBound) {
