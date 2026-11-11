@@ -7756,7 +7756,7 @@ h2 {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
 }
 
 .modal-card {
@@ -17315,7 +17315,6 @@ body:has(#view-dashboard.active) {
 .urgence-import-mode input { margin-top: 3px; }
 .urgence-import-mode span { color: var(--color-text-secondary); }
 .urgence-import-mode strong { color: var(--color-text); }
-=======
 /* ============================================================
    DONUTS HIERARCHIQUES ESPACÉS + CHIPS EN GRILLE + ⓘ TOGGLE
    ============================================================ */
@@ -17449,7 +17448,6 @@ body:has(#view-dashboard.active) {
 #cabinet-dashboard .info-i {
     cursor: pointer;
 }
->>>>>>> 95e50d7 (feat(dashboard): donuts hierarchiques espaces (gauche 200px > droite 150px, gap 36px) avec montants complets dans les trous ; chips de synthese en grille 4 colonnes egales avec moyenne compacte (R/D) ; info-i fonctionnel au clic/tap (toggle JS, le selecteur CSS frere ne matchait pas))
 
 /* --- Import : modale d'accueil --- */
 .urgence-import-help-actions {
@@ -17479,6 +17477,36 @@ body:has(#view-dashboard.active) {
     white-space: pre;
     resize: vertical;
     margin-top: 8px;
+}
+
+/* Donuts : la tranche basse ne doit plus être coupée par le premier onglet.
+   Le scale au survol (1.045) fait déborder l'anneau de ~5px de sa boîte :
+   padding vertical suffisant pour l'absorber. */
+#cabinet-dashboard .donut-row {
+    padding: 12px 0 16px;
+    overflow: visible;
+}
+#cabinet-dashboard .donut-hero {
+    padding: 6px;
+    box-sizing: content-box;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    box-sizing: border-box;
+}
+#cabinet-dashboard .top-cat-wrap:first-child {
+    position: relative;
+}
+
+/* ---- Donuts : remontés légèrement, marge basse qui absorbe le survol ---- */
+#cabinet-dashboard .donut-row {
+    padding: 2px 0 18px;
+    margin-top: 0;
+}
+#cabinet-dashboard .cab-donut-card:hover .donut-chart {
+    transform: none;
+}
+#cabinet-dashboard .donut-chart {
+    transition: none;
 }
 
 /* --- Modales sur telephone : carte centree, CORPS scrollable, pied toujours visible --- */
@@ -17537,4 +17565,62 @@ body:has(#view-dashboard.active) {
         min-height: 44px;
         justify-content: center;
     }
+}
+
+/* ============================================================
+   TITRES DE PAGES UNIFIÉS — modèle : page « Plus » (paramètres)
+   Titre : 2rem / 600 / tracking -0.03em (base h2)
+   Sous-titre : 0.8125rem, texte secondaire
+   ============================================================ */
+
+/* Flux : remplace le md-headline clampé (2.1rem/800) par le titre unifié */
+#view-flux .md-section-head .md-headline {
+    font-size: var(--text-3xl);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    color: var(--color-text);
+}
+#view-flux .md-headline-sub {
+    font-size: 0.8125rem;
+    margin: 0;
+}
+
+/* Affaires : titre + sous-titre unifiés */
+#view-affaires .page-header-card h2 {
+    margin: 0 0 6px;
+}
+#view-affaires .page-subtitle,
+.page-subtitle {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+}
+
+/* Urgence : sous-titre aligné */
+#view-urgence .urgence-page-desc {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    max-width: 640px;
+}
+
+/* Cabinet : sous-titre aligné */
+#view-cabinet .cabinet-page-title p {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+/* Espacement de tête de page cohérent partout */
+#view-urgence > h2,
+#view-history > h2,
+#view-admin > h2 {
+    margin-bottom: 6px;
+}
+
+/* Sécurité donut : marge basse franche avant les onglets */
+#cabinet-dashboard .donut-row {
+    margin-bottom: 24px;
 }
