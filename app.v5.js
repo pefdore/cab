@@ -5794,9 +5794,9 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             + ` L ${coords[0].x.toFixed(2)} ${zeroY} Z`;
         const curveSvg = `
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
-                <path d="${areaD}" fill="rgba(99,102,241,0.06)" stroke="none"/>
-                <line x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="var(--color-border)" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <path d="${curveD}" fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                <path class="treso-area" d="${areaD}" fill="rgba(99,102,241,0.06)" stroke="none"/>
+                <line class="treso-zero" x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="var(--color-border)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <path class="treso-curve" d="${curveD}" pathLength="100" fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
             </svg>`;
         const tresoDots = coords.map(c =>
             `<span class="treso-dot" style="left:${c.x.toFixed(2)}%; top:${c.y.toFixed(2)}%;"></span>`
