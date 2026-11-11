@@ -5845,8 +5845,8 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
                     <span class="evol-chip-value" style="color:${last.tresorerie >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}">${eur(last.tresorerie)}</span>
                 </div>
                 <div class="evol-chip">
-                    <span class="evol-chip-label">Moyenne mensuelle</span>
-                    <span class="evol-chip-value">${eur(avgRec)}<small> recettes</small> / ${eur(avgDep)}<small> d\u00e9penses</small></span>
+                    <span class="evol-chip-label">Moyenne / mois</span>
+                    <span class="evol-chip-value"><small>R</small> ${eur(avgRec)} <small>D</small> ${eur(avgDep)}</span>
                 </div>
                 <div class="evol-chip">
                     <span class="evol-chip-label">Taux de marge <span class="info-i" tabindex="0" role="button" aria-label="Explication du taux de marge">\u24d8</span></span>
@@ -5938,6 +5938,20 @@ function observeChartAnimations() {
 }
 window.observeChartAnimations = observeChartAnimations;
 
+// Info-i : toggle au clic/tap (survol insuffisant sur mobile, et l'icone est
+// imbriquee dans le label donc les selecteurs freres CSS ne matchaient pas).
+document.addEventListener('click', function(e) {
+    const info = e.target.closest ? e.target.closest('.info-i') : null;
+    document.querySelectorAll('#cabinet-dashboard .evol-chip.show-tip').forEach(function(c) {
+        if (!info || c !== info.closest('.evol-chip')) c.classList.remove('show-tip');
+    });
+    if (info) {
+        const chip = info.closest('.evol-chip');
+        if (chip) chip.classList.toggle('show-tip');
+        e.stopPropagation();
+    }
+});
+
 // Rejouer les animations a chaque re-rendu des charts : sinon les elements
 // recree arrivent en etat final (classe deja present) et rien ne s'anime.
 function resetChartAnimations() {
@@ -5953,9 +5967,7 @@ window.resetChartAnimations = resetChartAnimations;
 // "12 450,00 \u20ac" qui debordait du trou sur mobile.
 function formatCompactEur(n) {
     const v = Number(n) || 0;
-    if (Math.abs(v) >= 10000) return (v / 1000).toFixed(1).replace('.', ',') + ' k\u20ac';
-    if (Math.abs(v) >= 1000) return (v / 1000).toFixed(2).replace('.', ',') + ' k\u20ac';
-    return v.toFixed(0) + ' \u20ac';
+    return v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
 }
 window.formatCompactEur = formatCompactEur;
 
