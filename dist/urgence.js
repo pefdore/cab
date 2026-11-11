@@ -45,7 +45,9 @@ function loadUrgenceData() {
             if (!Array.isArray(urgenceData.products)) urgenceData.products = URGENCE_DEFAULT_PRODUCTS.slice();
             if (!Array.isArray(urgenceData.pointages)) urgenceData.pointages = [];
             if (!Array.isArray(urgenceData.orders)) urgenceData.orders = [];
+            if (!Array.isArray(urgenceData.suppliers)) urgenceData.suppliers = [];
             if (!urgenceData.lastPointage) urgenceData.lastPointage = null;
+            urgenceData.products.forEach(urgenceEnsureLots);
         } else {
             urgenceData = {
                 products: URGENCE_DEFAULT_PRODUCTS.slice(),
@@ -59,6 +61,7 @@ function loadUrgenceData() {
         console.error('[URGENCE] Erreur chargement:', e);
         urgenceData = { products: URGENCE_DEFAULT_PRODUCTS.slice(), pointages: [], orders: [], lastPointage: null };
     }
+    urgenceData.products.forEach(urgenceEnsureLots);
     // Synchro Supabase (partage multi-appareils / multi-sessions du cabinet)
     urgenceSyncPull();
 }
@@ -137,6 +140,8 @@ async function urgenceSyncPull(force) {
             if (!Array.isArray(urgenceData.products)) urgenceData.products = URGENCE_DEFAULT_PRODUCTS.slice();
             if (!Array.isArray(urgenceData.pointages)) urgenceData.pointages = [];
             if (!Array.isArray(urgenceData.orders)) urgenceData.orders = [];
+            if (!Array.isArray(urgenceData.suppliers)) urgenceData.suppliers = [];
+            urgenceData.products.forEach(urgenceEnsureLots);
             localStorage.setItem(URGENCE_STORAGE_KEY, JSON.stringify(urgenceData));
             localStorage.setItem(URGENCE_STORAGE_KEY + '_ts', String(remoteAt));
             if (typeof renderUrgenceStocks === 'function') renderUrgenceStocks();
@@ -190,6 +195,182 @@ function urgenceStockState(p) {
     if (!p.quantity) return 'rupture';
     if (p.quantity <= p.minQuantity) return 'bas';
     return 'ok';
+}
+
+// ---------- Lots de peremption (plusieurs dates par produit) ----------
+
+function urgenceLotId() {
+    return 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function urgenceEnsureLots(p) {
+    if (!p || Array.isArray(p.lots)) return p;
+    p.lots = [];
+    const qty = parseInt(p.quantity, 10) || 0;
+    if (qty > 0) p.lots.push({ id: urgenceLotId(), expiry: p.expiry || null, qty });
+    return p;
+}
+
+function urgenceSyncProductFromLots(p) {
+    if (!Array.isArray(p.lots)) return;
+    p.quantity = p.lots.reduce((s, l) => s + (parseInt(l.qty, 10) || 0), 0);
+    const dates = p.lots.filter(l => l.expiry).map(l => l.expiry).sort();
+    p.expiry = dates.length ? dates[0] : null;
+}
+
+function urgenceLotExpired(lot) {
+    return !!(lot.expiry && new Date(lot.expiry) < new Date());
+}
+
+function urgenceLotSoon(lot) {
+    if (!lot.expiry || urgenceLotExpired(lot)) return false;
+    return (new Date(lot.expiry) - new Date()) < 90 * 86400000;
+}
+
+// Applique un comptage total (pointage) sur les lots d'un produit :
+// on retire d'abord les lots qui periment le plus tot (FEFO), on ajoute sur le lot sans date.
+function urgenceApplyCountToLots(p, newQty) {
+    if (!Array.isArray(p.lots)) { p.quantity = newQty; return; }
+    const diff = newQty - p.quantity;
+    if (diff > 0) {
+        const noDate = p.lots.find(l => !l.expiry);
+        if (noDate) noDate.qty += diff;
+        else p.lots.push({ id: urgenceLotId(), expiry: null, qty: diff });
+    } else if (diff < 0) {
+        let rem = -diff;
+        const sorted = p.lots.slice().sort((a, b) => String(a.expiry || '9999').localeCompare(String(b.expiry || '9999')));
+        for (const l of sorted) {
+            if (rem <= 0) break;
+            const take = Math.min(l.qty, rem);
+            l.qty -= take;
+            rem -= take;
+        }
+        p.lots = p.lots.filter(l => l.qty > 0);
+    }
+    urgenceSyncProductFromLots(p);
+}
+
+// ---------- Fournisseurs (memorises pour eviter de les ressaisir) ----------
+
+function urgenceKnownSuppliers() {
+    if (!urgenceData) return [];
+    if (!Array.isArray(urgenceData.suppliers)) urgenceData.suppliers = [];
+    return urgenceData.suppliers;
+}
+
+function urgenceRememberSupplier(name, email) {
+    name = String(name || '').trim();
+    if (!name) return;
+    const list = urgenceKnownSuppliers();
+    let s = list.find(x => x.name.toLowerCase() === name.toLowerCase());
+    if (!s) {
+        s = { name, email: String(email || '').trim() };
+        list.push(s);
+    } else if (email) {
+        s.email = String(email).trim();
+    }
+}
+
+function urgenceSupplierEmail(name) {
+    const s = urgenceKnownSuppliers().find(x => x.name.toLowerCase() === String(name || '').trim().toLowerCase());
+    return s?.email || '';
+}
+
+// Autocompletion fournisseur : suggestions filtres + creation a la volee
+// emailInput (facultatif) : champ email a remplir automatiquement avec celui du fournisseur choisi
+function urgenceAttachSupplierAuto(input, emailInput) {
+    if (!input) return;
+    const host = input.parentElement;
+    if (!host) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+
+    let dd = host.querySelector('.stock-autocomplete');
+    if (!dd) {
+        dd = document.createElement('div');
+        dd.className = 'stock-autocomplete';
+        host.appendChild(dd);
+    }
+
+    const render = () => {
+        const raw = input.value.trim();
+        const q = raw.toLowerCase();
+        if (q.length < 2) { dd.classList.remove('open'); dd.innerHTML = ''; return; }
+        const all = urgenceKnownSuppliers();
+        const matches = all.filter(s => s.name.toLowerCase().includes(q)).slice(0, 6);
+        let html = matches.map(s =>
+            `<button type="button" class="stock-autocomplete-item" data-name="${urgenceEscapeHtml(s.name)}">${urgenceEscapeHtml(s.name)}${s.email ? ` <small>${urgenceEscapeHtml(s.email)}</small>` : ''}</button>`
+        ).join('');
+        const exact = all.some(s => s.name.toLowerCase() === q);
+        if (!exact && raw.length >= 2) {
+            html += `<button type="button" class="stock-autocomplete-item new" data-name="${urgenceEscapeHtml(raw)}">➕ Créer « ${urgenceEscapeHtml(raw)} »</button>`;
+        }
+        if (!html) { dd.classList.remove('open'); dd.innerHTML = ''; return; }
+        dd.innerHTML = html;
+        dd.classList.add('open');
+    };
+
+    const syncEmail = () => {
+        if (!emailInput) return;
+        const known = urgenceKnownSuppliers().find(s => s.name.toLowerCase() === input.value.trim().toLowerCase());
+        if (known) {
+            emailInput.value = known.email || '';
+            emailInput.dispatchEvent(new Event('input', { bubbles: false }));
+        }
+    };
+
+    input.addEventListener('input', render);
+    input.addEventListener('focus', render);
+    dd.addEventListener('mousedown', (e) => {
+        const btn = e.target.closest('.stock-autocomplete-item');
+        if (!btn) return;
+        e.preventDefault();
+        input.value = btn.dataset.name;
+        if (btn.classList.contains('new')) {
+            urgenceRememberSupplier(input.value.trim(), '');
+            saveUrgenceData();
+            if (typeof showToast === 'function') showToast(`Fournisseur « ${input.value.trim()} » créé — complétez son email dans l'onglet Coûts & fournisseurs`);
+        } else {
+            syncEmail();
+        }
+        dd.classList.remove('open');
+        input.dispatchEvent(new Event('input', { bubbles: false }));
+        input.focus();
+    });
+    // Si l'utilisateur tape un nom connu sans passer par le menu, on remplit aussi l'email
+    input.addEventListener('change', () => {
+        const known = urgenceKnownSuppliers().find(s => s.name.toLowerCase() === input.value.trim().toLowerCase());
+        if (known && emailInput && !emailInput.value.trim()) syncEmail();
+    });
+    const close = (e) => { if (!host.contains(e.target)) dd.classList.remove('open'); };
+    document.addEventListener('click', close);
+}
+
+function urgenceSupplierOptionsHtml() {
+    return urgenceKnownSuppliers().map(s => `<option value="${urgenceEscapeHtml(s.name)}">${urgenceEscapeHtml(s.email || '')}</option>`).join('');
+}
+
+function urgenceAddStockQty(p, qty, expiry) {
+    if (!p || !qty) return;
+    urgenceEnsureLots(p);
+    expiry = expiry || null;
+    const lot = p.lots.find(l => (l.expiry || null) === expiry);
+    if (lot) lot.qty = (parseInt(lot.qty, 10) || 0) + qty;
+    else p.lots.push({ id: urgenceLotId(), expiry, qty });
+    urgenceSyncProductFromLots(p);
+}
+
+function urgenceDiscardLot(productId, lotId) {
+    const p = urgenceData.products.find(p => p.id === productId);
+    const lot = p?.lots?.find(l => l.id === lotId);
+    if (!p || !lot) return;
+    const dateStr = lot.expiry ? new Date(lot.expiry).toLocaleDateString('fr-FR') : 'sans date';
+    if (!confirm(`Éliminer du stock ${lot.qty} ${p.unit} de « ${p.name} » (péremption ${dateStr}) ?\n\nLes quantités saisies non enregistrées dans le pointage seront conservées.`)) return;
+    p.lots = p.lots.filter(l => l.id !== lotId);
+    urgenceSyncProductFromLots(p);
+    saveUrgenceData();
+    renderUrgenceStocks();
+    renderUrgencePointage();
+    if (typeof showToast === 'function') showToast(`Lot périmé éliminé : ${p.name} (${dateStr})`);
 }
 
 // ---------- Rendu : Stocks ----------
@@ -254,8 +435,512 @@ function renderUrgenceStocks() {
             }).join('');
     }
 
+    renderUrgenceStockCards();
     renderUrgenceAlerts();
+    renderUrgenceOverview();
 }
+
+function renderUrgenceStockCards() {
+    const grid = document.getElementById('cabinetUrgenceStockGrid');
+    if (!grid) return;
+
+    const filter = document.getElementById('urgenceStockFilter')?.value || '';
+    const products = urgenceData.products.filter(p => !filter || p.category === filter);
+
+    const expired = p => p.expiry && new Date(p.expiry) < new Date();
+    const soon = p => {
+        if (!p.expiry) return false;
+        const d = new Date(p.expiry) - new Date();
+        return d >= 0 && d < 90 * 86400000;
+    };
+
+    grid.innerHTML = products.length === 0
+        ? '<p class="urgence-empty">Aucun produit. Ajoutez-en avec le bouton « Ajouter un produit ».</p>'
+        : products.map(p => {
+            const state = urgenceStockState(p);
+            const stateLabel = state === 'rupture' ? 'Rupture' : (state === 'bas' ? 'À commander' : 'OK');
+            const priceHtml = p.unitPrice ? Number(p.unitPrice).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) + '<small>/' + urgenceEscapeHtml(p.unit) + '</small>' : '';
+            const lotsHtml = (p.lots || []).map(l => {
+                const exp = urgenceLotExpired(l);
+                const soonFlag = urgenceLotSoon(l);
+                const dateStr = l.expiry ? new Date(l.expiry).toLocaleDateString('fr-FR') : 'sans date';
+                return `<span class="stock-lot-chip ${exp ? 'danger' : (soonFlag ? 'warning' : '')}">📅 ${urgenceEscapeHtml(dateStr)} ×${l.qty}${exp ? `<button class="stock-lot-discard" onclick="urgenceDiscardLot('${p.id}', '${l.id}')" title="Éliminer ce lot périmé du stock">Jeter</button>` : ''}</span>`;
+            }).join('');
+            return `
+                <div class="stock-card ${state}">
+                    <div class="stock-card-top">
+                        <span class="stock-card-cat">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))}</span>
+                        <span class="stock-card-actions">
+                            <button class="stock-icon-btn" onclick="urgenceEditProduct('${p.id}')" title="Modifier" aria-label="Modifier">✏️</button>
+                            <button class="stock-icon-btn" onclick="urgenceDeleteProduct('${p.id}')" title="Supprimer" aria-label="Supprimer">🗑️</button>
+                        </span>
+                    </div>
+                    <div class="stock-card-name">${urgenceEscapeHtml(p.name)}</div>
+                    <div class="stock-card-qty">
+                        <span class="stock-card-num">${p.quantity}</span>
+                        <span class="stock-card-unit">${urgenceEscapeHtml(p.unit)}</span>
+                        <span class="stock-chip ${state === 'rupture' ? 'danger' : (state === 'bas' ? 'warning' : 'success')}">${stateLabel}</span>
+                    </div>
+                    ${lotsHtml ? `<div class="stock-card-lots">${lotsHtml}</div>` : ''}
+                    <div class="stock-card-meta">
+                        <span>seuil ${p.minQuantity}</span>
+                        ${p.reference ? `<span>• réf. ${urgenceEscapeHtml(p.reference)}</span>` : ''}
+                        ${p.packaging ? `<span>• ${urgenceEscapeHtml(p.packaging)}</span>` : ''}
+                        ${p.supplier ? `<span>• ${urgenceEscapeHtml(p.supplier)}</span>` : ''}
+                    </div>
+                    ${priceHtml ? `<div class="stock-card-price">${priceHtml}</div>` : ''}
+                </div>`;
+        }).join('');
+
+    const kpisEl = document.getElementById('urgenceStockKpis');
+    if (kpisEl) kpisEl.innerHTML = urgenceStockKpisHtml();
+}
+
+function urgenceStockKpisHtml() {
+    const all = urgenceData.products;
+    const low = all.filter(p => p.quantity <= p.minQuantity);
+    const out = all.filter(p => !p.quantity);
+    const exp = all.filter(p => p.expiry && new Date(p.expiry) < new Date());
+    const soonN = all.filter(p => {
+        if (!p.expiry) return false;
+        const d = new Date(p.expiry) - new Date();
+        return d >= 0 && d < 90 * 86400000;
+    });
+    return `
+        <div class="stock-kpi"><span class="stock-kpi-num">${all.length}</span><span class="stock-kpi-label">Références</span></div>
+        <div class="stock-kpi warn"><span class="stock-kpi-num">${low.length}</span><span class="stock-kpi-label">À recommander</span></div>
+        <div class="stock-kpi danger"><span class="stock-kpi-num">${out.length}</span><span class="stock-kpi-label">Ruptures</span></div>
+        <div class="stock-kpi exp"><span class="stock-kpi-num">${exp.length}${soonN.length ? `<small> +${soonN.length} bientôt</small>` : ''}</span><span class="stock-kpi-label">Périmés</span></div>`;
+}
+
+// ---------- Vue d'ensemble ----------
+
+function renderUrgenceOverview() {
+    const kpisEl = document.getElementById('urgenceOverviewKpis');
+    if (kpisEl) kpisEl.innerHTML = urgenceStockKpisHtml();
+
+    const nextEl = document.getElementById('urgenceOverviewNext');
+    if (nextEl) {
+        const days = urgenceDaysSinceLastPointage();
+        if (days === null) nextEl.textContent = 'Premier pointage à faire — cochez ce qu’il reste dans la salle d’urgence.';
+        else if (days >= 7) nextEl.innerHTML = `<strong>⚠️ Pointage à faire :</strong> dernier pointage il y a ${days} jours.`;
+        else nextEl.textContent = `Dernier pointage il y a ${days} jour(s) — prochain conseillé dans ${7 - days} jour(s).`;
+    }
+}
+
+function urgenceGoSubTab(subtab) {
+    document.querySelector(`#cabinet-stocks .sub-tab[data-subtab="${subtab}"]`)?.click();
+    document.getElementById(`cabinet-stocks`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---------- Import CSV (inventaire complementaire ou complet) ----------
+
+function urgenceCsvNormDate(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return s;
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) return `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+    return null;
+}
+
+function urgenceCsvNum(raw) {
+    if (raw === undefined || raw === null || String(raw).trim() === '') return null;
+    const v = parseFloat(String(raw).replace(',', '.'));
+    return isNaN(v) ? null : v;
+}
+
+function urgenceCsvCategory(raw) {
+    const s = String(raw || '').trim().toLowerCase();
+    if (!s) return 'divers';
+    const byId = URGENCE_CATEGORIES.find(c => c.id === s);
+    if (byId) return byId.id;
+    const byLabel = URGENCE_CATEGORIES.find(c => c.label.toLowerCase() === s);
+    return byLabel ? byLabel.id : 'divers';
+}
+
+function urgenceCleanCsvText(text) {
+    let t = String(text);
+    // BOM et caracteres invisibles (Zero Width, marque d'ordre, separateurs exotiques)
+    t = t.replace(/\uFEFF/g, '').replace(/[\u200B-\u200D\u2060\u00AD]/g, '');
+    // Bloc de code markdown eventuel (```csv ... ```)
+    t = t.replace(/^\s*```[a-zA-Z]*\s*\r?\n?/, '').replace(/\r?\n?```\s*$/, '');
+    // Guillemets typographiques -> droits
+    t = t.replace(/[\u201C\u201D\u201E]/g, '"').replace(/[\u2018\u2019]/g, "'");
+    return t;
+}
+
+function urgenceParseCsv(text) {
+    const lines = urgenceCleanCsvText(text).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return { products: [], errors: ['Fichier vide ou sans ligne de données.'] };
+
+    const header = lines[0];
+    const sep = [';', '\t', ','].sort((a, b) => header.split(b).length - header.split(a).length)[0];
+    const cols = header.split(sep).map(c => c.trim().toLowerCase()
+        .replace(/^["'`]+|["'`]+$/g, '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z_]/g, ''));
+    const idx = (names) => cols.findIndex(c => names.includes(c));
+    const map = {
+        name: idx(['nom', 'name', 'produit']),
+        category: idx(['categorie', 'catégorie', 'category']),
+        reference: idx(['reference', 'référence', 'ref', 'code']),
+        packaging: idx(['conditionnement', 'packaging']),
+        unit: idx(['unite', 'unité', 'unit']),
+        qty: idx(['quantite', 'quantité', 'qty', 'quantite']),
+        min: idx(['seuil', 'min', 'seuil_alerte']),
+        expiry: idx(['peremption', 'péremption', 'expiration', 'date_peremption']),
+        price: idx(['prix', 'prix_unitaire', 'cout', 'cout_unitaire']),
+        supplier: idx(['fournisseur', 'supplier']),
+        supplierEmail: idx(['email_fournisseur', 'email', 'email fournisseur'])
+    };
+    const errors = [];
+    if (map.name < 0) {
+        errors.push('Colonne « nom » introuvable : ajoutez une ligne d\u2019en-tête (nom;categorie;reference;...).');
+        return { products: [], errors };
+    }
+
+    const products = [];
+    const byKey = new Map();
+    lines.slice(1).forEach((line, n) => {
+        const cells = line.split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+        const get = (i) => (i >= 0 && i < cells.length ? cells[i] : '');
+        const name = get(map.name);
+        if (!name) { errors.push(`Ligne ${n + 2} ignorée : nom manquant.`); return; }
+        const reference = get(map.reference);
+        const key = reference || name.toLowerCase();
+        const lot = {
+            id: urgenceLotId(),
+            expiry: urgenceCsvNormDate(get(map.expiry)),
+            qty: Math.max(0, parseInt(get(map.qty), 10) || 0)
+        };
+        let p = byKey.get(key);
+        if (!p) {
+            p = {
+                id: 'p' + Date.now() + '_' + products.length,
+                name,
+                category: urgenceCsvCategory(get(map.category)),
+                reference,
+                packaging: get(map.packaging),
+                unit: get(map.unit) || 'unité',
+                minQuantity: Math.max(0, parseInt(get(map.min), 10) || 0),
+                lots: [],
+                supplier: get(map.supplier),
+                supplierEmail: get(map.supplierEmail),
+                unitPrice: urgenceCsvNum(get(map.price))
+            };
+            byKey.set(key, p);
+            products.push(p);
+        }
+        if (lot.qty > 0) p.lots.push(lot);
+    });
+
+    products.forEach(p => {
+        if (!p.lots.length) p.lots = [];
+        urgenceSyncProductFromLots(p);
+    });
+    return { products, errors };
+}
+
+function urgenceImportCsvClick() {
+    urgenceShowImportHelpModal();
+}
+
+// Modale d'accueil : format attendu copiable (pour le donner a une IA avec ses donnees brutes)
+function urgenceImportAiPrompt() {
+    return [
+        'Voici mon inventaire brut :',
+        '',
+        '[COLLEZ ICI VOS DONNÉES : copier-coller de votre tableur, facture, liste...]',
+        '',
+        'Mets-le au format CSV attendu par mon application de gestion de stock, avec :',
+        '- ligne 1 d\u2019en-tête exactement : nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur',
+        '- IMPORTANT : les noms de colonnes en minuscules, sans accent et sans aucun caractère ajouté devant (pas de BOM, pas de guillemet ou backtick au début de « nom »)',
+        '- réponds UNIQUEMENT avec le CSV brut : pas de bloc de code markdown (pas de triple backticks ```, ni « csv » sur la première ligne), pas de texte avant/après, pas de caractère invisible',
+        '- les accents et caractères spéciaux normaux (é, è, ê, î, ç) sont conservés tels quels dans les valeurs — ne les transforme pas en codes ni en entités',
+        '- séparateur point-virgule ;',
+        '- une ligne par lot : si un produit a plusieurs dates de péremption, répète la ligne en changeant quantite et peremption',
+        '- categorie : Désinfection / Suture / Injections / Médicaments / Divers',
+        '- peremption au format AAAA-MM-JJ (ou JJ/MM/AAAA)',
+        '- prix en euros par unité (virgule ou point décimal)',
+        '- reference = code produit fournisseur si connu, sinon vide',
+        '- Les champs facultatifs peuvent rester vides, seul nom est obligatoire',
+        '',
+        'Réponds uniquement avec le CSV, sans autre texte.',
+        '',
+        'Exemple :',
+        'nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur',
+        'Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;3;3;2026-05-01;4,50;Cooper;commandes@cooper.fr',
+        'Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;2;3;2027-01-01;4,50;Cooper;commandes@cooper.fr',
+        'Gants stériles;Suture;G-052;paquet de 50;paire;6;4;;;Cera;'
+    ].join('\n');
+}
+
+function urgenceShowImportHelpModal() {
+    document.getElementById('urgenceImportHelpModal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'urgenceImportHelpModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card urgence-modal-content" style="max-width:620px;">
+            <div class="modal-header">
+                <h3>Importer un inventaire</h3>
+                <button type="button" class="modal-close" onclick="urgenceCloseImportHelpModal()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="form-hint"><strong>Vous avez déjà un fichier ?</strong> CSV ou Excel (.xlsx), choisissez-le : il sera analysé, un aperçu vous sera proposé avant tout ajout.</p>
+                <div class="urgence-import-help-actions">
+                    <button class="action-btn primary" onclick="urgencePickImportFile()">⬆️ Choisir mon fichier…</button>
+                    <button class="action-btn" onclick="urgenceDownloadCsvTemplate()">📄 Télécharger le modèle CSV</button>
+                </div>
+                <p class="form-hint" style="margin-top:14px;"><strong>Ou collez directement vos lignes CSV</strong> (réponse d'une IA, copier-coller d'un tableur) :</p>
+                <textarea class="form-input urgence-import-paste" id="urgenceImportPasteArea" placeholder="Collez ici vos lignes CSV&#10;nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur&#10;Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;3;3;2026-05-01;4,50;Cooper;commandes@cooper.fr"></textarea>
+                <div class="urgence-import-help-actions">
+                    <button class="action-btn primary" onclick="urgenceAnalyzePastedCsv()">⠫ Analyser le collage</button>
+                </div>
+                <p class="form-hint" style="margin-top:14px;"><strong>Vos données sont en vrac ?</strong> Copiez le format ci-dessous et collez-le dans une IA (ChatGPT, etc.) avec vos données brutes : elle vous rendra un CSV prêt à importer — puis collez sa réponse ci-dessus.</p>
+                <textarea class="form-input urgence-import-prompt" readonly onclick="this.select()">${urgenceEscapeHtml(urgenceImportAiPrompt())}</textarea>
+                <div class="urgence-import-help-actions">
+                    <button class="action-btn stock-btn-tonal" onclick="urgenceCopyAiPrompt()">⠫ Copier le format pour l'IA</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="urgenceCloseImportHelpModal()">Fermer</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) urgenceCloseImportHelpModal();
+    });
+}
+
+function urgenceCloseImportHelpModal() {
+    document.getElementById('urgenceImportHelpModal')?.remove();
+}
+
+function urgencePickImportFile() {
+    urgenceCloseImportHelpModal();
+    document.getElementById('urgenceImportCsvInput')?.click();
+}
+
+function urgenceAnalyzePastedCsv() {
+    const ta = document.getElementById('urgenceImportPasteArea');
+    const text = (ta?.value || '').trim();
+    if (!text) {
+        if (typeof showToast === 'function') showToast('Collez d\u2019abord vos lignes CSV dans la zone de texte', 'error');
+        ta?.focus();
+        return;
+    }
+    urgenceCloseImportHelpModal();
+    urgenceShowImportPreview(text, 'Collage');
+}
+
+function urgenceCopyAiPrompt() {
+    const text = urgenceImportAiPrompt();
+    navigator.clipboard.writeText(text).then(() => {
+        if (typeof showToast === 'function') showToast('Format copié — collez-le dans votre IA avec vos données brutes');
+    }).catch(() => {
+        const ta = document.querySelector('.urgence-import-prompt');
+        if (ta) { ta.select(); document.execCommand('copy'); }
+    });
+}
+
+// Modele CSV : en-tete + lignes d'exemple (une ligne par date de peremption)
+function urgenceDownloadCsvTemplate() {
+    const template = [
+        'nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur',
+        'Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;3;3;2026-05-01;4,50;Cooper;commandes@cooper.fr',
+        'Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;2;3;2027-01-01;4,50;Cooper;commandes@cooper.fr',
+        'Gants stériles;Suture / petit matériel;G-052;paquet de 50;paire;6;4;;;Cera;',
+        'Compresses stériles 10x10;Désinfection;D-010;sachet de 20;paquet;4;2;2026-12-01;;Phocépharma;'
+    ].join('\n');
+    const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modele_inventaire.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    if (typeof showToast === 'function') showToast('Modèle CSV téléchargé — remplissez-le puis importez-le depuis ce même menu');
+}
+
+function urgenceHandleCsvFile(input) {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'xlsx' || ext === 'xls') {
+        urgenceReadExcelFile(file);
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => urgenceShowImportPreview(String(reader.result), file.name);
+    reader.onerror = () => alert('Impossible de lire le fichier.');
+    reader.readAsText(file, 'utf-8');
+}
+
+// ---------- Import Excel (.xlsx / .xls) via SheetJS charge a la demande ----------
+
+let _xlsxLoading = false;
+function urgenceLoadScriptOnce(url) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = url;
+        s.onload = () => resolve();
+        s.onerror = () => { s.remove(); reject(new Error('echec ' + url)); };
+        document.head.appendChild(s);
+    });
+}
+
+async function urgenceEnsureXlsxLoaded() {
+    if (window.XLSX) return;
+    if (_xlsxLoading) {
+        while (!window.XLSX) await new Promise(r => setTimeout(r, 100));
+        return;
+    }
+    _xlsxLoading = true;
+    // cdnjs d'abord (deja utilise par l'app pour jsPDF), puis replis
+    const urls = [
+        'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+        'https://cdn.jsdelivr.net/npm/xlsx@0.18.10/dist/xlsx.full.min.js',
+        'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+    ];
+    for (const url of urls) {
+        try {
+            await urgenceLoadScriptOnce(url);
+            if (window.XLSX) return;
+        } catch (e) { /* essai suivant */ }
+    }
+    throw new Error('Impossible de charger le lecteur Excel. Vérifiez la connexion internet, ou exportez votre fichier en CSV (Fichier > Télécharger > CSV) et importez-le — le CSV ne nécessite aucune librairie.');
+}
+
+async function urgenceReadExcelFile(file) {
+    try {
+        await urgenceEnsureXlsxLoaded();
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { cellDates: true });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        if (!sheet) {
+            alert('Aucune feuille trouvée dans le fichier Excel.');
+            return;
+        }
+        // Conversion en CSV (separateur virgule, le parseur le gere) puis meme parcours que le CSV
+        const csv = XLSX.utils.sheet_to_csv(sheet);
+        urgenceShowImportPreview(csv, file.name);
+    } catch (e) {
+        alert(e.message || 'Erreur de lecture du fichier Excel.');
+    }
+}
+
+function urgenceShowImportPreview(csvText, fileName) {
+    const parsed = urgenceParseCsv(csvText);
+    document.getElementById('urgenceImportModal')?.remove();
+
+    if (parsed.errors.length && parsed.products.length === 0) {
+        alert('Erreurs dans le fichier CSV :\n\n' + parsed.errors.slice(0, 5).join('\n'));
+        return;
+    }
+
+    window._urgenceImportData = parsed;
+
+    const rowsPreview = parsed.products.slice(0, 8).map(p => `
+        <div class="stock-price-row">
+            <span class="stock-price-name">${urgenceEscapeHtml(p.name)}</span>
+            <span class="stock-price-hist">${p.quantity} ${urgenceEscapeHtml(p.unit)}${p.lots.length > 1 ? ` · ${p.lots.length} lots` : ''}${p.supplier ? ` · ${urgenceEscapeHtml(p.supplier)}` : ''}</span>
+        </div>`).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'urgenceImportModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card urgence-modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3>Importer un inventaire</h3>
+                <button type="button" class="modal-close" onclick="urgenceCloseImportModal()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="form-hint"><strong>${parsed.products.length} produit(s)</strong> détecté(s) dans « ${urgenceEscapeHtml(fileName)} »${parsed.errors.length ? ` · ${parsed.errors.length} ligne(s) ignorée(s)` : ''}.</p>
+                ${rowsPreview}
+                ${parsed.products.length > 8 ? `<p class="form-hint">+ ${parsed.products.length - 8} autre(s)…</p>` : ''}
+                <div class="form-group" style="margin-top:12px;">
+                    <label>Mode d'import</label>
+                    <label class="urgence-import-mode"><input type="radio" name="urgenceImportMode" value="merge" checked> <span><strong>Compléter l'inventaire existant</strong> — les quantités s'ajoutent aux produits déjà présents (reconnus par référence ou par nom), les nouveaux produits sont créés.</span></label>
+                    <label class="urgence-import-mode"><input type="radio" name="urgenceImportMode" value="replace"> <span><strong>Remplacer tout l'inventaire</strong> — l'inventaire actuel est effacé et remplacé par le fichier.</span></label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="urgenceCloseImportModal()">Annuler</button>
+                <button class="action-btn primary" onclick="urgenceApplyImport()">Importer</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) urgenceCloseImportModal();
+    });
+}
+
+function urgenceCloseImportModal() {
+    document.getElementById('urgenceImportModal')?.remove();
+    window._urgenceImportData = null;
+}
+
+function urgenceApplyImport() {
+    const parsed = window._urgenceImportData;
+    if (!parsed || !parsed.products.length) return;
+    const mode = document.querySelector('input[name="urgenceImportMode"]:checked')?.value || 'merge';
+
+    if (mode === 'replace') {
+        if (!confirm(`Remplacer TOUT l'inventaire actuel (${urgenceData.products.length} produit(s)) par les ${parsed.products.length} produit(s) du fichier ?`)) return;
+        urgenceData.products = parsed.products;
+    } else {
+        let created = 0, updated = 0;
+        parsed.products.forEach(cp => {
+            let existing = cp.reference ? urgenceData.products.find(p => p.reference === cp.reference) : null;
+            if (!existing) existing = urgenceData.products.find(p => p.name.toLowerCase() === cp.name.toLowerCase());
+            if (existing) {
+                cp.lots.forEach(l => {
+                    const lot = existing.lots.find(x => (x.expiry || null) === (l.expiry || null));
+                    if (lot) lot.qty += l.qty;
+                    else existing.lots.push(l);
+                });
+                if (cp.supplier && !existing.supplier) { existing.supplier = cp.supplier; existing.supplierEmail = existing.supplierEmail || cp.supplierEmail; }
+                if (cp.reference && !existing.reference) existing.reference = cp.reference;
+                if (cp.packaging && !existing.packaging) existing.packaging = cp.packaging;
+                if (cp.unitPrice !== null && cp.unitPrice > 0) existing.unitPrice = cp.unitPrice;
+                if (cp.minQuantity > 0 && existing.minQuantity === 0) existing.minQuantity = cp.minQuantity;
+                urgenceSyncProductFromLots(existing);
+                updated++;
+            } else {
+                urgenceData.products.push(cp);
+                created++;
+            }
+        });
+        if (typeof showToast === 'function') showToast(`Import : ${created} produit(s) créé(s), ${updated} mis à jour`);
+    }
+
+    parsed.products.forEach(p => urgenceRememberSupplier(p.supplier, p.supplierEmail));
+    saveUrgenceData();
+    urgenceCloseImportModal();
+    renderUrgenceStocks();
+    renderUrgencePointage();
+    if (typeof urgenceRenderOrders === 'function') urgenceRenderOrders();
+    if (mode === 'replace' && typeof showToast === 'function') showToast(`Inventaire remplacé : ${parsed.products.length} produit(s)`);
+}
+
+function urgenceToggleStockMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('urgenceStockMenu');
+    if (!menu) return;
+    menu.classList.toggle('open');
+}
+
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('urgenceStockMenu');
+    if (menu?.classList.contains('open') && !e.target.closest('.stock-menu-wrap')) {
+        menu.classList.remove('open');
+    }
+});
 
 function renderUrgenceAlerts() {
     const alertsEl = document.getElementById('urgenceStockAlerts');
@@ -278,6 +963,11 @@ function renderUrgenceAlerts() {
 
     const cabinetAlertsEl = document.getElementById('cabinetUrgenceStockAlerts');
     if (cabinetAlertsEl && cabinetAlertsEl !== alertsEl) cabinetAlertsEl.innerHTML = html;
+
+    const overviewAlertsEl = document.getElementById('urgenceOverviewAlerts');
+    if (overviewAlertsEl) {
+        overviewAlertsEl.innerHTML = html ? `<div class="inventory-alerts">${html}</div>` : '';
+    }
 
     const orderBtn = document.getElementById('urgenceCopyOrderBtn');
     if (orderBtn) orderBtn.disabled = toOrder.length === 0;
@@ -320,35 +1010,54 @@ function urgenceShowProductModal(product) {
                 <button type="button" class="modal-close" onclick="urgenceCloseProductModal()" aria-label="Fermer">✕</button>
             </div>
             <div class="modal-body">
-            <div class="form-group">
-                <label>Nom du produit *</label>
-                <input type="text" id="urgenceProductName" class="form-input" value="${product ? urgenceEscapeHtml(product.name) : ''}" placeholder="Ex : Adrénaline 1 mg/mL">
+            <div class="urgence-form-row">
+                <div class="form-group">
+                    <label>Nom du produit *</label>
+                    <input type="text" id="urgenceProductName" class="form-input" value="${product ? urgenceEscapeHtml(product.name) : ''}" placeholder="Ex : Adrénaline 1 mg/mL">
+                </div>
+                <div class="form-group">
+                    <label>Référence fournisseur</label>
+                    <input type="text" id="urgenceProductRef" class="form-input" value="${product && product.reference ? urgenceEscapeHtml(product.reference) : ''}" placeholder="Ex : C-1234">
+                </div>
+            </div>
+            <div class="urgence-form-row">
+                <div class="form-group">
+                    <label>Conditionnement</label>
+                    <input type="text" id="urgenceProductPackaging" class="form-input" value="${product && product.packaging ? urgenceEscapeHtml(product.packaging) : ''}" placeholder="Ex : boîte de 50">
+                </div>
+                <div class="form-group">
+                    <label>Unité</label>
+                    <input type="text" id="urgenceProductUnit" class="form-input" value="${product ? urgenceEscapeHtml(product.unit) : 'unité'}" placeholder="flacon, ampoule, kit...">
+                </div>
             </div>
             <div class="form-group">
                 <label>Catégorie</label>
                 <select id="urgenceProductCategory" class="form-input">${cats}</select>
             </div>
-            <div class="urgence-form-row">
-                <div class="form-group">
-                    <label>Unité</label>
-                    <input type="text" id="urgenceProductUnit" class="form-input" value="${product ? urgenceEscapeHtml(product.unit) : 'unité'}" placeholder="flacon, ampoule, kit...">
-                </div>
-                <div class="form-group">
-                    <label>Quantité actuelle</label>
-                    <input type="number" id="urgenceProductQty" class="form-input" min="0" value="${product ? product.quantity : 0}">
-                </div>
-                <div class="form-group">
-                    <label>Seuil d'alerte</label>
-                    <input type="number" id="urgenceProductMin" class="form-input" min="0" value="${product ? product.minQuantity : 1}">
-                </div>
+            <div class="form-group">
+                <label>Seuil d'alerte</label>
+                <input type="number" id="urgenceProductMin" class="form-input" min="0" value="${product ? product.minQuantity : 1}">
             </div>
             <div class="form-group">
-                <label>Date de péremption (facultatif)</label>
-                <input type="date" id="urgenceProductExpiry" class="form-input" value="${product && product.expiry ? product.expiry : ''}">
+                <label>Stock détaillé — quantité par date de péremption</label>
+                <div id="urgenceProductLots" class="stock-lot-editor"></div>
+                <button type="button" class="action-btn stock-lot-add" onclick="urgenceAddLotRow()">+ Ajouter une date de péremption</button>
+                <p class="form-hint">Ex. : Adrénaline — 3 tubes péremption 05/2026 et 2 tubes péremption 01/2027 = deux lignes.</p>
             </div>
             <div class="form-group">
                 <label>Coût TTC par ${urgenceEscapeHtml(product ? product.unit : 'unité')} (€, facultatif)</label>
                 <input type="number" min="0" step="0.01" id="urgenceProductPrice" class="form-input" value="${product && product.unitPrice ? product.unitPrice : ''}" placeholder="Ex : 4.50">
+            </div>
+            <div class="urgence-form-row">
+                <div class="form-group">
+                    <label>Fournisseur habituel</label>
+                    <input type="text" id="urgenceProductSupplier" class="form-input" list="urgenceSupplierDatalist" value="${product && product.supplier ? urgenceEscapeHtml(product.supplier) : ''}" placeholder="Ex : Cooper">
+                    <datalist id="urgenceSupplierDatalist">${urgenceSupplierOptionsHtml()}</datalist>
+                </div>
+                <div class="form-group">
+                    <label>Email du fournisseur (facultatif)</label>
+                    <input type="email" id="urgenceProductSupplierEmail" class="form-input" value="${product && product.supplierEmail ? urgenceEscapeHtml(product.supplierEmail) : ''}" placeholder="commandes@fournisseur.fr">
+                </div>
             </div>
             </div>
             <div class="modal-footer">
@@ -360,7 +1069,37 @@ function urgenceShowProductModal(product) {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) urgenceCloseProductModal();
     });
+    const lotRows = (product && Array.isArray(product.lots) && product.lots.length)
+        ? product.lots
+        : [{ id: null, expiry: null, qty: product ? product.quantity : 0 }];
+    lotRows.forEach(l => urgenceAddLotRow(l.id, l.expiry, l.qty));
+    urgenceAttachSupplierAuto(document.getElementById('urgenceProductSupplier'), document.getElementById('urgenceProductSupplierEmail'));
     setTimeout(() => document.getElementById('urgenceProductName')?.focus(), 50);
+}
+
+function urgenceAddLotRow(lotId, expiry, qty) {
+    const wrap = document.getElementById('urgenceProductLots');
+    if (!wrap) return;
+    const row = document.createElement('div');
+    row.className = 'stock-lot-row';
+    row.dataset.lot = lotId || urgenceLotId();
+    row.innerHTML = `
+        <input type="number" min="0" class="form-input stock-lot-qty" value="${parseInt(qty, 10) || 0}" title="Quantité" placeholder="Qté">
+        <input type="date" class="form-input stock-lot-expiry" value="${expiry || ''}" title="Date de péremption">
+        <button type="button" class="stock-icon-btn stock-lot-remove" onclick="this.closest('.stock-lot-row').remove()" title="Retirer cette ligne" aria-label="Retirer">✕</button>`;
+    wrap.appendChild(row);
+}
+
+function urgenceCollectProductLots() {
+    const wrap = document.getElementById('urgenceProductLots');
+    if (!wrap) return null;
+    const lots = [];
+    wrap.querySelectorAll('.stock-lot-row').forEach(row => {
+        const qty = parseInt(row.querySelector('.stock-lot-qty')?.value, 10) || 0;
+        const expiry = row.querySelector('.stock-lot-expiry')?.value || null;
+        if (qty > 0) lots.push({ id: row.dataset.lot, expiry, qty });
+    });
+    return lots;
 }
 
 document.addEventListener('keydown', (e) => {
@@ -381,12 +1120,14 @@ function urgenceSaveProduct(productId) {
     const name = document.getElementById('urgenceProductProductName')?.value?.trim() || document.getElementById('urgenceProductName')?.value?.trim();
     const category = document.getElementById('urgenceProductCategory')?.value;
     const unit = document.getElementById('urgenceProductUnit')?.value?.trim() || 'unité';
-    const qty = parseInt(document.getElementById('urgenceProductQty')?.value, 10) || 0;
     const min = parseInt(document.getElementById('urgenceProductMin')?.value, 10) || 0;
-    const expiryRaw = document.getElementById('urgenceProductExpiry')?.value;
-    const expiry = expiryRaw || null;
+    const lots = urgenceCollectProductLots() || [];
     const priceRaw = document.getElementById('urgenceProductPrice')?.value;
     const unitPrice = priceRaw !== '' && priceRaw !== undefined && priceRaw !== null ? (parseFloat(priceRaw) || 0) : null;
+    const supplier = document.getElementById('urgenceProductSupplier')?.value?.trim() || '';
+    const supplierEmail = document.getElementById('urgenceProductSupplierEmail')?.value?.trim() || '';
+    const reference = document.getElementById('urgenceProductRef')?.value?.trim() || '';
+    const packaging = document.getElementById('urgenceProductPackaging')?.value?.trim() || '';
 
     if (!name) {
         if (typeof showToast === 'function') showToast('Le nom du produit est obligatoire', 'error');
@@ -397,17 +1138,26 @@ function urgenceSaveProduct(productId) {
         const p = urgenceData.products.find(p => p.id === productId);
         if (p) {
             p.name = name; p.category = category; p.unit = unit;
-            p.quantity = qty; p.minQuantity = min; p.expiry = expiry;
+            p.minQuantity = min; p.lots = lots;
+            urgenceSyncProductFromLots(p);
+            p.supplier = supplier;
+            p.supplierEmail = supplierEmail;
+            p.reference = reference;
+            p.packaging = packaging;
             if (unitPrice !== null) p.unitPrice = unitPrice;
         }
     } else {
-        urgenceData.products.push({
+        const p = {
             id: 'p' + Date.now(),
             name, category, unit,
-            quantity: qty, minQuantity: min, expiry,
+            minQuantity: min, lots,
+            supplier, supplierEmail, reference, packaging,
             unitPrice: unitPrice !== null ? unitPrice : undefined
-        });
+        };
+        urgenceSyncProductFromLots(p);
+        urgenceData.products.push(p);
     }
+    urgenceRememberSupplier(supplier, supplierEmail);
 
     saveUrgenceData();
     urgenceCloseProductModal();
@@ -456,23 +1206,134 @@ function renderUrgencePointage() {
         }
     }
 
-    container.innerHTML = products.map(p => `
+    // Conserver les quantites saisies non enregistrees a travers le re-rendu (reordonnancement)
+    const draft = {};
+    container.querySelectorAll('.urgence-pointage-qty').forEach(i => { draft[i.dataset.id] = i.value; });
+
+    container.innerHTML = products.map((p, idx) => {
+        const lots = Array.isArray(p.lots) ? p.lots : [];
+        // Pointage = comptage : une seule saisie par reference, les lots restent en lecture seule
+        // (dates et quantites par lot se gerent dans l'onglet Gestion des stocks)
+        const lotsHtml = lots.length > 0
+            ? `<div class="urgence-pointage-lots">` + lots.map(l => {
+                const exp = urgenceLotExpired(l);
+                const soonFlag = urgenceLotSoon(l);
+                const dateStr = l.expiry ? new Date(l.expiry).toLocaleDateString('fr-FR') : 'sans date';
+                const cls = exp ? 'danger' : (soonFlag ? 'warning' : '');
+                const discard = exp
+                    ? `<button class="stock-lot-discard" onclick="urgenceDiscardLot('${p.id}', '${l.id}')" title="Éliminer ce lot périmé du stock">Jeter</button>`
+                    : '';
+                return `<span class="stock-lot-chip ${cls}">📅 ${urgenceEscapeHtml(dateStr)} ×${l.qty}${discard}</span>`;
+            }).join('') + `</div>`
+            : '';
+        return `
         <div class="urgence-pointage-row" data-id="${p.id}">
+            <div class="urgence-pointage-handle" title="Glisser pour réordonner">
+                <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+            </div>
             <div class="urgence-pointage-name">
                 <strong>${urgenceEscapeHtml(p.name)}</strong>
                 <span class="urgence-pointage-sub">${urgenceEscapeHtml(urgenceCategoryLabel(p.category))} · stock actuel : ${p.quantity} ${urgenceEscapeHtml(p.unit)} (seuil ${p.minQuantity})</span>
             </div>
             <div class="urgence-pointage-input">
                 <label>Reste :</label>
-                <input type="number" min="0" class="form-input urgence-pointage-qty" data-id="${p.id}" value="${p.quantity}">
+                <input type="number" min="0" class="form-input urgence-pointage-qty" data-id="${p.id}" value="${draft[p.id] !== undefined ? urgenceEscapeHtml(draft[p.id]) : p.quantity}">
                 <span class="urgence-pointage-unit">${urgenceEscapeHtml(p.unit)}</span>
                 <span class="urgence-pointage-flag" data-flag="${p.id}"></span>
             </div>
-        </div>`).join('');
+            ${lotsHtml}
+            <div class="urgence-pointage-move">
+                <button class="stock-icon-btn" onclick="urgenceMovePointage('${p.id}', -1)" title="Monter" aria-label="Monter" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                <button class="stock-icon-btn" onclick="urgenceMovePointage('${p.id}', 1)" title="Descendre" aria-label="Descendre" ${idx === products.length - 1 ? 'disabled' : ''}>▼</button>
+            </div>
+        </div>`;
+    }).join('');
 
     container.querySelectorAll('.urgence-pointage-qty').forEach(input => {
         input.addEventListener('input', () => urgenceUpdatePointageFlag(input));
+        urgenceUpdatePointageFlag(input);
     });
+
+    urgenceBindPointageDrag(container);
+}
+
+let _urgencePointageDrag = null;
+
+function urgenceBindPointageDrag(container) {
+    container.querySelectorAll('.urgence-pointage-row').forEach(row => {
+        const handle = row.querySelector('.urgence-pointage-handle');
+        if (!handle) return;
+
+        handle.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            const rows = Array.from(container.querySelectorAll('.urgence-pointage-row'));
+            _urgencePointageDrag = {
+                row,
+                rows,
+                startIndex: rows.indexOf(row),
+                startY: e.clientY,
+                step: row.offsetHeight + 8,
+                pointerId: e.pointerId,
+                moved: false
+            };
+            row.classList.add('dragging');
+            try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+            e.preventDefault();
+        });
+
+        handle.addEventListener('pointermove', (e) => {
+            const d = _urgencePointageDrag;
+            if (!d || d.row !== row) return;
+            const dy = e.clientY - d.startY;
+            if (Math.abs(dy) > 4) d.moved = true;
+            row.style.transform = `translateY(${dy}px)`;
+            const targetIdx = urgenceDragTargetIndex(d, dy);
+            d.rows.forEach((r, i) => {
+                if (r !== row) r.classList.toggle('drag-over', i === targetIdx);
+            });
+        });
+
+        const finish = (e) => {
+            const d = _urgencePointageDrag;
+            if (!d || d.row !== row) return;
+            _urgencePointageDrag = null;
+            row.classList.remove('dragging');
+            row.style.transform = '';
+            d.rows.forEach(r => r.classList.remove('drag-over'));
+            const dy = (e.clientY !== undefined ? e.clientY : d.startY) - d.startY;
+            const targetIdx = urgenceDragTargetIndex(d, dy);
+            if (d.moved && targetIdx !== d.startIndex) {
+                urgenceReorderIndex(d.startIndex, targetIdx);
+            }
+        };
+        handle.addEventListener('pointerup', finish);
+        handle.addEventListener('pointercancel', finish);
+    });
+}
+
+function urgenceDragTargetIndex(d, dy) {
+    const shift = Math.round(dy / d.step);
+    return Math.max(0, Math.min(d.rows.length - 1, d.startIndex + shift));
+}
+
+function urgenceReorderIndex(from, to) {
+    if (from === to || from < 0 || to < 0 || from >= urgenceData.products.length || to >= urgenceData.products.length) return;
+    const [moved] = urgenceData.products.splice(from, 1);
+    urgenceData.products.splice(to, 0, moved);
+    saveUrgenceData();
+    renderUrgencePointage();
+    renderUrgenceStocks();
+}
+
+function urgenceMovePointage(id, dir) {
+    const idx = urgenceData.products.findIndex(p => p.id === id);
+    const to = idx + dir;
+    if (idx < 0 || to < 0 || to >= urgenceData.products.length) return;
+    const [moved] = urgenceData.products.splice(idx, 1);
+    urgenceData.products.splice(to, 0, moved);
+    saveUrgenceData();
+    renderUrgencePointage();
+    renderUrgenceStocks();
 }
 
 function urgenceUpdatePointageFlag(input) {
@@ -503,11 +1364,12 @@ function urgenceSavePointage() {
         const product = urgenceData.products.find(p => p.id === id);
         if (!product) return;
         if (product.quantity !== qty) {
-            product.quantity = qty;
+            urgenceApplyCountToLots(product, qty);
             changed = true;
         }
         snapshot[id] = qty;
     });
+    urgenceData.products.forEach(p => { if (!(p.id in snapshot)) snapshot[p.id] = p.quantity; });
 
     const now = new Date().toISOString();
     urgenceData.lastPointage = now;
@@ -529,8 +1391,8 @@ function urgenceSavePointage() {
     if (typeof showToast === 'function') showToast(msg);
     else alert(msg);
 
-    if (toOrder.length > 0 && confirm(`Générer la liste à commander (${toOrder.length} produit(s)) ?\n\nVous pourrez la copier pour le fournisseur.`)) {
-        urgenceCopyOrderList();
+    if (toOrder.length > 0 && confirm(`Générer les bons de commande (${toOrder.length} référence(s) à recommander) ?\n\nIls seront créés dans l'onglet « Commandes & réception », groupés par fournisseur.`)) {
+        if (typeof urgenceBuildOrderFromNeeds === 'function') urgenceBuildOrderFromNeeds();
     }
 }
 
@@ -1722,6 +2584,23 @@ function initUrgenceModule() {
     const exportBtn = document.getElementById('urgenceExportStocksBtn');
     if (exportBtn) exportBtn.addEventListener('click', urgenceExportStocks);
 
+    const importBtn = document.getElementById('urgenceImportStocksBtn');
+    if (importBtn) importBtn.addEventListener('click', urgenceImportCsvClick);
+
+    const templateBtn = document.getElementById('urgenceCsvTemplateBtn');
+    if (templateBtn) templateBtn.addEventListener('click', urgenceDownloadCsvTemplate);
+
+    const importInput = document.getElementById('urgenceImportCsvInput');
+    if (importInput) importInput.addEventListener('change', (e) => urgenceHandleCsvFile(e.target));
+
+    const goPointageBtn = document.getElementById('urgenceGoPointageBtn');
+    if (goPointageBtn) goPointageBtn.addEventListener('click', () => urgenceGoSubTab('urgence-pointage'));
+
+    const goOrderBtn = document.getElementById('urgenceGoOrderBtn');
+    if (goOrderBtn) goOrderBtn.addEventListener('click', () => {
+        if (typeof urgenceBuildOrderFromNeeds === 'function') urgenceBuildOrderFromNeeds();
+    });
+
     renderUrgenceStocks();
     renderUrgencePointage();
     renderUrgenceProtocols();
@@ -1749,15 +2628,17 @@ function refreshUrgenceView() {
 
 function urgenceExportStocks() {
     const rows = [
-        ['Produit', 'Catégorie', 'Quantité', 'Unité', 'Seuil', 'Péremption', 'État'].join(';')
+        ['nom', 'categorie', 'reference', 'conditionnement', 'unite', 'quantite', 'seuil', 'peremption', 'prix', 'fournisseur', 'email_fournisseur'].join(';')
     ];
     urgenceData.products.forEach(p => {
-        const state = urgenceStockState(p);
-        const stateLabel = state === 'rupture' ? 'RUPTURE' : (state === 'bas' ? 'À commander' : 'OK');
-        const exp = p.expiry ? new Date(p.expiry).toLocaleDateString('fr-FR') : '';
-        rows.push([
-            `"${p.name}"`, urgenceCategoryLabel(p.category), p.quantity, p.unit, p.minQuantity, exp, stateLabel
-        ].join(';'));
+        (p.lots && p.lots.length ? p.lots : [{ id: null, expiry: null, qty: p.quantity }]).forEach(l => {
+            rows.push([
+                `"${p.name}"`, urgenceCategoryLabel(p.category),
+                p.reference || '', p.packaging || '', p.unit,
+                l.qty || 0, p.minQuantity, l.expiry || '',
+                p.unitPrice || '', p.supplier || '', p.supplierEmail || ''
+            ].join(';'));
+        });
     });
     const csv = rows.join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
@@ -1779,6 +2660,21 @@ window.urgenceCloseProductModal = urgenceCloseProductModal;
 window.urgenceTTSPlay = urgenceTTSPlay;
 window.urgenceTTSStop = urgenceTTSStop;
 window.urgenceCopyOrderList = urgenceCopyOrderList;
+window.urgenceToggleStockMenu = urgenceToggleStockMenu;
+window.urgenceMovePointage = urgenceMovePointage;
+window.urgenceDiscardLot = urgenceDiscardLot;
+window.urgenceAddLotRow = urgenceAddLotRow;
+window.urgenceGoSubTab = urgenceGoSubTab;
+window.urgenceImportCsvClick = urgenceImportCsvClick;
+window.urgenceCloseImportHelpModal = urgenceCloseImportHelpModal;
+window.urgencePickImportFile = urgencePickImportFile;
+window.urgenceAnalyzePastedCsv = urgenceAnalyzePastedCsv;
+window.urgenceCopyAiPrompt = urgenceCopyAiPrompt;
+window.urgenceDownloadCsvTemplate = urgenceDownloadCsvTemplate;
+window.urgenceHandleCsvFile = urgenceHandleCsvFile;
+window.urgenceShowImportPreview = urgenceShowImportPreview;
+window.urgenceCloseImportModal = urgenceCloseImportModal;
+window.urgenceApplyImport = urgenceApplyImport;
 window.refreshUrgenceView = refreshUrgenceView;
 window.urgenceToggleProtocol = urgenceToggleProtocol;
 window.urgenceComputeDoses = urgenceComputeDoses;

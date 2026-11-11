@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-DmSvQT2w.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-BrcghRx0.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -325,6 +325,10 @@ window.attemptLogin = function() {
                         </div>
                     </div>
                     <p class="releve-upload-sub">Comment importer votre relevé bancaire ?</p>
+                    <label style="display:flex; align-items:center; gap:8px; margin:0 0 14px; font-size:0.75rem; color:var(--color-text-secondary); cursor:pointer; user-select:none;">
+                        <input type="checkbox" id="relevePrivateMode" onchange="toggleRelevePrivateMode(this.checked)" style="accent-color:var(--color-primary); width:16px; height:16px; cursor:pointer;">
+                        <span><strong>Mode privé</strong> — analyse 100 % locale (OCR seul, sans IA) : rien n'est envoyé à un service externe, mais la détection des lignes est moins précise.</span>
+                    </label>
                     <input type="file" id="releveFileInputGlobal" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleRelevéUpload(event)">
                     <input type="file" id="releveCameraInputGlobal" accept="image/*" capture="environment" style="display:none" onchange="handleRelevéUpload(event)">
                     <div id="releveMonthPanel" class="releve-month-panel" style="display:none;">
@@ -710,8 +714,8 @@ window.attemptLogin = function() {
                     <!-- 4 indicateurs cl&eacute;s -->
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            <div class="stat-icon" data-md-icon>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </div>
                             <div class="stat-info">
                                 <div class="stat-header">
@@ -722,8 +726,8 @@ window.attemptLogin = function() {
                             </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #f87171);">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                            <div class="stat-icon" data-md-icon>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                             </div>
                             <div class="stat-info">
                                 <div class="stat-header">
@@ -734,8 +738,8 @@ window.attemptLogin = function() {
                             </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                            <div class="stat-icon" data-md-icon>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                             </div>
                             <div class="stat-info">
                                 <div class="stat-header">
@@ -745,70 +749,49 @@ window.attemptLogin = function() {
                                 <span class="stat-label">R&eacute;sultat de l'ann&eacute;e</span>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                            </div>
-                            <div class="stat-info">
-                                <div class="stat-header">
-                                    <span class="stat-value" id="alertesCount">0</span>
-                                </div>
-                                <span class="stat-label">Points d'attention</span>
-                            </div>
-                        </div>
+                        
                     </div>
 
                     <!-- Rep&egrave;res du mois -->
-                    <div class="cab-kpi-strip">
-                        <div class="cab-kpi-mini">
-                            <span class="cab-kpi-label">Recettes ce mois</span>
-                            <span class="cab-kpi-value" id="recettesThisMonth">-</span>
-                            <span class="cabinet-stat-trend" id="recettesThisMonthTrend"></span>
-                        </div>
-                        <div class="cab-kpi-mini">
-                            <span class="cab-kpi-label">D&eacute;penses ce mois</span>
-                            <span class="cab-kpi-value" id="depensesThisMonth">-</span>
-                            <span class="cabinet-stat-trend" id="depensesThisMonthTrend"></span>
-                        </div>
-                        <div class="cab-kpi-mini">
-                            <span class="cab-kpi-label">Taux de marge</span>
-                            <span class="cab-kpi-value" id="tauxMarge">-</span>
-                            <span class="cabinet-stat-trend" id="tauxMargeTrend"></span>
-                        </div>
-                        <div class="cab-kpi-mini">
-                            <span class="cab-kpi-label">R&eacute;serve de tr&eacute;sorerie</span>
-                            <span class="cab-kpi-value" id="reserveTresorerie">-</span>
-                            <span class="cabinet-stat-trend" id="reserveTresorerieTrend"></span>
-                        </div>
-                        <div class="cab-kpi-mini">
-                            <span class="cab-kpi-label">Moyenne mensuelle d&eacute;penses</span>
-                            <span class="cab-kpi-value" id="avgMonthlyDepenses">-</span>
-                            <span class="cabinet-stat-trend" id="avgMonthlyDepensesTrend"></span>
-                        </div>
-                        <div class="cab-kpi-mini">
-                            <span class="cab-kpi-label">D&eacute;penses vs N-1</span>
-                            <span class="cab-kpi-value" id="vsAnneePrecedente">-</span>
-                            <span class="cabinet-stat-trend" id="vsAnneePrecedenteTrend"></span>
-                        </div>
-                    </div>
-
                     <!-- Graphiques : histogramme mensuel + camembert des d&eacute;penses -->
                     <div class="charts-grid">
-                        <div class="chart-card">
-                            <h3>D&eacute;penses &amp; recettes par mois</h3>
+                        <div class="chart-card cab-evol-card">
+                            <h3 id="evolutionChartTitle">D&eacute;penses &amp; recettes par mois</h3>
                             <div class="chart-legend">
                                 <span class="legend-item"><span class="legend-dot expense"></span>D&eacute;penses</span>
                                 <span class="legend-item"><span class="legend-dot income"></span>Recettes</span>
+                                <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Tr&eacute;sorerie (solde bancaire)</span>
                             </div>
                             <div class="bar-chart" id="evolutionChart"></div>
+                            <div class="evol-summary" id="evolutionSummary"></div>
                         </div>
-                        <div class="chart-card">
-                            <h3>O&ugrave; vont les d&eacute;penses</h3>
-                            <div class="donut-wrapper">
-                                <div class="donut-chart" id="depensesPieChart"></div>
-                                <div class="donut-legend" id="depensesPieLegend"></div>
+                        <div class="chart-card cab-donut-card">
+                            <h3 id="depensesDonutTitle">O&ugrave; vont les d&eacute;penses</h3>
+                            <div class="donut-row">
+                                <div class="donut-hero">
+                                    <div class="donut-chart" id="depensesPieChart"></div>
+                                    <div class="donut-center">
+                                        <span class="donut-center-value" id="donutCenterTotal">0&euro;</span>
+                                        <span class="donut-center-label">Total d&eacute;penses</span>
+                                    </div>
+                                </div>
+                                <div class="donut-hero donut-sub-hero" id="depensesSubHero" style="display:none;">
+                                    <div class="donut-chart" id="depensesSubPieChart"></div>
+                                    <div class="donut-center">
+                                        <span class="donut-center-value" id="donutSubCenterTotal">0&euro;</span>
+                                        <span class="donut-center-label" id="donutSubCenterLabel">Cat&eacute;gorie</span>
+                                    </div>
+                                </div>
                             </div>
                             <div id="topCategories"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h3 id="consommablesTitle">Consommables &mdash; bons de commande</h3>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-dot" style="background:linear-gradient(180deg,#f59e0b,#fbbf24)"></span>Co&ucirc;t r&eacute;el TTC des r&eacute;ceptions</span>
+                            </div>
+                            <div class="bar-chart" id="consommablesChart"></div>
+                            <div id="consommablesTop"></div>
                         </div>
                     </div>
 
@@ -1115,9 +1098,9 @@ window.attemptLogin = function() {
 
             <!-- Affaires View -->
             <section id="view-affaires" class="view">
-                <div class="module-card" style="padding:18px; margin-bottom:16px;">
-                    <h2 style="margin:0; font-size:1.15rem;">Affaires</h2>
-                    <p style="margin:6px 0 0; font-size:0.85rem; color:var(--color-text-secondary);">Les tâches à faire de temps en temps : solde d'ouverture, relevés à intégrer, rapprochement des dépenses, pointage des stocks.</p>
+                <div class="page-header-card module-card" style="padding:18px; margin-bottom:16px;">
+                    <h2>Affaires</h2>
+                    <p class="page-subtitle">Les tâches à faire de temps en temps : solde d'ouverture, relevés à intégrer, rapprochement des dépenses, pointage des stocks.</p>
                 </div>
 
                 <!-- Reprise d'import en cours -->
@@ -1651,8 +1634,8 @@ window.attemptLogin = function() {
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
                         </span>
                         <div>
-                            <h2>Gestion Cabinet</h2>
-                            <p>Ressources humaines, réunions, stocks et remplacements du cabinet</p>
+                            <h2 id="cabinetPageTitle">Gestion Cabinet</h2>
+                            <p id="cabinetPageSubtitle">Ressources humaines, réunions, stocks et remplacements du cabinet</p>
                         </div>
                     </div>
                 </div>
@@ -2128,28 +2111,66 @@ window.attemptLogin = function() {
 <!-- Stocks -->
                 <div id="cabinet-stocks" class="cabinet-tab-content">
                     <div class="sub-tabs">
-                        <button class="sub-tab active" data-subtab="urgence-stock">
+                        <button class="sub-tab active" data-subtab="urgence-overview">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            <span>Vue d'ensemble</span>
+                        </button>
+                        <button class="sub-tab" data-subtab="urgence-stock">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                            <span>Gestion des stocks</span>
+                            <span>Inventaire</span>
                         </button>
                         <button class="sub-tab" data-subtab="urgence-pointage">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                            <span>Pointage hebdomadaire</span>
+                            <span>Pointage</span>
                         </button>
                         <button class="sub-tab" data-subtab="urgence-orders">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            <span>Commandes & réception</span>
+                            <span>Commandes</span>
                         </button>
                         <button class="sub-tab" data-subtab="urgence-costs">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            <span>Coûts & budget</span>
+                            <span>Coûts & fournisseurs</span>
                         </button>
                     </div>
 
-                    <div id="urgence-stock" class="sub-tab-content active">
-                        <div class="module-card">
-                            <h3>Stocks — Salle d'urgence</h3>
-                            <p class="module-desc">Inventaire du matériel et des médicaments de la salle d'urgence : consommables, petit matériel, injections/perfusion, médicaments.</p>
+                    <div id="urgence-overview" class="sub-tab-content active">
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Vue d'ensemble</h3>
+                                    <p class="module-desc" id="urgenceOverviewNext"></p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn primary" id="urgenceGoPointageBtn">✓ Faire le pointage</button>
+                                    <button class="action-btn" id="urgenceGoOrderBtn">＋ Commander le manquant</button>
+                                </div>
+                            </div>
+                            <div class="stock-kpi-row" id="urgenceOverviewKpis"></div>
+                            <div id="urgenceOverviewAlerts"></div>
+                        </div>
+                    </div>
+
+                    <div id="urgence-stock" class="sub-tab-content">
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Gestion des stocks</h3>
+                                    <p class="module-desc">Inventaire du matériel et des médicaments : consommables, petit matériel, injections/perfusion, médicaments.</p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn primary" id="urgenceAddProductBtn">+ Ajouter un produit</button>
+                                    <div class="stock-menu-wrap">
+                                        <button class="stock-menu-btn" id="urgenceStockMenuBtn" onclick="urgenceToggleStockMenu(event)" aria-label="Plus d'actions" title="Plus d'actions">⋮</button>
+                                        <div class="stock-menu" id="urgenceStockMenu">
+                                            <button class="stock-menu-item" id="urgenceImportStocksBtn">⬆️ Importer un inventaire (CSV / Excel)</button>
+                                            <button class="stock-menu-item" id="urgenceCsvTemplateBtn">📄 Télécharger le modèle CSV</button>
+                                            <button class="stock-menu-item" id="urgenceExportStocksBtn">⬇️ Exporter CSV</button>
+                                        </div>
+                                        <input type="file" id="urgenceImportCsvInput" accept=".csv,.xlsx,.xls,text/csv,text/plain" style="display:none;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stock-kpi-row" id="urgenceStockKpis"></div>
                             <div class="inventory-filters">
                                 <select id="urgenceStockFilter" class="form-input">
                                     <option value="">Toutes catégories</option>
@@ -2159,66 +2180,65 @@ window.attemptLogin = function() {
                                     <option value="medicament">Médicaments</option>
                                     <option value="divers">Divers</option>
                                 </select>
-                                <button class="action-btn primary" id="urgenceAddProductBtn">Ajouter un produit</button>
-                                <button class="action-btn" id="urgenceExportStocksBtn">Exporter CSV</button>
                             </div>
-                            <div class="inventory-table urgence-stock-table">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Produit</th>
-                                            <th>Quantité</th>
-                                            <th>Seuil</th>
-                                            <th>Péremption</th>
-                                            <th>Coût TTC / unité</th>
-                                            <th>État</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="cabinetUrgenceStockBody"></tbody>
-                                </table>
-                            </div>
+                            <div class="stock-card-grid" id="cabinetUrgenceStockGrid"></div>
                             <div class="inventory-alerts" id="cabinetUrgenceStockAlerts"></div>
-                            <div style="margin-top: 12px;">
-                                <button class="action-btn" id="urgenceCopyOrderBtnCabinet" disabled>Copier la liste à commander</button>
-                                <button class="action-btn primary" id="urgenceCreateOrderBtn">Créer la commande à passer</button>
-                            </div>
+                            <p class="stock-order-hint">💡 Les commandes se génèrent depuis le <strong>Pointage</strong> (après l'état des lieux) ou depuis l'onglet <strong>Commandes & réception</strong>.</p>
                         </div>
                     </div>
 
                     <div id="urgence-pointage" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Pointage hebdomadaire — Secrétariat</h3>
-                            <p class="module-desc">Cochez chaque semaine ce qu'il reste dans la salle d'urgence. La liste à recommander est générée automatiquement.</p>
-                            <div class="urgence-alert info" id="urgencePointageInfo"></div>
-                            <div id="urgencePointageList"></div>
-                            <div style="margin-top: 16px;">
-                                <button class="action-btn primary" id="urgenceSavePointageBtn">Enregistrer le pointage</button>
-                                <button class="action-btn" id="urgenceCreateOrderBtn2">Générer la commande à passer</button>
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Pointage hebdomadaire</h3>
+                                    <p class="module-desc">Notez chaque semaine ce qu'il reste. La liste à recommander est générée automatiquement.</p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn primary" id="urgenceSavePointageBtn">✓ Enregistrer le pointage</button>
+                                    <button class="action-btn" id="urgenceCreateOrderBtn2">Générer la commande</button>
+                                </div>
                             </div>
+                            <div class="urgence-alert info" id="urgencePointageInfo"></div>
+                            <div class="stock-drag-hint">⠿ Glissez les références avec la poignée pour les mettre dans l'ordre de vos armoires — l'ordre est mémorisé pour le cabinet.</div>
+                            <div id="urgencePointageList"></div>
                         </div>
                     </div>
 
                     <div id="urgence-orders" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Commandes & réception</h3>
-                            <p class="module-desc">Générez la commande depuis le pointage, envoyez-la au fournisseur, puis réceptionnez : le stock disponible est mis à jour automatiquement.</p>
-                            <div style="margin-bottom: 16px;">
-                                <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">Créer la commande à passer</button>
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Commandes & réception</h3>
+                                    <p class="module-desc">Générez la commande depuis le pointage, envoyez-la au fournisseur, puis réceptionnez : le stock est mis à jour automatiquement.</p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">+ Commander le manquant</button>
+                                    <button class="action-btn" id="urgenceBlankOrderBtn" title="Créer une commande libre, hors pointage">Commande vierge</button>
+                                </div>
                             </div>
-                            <h4>Commandes en préparation (à passer)</h4>
+                            <h4 class="stock-section-title">Commandes en préparation (à passer)</h4>
                             <div id="urgenceOrdersPending"></div>
-                            <h4 style="margin-top: 20px;">Commandées — en attente de livraison</h4>
+                            <h4 class="stock-section-title">Commandées — en attente de livraison</h4>
                             <div id="urgenceOrdersOrdered"></div>
-                            <h4 style="margin-top: 20px;">Historique</h4>
+                            <h4 class="stock-section-title">Historique</h4>
                             <div id="urgenceOrdersHistory"></div>
                         </div>
                     </div>
 
                     <div id="urgence-costs" class="sub-tab-content">
-                        <div class="module-card">
-                            <h3>Coûts & budget — Fournitures salle d'urgence</h3>
-                            <p class="module-desc">Visualisez ce qui coûte le plus cher pour prendre des décisions de cabinet : par produit et par catégorie.</p>
+                        <div class="module-card stock-md3-card">
+                            <div class="stock-md3-head">
+                                <div>
+                                    <h3>Coûts & fournisseurs</h3>
+                                    <p class="module-desc">Ce que coûtent vos achats — par fournisseur, par produit, par catégorie — et l'évolution des prix payés.</p>
+                                </div>
+                                <div class="stock-md3-head-actions">
+                                    <button class="action-btn" id="urgenceAddSupplierBtn">＋ Fournisseur</button>
+                                </div>
+                            </div>
+                            <h4 class="stock-section-title">Fournisseurs</h4>
+                            <div class="stock-supplier-grid" id="urgenceSuppliersPanel"></div>
                             <div id="urgenceCostsPanel"></div>
                         </div>
                     </div>
@@ -2332,14 +2352,14 @@ window.attemptLogin = function() {
                      validees par un medecin associe du cabinet)
                      ============================================================ -->
                 <div id="secretarySpace" class="secretary-space" style="display:none;">
-                    <div class="secretary-header">
+                    <div class="secretary-header" id="secSpaceHeader">
                         <div class="secretary-title">
                             <span class="secretary-icon">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                             </span>
                             <div>
-                                <h2>Espace Secrétariat</h2>
-                                <p>Bonjour ! Voici vos tâches et l'état des stocks du cabinet.</p>
+                                <h2 id="secSpaceTitle">Espace Secrétariat</h2>
+                                <p id="secSpaceSubtitle">Bonjour ! Voici vos tâches et l'état des stocks du cabinet.</p>
                             </div>
                         </div>
                     </div>
@@ -2350,6 +2370,43 @@ window.attemptLogin = function() {
                         <div>
                             <span class="sec-pending-title">Accès en attente de validation</span>
                             <span class="sec-pending-text">Votre demande a bien été envoyée. Un médecin associé du cabinet doit la valider pour activer votre espace.</span>
+                        </div>
+                    </div>
+
+                    <!-- Medecin installé en attente de validation : carte explicative -->
+                    <div id="doctorPendingPanel" style="display:none;">
+                        <div class="module-card" style="max-width:680px;margin:0 auto;padding:36px 32px;text-align:center;">
+                            <div style="width:72px;height:72px;margin:0 auto 20px;border-radius:20px;background:var(--color-primary-light,#eef4ff);display:flex;align-items:center;justify-content:center;">
+                                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary,#2563eb)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L11.6 1.6a1.5 1.5 0 0 1 2.63 0l1.31 2.26 2.55.38a1.5 1.5 0 0 1 .83 2.56l-1.85 1.8.44 2.54a1.5 1.5 0 0 1-2.17 1.58L12 11.6l-2.29 1.2a1.5 1.5 0 0 1-2.17-1.58l.44-2.54-1.85-1.8a1.5 1.5 0 0 1 .83-2.56l2.55-.38z"/><path d="M12 15v6"/></svg>
+                            </div>
+                            <h2 id="doctorPendingTitle" style="margin:0 0 10px;font-size:1.4rem;">Bienvenue</h2>
+                            <p id="doctorPendingIntro" style="margin:0 0 28px;color:var(--color-text-secondary,#64748b);font-size:0.95rem;line-height:1.5;">
+                            <div style="display:flex;flex-direction:column;gap:14px;text-align:left;margin-bottom:28px;">
+                                <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--color-border,#e2e8f0);border-radius:12px;">
+                                    <span style="flex:none;width:34px;height:34px;border-radius:50%;background:#dcfce7;color:#16a34a;display:flex;align-items:center;justify-content:center;font-weight:600;">✓</span>
+                                    <div>
+                                        <div style="font-weight:600;">Inscription enregistrée</div>
+                                        <div style="font-size:0.82rem;color:var(--color-text-secondary,#64748b);">Votre compte et votre demande d'affiliation au cabinet sont bien enregistrés.</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:2px solid var(--color-primary,#2563eb);border-radius:12px;background:var(--color-primary-light,#eef4ff);">
+                                    <span style="flex:none;width:34px;height:34px;border-radius:50%;background:var(--color-primary,#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;">2</span>
+                                    <div>
+                                        <div style="font-weight:600;">Validation par un médecin associé — en cours</div>
+                                        <div style="font-size:0.82rem;color:var(--color-text-secondary,#64748b);">Un médecin associé du cabinet doit accepter votre demande dans la rubrique « Demandes d'accès en attente » de son compte.</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--color-border,#e2e8f0);border-radius:12px;opacity:0.65;">
+                                    <span style="flex:none;width:34px;height:34px;border-radius:50%;background:var(--color-border,#e2e8f0);color:var(--color-text-secondary,#64748b);display:flex;align-items:center;justify-content:center;font-weight:600;">3</span>
+                                    <div>
+                                        <div id="doctorPendingStep3Title" style="font-weight:600;">Accès complet au cabinet</div>
+                                        <div id="doctorPendingStep3Desc" style="font-size:0.82rem;color:var(--color-text-secondary,#64748b);">Dashboard partagé du cabinet, dépenses et recettes, stocks, réunions… La cotation reste votre espace personnel.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p style="margin:0;font-size:0.82rem;color:var(--color-text-secondary,#64748b);line-height:1.5;">
+                                ℹ️ Aucune action n'est nécessaire de votre côté. Dès que votre demande est validée, votre accès est activé automatiquement — reconnectez-vous simplement pour profiter de l'espace cabinet.
+                            </p>
                         </div>
                     </div>
 
@@ -3399,17 +3456,17 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202611062000" defer></script>
+    <script src="app.v5.js?v=202612011000" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
-    <script src="secretaire-space.js?v=2026110115000" defer></script>
-    <script src="urgence.js?v=2026110115000" defer></script>
-    <script src="flux.js?v=2026110115000" defer></script>
-    <script src="reconciliation.js?v=2026110115000" defer></script>
+    <script src="secretaire-space.js?v=202612011000" defer></script>
+    <script src="urgence.js?v=202611291000" defer></script>
+    <script src="flux.js?v=202612011000" defer></script>
+    <script src="reconciliation.js?v=202611141000" defer></script>
     <script src="reminders.js?v=202611062000" defer></script>
-    <script src="affaires.js?v=202611071000" defer></script>
+    <script src="affaires.js?v=202612011000" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
     <script src="releve-review.js?v=202611062200" defer></script>
-    <script src="urgence-orders.js?v=2026110115000" defer></script>
+    <script src="urgence-orders.js?v=202611161000" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {

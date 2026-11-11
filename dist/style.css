@@ -7756,7 +7756,7 @@ h2 {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
 }
 
 .modal-card {
@@ -11001,7 +11001,7 @@ html.no-anim *::after {
     font-weight: 600;
 }
 
-/* ============================================================
+/* =====================================================
    ESPACE ADMINISTRATEUR
    ============================================================ */
 .admin-panel { background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 12px; padding: 20px; }
@@ -11160,6 +11160,8 @@ select.admin-search { min-width: 170px; }
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
     cursor: default;
+    position: relative;
+    z-index: 40;
 }
 .review-line.confirmed { opacity: 0.55; background: rgba(16,185,129,0.06); }
 .review-line.rejected { opacity: 0.4; background: rgba(239,68,68,0.05); text-decoration: line-through; }
@@ -13403,6 +13405,11 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     background: var(--md-surface-high);
     box-shadow: 0 0 0 2px var(--md-primary), var(--elev-2) !important;
     animation: md-pop 0.45s var(--md-spring) both;
+    /* la carte en cours doit passer DEVANT les cartes suivantes :
+       sans promotion, le menu de sous-categories (position absolute)
+       reste confine dans le stacking context de sa carte et disparait dessous */
+    position: relative;
+    z-index: 40;
 }
 .review-line.confirmed { opacity: 0.55; background: rgba(16,185,129,0.07); }
 .review-line.rejected { opacity: 0.4; background: rgba(239,68,68,0.05); text-decoration: line-through; }
@@ -14537,3 +14544,3130 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
     #reunionDetailView .odj-item,
     #reunionDetailView .sujet-item { padding: 13px 14px !important; }
 }
+
+/* ============================================================
+   STOCKS CABINET — Material Design 3 Expressive
+   (Gestion, Pointage, Commandes, Coûts)
+   ============================================================ */
+
+#cabinet-stocks {
+    --stock-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --stock-radius: 20px;
+    --stock-ok: #16a34a;
+    --stock-warn: #d97706;
+    --stock-danger: #dc2626;
+}
+
+/* --- Sous-onglets : pilules segmentées MD3 --- */
+#cabinet-stocks .sub-tabs {
+    gap: 8px;
+    margin-bottom: 22px;
+    padding: 4px;
+    background: var(--color-bg-muted);
+    border-radius: 999px;
+    border: 1px solid var(--color-border-subtle);
+}
+
+#cabinet-stocks .sub-tab {
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-size: 0.84rem;
+    transition: transform 0.3s var(--stock-spring), background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#cabinet-stocks .sub-tab:hover { background: var(--color-bg-elevated); transform: translateY(-1px); }
+
+#cabinet-stocks .sub-tab.active {
+    background: var(--color-bg-elevated);
+    color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+}
+
+[data-theme="dark"] #cabinet-stocks .sub-tab.active {
+    background: rgba(99, 102, 241, 0.22);
+    color: #c7d2fe;
+}
+
+/* --- Cartes module : surfaces plus douces --- */
+#cabinet-stocks .stock-md3-card {
+    border-radius: 24px;
+    padding: 22px;
+    animation: stock-pop 0.5s var(--stock-spring) both;
+}
+
+@keyframes stock-pop {
+    from { opacity: 0; transform: translateY(10px) scale(0.99); }
+    to { opacity: 1; transform: none; }
+}
+
+.stock-md3-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.stock-md3-head h3 { margin: 0 0 4px; font-size: 1.15rem; }
+
+.stock-md3-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.stock-md3-foot { margin-top: 16px; text-align: center; }
+.stock-md3-cta { min-width: 240px; border-radius: 999px !important; padding: 12px 24px !important; font-weight: 600; }
+
+.stock-section-title {
+    margin: 22px 0 10px;
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* --- Menu « ⋮ » --- */
+.stock-menu-wrap { position: relative; }
+
+.stock-menu-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.25s var(--stock-spring), background 0.15s ease;
+}
+
+.stock-menu-btn:hover { background: var(--color-bg-muted); transform: scale(1.08); }
+
+.stock-menu {
+    position: absolute;
+    top: 44px;
+    right: 0;
+    min-width: 240px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+    padding: 6px;
+    display: none;
+    z-index: 40;
+}
+
+.stock-menu.open {
+    display: block;
+    animation: stock-pop 0.3s var(--stock-spring) both;
+}
+
+.stock-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 11px 14px;
+    border: none;
+    background: transparent;
+    color: var(--color-text);
+    font-size: 0.85rem;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.stock-menu-item:hover:not(:disabled) { background: var(--color-bg-muted); }
+.stock-menu-item:disabled { color: var(--color-text-tertiary); cursor: default; }
+
+/* --- KPI : tuiles expressive --- */
+.stock-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.stock-kpi {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 2px;
+    min-height: 72px;
+    padding: 12px 8px;
+    border-radius: var(--stock-radius);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    animation: stock-pop 0.5s var(--stock-spring) both;
+}
+
+.stock-kpi.warn { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+.stock-kpi.danger { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+.stock-kpi.exp { background: rgba(124, 58, 237, 0.12); color: #7c3aed; }
+
+.stock-kpi-num { font-size: 1.6rem; font-weight: 800; line-height: 1.05; }
+.stock-kpi-num small { display: block; font-size: 0.62rem; font-weight: 600; line-height: 1.2; }
+.stock-kpi-label { font-size: 0.7rem; font-weight: 600; line-height: 1.25; opacity: 0.85; white-space: normal; }
+
+[data-theme="dark"] .stock-kpi.warn { color: #fbbf24; }
+[data-theme="dark"] .stock-kpi.danger { color: #f87171; }
+[data-theme="dark"] .stock-kpi.exp { color: #c4b5fd; }
+
+/* --- Cartes produit --- */
+.stock-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.stock-card {
+    position: relative;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--stock-radius);
+    padding: 14px 16px 16px;
+    overflow: hidden;
+    transition: transform 0.3s var(--stock-spring), box-shadow 0.2s ease;
+    animation: stock-pop 0.45s var(--stock-spring) both;
+}
+
+.stock-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--stock-ok);
+}
+
+.stock-card.bas::before { background: var(--stock-warn); }
+.stock-card.rupture::before { background: var(--stock-danger); }
+
+.stock-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1); }
+
+.stock-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.stock-card-cat {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary);
+}
+
+.stock-card-actions { display: flex; gap: 2px; }
+
+.stock-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.25s var(--stock-spring);
+}
+
+.stock-icon-btn:hover:not(:disabled) { background: var(--color-bg-muted); transform: scale(1.12); }
+.stock-icon-btn:disabled { opacity: 0.3; cursor: default; }
+
+.stock-card-name { font-weight: 700; font-size: 0.92rem; line-height: 1.3; margin-bottom: 8px; }
+
+.stock-card-qty { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+
+.stock-card-num {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-text);
+}
+
+.stock-card-unit { font-size: 0.8rem; color: var(--color-text-secondary); }
+
+.stock-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.stock-chip.success { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
+.stock-chip.warning { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.stock-chip.danger { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+
+.stock-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+}
+
+.stock-card-price { margin-top: 6px; font-size: 0.8rem; font-weight: 700; color: var(--color-text); }
+.stock-card-price small { font-weight: 500; color: var(--color-text-tertiary); }
+
+/* --- Bloc d'alertes : cartes MD3, detache de la grille --- */
+#cabinet-stocks .inventory-alerts {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#cabinet-stocks .inventory-alerts .urgence-alert {
+    margin-top: 0;
+    border-radius: 16px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    border: 1px solid transparent;
+    animation: stock-pop 0.45s var(--stock-spring) both;
+}
+
+#cabinet-stocks .inventory-alerts .urgence-alert.danger {
+    background: rgba(239, 68, 68, 0.09);
+    border-color: rgba(239, 68, 68, 0.28);
+    color: #b91c1c;
+}
+
+#cabinet-stocks .inventory-alerts .urgence-alert.warning {
+    background: rgba(245, 158, 11, 0.09);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #b45309;
+}
+
+#cabinet-stocks .inventory-alerts .urgence-alert.success {
+    background: rgba(34, 197, 94, 0.09);
+    border-color: rgba(34, 197, 94, 0.28);
+    color: #15803d;
+}
+
+[data-theme="dark"] #cabinet-stocks .inventory-alerts .urgence-alert.danger { color: #fca5a5; }
+[data-theme="dark"] #cabinet-stocks .inventory-alerts .urgence-alert.warning { color: #fcd34d; }
+[data-theme="dark"] #cabinet-stocks .inventory-alerts .urgence-alert.success { color: #86efac; }
+
+/* --- Pointage : lignes simples et manipulables --- */
+.stock-drag-hint {
+    font-size: 0.78rem;
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    border-radius: 999px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    display: inline-block;
+}
+
+#cabinet-stocks .urgence-pointage-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: var(--color-bg);
+    margin-bottom: 8px;
+    transition: transform 0.25s var(--stock-spring), box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.15s ease;
+}
+
+#cabinet-stocks .urgence-pointage-row:hover { box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08); }
+
+#cabinet-stocks .urgence-pointage-name { flex: 1 1 160px; }
+
+#cabinet-stocks .urgence-pointage-row.dragging {
+    opacity: 0.85;
+    z-index: 5;
+    position: relative;
+    transition: none;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#cabinet-stocks .urgence-pointage-row.drag-over {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.urgence-pointage-handle {
+    flex-shrink: 0;
+    width: 30px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    color: var(--color-text-tertiary);
+    border-radius: 8px;
+    touch-action: none;
+}
+
+.urgence-pointage-handle:hover { background: var(--color-bg-muted); color: var(--color-text); }
+.urgence-pointage-handle:active { cursor: grabbing; }
+.urgence-pointage-handle svg { width: 16px; height: 16px; }
+
+.urgence-pointage-move { display: flex; gap: 2px; flex-shrink: 0; }
+
+#cabinet-stocks .urgence-pointage-input .form-input {
+    width: 76px;
+    text-align: center;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+#cabinet-stocks .urgence-pointage-flag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    min-width: 0;
+    text-align: center;
+}
+
+#cabinet-stocks .urgence-pointage-flag.warning { background: rgba(245, 158, 11, 0.14); }
+#cabinet-stocks .urgence-pointage-flag.success { background: rgba(34, 197, 94, 0.13); }
+
+/* --- Commandes : cartes --- */
+#cabinet-stocks .urgence-order-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--stock-radius);
+    background: var(--color-bg);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    animation: stock-pop 0.45s var(--stock-spring) both;
+}
+
+#cabinet-stocks .urgence-order-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+#cabinet-stocks .urgence-order-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--color-border);
+}
+
+#cabinet-stocks .urgence-order-edit-row {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+#cabinet-stocks .urgence-order-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+#cabinet-stocks .action-btn { border-radius: 999px !important; }
+
+#cabinet-stocks .action-btn.primary {
+    transition: transform 0.25s var(--stock-spring), box-shadow 0.2s ease;
+}
+
+#cabinet-stocks .action-btn.primary:active { transform: scale(0.96); }
+
+/* --- Coûts --- */
+#cabinet-stocks .urgence-cost-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+#cabinet-stocks .urgence-cost-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 16px 10px;
+    border-radius: var(--stock-radius);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+}
+
+#cabinet-stocks .urgence-cost-value { font-size: 1.35rem; font-weight: 800; }
+#cabinet-stocks .urgence-cost-label { font-size: 0.72rem; font-weight: 600; opacity: 0.85; }
+
+#cabinet-stocks .urgence-cost-bar { border-radius: 999px; }
+#cabinet-stocks .urgence-cost-cat { margin-bottom: 8px; }
+
+/* --- Mobile --- */
+@media (max-width: 640px) {
+    #cabinet-stocks .stock-md3-card { padding: 12px 10px; border-radius: 16px; }
+    #cabinet-stocks .stock-md3-head { margin-bottom: 10px; gap: 8px; }
+    #cabinet-stocks .stock-md3-head h3 { font-size: 1rem; }
+    #cabinet-stocks .stock-md3-head .module-desc { font-size: 0.72rem; }
+    #cabinet-stocks .stock-md3-head-actions .action-btn { padding: 8px 12px !important; font-size: 0.78rem; }
+
+    #cabinet-stocks .sub-tab { padding: 8px 12px; font-size: 0.76rem; }
+    #cabinet-stocks .sub-tab span { max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+
+    .stock-md3-head { flex-direction: column; }
+    .stock-md3-head-actions { width: 100%; }
+    .stock-md3-head-actions .action-btn { flex: 1; }
+
+    .stock-card-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .stock-card { padding: 8px 10px 9px; gap: 4px; }
+    .stock-card::before { width: 4px; }
+    .stock-card-top { margin-bottom: 0; }
+    .stock-card-cat { font-size: 0.58rem; }
+    .stock-card-name {
+        font-size: 0.76rem;
+        line-height: 1.15;
+        margin-bottom: 3px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .stock-card-num { font-size: 1.1rem; }
+    .stock-card-unit { font-size: 0.68rem; }
+    .stock-chip { font-size: 0.6rem; padding: 2px 7px; }
+    .stock-card-meta { display: none; }
+    .stock-card-price { margin-top: 1px; font-size: 0.68rem; }
+    .stock-card-lots { gap: 4px; margin-top: 4px; }
+    .stock-lot-chip { font-size: 0.6rem; padding: 2px 3px 2px 7px; }
+    .stock-icon-btn { width: 24px; height: 24px; font-size: 0.68rem; }
+
+    .stock-kpi-row { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 6px; }
+    .stock-kpi { padding: 8px 4px; min-height: 64px; border-radius: 14px; }
+    .stock-kpi-num { font-size: 1.05rem; }
+    .stock-kpi-num small { font-size: 0.55rem; }
+    .stock-kpi-label { font-size: 0.58rem; }
+
+    .stock-drag-hint { font-size: 0.66rem; padding: 5px 10px; margin-bottom: 8px; }
+
+    #cabinet-stocks .urgence-pointage-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            "handle name input"
+            "lots lots lots";
+        align-items: center;
+        padding: 6px 8px;
+        gap: 3px 6px;
+        margin-bottom: 6px;
+        border-radius: 12px;
+    }
+    #cabinet-stocks .urgence-pointage-row:has(.urgence-pointage-lots:empty),
+    #cabinet-stocks .urgence-pointage-row:not(:has(.urgence-pointage-lots)) { padding-bottom: 8px; }
+    #cabinet-stocks .urgence-pointage-handle { grid-area: handle; width: 20px; height: 26px; }
+    #cabinet-stocks .urgence-pointage-handle svg { width: 13px; height: 13px; }
+    #cabinet-stocks .urgence-pointage-name { grid-area: name; min-width: 0; }
+    #cabinet-stocks .urgence-pointage-name strong { font-size: 0.8rem; line-height: 1.15; }
+    #cabinet-stocks .urgence-pointage-sub {
+        font-size: 0.62rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #cabinet-stocks .urgence-pointage-input { grid-area: input; margin-left: 0; }
+    #cabinet-stocks .urgence-pointage-input .form-input { width: 58px; padding: 5px 2px; font-size: 0.88rem; }
+    #cabinet-stocks .urgence-pointage-input label { display: none; }
+    #cabinet-stocks .urgence-pointage-move { display: none; }
+    #cabinet-stocks .urgence-pointage-lots { grid-area: lots; order: 0; flex: 1 1 auto; gap: 4px; }
+    #cabinet-stocks .stock-lot-chip { font-size: 0.6rem; }
+    #cabinet-stocks .urgence-pointage-flag { min-width: 0; font-size: 0.62rem; }
+
+    /* Sur mobile : le texte « à recommander » ecrase la reference -> pastille compacte */
+    #cabinet-stocks .urgence-pointage-flag.warning,
+    #cabinet-stocks .urgence-pointage-flag.success {
+        font-size: 0;
+        line-height: 0;
+        width: 10px;
+        height: 10px;
+        padding: 0;
+        border-radius: 50%;
+        flex: 0 0 10px;
+        align-self: center;
+    }
+    #cabinet-stocks .urgence-pointage-flag.warning { background: #d97706; }
+    #cabinet-stocks .urgence-pointage-flag.success { background: #16a34a; }
+
+    .stock-md3-cta { width: 100%; min-width: 0; }
+}
+
+@media (max-width: 400px) {
+    .stock-card-grid { grid-template-columns: 1fr; }
+}
+
+/* --- Lots de péremption : éditeur (modal produit), cartes, pointage, réception --- */
+.stock-lot-editor { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+.stock-lot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-bg-subtle);
+}
+
+.stock-lot-row .form-input { flex: 1; border-radius: 10px; }
+.stock-lot-row .stock-lot-qty { max-width: 90px; flex: 0 0 90px; text-align: center; font-weight: 700; }
+.stock-lot-row .stock-lot-remove { flex-shrink: 0; color: var(--color-text-tertiary); }
+.stock-lot-row .stock-lot-remove:hover { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+
+.stock-lot-add {
+    border-radius: 999px !important;
+    border-style: dashed !important;
+    width: 100%;
+    padding: 9px 14px !important;
+    color: var(--color-primary);
+}
+
+.stock-lot-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.stock-lot-chip.warning { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.stock-lot-chip.danger { background: rgba(239, 68, 68, 0.14); color: #dc2626; }
+
+.stock-chip.neutral { background: var(--color-bg-muted); color: var(--color-text-secondary); }
+
+.stock-lot-discard {
+    border: none;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: #dc2626;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.25s var(--stock-spring, ease), background 0.15s ease;
+}
+
+.stock-lot-discard:hover { background: #b91c1c; transform: scale(1.06); }
+
+.stock-card-lots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+/* Pointage : chips de lots en lecture seule (comptage = un seul champ par reference) */
+.urgence-pointage-lots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1 1 100%;
+    order: 3;
+}
+
+/* Réception : date de péremption par référence */
+.urgence-receive-expiry-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.urgence-receive-expiry-row label { font-size: 0.78rem; color: var(--color-text-secondary); white-space: nowrap; }
+.urgence-receive-expiry-row .form-input { max-width: 180px; border-radius: 10px; }
+
+@media (max-width: 640px) {
+    .urgence-receive-expiry-row .form-input { max-width: 150px; }
+}
+
+/* --- Commandes : meta fournisseur / port / remise --- */
+.urgence-order-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    padding: 12px;
+    background: var(--color-bg-subtle);
+    border-radius: 14px;
+    margin-bottom: 12px;
+}
+
+.urgence-order-meta label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.urgence-order-meta .form-input { border-radius: 10px; }
+
+.stock-order-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-top: 16px;
+    text-align: center;
+    background: var(--color-bg-muted);
+    border-radius: 999px;
+    padding: 8px 14px;
+}
+
+@media (max-width: 640px) {
+    .urgence-order-meta { grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+    .stock-order-hint { font-size: 0.68rem; }
+}
+
+/* --- Coûts : evolution des prix payes (benchmark interne) --- */
+.stock-price-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.stock-price-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--color-bg-subtle);
+}
+
+.stock-price-name { font-weight: 700; font-size: 0.82rem; flex: 1 1 160px; }
+.stock-price-hist { font-size: 0.75rem; color: var(--color-text-secondary); flex: 2 1 200px; }
+
+.stock-cost-note, .stock-price-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+    margin: 8px 0 0;
+}
+
+.stock-price-hint { margin: 8px 0 0; font-style: italic; }
+
+@media (max-width: 640px) {
+    .stock-price-row { padding: 7px 9px; gap: 6px; }
+    .stock-price-name { flex: 1 1 100%; font-size: 0.78rem; }
+    .stock-price-hist { flex: 1 1 100%; font-size: 0.7rem; }
+}
+
+/* --- Fournisseurs : cartes --- */
+.stock-supplier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.stock-supplier-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--stock-radius, 20px);
+    padding: 14px 16px;
+    animation: stock-pop 0.45s var(--stock-spring, ease) both;
+    transition: transform 0.3s var(--stock-spring, ease), box-shadow 0.2s ease;
+}
+
+.stock-supplier-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); }
+
+.stock-supplier-name { font-size: 0.95rem; }
+
+.stock-supplier-email { font-size: 0.78rem; color: var(--color-primary); margin: 4px 0 8px; word-break: break-all; }
+.stock-supplier-email.muted { color: var(--color-text-tertiary); font-style: italic; }
+
+.stock-supplier-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+    .stock-supplier-grid { grid-template-columns: 1fr; gap: 8px; }
+    .stock-supplier-card { padding: 12px; }
+}
+
+/* --- Commandes : lignes compactes sur mobile + cibles de deplacement --- */
+.urgence-move-target { margin-bottom: 6px; font-weight: 600; }
+
+@media (max-width: 768px) {
+    .urgence-order-edit-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "name total"
+            "fields fields";
+        gap: 3px 8px;
+        padding: 6px 0;
+    }
+
+    .urgence-order-edit-name { grid-area: name; }
+    .urgence-order-edit-name strong { font-size: 0.8rem; line-height: 1.2; }
+    .urgence-order-edit-name .urgence-pointage-sub {
+        font-size: 0.62rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .urgence-order-edit-fields {
+        grid-area: fields;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .urgence-order-edit-fields label {
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.62rem;
+    }
+
+    .urgence-order-edit-fields .form-input { width: 58px; padding: 5px 2px; font-size: 0.85rem; }
+
+    .urgence-order-line-total { min-width: 0; font-size: 0.75rem; }
+
+    .urgence-order-add-row { margin: 6px 0; }
+    .urgence-order-add-row .form-input { max-width: none; }
+
+    .urgence-order-meta { grid-template-columns: 1fr 1fr; }
+}
+
+/* --- Réception : saisie des prix facturés par référence --- */
+.urgence-receive-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.urgence-receive-price-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.68rem;
+    color: var(--color-text-secondary);
+}
+
+.urgence-receive-price-label .form-input { width: 90px; border-radius: 10px; }
+
+.urgence-receive-line-total {
+    min-width: 70px;
+    text-align: right;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.urgence-receive-totals {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--color-bg-subtle);
+}
+
+.urgence-receive-totals .form-group { flex: 1 1 180px; margin: 0; }
+
+.urgence-receive-sum {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 4px;
+}
+
+.urgence-receive-sum-label { font-size: 0.68rem; color: var(--color-text-secondary); }
+.urgence-receive-sum strong { font-size: 1.05rem; }
+
+@media (max-width: 640px) {
+    .urgence-receive-line { gap: 6px; padding: 6px 0; }
+    .urgence-receive-price-label .form-input { width: 74px; padding: 5px 2px; font-size: 0.85rem; }
+    .urgence-receive-line-total { min-width: 0; font-size: 0.74rem; }
+    .urgence-receive-totals { padding: 10px; gap: 10px; }
+}
+
+/* --- Rapprochement automatique : suggestion ✨ dans le flux --- */
+.recon-suggest {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px dashed rgba(99, 102, 241, 0.4);
+    animation: stock-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.recon-suggest-icon { font-size: 0.95rem; flex-shrink: 0; }
+
+.recon-suggest-label {
+    flex: 1 1 200px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.recon-suggest-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.recon-suggest-actions .action-btn { padding: 5px 12px !important; font-size: 0.75rem; }
+
+[data-theme="dark"] .recon-suggest { background: rgba(99, 102, 241, 0.16); border-color: rgba(129, 140, 248, 0.45); }
+[data-theme="dark"] .recon-suggest-label { color: #c7d2fe; }
+
+@media (max-width: 640px) {
+    .recon-suggest { padding: 7px 9px; gap: 6px; }
+    .recon-suggest-label { flex: 1 1 100%; font-size: 0.72rem; }
+}
+
+/* --- Cartes commande : hiérarchie visuelle claire --- */
+.urgence-order-head { align-items: flex-start; margin-bottom: 4px; }
+
+.urgence-order-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.urgence-order-supplier {
+    font-size: 1.02rem;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.urgence-order-date { font-size: 0.72rem; color: var(--color-text-tertiary); }
+
+.urgence-order-line-total { color: var(--color-text); }
+
+.urgence-order-total-wrap { font-size: 0.78rem; color: var(--color-text-secondary); }
+.urgence-order-total-wrap strong { font-size: 1.05rem; color: var(--color-text); }
+
+@media (max-width: 640px) {
+    .urgence-order-supplier { font-size: 0.95rem; }
+    .urgence-order-date { font-size: 0.68rem; }
+    .urgence-order-total-wrap { flex: 1 1 100%; text-align: right; }
+    .urgence-order-total-wrap strong { font-size: 1.1rem; }
+}
+
+/* --- Cartes commande : avatar fournisseur + pied de carte MD3 --- */
+.urgence-order-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.urgence-order-avatar {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    font-size: 1.15rem;
+    font-weight: 800;
+    transition: transform 0.3s var(--stock-spring, ease);
+}
+
+.urgence-order-card:hover .urgence-order-avatar { transform: scale(1.06); }
+
+[data-theme="dark"] .urgence-order-avatar { background: rgba(99, 102, 241, 0.2); color: #c7d2fe; }
+
+.urgence-order-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.urgence-order-head .urgence-state { flex-shrink: 0; }
+
+/* Total en pilule */
+.urgence-order-total-wrap {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: var(--color-primary-subtle);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.urgence-order-total-wrap strong { font-size: 1.12rem; color: var(--color-primary); }
+
+[data-theme="dark"] .urgence-order-total-wrap { background: rgba(99, 102, 241, 0.18); }
+[data-theme="dark"] .urgence-order-total-wrap strong { color: #c7d2fe; }
+
+/* Boutons hierarchises : tonal (rempli leger) / ghost (discret) */
+#cabinet-stocks .action-btn.stock-btn-tonal {
+    background: var(--color-bg-muted);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+#cabinet-stocks .action-btn.stock-btn-tonal:hover { background: var(--color-bg-subtle); }
+
+#cabinet-stocks .action-btn.stock-btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--color-text-tertiary);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+}
+
+#cabinet-stocks .action-btn.stock-btn-ghost:hover { color: #dc2626; background: transparent; }
+
+.urgence-order-foot {
+    align-items: center;
+    border-top: 1px solid var(--color-border-subtle);
+    margin-top: 12px;
+    padding-top: 12px;
+}
+
+@media (max-width: 640px) {
+    .urgence-order-avatar { width: 36px; height: 36px; font-size: 1rem; }
+    .urgence-order-head { gap: 10px; margin-bottom: 10px; padding-bottom: 10px; }
+    .urgence-order-total-wrap { flex: 1 1 100%; justify-content: space-between; padding: 8px 14px; }
+    .urgence-order-actions { flex: 1 1 100%; }
+    .urgence-order-actions .action-btn { flex: 1 1 40%; padding: 8px 10px !important; font-size: 0.75rem; }
+    .urgence-order-actions .action-btn.stock-btn-ghost { flex: 0 1 auto; }
+}
+/* ===== FLUX HERO : disposition cohérente des inlines selon la largeur ===== */
+/* Toutes les tuiles partagent la même géométrie : même padding, valeurs
+   tabulaires sur une seule ligne, libellés ellipsés proprement. */
+.flux-hero-grid { max-width: 100%; }
+.flux-hero-grid > * { min-width: 0; }
+.fhero-balance, .fhero-kpi, .fhero-chart { padding: 10px 14px !important; }
+.fhero-kpi > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+}
+.fhero-kpi-label, .fhero-balance-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.fhero-kpi-value, .fhero-balance-value { white-space: nowrap; }
+
+/* Largeur intermédiaire (761-1000px) : la balance prend toute la ligne,
+   les 4 tuiles restantes se répartissent uniformément — plus d'écrasement */
+@media (min-width: 761px) and (max-width: 1000px) {
+    .flux-hero-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    .fhero-balance {
+        grid-column: 1 / -1;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 12px;
+    }
+    .fhero-balance-label { margin: 0 !important; flex-shrink: 0; }
+    .fhero-balance-value { font-size: 1.45rem !important; }
+    .fhero-meta { margin: 0 0 0 auto; }
+    .fhero-meta .fhero-trend,
+    .fhero-meta .fhero-bank {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        background: var(--md-surface-high);
+        border-radius: var(--radius-full);
+        font-size: 0.64rem !important;
+    }
+}
+
+/* Mobile : la tuile année reste lisible, pas de tuile orpheline écrasée */
+@media (max-width: 760px) {
+    .flux-hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .fhero-balance, .fhero-chart { grid-column: 1 / -1; }
+    .fhero-kpi { padding: 8px 12px !important; }
+}
+
+/* ---- Graphique cabinet : courbe de tresorerie + barres polies ---- */
+#cabinet-dashboard .bar-chart .treso-dot {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #3b82f6;
+    box-shadow: 0 1px 5px rgba(59, 130, 246, 0.45);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 3;
+}
+#cabinet-dashboard .bar-chart .bar {
+    transition: height 0.6s var(--md-spring, ease), filter 0.15s ease, transform 0.2s ease;
+}
+#cabinet-dashboard .bar-chart .bar-group:hover .bar {
+    transform: translateY(-3px);
+}
+#cabinet-dashboard .bar-chart .bar-label.current-month {
+    color: var(--color-primary, #2563eb);
+    font-weight: 700;
+}
+
+/* ---- Consommables : barres ambre des bons de commande ---- */
+#cabinet-dashboard .bar-chart .bar.conso {
+    background: linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%);
+    border-radius: 6px 6px 0 0;
+}
+#cabinet-dashboard .bar-chart .bar.conso:hover {
+    filter: brightness(1.15);
+}
+
+/* ---- Donut dépenses : drill-down sous-catégories ---- */
+#cabinet-dashboard .donut-legend-item.donut-clickable {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+    transition: background 0.15s ease;
+}
+#cabinet-dashboard .donut-legend-item.donut-clickable:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.05));
+}
+
+/* ---- Donut dépenses : dropdown sous-catégories ---- */
+#cabinet-dashboard .donut-item-wrap {
+    display: flex;
+    flex-direction: column;
+}
+#cabinet-dashboard .donut-legend-item.donut-clickable {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+    transition: background 0.15s ease;
+}
+#cabinet-dashboard .donut-legend-item.donut-clickable:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.05));
+}
+#cabinet-dashboard .donut-chevron {
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    transition: transform 0.2s ease;
+}
+#cabinet-dashboard .donut-item-wrap:has(.donut-subs.open) .donut-chevron {
+    transform: rotate(180deg);
+}
+#cabinet-dashboard .donut-subs {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    margin: 4px 4px 8px 26px;
+    padding: 8px 10px;
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.04));
+    border-radius: 8px;
+}
+#cabinet-dashboard .donut-subs.open {
+    display: flex;
+}
+#cabinet-dashboard .donut-sub-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "name amount" "bar bar";
+    gap: 2px 8px;
+    align-items: center;
+}
+#cabinet-dashboard .donut-sub-name {
+    grid-area: name;
+    font-size: 0.72rem;
+    color: var(--color-text);
+}
+#cabinet-dashboard .donut-sub-amount {
+    grid-area: amount;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+#cabinet-dashboard .donut-sub-bar {
+    grid-area: bar;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+#cabinet-dashboard .donut-sub-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #6366f1, #818cf8);
+}
+
+/* ---- Onglets top-catégories : drill-down sous-catégories ---- */
+#cabinet-dashboard .top-cat-wrap {
+    display: flex;
+    flex-direction: column;
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable {
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.08));
+    transform: translateX(2px);
+}
+#cabinet-dashboard .top-cat-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#cabinet-dashboard .top-cat-chevron {
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    transition: transform 0.2s ease;
+}
+#cabinet-dashboard .top-cat-wrap:has(.top-cat-subs.open) .top-cat-chevron {
+    transform: rotate(180deg);
+}
+#cabinet-dashboard .top-cat-subs {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin: 4px 0 8px 10px;
+    padding: 10px 12px;
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.04));
+    border-left: 3px solid var(--color-primary, #2563eb);
+    border-radius: 8px;
+}
+#cabinet-dashboard .top-cat-subs.open {
+    display: flex;
+}
+
+/* ---- Carte "Où vont les dépenses" : MD3 expressif ---- */
+#cabinet-dashboard .cab-donut-card {
+    border-radius: var(--md-radius-2xl, 24px);
+}
+#cabinet-dashboard .donut-hero {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    margin: 18px auto 22px;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    width: 170px;
+    height: 170px;
+    transition: transform 0.45s var(--md-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+#cabinet-dashboard .cab-donut-card .donut-chart::after {
+    width: 106px;
+    height: 106px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+#cabinet-dashboard .cab-donut-card:hover .donut-chart {
+    transform: scale(1.045) rotate(1.5deg);
+}
+#cabinet-dashboard .donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+}
+#cabinet-dashboard .donut-center-value {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+}
+#cabinet-dashboard .donut-center-label {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+    margin-top: 2px;
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable {
+    border-radius: 14px;
+    padding: 10px 14px;
+    background: var(--color-bg-muted);
+    transition: background 0.2s ease, transform 0.25s var(--md-spring, ease), box-shadow 0.2s ease;
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.08));
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:active {
+    transform: translateY(0) scale(0.985);
+}
+#cabinet-dashboard .top-cat-wrap:has(.top-cat-subs.open) .top-cat-item {
+    background: var(--color-primary-light, #eef4ff);
+}
+#cabinet-dashboard .top-cat-dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+#cabinet-dashboard .top-cat-item {
+    gap: 0;
+}
+#cabinet-dashboard .top-cat-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#cabinet-dashboard .top-cat-subs {
+    animation: md-pop 0.4s var(--md-spring, ease) both;
+    margin: 6px 0 10px 14px;
+    border-radius: 14px;
+}
+
+/* ---- Deux donuts côte à côte (catégories + sous-catégories) ---- */
+#cabinet-dashboard .donut-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+#cabinet-dashboard .donut-sub-hero {
+    width: 140px;
+    height: 140px;
+    margin: 0;
+    animation: md-pop 0.45s var(--md-spring, ease) both;
+}
+#cabinet-dashboard .donut-sub-hero .donut-chart {
+    width: 140px;
+    height: 140px;
+}
+#cabinet-dashboard .donut-sub-hero .donut-chart::after {
+    width: 86px;
+    height: 86px;
+}
+#cabinet-dashboard .donut-sub-hero .donut-center-value {
+    font-size: 0.85rem;
+}
+#cabinet-dashboard .donut-sub-hero .donut-center-label {
+    font-size: 0.55rem;
+    max-width: 78px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .donut-row {
+        gap: 0;
+    }
+}
+
+/* ---- Carte évolution : MD3 expressif + synthèse ---- */
+#cabinet-dashboard .cab-evol-card {
+    border-radius: var(--md-radius-2xl, 24px);
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--color-bg-muted);
+    font-size: 0.72rem;
+    transition: transform 0.2s var(--md-spring, ease);
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-item:hover {
+    transform: translateY(-1px);
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+#cabinet-dashboard .evol-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+#cabinet-dashboard .evol-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--color-bg-muted);
+    flex: 1 1 160px;
+    animation: md-pop 0.45s var(--md-spring, ease) both;
+}
+#cabinet-dashboard .evol-chip-label {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-text-tertiary);
+}
+#cabinet-dashboard .evol-chip-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+#cabinet-dashboard .evol-chip-value small {
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-size: 0.68rem;
+}
+#cabinet-dashboard .bar-tooltip {
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+    animation: md-pop 0.25s var(--md-spring, ease) both;
+}
+
+/* ---- Graphique évolution : rendu MD3 expressif ---- */
+#cabinet-dashboard .bar-chart .treso-dot {
+    width: 11px;
+    height: 11px;
+    border: 2.5px solid #3b82f6;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.45), 0 0 0 4px rgba(99, 102, 241, 0.12);
+    transition: transform 0.25s var(--md-spring, ease), box-shadow 0.2s ease;
+    animation: md-pop 0.5s var(--md-spring, ease) both;
+}
+#cabinet-dashboard .bar-chart .bar-group:hover .treso-dot {
+    transform: translate(-50%, -50%) scale(1.35);
+    box-shadow: 0 3px 12px rgba(79, 70, 229, 0.55), 0 0 0 6px rgba(99, 102, 241, 0.18);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar {
+    border-radius: 7px 7px 3px 3px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: height 0.6s var(--md-spring, ease), filter 0.15s ease, transform 0.25s var(--md-spring, ease);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.income {
+    background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.expense {
+    background: linear-gradient(180deg, #fb7185 0%, #ef4444 100%);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group {
+    border-radius: 10px;
+    padding: 0 2px;
+    transition: background 0.2s ease;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.045));
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group.is-current {
+    background: var(--color-primary-light, #eef4ff);
+    box-shadow: inset 0 0 0 1.5px rgba(37, 99, 235, 0.25);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-label {
+    font-size: 0.66rem;
+    letter-spacing: 0.02em;
+}
+
+/* ---- FLAT MD3 : override final du graphique évolution ---- */
+#cabinet-dashboard .cab-evol-card .bar-chart .bar {
+    border-radius: 6px 6px 0 0;
+    box-shadow: none;
+    transition: height 0.5s var(--md-spring, ease), opacity 0.15s ease;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.income {
+    background: #10b981;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.expense {
+    background: #ef4444;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar:hover {
+    transform: none;
+    opacity: 0.82;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover .bar {
+    transform: none;
+    opacity: 0.82;
+}
+#cabinet-dashboard .bar-chart .treso-dot {
+    width: 9px;
+    height: 9px;
+    border: 2px solid #6366f1;
+    background: #fff;
+    box-shadow: none;
+    animation: none;
+    transition: transform 0.2s var(--md-spring, ease);
+}
+#cabinet-dashboard .bar-chart .bar-group:hover .treso-dot {
+    transform: translate(-50%, -50%) scale(1.25);
+    box-shadow: none;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group.is-current {
+    background: rgba(99, 102, 241, 0.08);
+    box-shadow: none;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover {
+    background: rgba(0, 0, 0, 0.035);
+}
+
+/* ---- Consommables : classement des références (flat MD3) ---- */
+#cabinet-dashboard .conso-refs-head {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-secondary);
+    margin: 14px 0 8px;
+}
+#cabinet-dashboard .conso-pareto {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(245, 158, 11, 0.10);
+    margin-bottom: 10px;
+}
+#cabinet-dashboard .conso-pareto-value {
+    flex: none;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #b45309;
+}
+#cabinet-dashboard .conso-pareto-text {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
+}
+#cabinet-dashboard .conso-ref-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+#cabinet-dashboard .conso-ref-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 12px;
+    transition: background 0.15s ease;
+}
+#cabinet-dashboard .conso-ref-row:hover {
+    background: var(--color-bg-subtle, rgba(0, 0, 0, 0.04));
+}
+#cabinet-dashboard .conso-ref-rank {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+    font-size: 0.66rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#cabinet-dashboard .conso-ref-row:nth-child(1) .conso-ref-rank {
+    background: #f59e0b;
+    color: #fff;
+}
+#cabinet-dashboard .conso-ref-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    min-width: 90px;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#cabinet-dashboard .conso-ref-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--color-bg-muted);
+    overflow: hidden;
+}
+#cabinet-dashboard .conso-ref-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: #f59e0b;
+}
+#cabinet-dashboard .conso-ref-amount {
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+#cabinet-dashboard .conso-ref-amount small {
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+}
+#cabinet-dashboard .conso-sup-line {
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    margin-top: 10px;
+}
+
+/* ============================================================
+   CABINET DASHBOARD — CONFORMITÉ MD3 (m3.material.io)
+   Tokens et règles appliqués à la lettre :
+   - Type scale : Title M 16/24 w500, Headline S 24/32, Headline M 28/36,
+     Body S 12/16, Label L 14/20 w500, Label M 12/16 w500, Label S 11/16 w500
+   - Shape scale : xs 4, s 8, m 12, l 16, xl 28 (cartes = 16, chips = 8,
+     boutons = full round, panneaux = 12)
+   - Cartes remplies : surface-container, élévation niveau 0 (aucune ombre)
+   - State layers : survol 8%, pressé 12% (couleur on-surface)
+   - Motion : standard cubic-bezier(0.2, 0, 0, 1), durées courtes 200ms
+   - Grille d'espacement 4dp
+   ============================================================ */
+:root {
+    --md-shape-xs: 4px;
+    --md-shape-s: 8px;
+    --md-shape-m: 12px;
+    --md-shape-l: 16px;
+    --md-shape-xl: 28px;
+    --md-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --md-ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --md-state-hover: 8%;
+    --md-state-pressed: 12%;
+}
+
+/* ---- Cartes remplies (filled cards) : forme large 16dp, élévation 0 ---- */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card {
+    background: var(--color-bg-muted);
+    border: none;
+    box-shadow: none;
+    border-radius: var(--md-shape-l);
+    padding: 16px;
+    transition: box-shadow 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .stat-card:hover,
+#cabinet-dashboard .chart-card:hover {
+    box-shadow: none;
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent));
+}
+#cabinet-dashboard .chart-card h3 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+    letter-spacing: 0.15px;
+    margin: 0 0 16px;
+}
+
+/* ---- Bandeau santé : Headline Small 24/32, overline = Label Small 11/16 w500 ---- */
+#cabinet-dashboard .cab-health-title {
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+#cabinet-dashboard .cab-health-overline {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: none;
+}
+#cabinet-dashboard .cab-health-sub {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--color-text-secondary);
+}
+
+/* ---- Indicateurs : valeur Headline Medium 28/36, libellé Body Small 12/16 ---- */
+#cabinet-dashboard .stat-value {
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+#cabinet-dashboard .stat-label {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--color-text-secondary);
+}
+#cabinet-dashboard .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--md-shape-l);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---- Chips (légende, synthèse) : forme small 8dp, Label Medium 12/16 w500,
+     state layer 8% au survol — pas de majuscules (MD3 : sentence case) ---- */
+#cabinet-dashboard .chart-legend .legend-item {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    border-radius: var(--md-shape-s);
+    padding: 4px 12px;
+    transition: background-color 200ms var(--md-ease-standard), transform 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .chart-legend .legend-item:hover {
+    transform: none;
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent));
+}
+#cabinet-dashboard .evol-chip {
+    border-radius: var(--md-shape-m);
+    padding: 12px 16px;
+    background: var(--color-bg-subtle);
+}
+#cabinet-dashboard .evol-chip-label {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.1px;
+}
+#cabinet-dashboard .evol-chip-value {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+    letter-spacing: 0.15px;
+}
+#cabinet-dashboard .donut-center-label {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.5px;
+}
+#cabinet-dashboard .conso-refs-head {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.1px;
+}
+
+/* ---- Onglets catégories : state layers 8%/12%, forme 12dp ---- */
+#cabinet-dashboard .top-cat-item.top-cat-clickable {
+    border-radius: var(--md-shape-m);
+    background: var(--color-bg-subtle);
+    box-shadow: none;
+    transition: background-color 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:hover {
+    transform: none;
+    box-shadow: none;
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent));
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:active {
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-pressed), transparent), color-mix(in srgb, var(--color-text) var(--md-state-pressed), transparent));
+}
+#cabinet-dashboard .top-cat-subs,
+#cabinet-dashboard .donut-subs {
+    border-radius: var(--md-shape-m);
+}
+
+/* ---- Labels du graphique : Label Small 11/16 w500 ---- */
+#cabinet-dashboard .bar-label {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+}
+
+/* ---- Boutons : full round, hauteur 40dp, Label Large 14/20 w500,
+     state layers 8%/12% sur la couleur on-primary ---- */
+#cabinet-dashboard .action-btn,
+#cabinet-dashboard .top-cat-item button {
+    border-radius: 999px;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    transition: background-color 200ms var(--md-ease-standard), box-shadow 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .action-btn.primary {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+#cabinet-dashboard .action-btn.primary:hover {
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text-inverse) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text-inverse) var(--md-state-hover), transparent));
+}
+#cabinet-dashboard .action-btn.primary:active {
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text-inverse) var(--md-state-pressed), transparent), color-mix(in srgb, var(--color-text-inverse) var(--md-state-pressed), transparent));
+}
+
+/* ---- Grille d'espacement 4dp ---- */
+#cabinet-dashboard .stats-grid,
+#cabinet-dashboard .charts-grid {
+    gap: 16px;
+}
+
+/* ---- Tooltips : forme extra-small 4dp, Body Small 12/16 ---- */
+#cabinet-dashboard .bar-tooltip {
+    border-radius: var(--md-shape-xs);
+    font-size: 12px;
+    line-height: 16px;
+    box-shadow: none;
+    border: 1px solid var(--color-border);
+}
+
+/* ============================================================
+   UNIFICATION MD3 — système chromatique tonal du dashboard cabinet
+   Pattern Google (dashboards Material) :
+   - barres en tons "container" pâles (primary-container / tertiary-container)
+   - courbe de trésorerie en primary = élément héros
+   - palette catégorielle tonale (primary, tertiary, tons étendus)
+   - plus aucune couleur saturée de sémantique red/green
+   ============================================================ */
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.income {
+    background: color-mix(in srgb, var(--color-primary) 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.expense {
+    background: color-mix(in srgb, #7d5260 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-dot.income {
+    background: color-mix(in srgb, var(--color-primary) 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-dot.expense {
+    background: color-mix(in srgb, #7d5260 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .bar-chart .treso-dot {
+    border: 2px solid var(--color-primary);
+    background: var(--color-bg-elevated);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group.is-current {
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar:hover,
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover .bar {
+    opacity: 1;
+    filter: none;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group:hover {
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+/* Consommables : ambre tonal unifié */
+#cabinet-dashboard .bar-chart .bar.conso {
+    background: color-mix(in srgb, #b45309 34%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .conso-ref-bar > span {
+    background: #b45309;
+}
+#cabinet-dashboard .conso-ref-row:nth-child(1) .conso-ref-rank {
+    background: #b45309;
+}
+#cabinet-dashboard .conso-pareto {
+    background: color-mix(in srgb, #b45309 8%, transparent);
+}
+#cabinet-dashboard .conso-pareto-value {
+    color: #7c4a0e;
+}
+
+/* Donut : centre sur la couleur du conteneur de carte, trou net */
+#cabinet-dashboard .cab-donut-card .donut-chart::after {
+    background: var(--color-bg-muted);
+    box-shadow: none;
+}
+
+/* ============================================================
+   MD3 — ICÔNES TONALES, BANDEAU SANTÉ, FOCUS, RESPONSIVE (cabinet)
+   ============================================================ */
+
+/* Icônes de stats : tons container + icône de la même famille (pas de blanc) */
+#cabinet-dashboard .stats-grid .stat-card .stat-icon {
+    background: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg-elevated));
+    color: var(--color-primary);
+    border-radius: 100px;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(2) .stat-icon {
+    background: color-mix(in srgb, #7d5260 14%, var(--color-bg-elevated));
+    color: #7d5260;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(3) .stat-icon {
+    background: color-mix(in srgb, #3a6f6b 14%, var(--color-bg-elevated));
+    color: #3a6f6b;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(4) .stat-icon {
+    background: color-mix(in srgb, #8a6d4b 14%, var(--color-bg-elevated));
+    color: #8a6d4b;
+}
+
+/* Bandeau santé : filled card MD3 — ni bordure, ni barre latérale, ni blob décoratif */
+#cabinet-dashboard .cab-health-wrap {
+    background: var(--color-bg-muted);
+    border: none;
+    border-radius: var(--md-shape-l);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+#cabinet-dashboard .cab-health-wrap::before,
+#cabinet-dashboard .cab-health-wrap::after {
+    display: none;
+}
+#cabinet-dashboard .cab-health-pulse {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+/* Chips KPI : cartes remplies, pas de bordure */
+#cabinet-dashboard .cab-kpi-mini {
+    background: var(--color-bg-subtle);
+    border: none;
+    border-radius: var(--md-shape-m);
+    box-shadow: none;
+}
+
+/* États de focus MD3 : anneau primary 2dp, offset 2dp */
+#cabinet-dashboard .top-cat-clickable:focus-visible,
+#cabinet-dashboard .action-btn:focus-visible,
+#cabinet-dashboard .chart-legend .legend-item:focus-visible,
+#cabinet-dashboard .bar-group:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Responsive MD3 : les grilles respirent sur petit écran */
+@media (max-width: 1024px) {
+    #cabinet-dashboard .stats-grid,
+    #cabinet-dashboard .charts-grid {
+        gap: 12px;
+    }
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    #cabinet-dashboard .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    #cabinet-dashboard .stat-card {
+        padding: 12px;
+    }
+    #cabinet-dashboard .stat-value {
+        font-size: 22px;
+        line-height: 28px;
+    }
+    #cabinet-dashboard .stat-icon {
+        width: 40px;
+        height: 40px;
+    }
+    #cabinet-dashboard .evol-chip {
+        flex: 1 1 100%;
+    }
+    #cabinet-dashboard .cab-evol-card .bar-label {
+        font-size: 10px;
+    }
+    #cabinet-dashboard .donut-hero {
+        width: 140px;
+        height: 140px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart {
+        width: 140px;
+        height: 140px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart::after {
+        width: 86px;
+        height: 86px;
+    }
+}
+
+/* ---- Segmented button MD3 (toggle cotation/cabinet du dashboard) ---- */
+#dashboardSwitcher {
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    overflow: hidden;
+    background: transparent;
+}
+#dashboardSwitcher .switch-btn {
+    border-radius: 0;
+    padding: 8px 20px;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    color: var(--color-text);
+    background: transparent;
+    transition: background-color 200ms var(--md-ease-standard), color 200ms var(--md-ease-standard);
+}
+#dashboardSwitcher .switch-btn + .switch-btn {
+    border-left: 1px solid var(--color-border);
+}
+#dashboardSwitcher .switch-btn:hover {
+    background-image: linear-gradient(color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent), color-mix(in srgb, var(--color-text) var(--md-state-hover), transparent));
+}
+#dashboardSwitcher .switch-btn.active {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+    background-image: none;
+}
+#dashboardSwitcher .switch-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+}
+
+/* ---- Palette expressive : couleurs vives MD3 (structure inchangée) ---- */
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.income {
+    background: color-mix(in srgb, #6366f1 72%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar.expense {
+    background: color-mix(in srgb, #f43f5e 72%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-dot.income {
+    background: color-mix(in srgb, #6366f1 72%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .cab-evol-card .chart-legend .legend-dot.expense {
+    background: color-mix(in srgb, #f43f5e 72%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .bar-chart .bar.conso {
+    background: color-mix(in srgb, #f59e0b 72%, var(--color-bg-elevated));
+}
+#cabinet-dashboard .conso-ref-bar > span {
+    background: #f59e0b;
+}
+#cabinet-dashboard .conso-ref-row:nth-child(1) .conso-ref-rank {
+    background: #f59e0b;
+}
+#cabinet-dashboard .conso-pareto {
+    background: color-mix(in srgb, #f59e0b 12%, transparent);
+}
+#cabinet-dashboard .conso-pareto-value {
+    color: #b45309;
+}
+
+/* Icônes de stats : conteneurs tonaux vifs */
+#cabinet-dashboard .stats-grid .stat-card .stat-icon {
+    background: color-mix(in srgb, #6366f1 18%, var(--color-bg-elevated));
+    color: #6366f1;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(2) .stat-icon {
+    background: color-mix(in srgb, #f43f5e 18%, var(--color-bg-elevated));
+    color: #f43f5e;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(3) .stat-icon {
+    background: color-mix(in srgb, #10b981 18%, var(--color-bg-elevated));
+    color: #10b981;
+}
+#cabinet-dashboard .stats-grid .stat-card:nth-child(4) .stat-icon {
+    background: color-mix(in srgb, #f59e0b 18%, var(--color-bg-elevated));
+    color: #f59e0b;
+}
+
+/* ---- Fond de page teinté + cartes blanches élevées (comme cotation) ---- */
+#view-dashboard {
+    background: color-mix(in srgb, var(--color-primary) 5%, var(--color-bg));
+    border-radius: var(--md-shape-l);
+    padding: 4px;
+}
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card {
+    background: var(--color-bg-elevated);
+    box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+#cabinet-dashboard .cab-health-wrap {
+    background: var(--color-bg-elevated);
+    box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+#cabinet-dashboard .cab-kpi-mini {
+    background: var(--color-bg-subtle);
+}
+#cabinet-dashboard .cab-donut-card .donut-chart::after {
+    background: var(--color-bg-elevated);
+}
+#cabinet-dashboard .bar-chart .treso-dot {
+    background: var(--color-bg-elevated);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable {
+    background: var(--color-bg-subtle);
+}
+#cabinet-dashboard .evol-chip {
+    background: var(--color-bg-subtle);
+}
+#cabinet-dashboard .conso-pareto {
+    background: color-mix(in srgb, #f59e0b 10%, transparent);
+}
+#cabinet-dashboard .bar-tooltip {
+    background: var(--color-bg-elevated);
+}
+[data-theme="dark"] #view-dashboard {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
+}
+[data-theme="dark"] #cabinet-dashboard .stat-card,
+[data-theme="dark"] #cabinet-dashboard .chart-card,
+[data-theme="dark"] #cabinet-dashboard .module-card {
+    background: var(--color-bg-elevated);
+    box-shadow: none;
+}
+
+/* ============================================================
+   EXPRESSIVE LAYER — la signature MD3 Expressive proprement dite
+   1. Formes généreuses : cartes extra-large 28dp, chips 12dp, barres pill
+   2. Motion emphatique : easing (0.05,0.7,0.1,1), rebond au survol,
+      morphing au clic (scale), entrées md-pop
+   3. Chiffres héros : Display/Headline surdimensionnés
+   ============================================================ */
+
+/* 1. Formes extra-large */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card,
+#cabinet-dashboard .cab-health-wrap {
+    border-radius: var(--md-shape-xl);
+}
+#cabinet-dashboard .evol-chip,
+#cabinet-dashboard .cab-kpi-mini,
+#cabinet-dashboard .top-cat-subs,
+#cabinet-dashboard .donut-subs,
+#cabinet-dashboard .conso-pareto {
+    border-radius: 12px;
+}
+#cabinet-dashboard .conso-ref-bar,
+#cabinet-dashboard .conso-ref-bar > span,
+#cabinet-dashboard .donut-sub-bar,
+#cabinet-dashboard .donut-sub-bar > span {
+    border-radius: 999px;
+    height: 10px;
+}
+#cabinet-dashboard .donut-sub-bar {
+    height: 6px;
+}
+
+/* 2. Motion emphatique — survol, clic, entrées */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card {
+    transition: transform 300ms var(--md-ease-emphasized), box-shadow 300ms var(--md-ease-emphasized);
+}
+#cabinet-dashboard .stat-card:hover,
+#cabinet-dashboard .chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px 2px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+    background-image: none;
+}
+#cabinet-dashboard .stat-card:active,
+#cabinet-dashboard .chart-card:active {
+    transform: translateY(0) scale(0.985);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable,
+#cabinet-dashboard .action-btn,
+#cabinet-dashboard .chart-legend .legend-item {
+    transition: transform 250ms var(--md-ease-emphasized), background-color 200ms var(--md-ease-standard);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:hover {
+    transform: translateY(-1px);
+}
+#cabinet-dashboard .top-cat-item.top-cat-clickable:active {
+    transform: scale(0.97);
+}
+#cabinet-dashboard .action-btn:active {
+    transform: scale(0.94);
+}
+#cabinet-dashboard .chart-legend .legend-item:hover {
+    transform: translateY(-1px);
+}
+#cabinet-dashboard .cab-donut-card:hover .donut-chart {
+    transform: scale(1.045) rotate(1.5deg);
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    transition: transform 450ms var(--md-ease-emphasized);
+}
+#cabinet-dashboard .bar-chart .treso-dot {
+    animation: md-pop 0.45s var(--md-spring) both;
+    transition: transform 250ms var(--md-ease-emphasized);
+}
+#cabinet-dashboard .evol-summary .evol-chip:nth-child(2) { animation-delay: 60ms; }
+#cabinet-dashboard .evol-summary .evol-chip:nth-child(3) { animation-delay: 120ms; }
+
+/* 3. Chiffres héros */
+#cabinet-dashboard .stat-value {
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+}
+#cabinet-dashboard .donut-center-value {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .stat-value {
+        font-size: 24px;
+        line-height: 32px;
+    }
+}
+
+/* ============================================================
+   ANIMATIONS AU SCROLL — les charts ne s'animent qu'à l'arrivée
+   dans le viewport (IntersectionObserver, classe .chart-in-view)
+   ============================================================ */
+
+/* Barres : poussent depuis la base, en cascade (45ms de décalage par mois) */
+#cabinet-dashboard .chart-card .bar {
+    transform: scaleY(0);
+    transform-origin: bottom center;
+    transition: transform 650ms var(--md-spring-soft, cubic-bezier(0.25, 1.2, 0.5, 1)), opacity 200ms ease;
+    transition-delay: calc(var(--i, 0) * 45ms);
+}
+#cabinet-dashboard .chart-card.chart-in-view .bar {
+    transform: scaleY(1);
+}
+
+/* Courbe de trésorerie : apparaît après le démarrage des barres */
+#cabinet-dashboard .chart-card .bar-chart > svg {
+    opacity: 0;
+    transition: opacity 700ms var(--md-ease-standard) 250ms;
+}
+#cabinet-dashboard .chart-card.chart-in-view .bar-chart > svg {
+    opacity: 1;
+}
+
+/* Points de trésorerie : pop en pause jusqu'à l'entrée dans le viewport */
+#cabinet-dashboard .chart-card .treso-dot {
+    animation-play-state: paused;
+    opacity: 0;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-dot {
+    animation-play-state: running;
+    opacity: 1;
+}
+
+/* Donut : monte et se dévoile à l'arrivée */
+#cabinet-dashboard .cab-donut-card .donut-hero {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+    transition: opacity 500ms var(--md-ease-standard), transform 550ms var(--md-ease-emphasized);
+}
+#cabinet-dashboard .cab-donut-card.chart-in-view .donut-hero {
+    opacity: 1;
+    transform: none;
+}
+
+/* Chips de synthèse et classement consommables : pop en cascade à l'arrivée */
+#cabinet-dashboard .chart-card .evol-chip,
+#cabinet-dashboard .chart-card .conso-ref-row {
+    animation: md-pop 0.45s var(--md-spring) both;
+    animation-play-state: paused;
+    opacity: 0;
+}
+#cabinet-dashboard .chart-card.chart-in-view .evol-chip,
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row {
+    animation-play-state: running;
+    opacity: 1;
+}
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(1) { animation-delay: 40ms; }
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(2) { animation-delay: 90ms; }
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(3) { animation-delay: 140ms; }
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(4) { animation-delay: 190ms; }
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(5) { animation-delay: 240ms; }
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(6) { animation-delay: 290ms; }
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(7) { animation-delay: 340ms; }
+#cabinet-dashboard .chart-card.chart-in-view .conso-ref-row:nth-child(8) { animation-delay: 390ms; }
+
+/* ---- Fix largeurs de barres + alignement exact des points de trésorerie ---- */
+/* min-width:auto (défaut flex) laissait les labels larges ("juil.", "sept.")
+   élargir leur colonne : toutes les colonnes doivent faire exactement 1/12. */
+#cabinet-dashboard .bar-chart .bar-group {
+    min-width: 0;
+}
+/* Espacement géré en padding DANS les groupes (pas en gap sur le conteneur) :
+   le conteneur fait alors exactement 12 colonnes de W/12, et la formule
+   (idx+0.5)/12 des points et de la courbe tombe pile au centre des barres. */
+#cabinet-dashboard .cab-evol-card .bar-chart {
+    gap: 0;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-group {
+    padding: 0 3px;
+}
+#cabinet-dashboard .cab-evol-card .bar-chart .bar-wrapper {
+    width: 100%;
+}
+
+/* ============================================================
+   ANIMATIONS DE DESSIN AU SCROLL (remplacent les fade-ins)
+   - Courbe : se dessine de janvier à décembre (stroke-dashoffset)
+   - Donut : balayage horaire (masque conique animé via @property)
+   - Barres : poussent en cascade (déjà en place)
+   ============================================================ */
+@property --donut-reveal {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+/* Courbe de trésorerie : dessin progressif */
+#cabinet-dashboard .chart-card .treso-curve {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-curve {
+    transition: stroke-dashoffset 1.2s var(--md-ease-standard) 350ms;
+    stroke-dashoffset: 0;
+}
+/* Aire : se voile après le passage du tracé ; ligne zéro : apparaît avec les barres */
+#cabinet-dashboard .chart-card .treso-area {
+    opacity: 0;
+    transition: opacity 700ms var(--md-ease-standard) 1.3s;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-area {
+    opacity: 1;
+}
+#cabinet-dashboard .chart-card .treso-zero {
+    opacity: 0;
+    transition: opacity 400ms var(--md-ease-standard) 200ms;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-zero {
+    opacity: 1;
+}
+
+/* Donut : balayage horaire au scroll */
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    -webkit-mask: conic-gradient(#000 var(--donut-reveal), transparent 0);
+    mask: conic-gradient(#000 var(--donut-reveal), transparent 0);
+}
+#cabinet-dashboard .cab-donut-card.chart-in-view .donut-chart {
+    animation: donut-sweep 1s var(--md-ease-standard) 150ms both;
+}
+@keyframes donut-sweep {
+    from { --donut-reveal: 0deg; }
+    to { --donut-reveal: 360deg; }
+}
+
+/* Neutraliser les anciens fade-ins (svg entier / hero donut) */
+#cabinet-dashboard .chart-card .bar-chart > svg {
+    opacity: 1;
+    transition: none;
+}
+#cabinet-dashboard .cab-donut-card .donut-hero {
+    opacity: 1;
+    transform: none;
+    transition: none;
+}
+
+/* ============================================================
+   PASSE COMPLÈTE CABINET MD3 EXPRESSIVE — correctifs
+   ============================================================ */
+
+/* 1. Segmented button : le fond actif épouse la forme (pill par segment) */
+#dashboardSwitcher {
+    padding: 0;
+    gap: 0;
+    overflow: visible;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-bg-elevated);
+}
+#dashboardSwitcher .switch-btn {
+    border-radius: 0;
+    padding: 8px 24px;
+    border-left: 1px solid var(--color-border);
+}
+#dashboardSwitcher .switch-btn:first-child {
+    border-radius: 999px 0 0 999px;
+    border-left: none;
+}
+#dashboardSwitcher .switch-btn:last-child {
+    border-radius: 0 999px 999px 0;
+}
+#dashboardSwitcher .switch-btn + .switch-btn {
+    border-left: 1px solid var(--color-border);
+}
+
+/* 2. Fond teinté pleine page (plus de bords blancs) */
+body:has(#view-dashboard.active) {
+    background: color-mix(in srgb, var(--color-primary) 5%, var(--color-bg));
+}
+#view-dashboard {
+    background: none;
+    border-radius: 0;
+    padding: 0;
+}
+[data-theme="dark"] body:has(#view-dashboard.active) {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
+}
+
+/* 3. Donut : initial 360deg — visible par défaut, le balayage ne le cache
+   jamais sur les navigateurs sans @property */
+@property --donut-reveal {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 360deg;
+}
+
+/* 4. Étiquettes KPI : chips MD3 expressives (4 pertinentes) */
+#cabinet-dashboard .cab-kpi-strip {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+#cabinet-dashboard .cab-kpi-mini {
+    background: var(--color-bg-subtle);
+    border: none;
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    box-shadow: none;
+}
+#cabinet-dashboard .cab-kpi-label {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    color: var(--color-text-secondary);
+}
+#cabinet-dashboard .cab-kpi-value {
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+@media (max-width: 1024px) {
+    #cabinet-dashboard .cab-kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 480px) {
+    #cabinet-dashboard .cab-kpi-strip {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   POLISH MD3 EXPRESSIVE — définition des bords, fond de page
+   ============================================================ */
+
+/* Fond de page : teinte plus affirmée pour faire ressortir les cartes */
+body:has(#view-dashboard.active) {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
+}
+
+/* Cartes : bords nets (contour outline-variant 1dp) + élévation niveau 1
+   plus lisible — les angles ET les côtés se détachent du fond teinté */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card,
+#cabinet-dashboard .cab-health-wrap {
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+#cabinet-dashboard .stat-card:hover,
+#cabinet-dashboard .chart-card:hover {
+    box-shadow: 0 2px 6px 2px rgba(0, 0, 0, 0.09), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Neutraliser les anciennes règles de la rangée KPI supprimée */
+#cabinet-dashboard .cab-kpi-strip { display: none; }
+
+/* ============================================================
+   CORRECTIFS ANIMATIONS + FORMES
+   ============================================================ */
+
+/* Points de trésorerie : keyframes DÉDIÉES conservant le translate de
+   centrage — md-pop l'écrasait et décentrait les points. */
+#cabinet-dashboard .bar-chart .treso-dot {
+    animation: treso-pop 0.45s var(--md-spring) both;
+    animation-play-state: paused;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-dot {
+    animation-play-state: running;
+    opacity: 1;
+}
+@keyframes treso-pop {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Courbe : dasharray géré en JS (getTotalLength) — plus de rule CSS
+   statique qui coupait la ligne */
+#cabinet-dashboard .chart-card .treso-curve,
+#cabinet-dashboard .chart-card.chart-in-view .treso-curve {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    transition: none;
+}
+
+/* Neutraliser md-bar-in (animation au changement de vue) sur ces charts :
+   c'est le système au scroll qui pilote, sinon conflit transform/height */
+#cabinet-dashboard .chart-card .bar {
+    animation: none !important;
+}
+
+/* Angles : 28dp trop prononcé — MD3 baseline cartes = 12dp ; 16dp = bon
+   compromis expressive sans effet "bulle" */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card,
+#cabinet-dashboard .cab-health-wrap {
+    border-radius: 16px;
+}
+
+/* Bord inférieur des cartes du haut : padding bas suffisant, pas de coupe */
+#cabinet-dashboard .stat-card {
+    padding: 16px 16px 18px;
+    overflow: visible;
+}
+#cabinet-dashboard .stat-info {
+    min-width: 0;
+}
+#cabinet-dashboard .stat-label {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   COURBE : révélateur clip-path (remplace le dash-draw fragile)
+   ============================================================ */
+#cabinet-dashboard .chart-card .treso-curve {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    clip-path: inset(-20% 100% -20% 0);
+    transition: clip-path 1.2s var(--md-ease-standard) 350ms;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-curve {
+    clip-path: inset(-20% 0 -20% 0);
+}
+#cabinet-dashboard .chart-card .treso-area {
+    clip-path: inset(-20% 100% -20% 0);
+    transition: clip-path 900ms var(--md-ease-standard) 800ms, opacity 700ms var(--md-ease-standard) 1.3s;
+    opacity: 0;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-area {
+    clip-path: inset(-20% 0 -20% 0);
+    opacity: 1;
+}
+
+/* ============================================================
+   REPASSE RESPONSIVE — dashboard cabinet
+   ============================================================ */
+@media (max-width: 1200px) {
+    #cabinet-dashboard .evol-summary .evol-chip {
+        flex: 1 1 calc(50% - 8px);
+    }
+}
+@media (max-width: 1024px) {
+    #dashboardSwitcher .switch-btn {
+        padding: 8px 16px;
+    }
+    #cabinet-dashboard .cab-health-title {
+        font-size: 20px;
+        line-height: 28px;
+    }
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    #cabinet-dashboard .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    #cabinet-dashboard .stat-card {
+        padding: 12px 12px 14px;
+    }
+    #cabinet-dashboard .stat-value {
+        font-size: 22px;
+        line-height: 28px;
+    }
+    #cabinet-dashboard .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 100px;
+    }
+    #cabinet-dashboard .stat-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+    #cabinet-dashboard .cab-health-wrap {
+        padding: 12px 14px;
+    }
+    #cabinet-dashboard .cab-health-title {
+        font-size: 18px;
+        line-height: 24px;
+    }
+    #cabinet-dashboard .chart-card {
+        padding: 14px;
+    }
+    #cabinet-dashboard .evol-summary .evol-chip {
+        flex: 1 1 100%;
+    }
+    #cabinet-dashboard .top-cat-name {
+        max-width: 110px;
+    }
+    #dashboardSwitcher .switch-btn {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+}
+@media (max-width: 400px) {
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    #cabinet-dashboard .donut-row {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE FINAL — 3 indicateurs, chips 2/2, donuts côte à côte
+   ============================================================ */
+
+/* 3 indicateurs : 3 colonnes au desktop */
+#cabinet-dashboard .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* Mobile : les 3 indicateurs restent 2 par 2 (jamais 1 colonne) */
+@media (max-width: 1024px) {
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Chips de synthèse : 2 par 2 sur téléphone */
+@media (max-width: 640px) {
+    #cabinet-dashboard .evol-summary .evol-chip {
+        flex: 1 1 calc(50% - 6px);
+    }
+}
+
+/* Donuts TOUJOURS côte à côte : on réduit leur taille sur petit écran
+   au lieu de les empiler */
+@media (max-width: 640px) {
+    #cabinet-dashboard .donut-hero,
+    #cabinet-dashboard .cab-donut-card .donut-chart {
+        width: 130px;
+        height: 130px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart::after {
+        width: 80px;
+        height: 80px;
+    }
+    #cabinet-dashboard .donut-sub-hero,
+    #cabinet-dashboard .donut-sub-hero .donut-chart {
+        width: 120px;
+        height: 120px;
+    }
+    #cabinet-dashboard .donut-sub-hero .donut-chart::after {
+        width: 72px;
+        height: 72px;
+    }
+    #cabinet-dashboard .donut-center-value {
+        font-size: 0.95rem;
+    }
+}
+@media (max-width: 380px) {
+    #cabinet-dashboard .donut-hero,
+    #cabinet-dashboard .cab-donut-card .donut-chart {
+        width: 110px;
+        height: 110px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart::after {
+        width: 66px;
+        height: 66px;
+    }
+    #cabinet-dashboard .donut-sub-hero,
+    #cabinet-dashboard .donut-sub-hero .donut-chart {
+        width: 100px;
+        height: 100px;
+    }
+    #cabinet-dashboard .donut-sub-hero .donut-chart::after {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* ============================================================
+   DONUTS CÔTE À CÔTE (jamais empilés) + CENTRE PROPRE + INFO ⓘ
+   ============================================================ */
+
+/* Force la rangée : les donuts restent côte à côte à TOUTE largeur */
+#cabinet-dashboard .donut-row {
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+#cabinet-dashboard .donut-hero {
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+/* Le texte du centre reste DANS le trou : largeur bridée + ellipsis */
+#cabinet-dashboard .donut-center {
+    overflow: hidden;
+}
+#cabinet-dashboard .donut-center-value {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 4px;
+}
+#cabinet-dashboard .donut-center-label {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 4px;
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .donut-center-value {
+        font-size: 0.78rem;
+    }
+    #cabinet-dashboard .donut-center-label {
+        font-size: 0.5rem;
+    }
+}
+
+/* Icône d'information ⓘ (taux de marge) */
+#cabinet-dashboard .info-i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    font-size: 10px;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-muted);
+    cursor: help;
+    vertical-align: middle;
+    margin-left: 2px;
+}
+#cabinet-dashboard .info-i-tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background: var(--color-bg-elevated);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    font-weight: 400;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+#cabinet-dashboard .evol-chip {
+    position: relative;
+}
+#cabinet-dashboard .info-i:hover + .evol-chip-value + .info-i-tip,
+#cabinet-dashboard .info-i:focus + .evol-chip-value + .info-i-tip,
+#cabinet-dashboard .info-i:focus-visible + .evol-chip-value + .info-i-tip {
+    display: block;
+}
+
+/* --- Import CSV : modes --- */
+.urgence-import-mode {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.urgence-import-mode:hover { background: var(--color-bg-subtle); }
+.urgence-import-mode input { margin-top: 3px; }
+.urgence-import-mode span { color: var(--color-text-secondary); }
+.urgence-import-mode strong { color: var(--color-text); }
+/* ============================================================
+   DONUTS HIERARCHIQUES ESPACÉS + CHIPS EN GRILLE + ⓘ TOGGLE
+   ============================================================ */
+
+/* Donuts : gauche (catégories) nettement plus grand que droite (sous-cat),
+   avec un vrai espacement — hiérarchie visuelle du drill-down */
+#cabinet-dashboard .donut-row {
+    gap: 36px;
+    justify-content: center;
+    align-items: center;
+    margin: 12px 0 20px;
+}
+#cabinet-dashboard .donut-hero {
+    width: 200px;
+    height: 200px;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    width: 200px;
+    height: 200px;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart::after {
+    width: 126px;
+    height: 126px;
+}
+#cabinet-dashboard .donut-sub-hero {
+    width: 150px;
+    height: 150px;
+}
+#cabinet-dashboard .donut-sub-hero .donut-chart {
+    width: 150px;
+    height: 150px;
+}
+#cabinet-dashboard .donut-sub-hero .donut-chart::after {
+    width: 92px;
+    height: 92px;
+}
+#cabinet-dashboard .donut-center-value {
+    font-size: 1rem;
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .donut-row {
+        gap: 20px;
+    }
+    #cabinet-dashboard .donut-hero,
+    #cabinet-dashboard .cab-donut-card .donut-chart {
+        width: 160px;
+        height: 160px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart::after {
+        width: 100px;
+        height: 100px;
+    }
+    #cabinet-dashboard .donut-sub-hero,
+    #cabinet-dashboard .donut-sub-hero .donut-chart {
+        width: 125px;
+        height: 125px;
+    }
+    #cabinet-dashboard .donut-sub-hero .donut-chart::after {
+        width: 76px;
+        height: 76px;
+    }
+    #cabinet-dashboard .donut-center-value {
+        font-size: 0.85rem;
+    }
+    #cabinet-dashboard .donut-sub-hero .donut-center-value {
+        font-size: 0.7rem;
+    }
+}
+@media (max-width: 380px) {
+    #cabinet-dashboard .donut-row {
+        gap: 12px;
+    }
+    #cabinet-dashboard .donut-hero,
+    #cabinet-dashboard .cab-donut-card .donut-chart {
+        width: 145px;
+        height: 145px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart::after {
+        width: 90px;
+        height: 90px;
+    }
+    #cabinet-dashboard .donut-sub-hero,
+    #cabinet-dashboard .donut-sub-hero .donut-chart {
+        width: 112px;
+        height: 112px;
+    }
+    #cabinet-dashboard .donut-sub-hero .donut-chart::after {
+        width: 68px;
+        height: 68px;
+    }
+}
+
+/* Chips de synthèse : grille 4 colonnes égales (2×2 sur mobile) */
+#cabinet-dashboard .evol-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+}
+#cabinet-dashboard .evol-summary .evol-chip {
+    flex: none;
+    padding: 10px 12px;
+}
+#cabinet-dashboard .evol-chip-value small {
+    font-size: 0.62rem;
+    color: var(--color-text-tertiary);
+    margin-right: 1px;
+}
+@media (max-width: 1024px) {
+    #cabinet-dashboard .evol-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .evol-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    #cabinet-dashboard .evol-summary .evol-chip {
+        padding: 8px 10px;
+    }
+    #cabinet-dashboard .evol-chip-value {
+        font-size: 0.78rem;
+    }
+}
+
+/* ⓘ : bulle via classe .show-tip (toggle JS) */
+#cabinet-dashboard .evol-chip.show-tip .info-i-tip {
+    display: block;
+}
+#cabinet-dashboard .info-i {
+    cursor: pointer;
+}
+
+/* --- Import : modale d'accueil --- */
+.urgence-import-help-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.urgence-import-prompt {
+    width: 100%;
+    min-height: 220px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    white-space: pre;
+    resize: vertical;
+    margin-top: 8px;
+}
+
+.urgence-import-paste {
+    width: 100%;
+    min-height: 110px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    white-space: pre;
+    resize: vertical;
+    margin-top: 8px;
+}
+
+/* Donuts : la tranche basse ne doit plus être coupée par le premier onglet.
+   Le scale au survol (1.045) fait déborder l'anneau de ~5px de sa boîte :
+   padding vertical suffisant pour l'absorber. */
+#cabinet-dashboard .donut-row {
+    padding: 12px 0 16px;
+    overflow: visible;
+}
+#cabinet-dashboard .donut-hero {
+    padding: 6px;
+    box-sizing: content-box;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    box-sizing: border-box;
+}
+#cabinet-dashboard .top-cat-wrap:first-child {
+    position: relative;
+}
+
+/* ---- Donuts : remontés légèrement, marge basse qui absorbe le survol ---- */
+#cabinet-dashboard .donut-row {
+    padding: 2px 0 18px;
+    margin-top: 0;
+}
+#cabinet-dashboard .cab-donut-card:hover .donut-chart {
+    transform: none;
+}
+#cabinet-dashboard .donut-chart {
+    transition: none;
+}
+
+/* --- Modales sur telephone : carte centree, CORPS scrollable, pied toujours visible --- */
+/* Regle cles (tous ecrans) : le corps doit pouvoir se reduire (min-height: 0),
+   sinon il pousse l'en-tete et le pied hors de la carte -> boutons coupes. */
+.modal-card {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow: hidden;
+}
+
+.modal-header { flex-shrink: 0; }
+
+.modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal-footer {
+    flex-shrink: 0;
+    background: var(--color-bg-elevated);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .modal-overlay {
+        align-items: center;
+        padding: 10px;
+        overflow-y: auto;
+    }
+
+    .modal-card {
+        width: 100%;
+        max-width: 100%;
+        max-height: 88vh;
+        max-height: 88dvh;
+        border-radius: 18px;
+    }
+
+    .modal-body { padding: 14px; }
+
+    .modal-footer {
+        padding: 12px 14px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        gap: 8px;
+    }
+
+    .modal-footer .action-btn,
+    .modal-footer .btn-primary,
+    .modal-footer .btn-secondary {
+        flex: 1 1 40%;
+        min-height: 44px;
+        justify-content: center;
+    }
+}
+
+/* ============================================================
+   TITRES DE PAGES UNIFIÉS — modèle : page « Plus » (paramètres)
+   Titre : 2rem / 600 / tracking -0.03em (base h2)
+   Sous-titre : 0.8125rem, texte secondaire
+   ============================================================ */
+
+/* Flux : remplace le md-headline clampé (2.1rem/800) par le titre unifié */
+#view-flux .md-section-head .md-headline {
+    font-size: var(--text-3xl);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    color: var(--color-text);
+}
+#view-flux .md-headline-sub {
+    font-size: 0.8125rem;
+    margin: 0;
+}
+
+/* Affaires : titre + sous-titre unifiés */
+#view-affaires .page-header-card h2 {
+    margin: 0 0 6px;
+}
+#view-affaires .page-subtitle,
+.page-subtitle {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+}
+
+/* Urgence : sous-titre aligné */
+#view-urgence .urgence-page-desc {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    max-width: 640px;
+}
+
+/* Cabinet : sous-titre aligné */
+#view-cabinet .cabinet-page-title p {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+/* Espacement de tête de page cohérent partout */
+#view-urgence > h2,
+#view-history > h2,
+#view-admin > h2 {
+    margin-bottom: 6px;
+}
+
+/* Sécurité donut : marge basse franche avant les onglets */
+#cabinet-dashboard .donut-row {
+    margin-bottom: 24px;
+}
+
+/* Unification titres : neutraliser les anciens !important divergents */
+#view-flux .md-headline-sub {
+    font-size: 0.8125rem !important;
+}
+#view-flux .md-section-head .md-headline {
+    font-size: var(--text-3xl) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.03em !important;
+}
+
+/* --- Autocompletion fournisseur --- */
+.stock-autocomplete {
+    position: absolute;
+    top: calc(100% - 4px);
+    left: 0;
+    right: 0;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+    padding: 4px;
+    display: none;
+    z-index: 60;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.stock-autocomplete.open { display: block; }
+
+.stock-autocomplete-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    width: 100%;
+    text-align: left;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 9px;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.stock-autocomplete-item:hover { background: var(--color-bg-muted); }
+.stock-autocomplete-item small { color: var(--color-text-tertiary); font-size: 0.7rem; }
+.stock-autocomplete-item.new { color: var(--color-primary); font-weight: 600; }

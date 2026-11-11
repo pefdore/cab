@@ -117,6 +117,7 @@ async function fluxEditOpeningBalance() {
 window.fluxEditOpeningBalance = fluxEditOpeningBalance;
 window.fluxHasOpeningBalance = fluxHasOpeningBalance;
 window.fluxLoadOpeningBalances = fluxLoadOpeningBalances;
+window.fluxBankBalanceAt = fluxBankBalanceAt;
 
 function fluxSelectMonth(key) {
     const parts = key.split('-');

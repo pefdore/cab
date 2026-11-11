@@ -174,7 +174,7 @@ async function secRenderJoinRequestsBanner() {
     if (emptyEl) emptyEl.style.display = 'none';
     wrap.innerHTML =
         '<h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L11.6 1.6a1.5 1.5 0 0 1 2.63 0l1.31 2.26 2.55.38a1.5 1.5 0 0 1 .83 2.56l-1.85 1.8.44 2.54a1.5 1.5 0 0 1-2.17 1.58L12 11.6l-2.29 1.2a1.5 1.5 0 0 1-2.17-1.58l.44-2.54-1.85-1.8a1.5 1.5 0 0 1 .83-2.56l2.55-.38z"/></svg> Demandes d\'acc\u00e8s en attente</h3>' +
-        '<p class="sec-banner-desc">Ces secr\u00e9taires demandent \u00e0 rejoindre l\'espace cabinet. Approuvez pour leur donner acc\u00e8s.</p>' +
+        '<p class="sec-banner-desc">Ces membres (secr\u00e9taires, m\u00e9decins) demandent \u00e0 rejoindre l\'espace cabinet. Approuvez pour leur donner acc\u00e8s.</p>' +
         requests.map(r =>
             '<div class="sec-request-card" data-request="' + r.id + '" data-requester="' + (r.requester_id || '') + '">' +
                 '<div class="sec-request-info">' +
@@ -191,14 +191,28 @@ async function secRenderJoinRequestsBanner() {
 }
 
 async function secDecideRequest(requestId, approve) {
+    // Feedback immediat : desactiver les boutons de la carte pendant le traitement
+    const card = document.querySelector('.sec-request-card[data-request="' + requestId + '"]');
+    const setCardBusy = (busy) => {
+        if (!card) return;
+        card.querySelectorAll('button').forEach(b => {
+            b.disabled = busy;
+            b.style.opacity = busy ? '0.55' : '';
+            b.style.pointerEvents = busy ? 'none' : '';
+        });
+        const primary = card.querySelector('.action-btn.primary');
+        if (primary) primary.textContent = busy ? (approve ? 'Validation…' : 'Refus…') : 'Approuver';
+    };
+    setCardBusy(true);
     try {
         const { data: req, error: fetchErr } = await supabaseClient
             .from('cabinet_join_requests')
-            .select('id, cabinet_id, requester_id')
+            .select('id, cabinet_id, requester_id, requester_name')
             .eq('id', requestId)
             .single();
         if (fetchErr || !req) throw fetchErr || new Error('Demande introuvable');
         const requesterId = req.requester_id;
+        const requesterName = (req.requester_name || '').trim() || 'ce membre';
         const cabinetId = req.cabinet_id;
 
         const { error } = await supabaseClient
@@ -221,11 +235,12 @@ async function secDecideRequest(requestId, approve) {
         if (typeof reunionMyCabinet !== 'undefined') reunionMyCabinet = null;
 
         if (typeof showToast === 'function') {
-            showToast(approve ? 'Acc\u00e8s cabinet accord\u00e9 au secr\u00e9taire' : 'Demande refus\u00e9e', 'success');
+            showToast(approve ? ('Acc\u00e8s cabinet accord\u00e9 \u00e0 ' + requesterName) : ('Demande de ' + requesterName + ' refus\u00e9e'), 'success');
         }
-        secRenderJoinRequestsBanner();
+        await secRenderJoinRequestsBanner();
     } catch (e) {
         console.error('[SEC-SPACE] decideRequest:', e);
+        setCardBusy(false);
         if (typeof showToast === 'function') showToast('Erreur lors de la validation : ' + e.message, 'error');
     }
 }
@@ -328,6 +343,10 @@ function secResetUiOnLogout() {
     if (secSpace) secSpace.style.display = 'none';
     const banner = document.getElementById('secPendingApprovalBanner');
     if (banner) banner.style.display = 'none';
+    const doctorPanel = document.getElementById('doctorPendingPanel');
+    if (doctorPanel) doctorPanel.style.display = 'none';
+    const spaceHeader = document.getElementById('secSpaceHeader');
+    if (spaceHeader) spaceHeader.style.display = '';
     const joinBanner = document.getElementById('secJoinRequestsBanner');
     if (joinBanner) { joinBanner.style.display = 'none'; joinBanner.innerHTML = ''; }
     ['secNavBadge', 'secNavBadgeMobile'].forEach(id => {
@@ -357,6 +376,37 @@ function secResetUiOnLogout() {
     });
 }
 
+function secApplyRoleTexts() {
+    const isSecretary = secIsSecretary();
+    const locked = !isSecretary && secIsMemberLocked();
+    const spaceTitle = document.getElementById('secSpaceTitle');
+    const spaceSub = document.getElementById('secSpaceSubtitle');
+    const pendTitle = document.querySelector('#secPendingApprovalBanner .sec-pending-title');
+    const pendText = document.querySelector('#secPendingApprovalBanner .sec-pending-text');
+    const cabTitle = document.getElementById('cabinetPageTitle');
+    const cabSub = document.getElementById('cabinetPageSubtitle');
+    if (locked) {
+        if (spaceTitle) spaceTitle.textContent = 'Compte médecin en attente';
+        if (spaceSub) spaceSub.textContent = "Votre demande d'accès au cabinet est en attente de validation par un médecin associé.";
+        if (pendTitle) pendTitle.textContent = 'Accès médecin en attente de validation';
+        if (pendText) pendText.textContent = "Votre inscription a bien été enregistrée. Un médecin associé du cabinet doit valider votre demande pour activer votre accès médecin.";
+        if (cabTitle) cabTitle.textContent = 'Espace médecin en attente';
+        if (cabSub) cabSub.textContent = "Votre accès sera actif dès la validation de votre demande par un médecin associé du cabinet.";
+    } else {
+        if (spaceTitle) spaceTitle.textContent = 'Espace Secrétariat';
+        if (spaceSub) spaceSub.textContent = "Bonjour ! Voici vos tâches et l'état des stocks du cabinet.";
+        if (pendTitle) pendTitle.textContent = 'Accès en attente de validation';
+        if (pendText) pendText.textContent = 'Votre demande a bien été envoyée. Un médecin associé du cabinet doit la valider pour activer votre espace.';
+        if (isSecretary) {
+            if (cabTitle) cabTitle.textContent = 'Espace Cabinet';
+            if (cabSub) cabSub.textContent = 'Suivi des stocks et tâches du cabinet.';
+        } else {
+            if (cabTitle) cabTitle.textContent = 'Gestion Cabinet';
+            if (cabSub) cabSub.textContent = 'Ressources humaines, réunions, stocks et remplacements du cabinet';
+        }
+    }
+}
+
 function secApplySecretarySpace() {
     const secSpace = document.getElementById('secretarySpace');
     if (!secSpace) return;
@@ -364,8 +414,53 @@ function secApplySecretarySpace() {
     const isSecretary = secIsSecretary();
     if (!isSecretary && !secIsMemberLocked()) {
         secSpace.style.display = 'none';
+        secApplyRoleTexts();
+        const dp = document.getElementById('doctorPendingPanel');
+        if (dp) dp.style.display = 'none';
+        const sh = document.getElementById('secSpaceHeader');
+        if (sh) sh.style.display = '';
         return;
     }
+
+    // Membre en attente (medecin installé OU secretaire) : carte explicative
+    // dediee unique (ni en-tete secretariat ni bandeau redondant)
+    const lockedDoctor = !isSecretary && secIsMemberLocked();
+    const pendingSecretary = isSecretary && !secIsApproved();
+    const pendingMember = lockedDoctor || pendingSecretary;
+    const spaceHeader = document.getElementById('secSpaceHeader');
+    const doctorPanel = document.getElementById('doctorPendingPanel');
+    const lockedBanner = document.getElementById('secPendingApprovalBanner');
+    if (pendingMember) {
+        if (spaceHeader) spaceHeader.style.display = 'none';
+        if (lockedBanner) lockedBanner.style.display = 'none';
+        if (doctorPanel) {
+            doctorPanel.style.display = 'block';
+            const meta = window.currentUser?.user_metadata || {};
+            const fn = String(window.currentProfile?.first_name || meta.first_name || '').trim();
+            const ln = String(window.currentProfile?.last_name || meta.last_name || '').trim();
+            const t = document.getElementById('doctorPendingTitle');
+            const intro = document.getElementById('doctorPendingIntro');
+            const s3t = document.getElementById('doctorPendingStep3Title');
+            const s3d = document.getElementById('doctorPendingStep3Desc');
+            if (lockedDoctor) {
+                const who = (ln || fn);
+                if (t) t.textContent = who ? ('Bienvenue Dr ' + who) : 'Bienvenue';
+                if (intro) intro.textContent = "Votre compte médecin a bien été créé. Pour des raisons de confidentialité médicale, l'accès complet au cabinet est activé uniquement après validation par un médecin associé.";
+                if (s3t) s3t.textContent = 'Accès complet au cabinet';
+                if (s3d) s3d.textContent = 'Dashboard partagé du cabinet, dépenses et recettes, stocks, réunions… La cotation reste votre espace personnel.';
+            } else {
+                if (t) t.textContent = fn ? ('Bienvenue ' + fn) : 'Bienvenue';
+                if (intro) intro.textContent = "Votre compte secrétaire a bien été créé. L'accès à l'espace secrétariat est activé uniquement après validation par un médecin associé du cabinet.";
+                if (s3t) s3t.textContent = "Accès à l'espace secrétariat";
+                if (s3d) s3d.textContent = 'Tâches partagées du cabinet et gestion des stocks.';
+            }
+        }
+    } else {
+        if (spaceHeader) spaceHeader.style.display = '';
+        if (doctorPanel) doctorPanel.style.display = 'none';
+    }
+
+    secApplyRoleTexts();
 
     // Toute secretaire (validee ou non) est soustraite aux vues medecin :
     // dashboard cotation/finances, flux, documents, urgence.
@@ -790,5 +885,7 @@ if (typeof window !== 'undefined') {
     window.secCreateJoinRequest = secCreateJoinRequest;
     window.secRefreshSpace = secRefreshSpace;
     window.secApplySecretarySpace = secApplySecretarySpace;
+    window.secApplyRoleTexts = secApplyRoleTexts;
+    window.secCheckApproval = secCheckApproval;
     window.secResetUiOnLogout = secResetUiOnLogout;
 }

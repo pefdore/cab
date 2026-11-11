@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abonnement — Cabix.io</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="icon-192.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7FAF9;--bg-soft:#EEF5F3;--ink:#0B1F1A;--ink-2:#3D524C;--ink-3:#6A817B;
+  --accent:#0E9F7E;--accent-deep:#087457;--accent-soft:#DCF2EC;--line:#E2ECE8;
+  --card:#FFFFFF;--radius:20px;--gold:#B98A2F;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+.container{max-width:980px;margin:0 auto;padding:40px 24px 80px}
+h1{font-family:'Fraunces',Georgia,serif;font-weight:500;letter-spacing:-.02em;font-size:clamp(1.8rem,4vw,2.5rem)}
+h2{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:1.15rem;margin-bottom:8px}
+a{color:inherit;text-decoration:none}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:16px}
+.badge.trial{color:var(--accent-deep);background:var(--accent-soft);border:1px solid rgba(14,159,126,.25)}
+.badge.active{color:var(--accent-deep);background:var(--accent-soft);border:1px solid rgba(14,159,126,.25)}
+.badge.expired{color:#8A2E2E;background:#F9E9E9;border:1px solid rgba(138,46,46,.25)}
+.badge.free{color:var(--gold);background:#F7EFDC;border:1px solid rgba(185,138,47,.3)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;box-shadow:0 1px 2px rgba(11,31,26,.04),0 12px 32px -12px rgba(11,31,26,.12)}
+.status-line{color:var(--ink-2);font-size:1.02rem;margin-bottom:4px}
+.trial-bar{height:8px;border-radius:99px;background:var(--bg-soft);overflow:hidden;margin-top:16px}
+.trial-bar>div{height:100%;background:linear-gradient(90deg,var(--accent),#12C79E);border-radius:99px;transition:width .6s ease}
+.interval{display:flex;gap:8px;margin:28px 0 20px;flex-wrap:wrap}
+.interval button{font:inherit;font-weight:600;padding:9px 18px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+.interval button.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+.interval .note{align-self:center;font-size:.82rem;color:var(--ink-3)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.plan{border:1px solid var(--line);border-radius:16px;padding:22px 18px;background:#fff;display:flex;flex-direction:column;gap:6px;position:relative}
+.plan.pop{border-color:var(--accent);box-shadow:0 12px 32px -16px rgba(14,159,126,.45)}
+.plan .tag{position:absolute;top:-11px;right:14px;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--accent);color:#fff;padding:3px 10px;border-radius:999px}
+.plan .name{font-weight:700;font-size:1rem}
+.plan .members{font-size:.8rem;color:var(--ink-3)}
+.plan .price{font-family:'Fraunces',Georgia,serif;font-size:1.7rem;margin-top:6px}
+.plan .price small{font-family:'Inter';font-size:.78rem;color:var(--ink-3);font-weight:500}
+.plan button{margin-top:14px;font:inherit;font-weight:600;padding:10px;border-radius:12px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+.plan button:hover{background:#12C79E}
+.plan.pop button{background:var(--ink)}
+.plan.pop button:hover{background:#123C31}
+.promo{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap}
+.promo input{font:inherit;flex:1;min-width:220px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:#fff}
+.promo button{font:inherit;font-weight:600;padding:12px 22px;border-radius:12px;border:none;background:var(--ink);color:#fff;cursor:pointer}
+.msg{margin-top:12px;font-size:.92rem;display:none;padding:12px 16px;border-radius:12px}
+.msg.ok{display:block;background:var(--accent-soft);color:var(--accent-deep)}
+.msg.err{display:block;background:#F9E9E9;color:#8A2E2E}
+.info{margin-top:24px;font-size:.85rem;color:var(--ink-3)}
+.info a{color:var(--accent-deep);font-weight:600}
+.loading{text-align:center;color:var(--ink-3);padding:80px 0}
+@media(max-width:640px){.plans{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="loading" class="loading">Chargement de votre abonnement…</div>
+
+  <div id="content" style="display:none">
+    <span id="status-badge" class="badge trial"></span>
+    <h1>Abonnement du cabinet</h1>
+
+    <div class="card" style="margin-top:24px">
+      <div id="status-line" class="status-line"></div>
+      <div id="status-sub" class="status-line" style="font-size:.9rem;color:var(--ink-3)"></div>
+      <div id="trial-bar" class="trial-bar" style="display:none"><div id="trial-fill"></div></div>
+    </div>
+
+    <div id="pay-section">
+      <div class="interval" id="interval">
+        <button data-i="yearly" class="sel">Annuel <span style="font-weight:400;opacity:.75">(-33 %)</span></button>
+        <button data-i="monthly">Mensuel</button>
+        <span class="note">Le cabinet paie une fois — tous les associés et salariés sont inclus.</span>
+      </div>
+
+      <div class="plans" id="plans">
+        <div class="plan" data-plan="solo">
+          <div class="name">Solo</div><div class="members">1–2 membres</div>
+          <div class="price"><span class="p"></span> <small class="per"></small></div>
+          <button>Choisir</button>
+        </div>
+        <div class="plan pop" data-plan="cabinet">
+          <span class="tag">Le plus choisi</span>
+          <div class="name">Cabinet</div><div class="members">3–6 membres</div>
+          <div class="price"><span class="p"></span> <small class="per"></small></div>
+          <button>Choisir</button>
+        </div>
+        <div class="plan" data-plan="groupe">
+          <div class="name">Groupe</div><div class="members">7–15 membres</div>
+          <div class="price"><span class="p"></span> <small class="per"></small></div>
+          <button>Choisir</button>
+        </div>
+        <div class="plan" data-plan="structure">
+          <div class="name">Structure</div><div class="members">16–50 membres</div>
+          <div class="price"><span class="p"></span> <small class="per"></small></div>
+          <button>Choisir</button>
+        </div>
+      </div>
+
+      <div class="promo">
+        <input id="promo-input" placeholder="Code d'accès offert (ex. CABIX-PARTENAIRE)">
+        <button id="promo-btn">Valider le code</button>
+      </div>
+      <div id="promo-msg" class="msg"></div>
+
+      <p class="info">
+        Paiement sécurisé par Stripe. Sans engagement, résiliable à tout moment.
+        Le prix par membre baisse automatiquement avec la taille du cabinet.
+        <a href="index.html">← Retour à l'application</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://wlpbnxnvctlmhndqvvim.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndscGJueG52Y3RsbWhuZHF2dmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NjgxMTAsImV4cCI6MjA5MjU0NDExMH0.ob6hctrkA7dTzKLUGG4Ymt1iemcgDnbsCtBwgBZPHoM';
+const PRICES = {
+  yearly:  { solo: '39 €/an',   cabinet: '119 €/an',  groupe: '239 €/an',  structure: '479 €/an',  per: '/an' },
+  monthly: { solo: '4,90 €/mois', cabinet: '14,90 €/mois', groupe: '29,90 €/mois', structure: '59,90 €/mois', per: '/mois' }
+};
+let currentInterval = 'yearly';
+let cabinetId = null;
+let appliedPromo = null;
+
+const fmtDate = d => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+async function init() {
+  if (typeof supabase === 'undefined') { return setTimeout(init, 100); }
+  const { createClient } = supabase;
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) { location.href = 'index.html'; return; }
+
+  const { data: profile } = await client.from('profiles')
+    .select('cabinet_id, role').eq('id', session.user.id).single();
+  cabinetId = profile?.cabinet_id || null;
+
+  let access = null;
+  if (cabinetId) {
+    const { data } = await client.rpc('cabix_cabinet_access', { p_cabinet_id: cabinetId });
+    access = data;
+  }
+
+  renderStatus(access);
+  renderPrices();
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  wireEvents(client, session);
+}
+
+function renderStatus(access) {
+  const badge = document.getElementById('status-badge');
+  const line = document.getElementById('status-line');
+  const sub = document.getElementById('status-sub');
+  const bar = document.getElementById('trial-bar');
+  const fill = document.getElementById('trial-fill');
+  const pay = document.getElementById('pay-section');
+
+  if (!access || access.reason === 'no_subscription') {
+    badge.className = 'badge trial'; badge.textContent = 'Essai gratuit';
+    line.textContent = "Votre cabinet est en essai gratuit.";
+    pay.style.display = 'block'; return;
+  }
+  if (access.reason === 'trial') {
+    badge.className = 'badge trial'; badge.textContent = 'Essai gratuit en cours';
+    const left = access.trial_days_left;
+    line.textContent = left + ' jour' + (left > 1 ? 's' : '') + " d'essai gratuit restant" + (left > 1 ? 's' : '') + '.';
+    sub.textContent = 'Fin de l\u2019essai : ' + fmtDate(access.trial_ends_at);
+    bar.style.display = 'block';
+    fill.style.width = Math.max(0, Math.min(100, (left / 30) * 100)) + '%';
+    pay.style.display = 'block';
+  } else if (access.reason === 'active') {
+    badge.className = 'badge active'; badge.textContent = 'Abonnement actif';
+    line.textContent = 'Cabinet abonné — merci de votre confiance.';
+    sub.textContent = 'Prochaine échéance : ' + (access.current_period_end ? fmtDate(access.current_period_end) : '—');
+    pay.style.display = 'none';
+  } else if (access.reason === 'free') {
+    badge.className = 'badge free'; badge.textContent = 'Accès offert';
+    line.textContent = 'Ce cabinet bénéficie d\u2019un accès gratuit' +
+      (access.free_until ? ' jusqu\u2019au ' + fmtDate(access.free_until) : ' illimité') + '.';
+    pay.style.display = 'none';
+  } else {
+    badge.className = 'badge expired'; badge.textContent = 'Paiement requis';
+    line.textContent = "Votre mois d'essai gratuit est terminé. Choisissez une formule pour réactiver l'accès de tout le cabinet.";
+    sub.textContent = '';
+    pay.style.display = 'block';
+  }
+}
+
+function renderPrices() {
+  document.querySelectorAll('.plan').forEach(el => {
+    const plan = el.dataset.plan;
+    el.querySelector('.p').textContent = PRICES[currentInterval][plan];
+    el.querySelector('.per').textContent = ' TTC — tous les membres inclus';
+  });
+}
+
+function wireEvents(client, session) {
+  document.getElementById('interval').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-i]');
+    if (!btn) return;
+    currentInterval = btn.dataset.i;
+    document.querySelectorAll('#interval button').forEach(b => b.classList.toggle('sel', b === btn));
+    renderPrices();
+  });
+
+  document.querySelectorAll('.plan button').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = 'Redirection…';
+      const { data: { session: fresh } } = await client.auth.getSession();
+      try {
+        const r = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan: btn.closest('.plan').dataset.plan,
+            interval: currentInterval,
+            promo_code: appliedPromo,
+            email: session.user.email,
+            cabinet_id: cabinetId,
+            supabase_access_token: fresh.access_token
+          })
+        });
+        const data = await r.json();
+        if (data.url) location.href = data.url;
+        else if (data.redirect) location.href = data.redirect;
+        else { alert(data.error === 'code_invalide' ? 'Code invalide.' : 'Erreur : ' + (data.details || data.error)); btn.disabled = false; btn.textContent = 'Choisir'; }
+      } catch (e) {
+        alert('Erreur de connexion au paiement. Réessayez.');
+        btn.disabled = false; btn.textContent = 'Choisir';
+      }
+    });
+  });
+
+  document.getElementById('promo-btn').addEventListener('click', async () => {
+    const code = document.getElementById('promo-input').value.trim();
+    const msg = document.getElementById('promo-msg');
+    if (!code) return;
+    const { data: { session: fresh } } = await client.auth.getSession();
+    try {
+      const r = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: 'cabinet', interval: currentInterval, promo_code: code,
+          email: session.user.email, cabinet_id: cabinetId,
+          supabase_access_token: fresh.access_token
+        })
+      });
+      const data = await r.json();
+      if (data.redirect) { location.href = data.redirect; return; }
+      if (data.error === 'code_invalide') {
+        msg.className = 'msg err'; msg.textContent = 'Code invalide, expiré ou déjà utilisé.';
+      } else if (data.error === 'code_deja_utilise') {
+        msg.className = 'msg err'; msg.textContent = 'Ce code a déjà été utilisé par ce cabinet.';
+      } else if (data.url) {
+        appliedPromo = code;
+        msg.className = 'msg ok';
+        msg.textContent = 'Code de réduction appliqué — il sera pris en compte au paiement.';
+      } else {
+        msg.className = 'msg err'; msg.textContent = 'Erreur : ' + (data.error || 'inconnue');
+      }
+    } catch (e) {
+      msg.className = 'msg err'; msg.textContent = 'Erreur de connexion. Réessayez.';
+    }
+  });
+
+  const q = new URLSearchParams(location.search);
+  if (q.get('success')) {
+    const msg = document.getElementById('promo-msg');
+    msg.className = 'msg ok';
+    msg.textContent = 'Paiement confirmé ! Votre cabinet est abonné. (La mise à jour peut prendre quelques secondes.)';
+  }
+  if (q.get('promo')) {
+    const msg = document.getElementById('promo-msg');
+    msg.className = 'msg ok';
+    msg.textContent = 'Code activé : accès gratuit accordé au cabinet.';
+  }
+}
+
+init();
+</script>
+</body>
+</html>

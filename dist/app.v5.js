@@ -101,6 +101,33 @@ async function checkExistingSession() {
     }
 }
 
+// Porte d'acces abonnement : verify que le cabinet de l'utilisateur a
+// toujours le droit d'utiler la plateforme (essai 30 j en cours, abonnement
+// actif ou acces offert). Fail-open : en cas d'erreur reseau/SQL, l'acces
+// est laisse ouvert pour ne jamais bloquer un cabinet legitime.
+async function cabixBillingGate() {
+    try {
+        if (!supabaseClient || !currentUser?.id) return;
+        const { data: profile } = await supabaseClient
+            .from('profiles').select('cabinet_id').eq('id', currentUser.id).single();
+        const cabinetId = profile?.cabinet_id;
+        if (!cabinetId) return; // remplacant / utilisateur sans cabinet : non concerne
+        const { data: access, error } = await supabaseClient
+            .rpc('cabix_cabinet_access', { p_cabinet_id: cabinetId });
+        if (error) { console.error('[BILLING] access check error:', error); return; }
+        if (access && access.access === false) {
+            console.log('[BILLING] Acces refuse (status:', access.status, ') -> paiement.html');
+            window.cabixBillingLocked = true;
+            location.replace('paiement.html');
+        } else if (access && access.status === 'trial' && typeof access.trial_days_left === 'number') {
+            console.log('[BILLING] Essai:', access.trial_days_left, 'jours restants');
+        }
+    } catch (e) {
+        console.error('[BILLING] gate error (fail-open):', e);
+    }
+}
+window.cabixBillingGate = cabixBillingGate;
+
 async function onAuthSuccess() {
     console.log('[AUTH] Connexion réussie, user:', currentUser?.email, 'id:', currentUser?.id);
     
@@ -111,6 +138,13 @@ async function onAuthSuccess() {
     if (loginScreen) loginScreen.style.display = 'none';
     if (appContainer) appContainer.style.display = 'flex';
     
+    // Voile anti-flash : le dashboard est la vue active par defaut du HTML.
+    // On la desactive immediatement - la bonne vue ne sera revelee qu'apres
+    // la verification du statut de validation (un membre en attente ne doit
+    // JAMAIS voir le dashboard cotation ou cabinet, meme une seconde).
+    const defaultActiveView = document.getElementById('view-dashboard');
+    if (defaultActiveView) defaultActiveView.classList.remove('active');
+    
     // Initialize UI first
     updateMonthDisplay();
     setDefaultDate();
@@ -120,7 +154,7 @@ async function onAuthSuccess() {
     // attendre le chargement complet : evite le flash du dashboard medecin
     // pendant 1-2 s a l'arrivee depuis le lien de validation email
     if (typeof secApplySecretarySpace === 'function' &&
-        (currentUser?.user_metadata?.role === 'secretaire')) {
+        (currentUser?.user_metadata?.role === 'secretaire' || currentUser?.user_metadata?.role === 'medecin_installe')) {
         secApplySecretarySpace();
     }
     
@@ -130,28 +164,34 @@ async function onAuthSuccess() {
     // Load user data (async) - sans basculer sur dashboard encore
     loadUserProfile();
     loadUserSettings();
+
+    // Porte abonnement : non bloquante, redirige vers paiement.html si l'essai
+    // du cabinet est expire et qu'aucun abonnement n'est actif.
+    cabixBillingGate();
     
-try {
-        console.log('[AUTH] Calling loadData...');
-        await loadData();
-        console.log('[AUTH] loadData completed, entries:', entries.length);
-    } catch (e) {
-        console.error('[AUTH] loadData error:', e);
+// Chargement parallel : cotation (entries), patients et cabinet etaient
+    // sequentiels et rendaient le dashboard long a apparaitre.
+    const results = await Promise.allSettled([loadData(), loadPatients(), loadCabinetData()]);
+    results.forEach((r, i) => {
+        if (r.status === 'rejected') console.error('[AUTH] load error (' + ['entries', 'patients', 'cabinet'][i] + '):', r.reason);
+    });
+    console.log('[AUTH] parallel loads done, entries:', entries.length, 'depenses:', cabinetDepenses.length);
+    
+    // Membre potentiellement en attente de validation (medecin ayant rejoint
+    // un cabinet OU secretaire) : verifier l'approbation AVANT d'afficher une
+    // vue - sinon le dashboard medecin flashe une seconde puis page blanche,
+    // et il fallait recharger pour voir le bandeau d'attente.
+    let earlyRole = currentUser?.user_metadata?.role || currentProfile?.role;
+    if (!earlyRole && supabaseClient && currentUser?.id) {
+        try {
+            const { data: p } = await supabaseClient.from('profiles').select('role').eq('id', currentUser.id).single();
+            earlyRole = p?.role || null;
+        } catch (e) { console.error('[AUTH] role fetch error:', e); }
     }
-    
-    try {
-        await loadPatients();
-        console.log('[AUTH] loadPatients completed, patients:', patients.length);
-    } catch (e) {
-        console.error('[AUTH] loadPatients error:', e);
-    }
-    
-    // Pre-load cabinet data (depenses/recettes) for autocomplete
-    try {
-        await loadCabinetData();
-        console.log('[AUTH] loadCabinetData completed, depenses:', cabinetDepenses.length);
-    } catch (e) {
-        console.error('[AUTH] loadCabinetData error:', e);
+    if (typeof window.secCheckApproval === 'function' &&
+        (earlyRole === 'medecin_installe' || earlyRole === 'secretaire')) {
+        try { await window.secCheckApproval(); } catch (e) { console.error('[AUTH] checkApproval error:', e); }
+        if (typeof secApplySecretarySpace === 'function') secApplySecretarySpace();
     }
     
     // NOW switch to the view the user was on before reload (dashboard by default) - data is ready
@@ -565,10 +605,19 @@ function applyCotationVisibility() {
     
     document.querySelectorAll('#cotationEnabledCheckbox').forEach(cb => { cb.checked = cotationEnabled; });
     
+    // Le mode choisi au toggle (cabinet/cotation) PREVAUT sur le defaut.
+    // Avant, cette fonction forcait l'affichage selon la case "cotation
+    // active" et ecrasait le choix de l'utilisateur : toggle "cabinet"
+    // actif mais page cotation affichee.
+    let savedDashMode = null;
+    try { savedDashMode = sessionStorage.getItem('cab_dashboard_mode'); } catch (e) {}
+    let dashMode = savedDashMode || (cotationEnabled ? 'cotation' : 'cabinet');
+    if (dashMode === 'cotation' && !cotationEnabled) dashMode = 'cabinet';
+    
     if (cotationDash) {
-        console.log('[COTATION] Setting cotation-dashboard display to:', cotationEnabled ? 'block' : 'none');
-        cotationDash.style.display = cotationEnabled ? 'block' : 'none';
-        cotationDash.style.visibility = cotationEnabled ? 'visible' : 'hidden';
+        console.log('[COTATION] Setting cotation-dashboard display to:', dashMode === 'cotation' ? 'block' : 'none');
+        cotationDash.style.display = dashMode === 'cotation' ? 'block' : 'none';
+        cotationDash.style.visibility = dashMode === 'cotation' ? 'visible' : 'hidden';
     }
     
     if (addPassagesSection) {
@@ -595,32 +644,29 @@ function applyCotationVisibility() {
     //     cotationSettingsSection.style.display = cotationEnabled ? 'block' : 'none';
     // }
     
-    // If cotation is disabled, switch to cabinet dashboard by default
-    if (!cotationEnabled) {
-        const cabinetDash = document.getElementById('cabinet-dashboard');
-        if (cabinetDash) {
-            cabinetDash.style.display = 'block';
-            cabinetDash.style.visibility = 'visible';
-        }
-        if (typeof renderCabinetLifeDashboard === 'function') {
-            renderCabinetLifeDashboard();
-        }
-    } else {
-        const cabinetDash = document.getElementById('cabinet-dashboard');
-        if (cabinetDash) {
-            cabinetDash.style.display = 'none';
-            cabinetDash.style.visibility = 'hidden';
-        }
+    const cabinetDash2 = document.getElementById('cabinet-dashboard');
+    if (cabinetDash2) {
+        cabinetDash2.style.display = dashMode === 'cabinet' ? 'block' : 'none';
+        cabinetDash2.style.visibility = dashMode === 'cabinet' ? 'visible' : 'hidden';
+    }
+    if (dashMode === 'cabinet' && typeof renderCabinetLifeDashboard === 'function') {
+        renderCabinetLifeDashboard();
     }
     
-    // Update toggle button state
-    updateToggleButton();
+    // Synchroniser les boutons du toggle avec le mode reellement affiche
+    document.querySelectorAll('.switch-btn').forEach(btn => {
+        if (btn.getAttribute('data-mode') === dashMode) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
     
     console.log('[COTATION] Visibility applied, enabled:', cotationEnabled);
 }
 
 async function saveCotationSetting(enabled) {
     console.log('[COTATION] saveCotationSetting called with:', enabled);
+    // La case "cotation active" definit le mode par defaut : on oublie le
+    // choix precedent du toggle pour que l'affichage suive la case.
+    try { sessionStorage.removeItem('cab_dashboard_mode'); } catch (e) {}
     console.log('[COTATION] currentUser:', currentUser ? currentUser.id : 'null');
     
     const value = enabled ? 'true' : 'false';
@@ -806,43 +852,10 @@ function initCotationVisibility() {
 }
 
 function updateToggleButton() {
-    const isEnabled = localStorage.getItem('cotation_enabled') === 'true';
-    document.querySelectorAll('#cotationEnabledCheckbox').forEach(cb => { cb.checked = isEnabled; });
-    
-    const cotationDash = document.getElementById('cotation-dashboard');
-    const addPassagesSection = document.getElementById('add-passages-section');
-    const addPassagesSectionModal = document.getElementById('add-passages-section-modal');
-    const dashboardSwitcher = document.getElementById('dashboardSwitcher');
-    const fabAddPassage = document.getElementById('fab-add-passage');
-    const cabinetDash = document.getElementById('cabinet-dashboard');
-    
-    if (cotationDash) {
-        cotationDash.style.display = isEnabled ? 'block' : 'none';
-        cotationDash.style.visibility = isEnabled ? 'visible' : 'hidden';
-    }
-    
-    if (addPassagesSection) {
-        addPassagesSection.style.display = isEnabled ? 'block' : 'none';
-    }
-    
-    if (addPassagesSectionModal) {
-        addPassagesSectionModal.style.display = isEnabled ? 'block' : 'none';
-    }
-    
-    if (dashboardSwitcher) {
-        dashboardSwitcher.style.display = isEnabled ? 'flex' : 'none';
-    }
-    
-    if (fabAddPassage) {
-        fabAddPassage.style.display = isEnabled ? 'flex' : 'none';
-    }
-    
-    // Don't hide settings section - user needs to be able to toggle back
-    
-    if (cabinetDash) {
-        cabinetDash.style.display = isEnabled ? 'none' : 'block';
-        cabinetDash.style.visibility = isEnabled ? 'hidden' : 'visible';
-    }
+    // Ne force plus l'affichage des dashboards : le mode choisi au toggle
+    // (sessionStorage cab_dashboard_mode) prevaut, gere par
+    // applyCotationVisibility / switchDashboardMode.
+    if (typeof applyCotationVisibility === 'function') applyCotationVisibility();
 }
 
 window.updateToggleButton = updateToggleButton;
@@ -1002,6 +1015,14 @@ window.handleRegisterSubmit = async function() {
         // masquage, sinon l'utilisateur ne voyait jamais les propositions.
         if (addressInput) addressInput.focus();
         searchAddresses(cabinetAddress);
+        return;
+    }
+    
+    // Cabinet deja choisi dans la modale (avant completion du formulaire)
+    if (window.preSelectedCabinetId) {
+        const chosenCabinetId = window.preSelectedCabinetId;
+        window.preSelectedCabinetId = null;
+        doSignUp(email, password, firstName, lastName, role, replaceMedecinId, cabinetAddress, chosenCabinetId);
         return;
     }
     
@@ -1174,7 +1195,6 @@ function createCabinetModal() {
 }
 
 window.joinExistingCabinet = function(cabinetId) {
-    alert('Cabinet cliqué: ' + cabinetId);
     console.log('[JOIN] joinExistingCabinet called, cabinetId:', cabinetId);
     var data = window.pendingRegistrationData;
     var address = window.pendingCabinetAddress;
@@ -1186,10 +1206,21 @@ window.joinExistingCabinet = function(cabinetId) {
         return;
     }
     
-    if (data) {
+    // Si le formulaire n'est pas encore complet (la modale s'ouvre des la
+    // selection de l'adresse, avant la saisie de l'email/mot de passe), on
+    // memorise juste le cabinet choisi : l'inscription partira a la
+    // soumission du formulaire, sans alerte prematuree.
+    if (!data.email || !data.password || !data.firstName || !data.lastName) {
+        window.preSelectedCabinetId = cabinetId;
         closeModal('cabinet-select-modal');
-        doSignUp(data.email, data.password, data.firstName, data.lastName, data.role, data.replaceMedecinId, address, cabinetId);
+        if (typeof showToast === 'function') {
+            showToast('Cabinet sélectionné. Complétez vos identifiants puis cliquez sur Créer mon compte.', 'success');
+        }
+        return;
     }
+    
+    closeModal('cabinet-select-modal');
+    doSignUp(data.email, data.password, data.firstName, data.lastName, data.role, data.replaceMedecinId, address, cabinetId);
     
     window.pendingRegistrationData = null;
     window.pendingCabinetAddress = null;
@@ -1337,6 +1368,7 @@ const VL_COTATIONS = ['VL', 'VL+MD', 'VSP', 'IMT'];
 
 function switchDashboardMode(mode) {
     console.log('[TOGGLE] switchDashboardMode called with mode:', mode);
+    try { sessionStorage.setItem('cab_dashboard_mode', mode); } catch (e) {}
     
     // Toggle buttons
     var btns = document.querySelectorAll('.switch-btn');
@@ -1365,6 +1397,11 @@ function switchDashboardMode(mode) {
             console.log('[TOGGLE] cotation-dashboard shown');
             // Load cotation data when showing
             if (typeof updateStats === 'function') updateStats();
+            // Les lignes du graphique n'etaient pas tracees si le dashboard
+            // cotation etait cache au rendu initial (rect = 0) : retracer.
+            requestAnimationFrame(function() {
+                if (typeof window.drawMonthlyLines === 'function') window.drawMonthlyLines();
+            });
         }
     } else {
         // Hide cotation, show cabinet
@@ -1379,8 +1416,13 @@ function switchDashboardMode(mode) {
             cabinetDash.style.visibility = 'visible';
             console.log('[TOGGLE] cabinet-dashboard shown');
             if (typeof mdArmAnimations === 'function') mdArmAnimations();
-            loadCabinetData();
+            if (!window._cabDataLoaded) loadCabinetData();
             renderCabinetLifeDashboard();
+            // Rejouer les animations des charts : c'est en basculant sur le
+            // mode cabinet qu'on "arrive" dessus dans la plupart des cas.
+            if (typeof resetChartAnimations === 'function') {
+                resetChartAnimations();
+            }
         }
     }
 }
@@ -5072,8 +5114,12 @@ async function loadCabinetData() {
         const userCabinetId = profile?.cabinet_id;
         console.log('[LOAD] User cabinet_id:', userCabinetId);
         
-        await loadDepenses(userCabinetId);
-        await loadRecettes(userCabinetId);
+        await Promise.allSettled([
+            loadDepenses(userCabinetId),
+            loadRecettes(userCabinetId),
+            (typeof window.fluxLoadOpeningBalances === 'function') ? window.fluxLoadOpeningBalances() : Promise.resolve()
+        ]);
+        window._cabDataLoaded = true;
         console.log('[LOAD] About to call renderComptaSummary');
         renderComptaSummary();
         renderAddDepensesRecettes();
@@ -5087,6 +5133,33 @@ async function loadCabinetData() {
         }
     } else {
         console.log('[LOAD] Cannot load - missing auth or client');
+    }
+}
+
+// Ids des medecins installes/admins du cabinet (hors soi-meme). La lecture
+// directe de profiles est bloquee par RLS entre membres : RPC SECURITY DEFINER.
+async function getCabinetDoctorIds(userCabinetId) {
+    try {
+        const { data: ids, error: rpcErr } = await supabaseClient
+            .rpc('cabinet_medecins_ids', { p_cabinet_id: userCabinetId, p_exclude_uid: currentUser.id });
+        if (!rpcErr && Array.isArray(ids)) {
+            return ids.map(r => r.user_id || r).filter(Boolean);
+        }
+        console.error('[COMPTAB] cabinet_medecins_ids RPC error:', rpcErr?.message);
+    } catch (e) {
+        console.error('[COMPTAB] cabinet_medecins_ids exception:', e);
+    }
+    // Fallback : lecture directe (fonctionne si la RLS profiles l'autorise)
+    try {
+        const { data: members } = await supabaseClient
+            .from('profiles')
+            .select('id')
+            .eq('cabinet_id', userCabinetId)
+            .in('role', ['medecin_installe', 'admin'])
+            .neq('id', currentUser.id);
+        return (members || []).map(m => m.id);
+    } catch (e) {
+        return [];
     }
 }
 
@@ -5109,15 +5182,9 @@ async function loadDepenses(userCabinetId) {
         
         // If user has a cabinet, also load depenses from other doctors in same cabinet
         if (userCabinetId) {
-            // Get other users in the same cabinet
-            const { data: cabinetMembers } = await supabaseClient
-                .from('profiles')
-                .select('id')
-                .eq('cabinet_id', userCabinetId)
-                .neq('id', currentUser.id);
+            const memberIds = await getCabinetDoctorIds(userCabinetId);
             
-            if (cabinetMembers && cabinetMembers.length > 0) {
-                const memberIds = cabinetMembers.map(m => m.id);
+            if (memberIds && memberIds.length > 0) {
                 
                 const { data: sharedDepenses } = await supabaseClient
                     .from('cabinet_depenses')
@@ -5160,14 +5227,9 @@ async function loadRecettes(userCabinetId) {
         
         // If user has a cabinet, also load recettes from other doctors in same cabinet
         if (userCabinetId) {
-            const { data: cabinetMembers } = await supabaseClient
-                .from('profiles')
-                .select('id')
-                .eq('cabinet_id', userCabinetId)
-                .neq('id', currentUser.id);
+            const memberIds = await getCabinetDoctorIds(userCabinetId);
             
-            if (cabinetMembers && cabinetMembers.length > 0) {
-                const memberIds = cabinetMembers.map(m => m.id);
+            if (memberIds && memberIds.length > 0) {
                 
                 const { data: sharedRecettes } = await supabaseClient
                     .from('cabinet_recettes')
@@ -5589,22 +5651,110 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     if (elAvgRecettes) elAvgRecettes.textContent = `${avgRecettes.toFixed(2)}€`;
     if (elNbDepenses) elNbDepenses.textContent = nbDepenses;
     
-    // Top catégories - reuse sortedCats computed earlier
+    // Top catégories - reuse sortedCats computed earlier.
+    // Clic sur un onglet : dropdown du détail des sous-catégories juste dessous.
     const topCatContainer = document.getElementById('topCategories');
     if (topCatContainer && totalDepenses > 0) {
-        topCatContainer.innerHTML = sortedCats.slice(0, 5).map(([cat, amount]) => {
+        const topCats = sortedCats;
+        const mdPalette = ['#6366f1', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6', '#10b981', '#f43f5e', '#84cc16'];
+        topCatContainer.innerHTML = topCats.map(([cat, amount], i) => {
             const pct = ((amount / totalDepenses) * 100).toFixed(1);
-            return `<div class="top-cat-item"><span class="top-cat-name">${cat}</span><span class="top-cat-pct">${pct}%</span></div>`;
+            return `
+                <div class="top-cat-wrap">
+                    <div class="top-cat-item top-cat-clickable" data-topcat-idx="${i}">
+                        <span class="top-cat-dot" style="background:${mdPalette[i % mdPalette.length]}"></span>
+                        <span class="top-cat-name">${cat}</span>
+                        <span class="top-cat-right"><span class="top-cat-pct">${pct}%</span><span class="top-cat-chevron">\u25be</span></span>
+                    </div>
+                    <div class="top-cat-subs" id="topcat-subs-${i}"></div>
+                </div>
+            `;
         }).join('');
+        
+        topCatContainer.querySelectorAll('.top-cat-clickable').forEach(el => {
+            el.addEventListener('click', function() {
+                const idx = parseInt(this.dataset.topcatIdx, 10);
+                const item = topCats[idx];
+                if (!item) return;
+                const subsEl = document.getElementById('topcat-subs-' + idx);
+                if (!subsEl) return;
+                const subHero = document.getElementById('depensesSubHero');
+                const subDonutEl = document.getElementById('depensesSubPieChart');
+                const subCenterTotal = document.getElementById('donutSubCenterTotal');
+                const subCenterLabel = document.getElementById('donutSubCenterLabel');
+                const baseColor = mdPalette[idx % mdPalette.length];
+                const shadeColor = (hex, t) => {
+                    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+                    const c = ch => Math.round(ch + (255 - ch) * t);
+                    return `rgb(${c(r)},${c(g)},${c(b)})`;
+                };
+                const hideSubDonut = () => {
+                    if (subHero) subHero.style.display = 'none';
+                    if (subDonutEl) subDonutEl.style.background = '';
+                };
+                if (subsEl.classList.contains('open')) {
+                    subsEl.classList.remove('open');
+                    subsEl.innerHTML = '';
+                    hideSubDonut();
+                    return;
+                }
+                topCatContainer.querySelectorAll('.top-cat-subs.open').forEach(s => {
+                    s.classList.remove('open');
+                    s.innerHTML = '';
+                });
+                const subTotals = new Map();
+                cabinetDepenses.forEach(d => {
+                    const catDef = CABINET_CATEGORIES[d.category];
+                    const catLabel = catDef ? catDef.label : (d.category || 'Autre');
+                    if (catLabel !== item[0]) return;
+                    const sub = (d.sous_categorie || '').trim() || 'Non pr\u00e9cis\u00e9';
+                    subTotals.set(sub, (subTotals.get(sub) || 0) + d.amount);
+                });
+                const subs = Array.from(subTotals.entries()).sort((a, b) => b[1] - a[1]);
+                subsEl.style.borderLeftColor = baseColor;
+                subsEl.style.background = shadeColor(baseColor, 0.93);
+                subsEl.innerHTML = subs.length
+                    ? subs.map(([sub, amt]) => {
+                        const subPct = item[1] > 0 ? (amt / item[1]) * 100 : 0;
+                        return `
+                            <div class="donut-sub-item">
+                                <span class="donut-sub-name">${sub}</span>
+                                <span class="donut-sub-amount">${amt.toFixed(2)}\u20ac \u00b7 ${subPct.toFixed(1)}%</span>
+                                <span class="donut-sub-bar"><span style="width:${subPct.toFixed(1)}%; background:${baseColor};"></span></span>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<div class="donut-sub-item"><span class="donut-sub-name">Aucune sous-cat\u00e9gorie renseign\u00e9e</span></div>';
+                subsEl.classList.add('open');
+                // Second donut : sous-cat\u00e9gories en teintes de la couleur de la cat\u00e9gorie
+                if (subDonutEl && subs.length) {
+                    let g = '', cum = 0;
+                    subs.forEach(([sub, amt], k) => {
+                        const pct = item[1] > 0 ? (amt / item[1]) * 100 : 0;
+                        const t = subs.length > 1 ? (k / (subs.length - 1)) * 0.72 : 0;
+                        g += `${shadeColor(baseColor, t)} ${cum}% ${(cum + pct).toFixed(2)}%, `;
+                        cum += pct;
+                    });
+                    g += `#e5e7eb ${Math.min(cum, 100).toFixed(2)}% 100%`;
+                    subDonutEl.style.background = `conic-gradient(${g.replace(/, $/, '')})`;
+                    if (subHero) subHero.style.display = '';
+                    if (subCenterTotal) subCenterTotal.textContent = formatCompactEur(item[1]);
+                    if (subCenterLabel) subCenterLabel.textContent = item[0];
+                } else {
+                    hideSubDonut();
+                }
+            });
+        });
     }
     
-    // Donut Chart - Répartition dépenses
+    // Donut Chart - Répartition dépenses (clic sur une catégorie :
+    // détail des sous-catégories dans un dropdown sous l'élément)
     const donutContainer = document.getElementById('depensesPieChart');
-    const donutLegendContainer = document.getElementById('depensesPieLegend');
-    console.log('[COMPTAB] donutContainer found:', !!donutContainer, 'totalDepenses:', totalDepenses);
+    const donutCenterTotal = document.getElementById('donutCenterTotal');
+    if (donutCenterTotal) donutCenterTotal.textContent = formatCompactEur(totalDepenses);
     if (donutContainer && totalDepenses > 0) {
+        const colors = ['#6366f1', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6', '#10b981', '#f43f5e', '#84cc16'];
         let gradient = '';
-        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
         let cumulative = 0;
         const legendItems = [];
         sortedCats.slice(0, 6).forEach(([cat, amount], i) => {
@@ -5612,53 +5762,150 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             const end = cumulative + pct;
             gradient += `${colors[i % colors.length]} ${cumulative}% ${end}%, `;
             cumulative = end;
-            // Add to legend
-            legendItems.push({ cat, pct, color: colors[i % colors.length] });
+            legendItems.push({ cat, pct, amount, color: colors[i % colors.length] });
         });
         gradient += `#e5e7eb ${cumulative}% 100%`;
         donutContainer.style.background = `conic-gradient(${gradient.replace(/, $/, '')})`;
         
-        // Render legend with percentages
-        if (donutLegendContainer) {
-            donutLegendContainer.innerHTML = legendItems.map(item => `
-                <div class="donut-legend-item">
-                    <span class="donut-legend-color" style="background: ${item.color}"></span>
-                    <span class="donut-legend-name">${item.cat}</span>
-                    <span class="donut-legend-pct">${item.pct.toFixed(1)}%</span>
-                </div>
-            `).join('');
-        }
-    } else if (donutLegendContainer) {
-        donutLegendContainer.innerHTML = '';
     }
     
-    // Evolution mensuelle - Bar chart (12 derniers mois) - click to show amounts
-    const monthlyValues = Object.values(monthlyData);
-    console.log('[COMPTAB] monthlyValues:', monthlyValues);
+    // Graphique : annee EN COURS, de janvier a decembre, avec courbe de
+    // tresorerie cumulee (recettes - depenses, cumul depuis le 1er janvier)
+    const chartMonths = [];
+    for (let m = 0; m < 12; m++) {
+        const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
+        const label = new Date(currentYear, m, 1).toLocaleDateString('fr-FR', { month: 'short' });
+        chartMonths.push({ key, label, depenses: 0, recettes: 0, tresorerie: 0 });
+    }
+    cabinetDepenses.forEach(d => {
+        const k = d.date ? String(d.date).substring(0, 7) : null;
+        const cm = chartMonths.find(c => c.key === k);
+        if (cm) cm.depenses += d.amount;
+    });
+    cabinetRecettes.forEach(r => {
+        const k = r.date ? String(r.date).substring(0, 7) : null;
+        const cm = chartMonths.find(c => c.key === k);
+        if (cm) cm.recettes += r.amount;
+    });
+    // Tresorerie = solde bancaire : part du solde au 31/12 de l'annee
+    // precedente (cabinet_opening_balances), puis +- les flux de chaque mois.
+    const useFluxBalance = typeof fluxBankBalanceAt === 'function';
+    let tresorerieCumul = 0;
+    chartMonths.forEach((cm, mIdx) => {
+        if (useFluxBalance) {
+            cm.tresorerie = fluxBankBalanceAt(currentYear, mIdx);
+        } else {
+            tresorerieCumul += cm.recettes - cm.depenses;
+            cm.tresorerie = tresorerieCumul;
+        }
+    });
+    
+    const monthlyValues = chartMonths;
     const maxValue = Math.max(...monthlyValues.map(m => Math.max(m.depenses, m.recettes)), 1);
-    console.log('[COMPTAB] maxValue for chart:', maxValue);
+    
+    const elChartTitle = document.getElementById('evolutionChartTitle');
+    if (elChartTitle) elChartTitle.textContent = `D\u00e9penses & recettes ${currentYear} \u2014 tr\u00e9sorerie (solde bancaire)`;
     
     const barContainer = document.getElementById('evolutionChart');
-    console.log('[COMPTAB] barContainer found:', !!barContainer);
     if (barContainer) {
-        console.log('[COMPTAB] Rendering bar chart with', monthlyValues.length, 'months');
-        barContainer.innerHTML = monthlyValues.map((m, idx) => {
+        if (typeof resetChartAnimations === 'function') resetChartAnimations();
+        barContainer.style.position = 'relative';
+        // Courbe de tresorerie : SVG en overlay, echelle propre au cumul
+        const maxT = Math.max(...monthlyValues.map(m => Math.abs(m.tresorerie)), 1);
+        const tY = t => 96 - ((t + maxT) / (2 * maxT)) * 88;
+        const coords = monthlyValues.map((m, idx) => ({
+            x: ((idx + 0.5) / 12) * 100,
+            y: tY(m.tresorerie)
+        }));
+        const zeroY = tY(0).toFixed(2);
+        const currentMonthIdx = new Date().getMonth();
+        // Courbe lissee : MEME spline Catmull-Rom que le dashboard cotation
+        // (points de controle calcules sur les voisins, /6) - douceur identique.
+        const smoothPath = (arr) => {
+            if (arr.length < 2) return arr.length ? `M ${arr[0].x.toFixed(2)} ${arr[0].y.toFixed(2)}` : '';
+            let d = `M ${arr[0].x.toFixed(2)} ${arr[0].y.toFixed(2)}`;
+            for (let i = 0; i < arr.length - 1; i++) {
+                const p0 = arr[i - 1] || arr[i];
+                const p1 = arr[i];
+                const p2 = arr[i + 1];
+                const p3 = arr[i + 2] || p2;
+                const c1x = p1.x + (p2.x - p0.x) / 6;
+                const c1y = p1.y + (p2.y - p0.y) / 6;
+                const c2x = p2.x - (p3.x - p1.x) / 6;
+                const c2y = p2.y - (p3.y - p1.y) / 6;
+                d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+            }
+            return d;
+        };
+        const curveD = smoothPath(coords);
+        const areaD = curveD
+            + ` L ${coords[coords.length - 1].x.toFixed(2)} ${zeroY}`
+            + ` L ${coords[0].x.toFixed(2)} ${zeroY} Z`;
+        const curveSvg = `
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
+                <path class="treso-area" d="${areaD}" fill="rgba(99,102,241,0.06)" stroke="none"/>
+                <line class="treso-zero" x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="var(--color-border)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <path class="treso-curve" d="${curveD}" fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+            </svg>`;
+        const tresoDots = coords.map(c =>
+            `<span class="treso-dot" style="left:${c.x.toFixed(2)}%; top:${c.y.toFixed(2)}%;"></span>`
+        ).join('');
+        barContainer.innerHTML = curveSvg + tresoDots + monthlyValues.map((m, idx) => {
             const depHeight = (m.depenses / maxValue) * 100;
             const recHeight = (m.recettes / maxValue) * 100;
+            const labelCls = idx === currentMonthIdx ? 'bar-label current-month' : 'bar-label';
             return `
-                <div class="bar-group" onclick="showBarTooltip(event, ${idx})" style="cursor:pointer">
+                <div class="bar-group${idx === currentMonthIdx ? ' is-current' : ''}" data-month-idx="${idx}" style="--i:${idx}; cursor:pointer">
                     <div class="bar-wrapper">
                         <div class="bar expense" style="height: ${depHeight}%"></div>
                         <div class="bar income" style="height: ${recHeight}%"></div>
                     </div>
-                    <span class="bar-label">${m.label}</span>
+                    <span class="${labelCls}">${m.label}</span>
                 </div>
             `;
         }).join('');
+        
+        // Tooltips au survol (plus intelligible qu'un clic)
+        barContainer.querySelectorAll('.bar-group').forEach(grp => {
+            const idx = parseInt(grp.dataset.monthIdx, 10);
+            grp.addEventListener('mouseenter', function(e) { showBarTooltip(e, idx, true); });
+            grp.addEventListener('mouseleave', function() { removeBarTooltip(); });
+        });
+        
+        // Synthese intelligible : trésorerie atteinte, meilleur mois, moyennes
+        const summaryEl = document.getElementById('evolutionSummary');
+        if (summaryEl) {
+            const withData = monthlyValues.filter(m => m.depenses > 0 || m.recettes > 0);
+            const last = withData.length ? withData[withData.length - 1] : null;
+            const elapsed = currentMonthIdx + 1;
+            const avgDep = elapsed > 0 ? chartMonths.reduce((sm, m) => sm + m.depenses, 0) / elapsed : 0;
+            const avgRec = elapsed > 0 ? chartMonths.reduce((sm, m) => sm + m.recettes, 0) / elapsed : 0;
+            const best = chartMonths.reduce((a, b) => (b.recettes > a.recettes ? b : a), chartMonths[0]);
+            const eur = n => (Number(n) || 0).toFixed(2).replace('.', ',') + ' \u20ac';
+            summaryEl.innerHTML = last ? `
+                <div class="evol-chip">
+                    <span class="evol-chip-label">Tr\u00e9sorerie \u00e0 fin ${last.label}</span>
+                    <span class="evol-chip-value" style="color:${last.tresorerie >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}">${eur(last.tresorerie)}</span>
+                </div>
+                <div class="evol-chip">
+                    <span class="evol-chip-label">Moyenne / mois</span>
+                    <span class="evol-chip-value"><small>R</small> ${eur(avgRec)} <small>D</small> ${eur(avgDep)}</span>
+                </div>
+                <div class="evol-chip">
+                    <span class="evol-chip-label">Taux de marge <span class="info-i" tabindex="0" role="button" aria-label="Explication du taux de marge">\u24d8</span></span>
+                    <span class="evol-chip-value" style="color:${tauxMarge >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}">${(Number(tauxMarge) || 0).toFixed(1).replace('.', ',')}%</span>
+                    <span class="info-i-tip">Le taux de marge mesure la part des recettes qui reste apr\u00e8s le paiement des d\u00e9penses du cabinet : (recettes \u2212 d\u00e9penses) \u00f7 recettes \u00d7 100. Au-dessus de 30 %, le cabinet est confortable ; en dessous de 10 %, surveillez vos charges.</span>
+                </div>
+                <div class="evol-chip">
+                    <span class="evol-chip-label">R\u00e9serve de tr\u00e9sorerie</span>
+                    <span class="evol-chip-value" style="color:${reserveMois >= 3 ? 'var(--color-success)' : reserveMois >= 1 ? 'var(--color-warning)' : 'var(--color-danger)'}">${reserveMois >= 0 ? reserveMois + ' mois' : 'N\u00e9gatif'}</span>
+                </div>
+            ` : '<div class="evol-chip"><span class="evol-chip-label">Aucune \u00e9criture en ' + currentYear + ' pour le moment</span></div>';
+        }
     }
     
     // Store monthly data for tooltip
-    window._monthlyData = monthlyData;
+    window._monthlyData = monthlyValues;
     
     // Dashboard - catégories
     const dashCatContainer = document.getElementById('dashDepensesParCategorie');
@@ -5696,24 +5943,211 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             </div>
         `).join('') || '<div class="no-entries">Aucune</div>';
     }
+    
+    if (typeof renderConsommablesChart === 'function') renderConsommablesChart();
+    if (typeof observeChartAnimations === 'function') observeChartAnimations();
+}
+
+// ===== Animations des charts au scroll (IntersectionObserver) =====
+// Les graphiques s'animent seulement quand ils entrent dans le viewport :
+// barres qui poussent en cascade, courbe qui apparait, donut qui monte.
+let _chartObserver = null;
+function animateChartCurves(card) {
+    // Le trace est pilote en CSS (clip-path inset : revele gauche -> droite).
+    // On force un reflow pour que la transition joue depuis l'etat cache.
+    card.querySelectorAll('.treso-curve').forEach(function(path) {
+        try { path.getBoundingClientRect(); } catch (e) {}
+    });
+}
+function observeChartAnimations() {
+    const cards = document.querySelectorAll('#cabinet-dashboard .chart-card:not([data-chart-observed])');
+    if (!cards.length) return;
+    if (!('IntersectionObserver' in window)) {
+        cards.forEach(function(c) { c.dataset.chartObserved = '1'; c.classList.add('chart-in-view'); animateChartCurves(c); });
+        return;
+    }
+    if (!_chartObserver) {
+        _chartObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(en) {
+                if (en.isIntersecting) {
+                    en.target.classList.add('chart-in-view');
+                    animateChartCurves(en.target);
+                    _chartObserver.unobserve(en.target);
+                }
+            });
+        }, { threshold: 0.2 });
+    }
+    cards.forEach(function(c) { c.dataset.chartObserved = '1'; _chartObserver.observe(c); });
+}
+window.observeChartAnimations = observeChartAnimations;
+
+// Info-i : toggle au clic/tap (survol insuffisant sur mobile, et l'icone est
+// imbriquee dans le label donc les selecteurs freres CSS ne matchaient pas).
+document.addEventListener('click', function(e) {
+    const info = e.target.closest ? e.target.closest('.info-i') : null;
+    document.querySelectorAll('#cabinet-dashboard .evol-chip.show-tip').forEach(function(c) {
+        if (!info || c !== info.closest('.evol-chip')) c.classList.remove('show-tip');
+    });
+    if (info) {
+        const chip = info.closest('.evol-chip');
+        if (chip) chip.classList.toggle('show-tip');
+        e.stopPropagation();
+    }
+});
+
+// Rejouer les animations a chaque re-rendu des charts : sinon les elements
+// recree arrivent en etat final (classe deja present) et rien ne s'anime.
+function resetChartAnimations() {
+    document.querySelectorAll('#cabinet-dashboard .chart-card.chart-in-view').forEach(function(c) {
+        c.classList.remove('chart-in-view');
+        delete c.dataset.chartObserved;
+    });
+    if (typeof observeChartAnimations === 'function') observeChartAnimations();
+}
+window.resetChartAnimations = resetChartAnimations;
+
+// Format compact pour les centres de donuts : "12,4 k\u20ac" au lieu de
+// "12 450,00 \u20ac" qui debordait du trou sur mobile.
+function formatCompactEur(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+}
+window.formatCompactEur = formatCompactEur;
+
+// ===== CONSOMMABLES : depenses des bons de commande (module urgence) =====
+function renderConsommablesChart() {
+    const container = document.getElementById('consommablesChart');
+    const topContainer = document.getElementById('consommablesTop');
+    const titleEl = document.getElementById('consommablesTitle');
+    if (!container) return;
+    
+    const year = new Date().getFullYear();
+    if (titleEl) titleEl.textContent = `Consommables ${year} \u2014 bons de commande`;
+    
+    const orders = (typeof urgenceData !== 'undefined' && Array.isArray(urgenceData.orders))
+        ? urgenceData.orders
+        : [];
+    
+    // Commandes recues : le cout reel TTC saisi a la reception fait foi.
+    // Le mois de reference est la reception (le colis arrive, la depense est reelle).
+    const received = orders.filter(o => o.status === 'received');
+    const months = [];
+    for (let m = 0; m < 12; m++) {
+        months.push({
+            label: new Date(year, m, 1).toLocaleDateString('fr-FR', { month: 'short' }),
+            total: 0,
+            orders: 0
+        });
+    }
+    const supTotals = new Map();
+    received.forEach(o => {
+        const dateRef = o.receivedAt || o.createdAt;
+        const d = new Date(dateRef);
+        const cost = Number(o.realCost) || 0;
+        if (d.getFullYear() === year && cost > 0) {
+            months[d.getMonth()].total += cost;
+            months[d.getMonth()].orders++;
+        }
+        if (cost > 0) {
+            const sup = (o.supplier || 'Fournisseur non pr\u00e9cis\u00e9').trim();
+            supTotals.set(sup, (supTotals.get(sup) || 0) + cost);
+        }
+    });
+    
+    const yearTotal = months.reduce((s, m) => s + m.total, 0);
+    const maxVal = Math.max(...months.map(m => m.total), 1);
+    const currentMonthIdx = new Date().getMonth();
+    
+    container.style.position = 'relative';
+    container.innerHTML = months.map((m, idx) => {
+        const h = (m.total / maxVal) * 100;
+        const labelCls = idx === currentMonthIdx ? 'bar-label current-month' : 'bar-label';
+        return `
+            <div class="bar-group conso-group" style="--i:${idx}; cursor:default">
+                <div class="bar-wrapper">
+                    <div class="bar conso" style="height: ${h}%" title="${m.total.toFixed(2)}\u20ac (${m.orders} commande${m.orders > 1 ? 's' : ''})"></div>
+                </div>
+                <span class="${labelCls}">${m.label}</span>
+            </div>
+        `;
+    }).join('') + `<div class="conso-total" style="text-align:center;font-size:0.75rem;color:var(--color-text-secondary);margin-top:8px;">Total ${yearTotal.toFixed(2)}\u20ac TTC re\u00e7us en ${year}</div>`;
+    
+    if (topContainer) {
+        // Classement des references les plus couteuses (cout reel reparti au
+        // prorata des lignes de commande) + lecture Pareto pour les economies.
+        const byProduct = new Map();
+        let yearRefTotal = 0;
+        received.forEach(o => {
+            const dRef = new Date(o.receivedAt || o.createdAt);
+            if (dRef.getFullYear() !== year) return;
+            const realCost = Number(o.realCost) || 0;
+            if (realCost <= 0) return;
+            yearRefTotal += realCost;
+            const est = (o.items || []).reduce((sm, i) => sm + (i.qty || 0) * (i.unitPrice || 0), 0);
+            (o.items || []).forEach(i => {
+                const cost = est > 0 && i.unitPrice > 0
+                    ? realCost * ((i.qty || 0) * (i.unitPrice || 0)) / est
+                    : realCost / Math.max((o.items || []).length, 1);
+                const cur = byProduct.get(i.productId) || { name: i.name || i.productId, total: 0, qty: 0 };
+                cur.total += cost;
+                cur.qty += (i.receivedQty !== undefined ? i.receivedQty : i.qty) || 0;
+                byProduct.set(i.productId, cur);
+            });
+        });
+        const refRows = Array.from(byProduct.values()).sort((a, b) => b.total - a.total);
+        const topRefs = refRows.slice(0, 8);
+        const maxRef = topRefs.length ? topRefs[0].total : 1;
+        const pareto3 = refRows.length >= 3
+            ? (refRows.slice(0, 3).reduce((sm, r) => sm + r.total, 0) / (yearRefTotal || 1)) * 100
+            : null;
+        const eur = n => (Number(n) || 0).toFixed(2).replace('.', ',') + ' \u20ac';
+        
+        const refsHtml = topRefs.length ? `
+            <div class="conso-refs-head">R\u00e9f\u00e9rences qui co\u00fbtent le plus</div>
+            ${pareto3 !== null ? `
+            <div class="conso-pareto">
+                <span class="conso-pareto-value">${pareto3.toFixed(0)}%</span>
+                <span class="conso-pareto-text">des d\u00e9penses consommables viennent des <strong>3 premi\u00e8res r\u00e9f\u00e9rences</strong> \u2014 c'est l\u00e0 que les \u00e9conomies sont les plus faciles.</span>
+            </div>` : ''}
+            <div class="conso-ref-list">
+                ${topRefs.map((r, k) => `
+                    <div class="conso-ref-row">
+                        <span class="conso-ref-rank">${k + 1}</span>
+                        <span class="conso-ref-name">${r.name}</span>
+                        <span class="conso-ref-bar"><span style="width:${Math.max((r.total / maxRef) * 100, 4).toFixed(1)}%"></span></span>
+                        <span class="conso-ref-amount">${eur(r.total)}<small> \u00b7 ${yearRefTotal > 0 ? ((r.total / yearRefTotal) * 100).toFixed(1) : 0}%</small></span>
+                    </div>
+                `).join('')}
+            </div>` : '';
+        
+        const topSup = Array.from(supTotals.entries()).sort((a, b) => b[1] - a[1]).slice(0, 2);
+        const supHtml = topSup.length ? `
+            <div class="conso-sup-line">Fournisseurs principaux : ${topSup.map(([sup, tot]) => `<strong>${sup}</strong> (${eur(tot)})`).join(' \u00b7 ')}</div>` : '';
+        
+        topContainer.innerHTML = refsHtml + supHtml;
+    }
 }
 
 // ===== BAR TOOLTIP FUNCTION =====
-function showBarTooltip(event, idx) {
+function removeBarTooltip() {
+    const t = document.querySelector('.bar-tooltip');
+    if (t) t.remove();
+}
+window.removeBarTooltip = removeBarTooltip;
+
+function showBarTooltip(event, idx, hover) {
     event.stopPropagation();
     
     const monthlyData = window._monthlyData;
     if (!monthlyData) return;
     
-    const values = Object.values(monthlyData);
+    const values = Array.isArray(monthlyData) ? monthlyData : Object.values(monthlyData);
     if (!values[idx]) return;
     
     const m = values[idx];
     const existingTooltip = document.querySelector('.bar-tooltip');
-    if (existingTooltip) {
-        existingTooltip.remove();
-        return;
-    }
+    if (existingTooltip) existingTooltip.remove();
+    if (!hover) return;
     
     const tooltip = document.createElement('div');
     tooltip.className = 'bar-tooltip';
@@ -5721,7 +6155,7 @@ function showBarTooltip(event, idx) {
         <div><strong>${m.label}</strong></div>
         <div class="tooltip-amount" style="color:var(--color-danger)">Dépenses: ${m.depenses.toFixed(2)}€</div>
         <div class="tooltip-amount" style="color:var(--color-success)">Recettes: ${m.recettes.toFixed(2)}€</div>
-        <div style="font-size:0.625rem;color:var(--color-text-tertiary);margin-top:4px">Cliquez pour fermer</div>
+        <div class="tooltip-amount" style="color:#3b82f6">Trésorerie (solde): ${m.tresorerie.toFixed(2)}€</div>
     `;
     
     const rect = event.currentTarget.getBoundingClientRect();
@@ -5740,16 +6174,18 @@ function showBarTooltip(event, idx) {
     tooltip.style.top = top + 'px';
     document.body.appendChild(tooltip);
     
-    const closeTooltip = function(e) {
-        if (!tooltip.contains(e.target)) {
-            tooltip.remove();
-            document.removeEventListener('click', closeTooltip);
-        }
-    };
-    
-    setTimeout(() => {
-        document.addEventListener('click', closeTooltip);
-    }, 100);
+    if (!hover) {
+        const closeTooltip = function(e) {
+            if (!tooltip.contains(e.target)) {
+                tooltip.remove();
+                document.removeEventListener('click', closeTooltip);
+            }
+        };
+        
+        setTimeout(() => {
+            document.addEventListener('click', closeTooltip);
+        }, 100);
+    }
 }
 
 window.showBarTooltip = showBarTooltip;
@@ -6948,6 +7384,7 @@ function renderCharts() {
         
         monthlyChartContainer.appendChild(svg);
     };
+    window.drawMonthlyLines = drawMonthlyLines;
     requestAnimationFrame(drawMonthlyLines);
     
     if (!window.__monthlyChartResizeBound) {
@@ -7877,9 +8314,24 @@ let pendingTransactions = [];
 function showRelevéUploadOptions() {
     const modal = document.getElementById('relevéUploadModal');
     if (modal) {
+        syncRelevePrivateMode();
         modal.style.display = 'flex';
     }
 }
+
+// Mode prive : analyse 100 locale (OCR + parseur), sans envoyer le releve a une IA externe
+function isRelevePrivateMode() {
+    try { return localStorage.getItem('releve_private_mode') === '1'; } catch (e) { return false; }
+}
+
+function syncRelevePrivateMode() {
+    const cb = document.getElementById('relevePrivateMode');
+    if (cb) cb.checked = isRelevePrivateMode();
+}
+
+window.toggleRelevePrivateMode = function(checked) {
+    try { localStorage.setItem('releve_private_mode', checked ? '1' : '0'); } catch (e) {}
+};
 
 function closeRelevéModal() {
     const modal = document.getElementById('relevéUploadModal');
@@ -8303,7 +8755,7 @@ async function extractTextFromPDF(file) {
     }
     
     const arrayBuffer = await file.arrayBuffer();
-    window._relevePdfBytes = file.type === 'application/pdf' ? new Blob([arrayBuffer]) : null;
+    window._relevePdfBytes = file.type === 'application/pdf' ? new Blob([arrayBuffer], { type: 'application/pdf' }) : null;
     const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
         cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/cmaps/',
@@ -8528,6 +8980,10 @@ async function getAPIKeyForUpload() {
 }
 
 async function analyzeRelevéWithAI(text) {
+    if (isRelevePrivateMode()) {
+        console.log('[RELEVÉ] Mode privé : analyse locale (OCR seul, sans IA)');
+        return parseRelevéLocalement(text);
+    }
     const apiKey = await getAPIKeyForUpload();
     if (apiKey) {
         try {
@@ -8540,7 +8996,49 @@ async function analyzeRelevéWithAI(text) {
     return parseRelevéLocalement(text);
 }
 
+// Decoupe le texte du releve en lots de pages tenant dans la limite du modele.
+// Sans ca, substring(0, 8000) coupait les pages 7+ d'un releve de plusieurs photos :
+// l'IA ne voyait jamais la fin du document.
+function splitRelevéTextForAI(text, maxChars) {
+    const limit = maxChars || 8000;
+    const raw = String(text || '');
+    if (raw.length <= limit) return [raw];
+    const pageParts = raw.split(/(?=<<<PAGE \d+>>>)/);
+    const chunks = [];
+    let cur = '';
+    for (const part of pageParts) {
+        if (part.length > limit) {
+            if (cur) { chunks.push(cur); cur = ''; }
+            // page seule trop longue : couper par lignes
+            let lines = '';
+            for (const line of part.split(/\r?\n/)) {
+                if ((lines + line).length > limit) { chunks.push(lines); lines = ''; }
+                lines += line + '\n';
+            }
+            if (lines) chunks.push(lines);
+        } else if ((cur + part).length > limit) {
+            chunks.push(cur);
+            cur = part;
+        } else {
+            cur += part;
+        }
+    }
+    if (cur) chunks.push(cur);
+    return chunks.filter(c => c.trim());
+}
+
 async function analyzeRelevéWithGroq(text, apiKey) {
+    const chunks = splitRelevéTextForAI(text, 8000);
+    const all = [];
+    for (let i = 0; i < chunks.length; i++) {
+        console.log('[RELEVÉ] Analyse IA lot ' + (i + 1) + '/' + chunks.length + ' (' + chunks[i].length + ' caractères)');
+        const transactions = await analyzeRelevéChunkWithGroq(chunks[i], apiKey);
+        all.push(...transactions);
+    }
+    return all;
+}
+
+async function analyzeRelevéChunkWithGroq(text, apiKey) {
     
     const prompt = `Analyse ce relevé bancaire et extrais chaque transaction. Pour chaque ligne, retourne un objet JSON avec:
 - date: la date de l'opération (format YYYY-MM-DD)
@@ -8561,9 +9059,9 @@ Retourne UNIQUEMENT un tableau JSON valide sans texte supplémentaire.`;
             model: 'llama-3.1-8b-instant',
             messages: [
                 { role: 'system', content: prompt },
-                { role: 'user', content: text.substring(0, 8000) }
+                { role: 'user', content: text }
             ],
-            max_tokens: 2048
+            max_tokens: 4096
         })
     });
     
@@ -8941,6 +9439,7 @@ function renderTransactionsList() {
         
         const sousCatSuggestion = suggestSousCategorie(t.description, isDepense);
         const sousCatPlaceholder = sousCatSuggestion ? `Suggestion : ${sousCatSuggestion}` : 'Ex : frais SCM mensuel, EDF octobre…';
+        const commentSuggestion = (typeof suggestComment === 'function') ? suggestComment(t.description, isDepense) : null;
         
         return `
             <div class="transaction-item" data-index="${index}" style="${isConfirmed ? 'opacity: 0.6; background: var(--color-success-bg);' : ''} ${t.rejected ? 'opacity: 0.45; border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);' : (t.duplicate ? 'border-left: 3px solid #f59e0b;' : '')}">
@@ -8992,7 +9491,10 @@ function renderTransactionsList() {
                 <div class="transaction-row">
                     <div class="transaction-field transaction-field-desc">
                         <label>Commentaire</label>
-                        <input type="text" class="trans-comment" value="${t.comment || ''}" placeholder="＋ commentaire libre sur cette ligne…" onchange="updateTransaction(${index}, 'comment', this.value)" ${isConfirmed ? 'disabled' : ''}>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="text" class="trans-comment" value="${t.comment || ''}" placeholder="${commentSuggestion ? 'Suggéré : ' + commentSuggestion.replace(/"/g, '&quot;') : '＋ commentaire libre sur cette ligne…'}" onchange="updateTransaction(${index}, 'comment', this.value)" ${isConfirmed ? 'disabled' : ''} style="flex:1;">
+                            ${commentSuggestion && !t.comment && !isConfirmed ? `<button class="action-btn" style="padding:2px 8px; font-size:0.68rem; white-space:nowrap;" onclick="applyCommentSuggestion(${index})" title="Appliquer la suggestion">✨ ${commentSuggestion.length > 18 ? commentSuggestion.slice(0,18)+'…' : commentSuggestion}</button>` : ''}
+                        </div>
                     </div>
                 </div>
                 <div class="transaction-row">
@@ -9234,6 +9736,12 @@ function updateTransaction(index, field, value) {
             pendingTransactions[index].amount = isDepense ? -Math.abs(amount) : Math.abs(amount);
         } else {
             pendingTransactions[index][field] = value;
+            if (field === 'sous_categorie' && value && value.trim()) {
+                const t = pendingTransactions[index];
+                const isDepense = t.type === 'dépense' || t.amount < 0;
+                const cat = categoryForSousCategorie(value, isDepense);
+                if (cat) t.category = cat;
+            }
         }
         renderTransactionsList();
     }
@@ -9300,7 +9808,7 @@ async function loadReleveLearning(force) {
     try {
         const { data, error } = await supabaseClient
             .from('releve_learning')
-            .select('libelle_norm, category, is_depense, weight');
+            .select('libelle_norm, category, is_depense, weight, updated_at');
         if (error) throw error;
         releveLearningCache = data || [];
         releveLearningLoadedAt = now;
@@ -9318,6 +9826,8 @@ function bestLearnedCategory(description, isDepense) {
     const rows = releveLearningCache || [];
     let best = null;
     let bestScore = 0;
+    let recent = null;
+    let recentAt = 0;
     for (const row of rows) {
         if (row.is_depense !== isDepense) continue;
         if (!row.libelle_norm) continue;
@@ -9330,7 +9840,18 @@ function bestLearnedCategory(description, isDepense) {
         } else if (norm.includes(row.libelle_norm) && row.libelle_norm.length >= 6) {
             const score = (row.weight || 1) + row.libelle_norm.length;
             if (score > bestScore) { bestScore = score; best = row; }
+        } else {
+            continue;
         }
+        // la ligne la plus recemment confirmee pour ce libelle (toutes categories)
+        const at = Date.parse(row.updated_at || '') || 0;
+        if (at > recentAt) { recentAt = at; recent = row; }
+    }
+    // correction utilisateur : une nouvelle categorisation confirmee au moins
+    // 2 fois prend le dessus sur l'ancienne, meme si l'ancienne est plus lourde.
+    // Sans ca, une premiere categorisation erronee resterait suggeree pour toujours.
+    if (recent && (recent.weight || 1) >= 2 && best && recent.category !== best.category) {
+        best = recent;
     }
     return best ? { category: normalizeFluxCategory(best.category, isDepense), score: bestScore } : null;
 }
@@ -12194,11 +12715,41 @@ function countMonthDuplicates(transactions) {
 
 
 // ===== Archivage du PDF de relevé importé (bucket Supabase "releves") =====
+// Assemble un PDF multi-pages a partir des photos du releve (import JPG) :
+// permet d'archiver et de revoir le releve photographie comme un PDF classique.
+async function buildPdfFromRelevePhotos() {
+    try {
+        const jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        const thumbs = (window.relevePageThumbs || []).filter(pd => pd.hiresDataUrl || pd.thumb);
+        if (!jsPDFCls || !thumbs.length) return null;
+        let doc = null;
+        for (const pd of thumbs) {
+            const dataUrl = pd.hiresDataUrl || pd.thumb;
+            const w = pd.pageWidth || 1240, h = pd.pageHeight || 1754;
+            const orientation = w > h ? 'landscape' : 'portrait';
+            if (!doc) {
+                doc = new jsPDFCls({ unit: 'px', format: [w, h], orientation, compress: true });
+            } else {
+                doc.addPage([w, h], orientation);
+            }
+            doc.addImage(dataUrl, 'JPEG', 0, 0, w, h);
+        }
+        return doc ? doc.output('blob') : null;
+    } catch (e) {
+        console.error('[RELEV\u00c9] buildPdfFromRelevePhotos:', e);
+        return null;
+    }
+}
+window.buildPdfFromRelevePhotos = buildPdfFromRelevePhotos;
+
 async function saveRelevePdfToStorage(depenses, recettes) {
     try {
-        // import photo : pas d'archivage PDF (les photos restent en local via IndexedDB)
-        if (window._releveIsPhotos) return;
-        const blob = window._relevePdfBytes || (window._releveCurrentFile instanceof Blob ? window._releveCurrentFile : null);
+        // import photo : assembler un PDF a partir des pages photographiees
+        // (avant, rien n'etait archive et le bouton \u00ab PDF \u00bb de la checklist echouait)
+        let blob = window._relevePdfBytes || (window._releveCurrentFile instanceof Blob ? window._releveCurrentFile : null);
+        if (!blob && window._releveIsPhotos) {
+            blob = await buildPdfFromRelevePhotos();
+        }
         if (!blob || !supabaseClient || !currentUser?.id) return;
         const all = [...(depenses || []), ...(recettes || [])];
         const monthKeys = [...new Set(all.map(t => (t.date || '').slice(0, 7)))].filter(Boolean).sort();
@@ -12360,10 +12911,24 @@ async function getReleveMonthStatuses() {
         return msg.includes('validated') || err?.code === 'PGRST204' || msg.includes('PGRST204');
     };
     try {
+        // Checklist partagee entre medecins du cabinet : les releves importes
+        // par un associe comptent pour tous (l'import est une tache de cabinet).
+        let releveUserIds = [currentUser.id];
+        try {
+            const { data: prof } = await supabaseClient
+                .from('profiles')
+                .select('cabinet_id')
+                .eq('id', currentUser.id)
+                .single();
+            if (prof?.cabinet_id) {
+                const associeIds = await getCabinetDoctorIds(prof.cabinet_id);
+                if (Array.isArray(associeIds)) releveUserIds = releveUserIds.concat(associeIds);
+            }
+        } catch (e) { console.error('[RELEVÉ] cabinet ids:', e); }
         const { data, error } = await supabaseClient
             .from('releve_imports')
-            .select('month, validated')
-            .eq('user_id', currentUser.id);
+            .select('user_id, month, validated')
+            .in('user_id', releveUserIds);
         if (error) throw error;
         (data || []).forEach(r => {
             const prev = map.get(r.month) || { imported: false, validated: false };
@@ -12384,7 +12949,7 @@ async function getReleveMonthStatuses() {
                 const { data } = await supabaseClient
                     .from('releve_imports')
                     .select('month')
-                    .eq('user_id', currentUser.id);
+                    .in('user_id', releveUserIds);
                 (data || []).forEach(r => map.set(r.month, { imported: true, validated: true }));
             } catch (e2) {
                 console.error('[RELEVÉ] getReleveMonthStatuses:', e2);
@@ -12454,6 +13019,32 @@ function suggestSousCategorie(description, isDepense, category) {
     return best;
 }
 
+// Suggestion de commentaire par similarite avec l'historique :
+// la ligne du releve ressemble a une ligne deja enregistree -> on propose
+// le commentaire utilise la fois d'avent (champ note)
+function suggestComment(description, isDepense) {
+    const norm = normalizeLibelle(description);
+    if (!norm || norm.length < 4) return null;
+    const pool = isDepense ? cabinetDepenses : cabinetRecettes;
+    const words = norm.split(' ').filter(w => w.length > 2);
+    let best = null, bestScore = 0;
+    for (const e of (pool || [])) {
+        if (!e.note || !String(e.note).trim()) continue;
+        const eNorm = normalizeLibelle(e.releve_libelle || e.description);
+        if (!eNorm) continue;
+        const eWords = new Set(eNorm.split(' ').filter(w => w.length > 2));
+        let common = 0;
+        for (const w of words) if (eWords.has(w)) common++;
+        const score = common / Math.max(words.length, 1);
+        if (score > bestScore && score >= 0.5) {
+            bestScore = score;
+            best = String(e.note).trim();
+        }
+    }
+    return best;
+}
+window.suggestComment = suggestComment;
+
 // Toutes les sous-categories proches (pour la datalist)
 function getSousCatSuggestions(description, isDepense) {
     const pool = isDepense ? cabinetDepenses : cabinetRecettes;
@@ -12471,12 +13062,47 @@ function getSousCatSuggestions(description, isDepense) {
     return result.slice(0, 5);
 }
 
+// Categorie parente d'une sous-categorie : historique du cabinet d'abord,
+// puis mapping statique SCM_SOUS_CATEGORIES (si non ambigu)
+function categoryForSousCategorie(sc, isDepense) {
+    const target = String(sc || '').trim().toLowerCase();
+    if (!target) return null;
+    const pool = isDepense ? cabinetDepenses : cabinetRecettes;
+    for (const e of (pool || [])) {
+        if (e.sous_categorie && String(e.sous_categorie).trim().toLowerCase() === target && e.category) {
+            return normalizeFluxCategory(e.category, isDepense);
+        }
+    }
+    if (typeof SCM_SOUS_CATEGORIES !== 'undefined') {
+        const matches = Object.entries(SCM_SOUS_CATEGORIES)
+            .filter(([cat, list]) => (list || []).some(s => String(s).trim().toLowerCase() === target))
+            .map(([cat]) => normalizeFluxCategory(cat, isDepense));
+        if (matches.length === 1) return matches[0];
+    }
+    return null;
+}
+window.categoryForSousCategorie = categoryForSousCategorie;
+
+function applyCommentSuggestion(index) {
+    const t = pendingTransactions[index];
+    if (!t) return;
+    const sug = suggestComment(t.description, t.type === 'dépense' || t.amount < 0);
+    if (sug) {
+        t.comment = sug;
+        renderTransactionsList();
+    }
+}
+window.applyCommentSuggestion = applyCommentSuggestion;
+
 function applySousCatSuggestion(index) {
     const t = pendingTransactions[index];
     if (!t) return;
-    const sug = suggestSousCategorie(t.description, t.type === 'dépense' || t.amount < 0);
+    const isDepense = t.type === 'dépense' || t.amount < 0;
+    const sug = suggestSousCategorie(t.description, isDepense);
     if (sug) {
         t.sous_categorie = sug;
+        const cat = categoryForSousCategorie(sug, isDepense);
+        if (cat) t.category = cat;
         renderTransactionsList();
     }
 }

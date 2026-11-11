@@ -140,6 +140,7 @@ window.renderReleveReview = function() {
         const isCurrent = index === cur;
         const isDone = tr.confirmed || tr.rejected;
         const sousCatSuggestion = (typeof suggestSousCategorie === 'function') ? suggestSousCategorie(tr.description, isDepense) : null;
+        const commentSuggestion = (typeof suggestComment === 'function') ? suggestComment(tr.description, isDepense) : null;
         return `
         <div class="review-line ${isCurrent ? 'current' : ''} ${tr.confirmed ? 'confirmed' : ''} ${tr.rejected ? 'rejected' : ''} ${tr.duplicate ? 'dup' : ''}" data-index="${index}" onclick="setReviewCurrent(${index})">
             <div class="review-line-head">
@@ -176,8 +177,8 @@ window.renderReleveReview = function() {
                     </div>
                 </div>
                 <div class="review-field grow">
-                    <label>Commentaire</label>
-                    <input type="text" value="${reviewEscapeHtml(tr.comment || '')}" placeholder="＋ commentaire…" onchange="reviewUpdate(${index}, 'comment', this.value)">
+                    <label>Commentaire ${commentSuggestion ? `<button class="review-sug-btn" onclick="event.stopPropagation(); applyReviewCommentSuggestion(${index})">✨ ${reviewEscapeHtml(commentSuggestion)}</button>` : ''}</label>
+                    <input type="text" value="${reviewEscapeHtml(tr.comment || '')}" placeholder="${commentSuggestion ? 'Suggéré : ' + reviewEscapeHtml(commentSuggestion) : '＋ commentaire…'}" onchange="reviewUpdate(${index}, 'comment', this.value)">
                 </div>
             </div>` : ''}
         </div>`;
@@ -197,6 +198,15 @@ function reviewUpdate(index, field, value) {
         renderReleveReview();
     } else {
         tr[field] = value;
+        if (field === 'sous_categorie' && value && value.trim()) {
+            const isDepense = tr.type === 'dépense' || tr.amount < 0;
+            const cat = (typeof categoryForSousCategorie === 'function') ? categoryForSousCategorie(value, isDepense) : null;
+            if (cat) {
+                tr.category = cat;
+                const catSelect = document.querySelector(`.review-line[data-index="${index}"] select[onchange*="'category'"]`);
+                if (catSelect) catSelect.value = cat;
+            }
+        }
         // champs inline : pas de re-render (le focus et la saisie seraient perdus)
     }
 }
@@ -205,10 +215,24 @@ window.reviewUpdate = reviewUpdate;
 function applyReviewSuggestion(index) {
     const tr = pendingTransactions[index];
     if (!tr) return;
-    const sug = suggestSousCategorie(tr.description, tr.type === 'dépense' || tr.amount < 0);
-    if (sug) { tr.sous_categorie = sug; renderReleveReview(); }
+    const isDepense = tr.type === 'dépense' || tr.amount < 0;
+    const sug = suggestSousCategorie(tr.description, isDepense);
+    if (sug) {
+        tr.sous_categorie = sug;
+        const cat = (typeof categoryForSousCategorie === 'function') ? categoryForSousCategorie(sug, isDepense) : null;
+        if (cat) tr.category = cat;
+        renderReleveReview();
+    }
 }
 window.applyReviewSuggestion = applyReviewSuggestion;
+
+function applyReviewCommentSuggestion(index) {
+    const tr = pendingTransactions[index];
+    if (!tr) return;
+    const sug = (typeof suggestComment === 'function') ? suggestComment(tr.description, tr.type === 'dépense' || tr.amount < 0) : null;
+    if (sug) { tr.comment = sug; renderReleveReview(); }
+}
+window.applyReviewCommentSuggestion = applyReviewCommentSuggestion;
 
 // Ajoute une ligne non detectee automatiquement (saisie manuelle dans la revue)
 window.reviewAddLine = function() {
@@ -1174,6 +1198,11 @@ function pickSousCatChip(index, sc) {
     const tr = pendingTransactions[index];
     if (!tr) return;
     tr.sous_categorie = sc;
+    const isDepense = tr.type === 'dépense' || tr.amount < 0;
+    const cat = (typeof categoryForSousCategorie === 'function') ? categoryForSousCategorie(sc, isDepense) : null;
+    if (cat) tr.category = cat;
+    const catSelect = document.querySelector(`.review-line[data-index="${index}"] select[onchange*="'category'"]`);
+    if (catSelect && cat) catSelect.value = cat;
     const input = document.getElementById(`review-souscat-input-${index}`);
     if (input) input.value = sc;
     const chips = document.getElementById(`review-souscat-chips-${index}`);
