@@ -17450,3 +17450,22 @@ body:has(#view-dashboard.active) {
     cursor: pointer;
 }
 >>>>>>> 95e50d7 (feat(dashboard): donuts hierarchiques espaces (gauche 200px > droite 150px, gap 36px) avec montants complets dans les trous ; chips de synthese en grille 4 colonnes egales avec moyenne compacte (R/D) ; info-i fonctionnel au clic/tap (toggle JS, le selecteur CSS frere ne matchait pas))
+
+/* --- Import : modale d'accueil --- */
+.urgence-import-help-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.urgence-import-prompt {
+    width: 100%;
+    min-height: 220px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    white-space: pre;
+    resize: vertical;
+    margin-top: 8px;
+}

@@ -561,7 +561,86 @@ function urgenceParseCsv(text) {
 }
 
 function urgenceImportCsvClick() {
+    urgenceShowImportHelpModal();
+}
+
+// Modale d'accueil : format attendu copiable (pour le donner a une IA avec ses donnees brutes)
+function urgenceImportAiPrompt() {
+    return [
+        'Voici mon inventaire brut :',
+        '',
+        '[COLLEZ ICI VOS DONNÉES : copier-coller de votre tableur, facture, liste...]',
+        '',
+        'Mets-le au format CSV attendu par mon application de gestion de stock, avec :',
+        '- ligne 1 d\u2019en-tête exactement : nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur',
+        '- séparateur point-virgule ;',
+        '- une ligne par lot : si un produit a plusieurs dates de péremption, répète la ligne en changeant quantite et peremption',
+        '- categorie : Désinfection / Suture / Injections / Médicaments / Divers',
+        '- peremption au format AAAA-MM-JJ (ou JJ/MM/AAAA)',
+        '- prix en euros par unité (virgule ou point décimal)',
+        '- reference = code produit fournisseur si connu, sinon vide',
+        '- Les champs facultatifs peuvent rester vides, seul nom est obligatoire',
+        '',
+        'Réponds uniquement avec le CSV, sans autre texte.',
+        '',
+        'Exemple :',
+        'nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur',
+        'Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;3;3;2026-05-01;4,50;Cooper;commandes@cooper.fr',
+        'Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;2;3;2027-01-01;4,50;Cooper;commandes@cooper.fr',
+        'Gants stériles;Suture;G-052;paquet de 50;paire;6;4;;;Cera;'
+    ].join('\n');
+}
+
+function urgenceShowImportHelpModal() {
+    document.getElementById('urgenceImportHelpModal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'urgenceImportHelpModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card urgence-modal-content" style="max-width:620px;">
+            <div class="modal-header">
+                <h3>Importer un inventaire</h3>
+                <button type="button" class="modal-close" onclick="urgenceCloseImportHelpModal()" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="form-hint"><strong>Vous avez déjà un fichier ?</strong> CSV ou Excel (.xlsx), choisissez-le : il sera analysé, un aperçu vous sera proposé avant tout ajout.</p>
+                <div class="urgence-import-help-actions">
+                    <button class="action-btn primary" onclick="urgencePickImportFile()">⬆️ Choisir mon fichier…</button>
+                    <button class="action-btn" onclick="urgenceDownloadCsvTemplate()">📄 Télécharger le modèle CSV</button>
+                </div>
+                <p class="form-hint" style="margin-top:14px;"><strong>Vos données sont en vrac ?</strong> Copiez le format ci-dessous et collez-le dans une IA (ChatGPT, etc.) avec vos données brutes : elle vous rendra un CSV prêt à importer.</p>
+                <textarea class="form-input urgence-import-prompt" readonly onclick="this.select()">${urgenceEscapeHtml(urgenceImportAiPrompt())}</textarea>
+                <div class="urgence-import-help-actions">
+                    <button class="action-btn stock-btn-tonal" onclick="urgenceCopyAiPrompt()">⠫ Copier le format pour l'IA</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="urgenceCloseImportHelpModal()">Fermer</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) urgenceCloseImportHelpModal();
+    });
+}
+
+function urgenceCloseImportHelpModal() {
+    document.getElementById('urgenceImportHelpModal')?.remove();
+}
+
+function urgencePickImportFile() {
+    urgenceCloseImportHelpModal();
     document.getElementById('urgenceImportCsvInput')?.click();
+}
+
+function urgenceCopyAiPrompt() {
+    const text = urgenceImportAiPrompt();
+    navigator.clipboard.writeText(text).then(() => {
+        if (typeof showToast === 'function') showToast('Format copié — collez-le dans votre IA avec vos données brutes');
+    }).catch(() => {
+        const ta = document.querySelector('.urgence-import-prompt');
+        if (ta) { ta.select(); document.execCommand('copy'); }
+    });
 }
 
 // Modele CSV : en-tete + lignes d'exemple (une ligne par date de peremption)
@@ -2469,6 +2548,9 @@ window.urgenceDiscardLot = urgenceDiscardLot;
 window.urgenceAddLotRow = urgenceAddLotRow;
 window.urgenceGoSubTab = urgenceGoSubTab;
 window.urgenceImportCsvClick = urgenceImportCsvClick;
+window.urgenceCloseImportHelpModal = urgenceCloseImportHelpModal;
+window.urgencePickImportFile = urgencePickImportFile;
+window.urgenceCopyAiPrompt = urgenceCopyAiPrompt;
 window.urgenceDownloadCsvTemplate = urgenceDownloadCsvTemplate;
 window.urgenceHandleCsvFile = urgenceHandleCsvFile;
 window.urgenceShowImportPreview = urgenceShowImportPreview;
