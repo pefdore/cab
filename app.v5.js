@@ -5767,6 +5767,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     
     const barContainer = document.getElementById('evolutionChart');
     if (barContainer) {
+        if (typeof resetChartAnimations === 'function') resetChartAnimations();
         barContainer.style.position = 'relative';
         // Courbe de tresorerie : SVG en overlay, echelle propre au cumul
         const maxT = Math.max(...monthlyValues.map(m => Math.abs(m.tresorerie)), 1);
@@ -5796,7 +5797,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;">
                 <path class="treso-area" d="${areaD}" fill="rgba(99,102,241,0.06)" stroke="none"/>
                 <line class="treso-zero" x1="0" y1="${zeroY}" x2="100" y2="${zeroY}" stroke="var(--color-border)" stroke-width="1" vector-effect="non-scaling-stroke"/>
-                <path class="treso-curve" d="${curveD}" pathLength="100" fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                <path class="treso-curve" d="${curveD}" fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
             </svg>`;
         const tresoDots = coords.map(c =>
             `<span class="treso-dot" style="left:${c.x.toFixed(2)}%; top:${c.y.toFixed(2)}%;"></span>`
@@ -5907,11 +5908,26 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
 // Les graphiques s'animent seulement quand ils entrent dans le viewport :
 // barres qui poussent en cascade, courbe qui apparait, donut qui monte.
 let _chartObserver = null;
+function animateChartCurves(card) {
+    // La longueur reelle du chemin depasse 100 (variations verticales) :
+    // dasharray calcule via getTotalLength, sinon la ligne a une coupure.
+    (card.querySelectorAll('.treso-curve') || []).forEach(function(path) {
+        try {
+            const len = path.getTotalLength();
+            path.style.transition = 'none';
+            path.style.strokeDasharray = String(len);
+            path.style.strokeDashoffset = String(len);
+            path.getBoundingClientRect(); // forcer le reflow
+            path.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.2, 0, 0, 1) 350ms';
+            path.style.strokeDashoffset = '0';
+        } catch (e) { path.style.strokeDasharray = 'none'; }
+    });
+}
 function observeChartAnimations() {
     const cards = document.querySelectorAll('#cabinet-dashboard .chart-card:not([data-chart-observed])');
     if (!cards.length) return;
     if (!('IntersectionObserver' in window)) {
-        cards.forEach(c => { c.dataset.chartObserved = '1'; c.classList.add('chart-in-view'); });
+        cards.forEach(function(c) { c.dataset.chartObserved = '1'; c.classList.add('chart-in-view'); animateChartCurves(c); });
         return;
     }
     if (!_chartObserver) {
@@ -5919,14 +5935,26 @@ function observeChartAnimations() {
             entries.forEach(function(en) {
                 if (en.isIntersecting) {
                     en.target.classList.add('chart-in-view');
+                    animateChartCurves(en.target);
                     _chartObserver.unobserve(en.target);
                 }
             });
-        }, { threshold: 0.25 });
+        }, { threshold: 0.2 });
     }
     cards.forEach(function(c) { c.dataset.chartObserved = '1'; _chartObserver.observe(c); });
 }
 window.observeChartAnimations = observeChartAnimations;
+
+// Rejouer les animations a chaque re-rendu des charts : sinon les elements
+// recree arrivent en etat final (classe deja present) et rien ne s'anime.
+function resetChartAnimations() {
+    document.querySelectorAll('#cabinet-dashboard .chart-card.chart-in-view').forEach(function(c) {
+        c.classList.remove('chart-in-view');
+        delete c.dataset.chartObserved;
+    });
+    if (typeof observeChartAnimations === 'function') observeChartAnimations();
+}
+window.resetChartAnimations = resetChartAnimations;
 
 // ===== CONSOMMABLES : depenses des bons de commande (module urgence) =====
 function renderConsommablesChart() {
