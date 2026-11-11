@@ -587,10 +587,54 @@ function urgenceHandleCsvFile(input) {
     const file = input.files && input.files[0];
     input.value = '';
     if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'xlsx' || ext === 'xls') {
+        urgenceReadExcelFile(file);
+        return;
+    }
     const reader = new FileReader();
     reader.onload = () => urgenceShowImportPreview(String(reader.result), file.name);
     reader.onerror = () => alert('Impossible de lire le fichier.');
     reader.readAsText(file, 'utf-8');
+}
+
+// ---------- Import Excel (.xlsx / .xls) via SheetJS charge a la demande ----------
+
+let _xlsxLoading = false;
+function urgenceEnsureXlsxLoaded() {
+    return new Promise((resolve, reject) => {
+        if (window.XLSX) return resolve();
+        if (_xlsxLoading) {
+            const check = setInterval(() => {
+                if (window.XLSX) { clearInterval(check); resolve(); }
+            }, 100);
+            return;
+        }
+        _xlsxLoading = true;
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.10/dist/xlsx.full.min.js';
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Impossible de charger le lecteur Excel (SheetJS). Vérifiez la connexion, ou exportez le fichier en CSV.'));
+        document.head.appendChild(s);
+    });
+}
+
+async function urgenceReadExcelFile(file) {
+    try {
+        await urgenceEnsureXlsxLoaded();
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { cellDates: true });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        if (!sheet) {
+            alert('Aucune feuille trouvée dans le fichier Excel.');
+            return;
+        }
+        // Conversion en CSV (separateur virgule, le parseur le gere) puis meme parcours que le CSV
+        const csv = XLSX.utils.sheet_to_csv(sheet);
+        urgenceShowImportPreview(csv, file.name);
+    } catch (e) {
+        alert(e.message || 'Erreur de lecture du fichier Excel.');
+    }
 }
 
 function urgenceShowImportPreview(csvText, fileName) {
