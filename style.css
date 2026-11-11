@@ -16986,3 +16986,63 @@ body:has(#view-dashboard.active) {
 
 /* Neutraliser les anciennes règles de la rangée KPI supprimée */
 #cabinet-dashboard .cab-kpi-strip { display: none; }
+
+/* ============================================================
+   CORRECTIFS ANIMATIONS + FORMES
+   ============================================================ */
+
+/* Points de trésorerie : keyframes DÉDIÉES conservant le translate de
+   centrage — md-pop l'écrasait et décentrait les points. */
+#cabinet-dashboard .bar-chart .treso-dot {
+    animation: treso-pop 0.45s var(--md-spring) both;
+    animation-play-state: paused;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-dot {
+    animation-play-state: running;
+    opacity: 1;
+}
+@keyframes treso-pop {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Courbe : dasharray géré en JS (getTotalLength) — plus de rule CSS
+   statique qui coupait la ligne */
+#cabinet-dashboard .chart-card .treso-curve,
+#cabinet-dashboard .chart-card.chart-in-view .treso-curve {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    transition: none;
+}
+
+/* Neutraliser md-bar-in (animation au changement de vue) sur ces charts :
+   c'est le système au scroll qui pilote, sinon conflit transform/height */
+#cabinet-dashboard .chart-card .bar {
+    animation: none !important;
+}
+
+/* Angles : 28dp trop prononcé — MD3 baseline cartes = 12dp ; 16dp = bon
+   compromis expressive sans effet "bulle" */
+#cabinet-dashboard .stat-card,
+#cabinet-dashboard .chart-card,
+#cabinet-dashboard .module-card,
+#cabinet-dashboard .cab-health-wrap {
+    border-radius: 16px;
+}
+
+/* Bord inférieur des cartes du haut : padding bas suffisant, pas de coupe */
+#cabinet-dashboard .stat-card {
+    padding: 16px 16px 18px;
+    overflow: visible;
+}
+#cabinet-dashboard .stat-info {
+    min-width: 0;
+}
+#cabinet-dashboard .stat-label {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
