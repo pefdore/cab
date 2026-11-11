@@ -17624,3 +17624,13 @@ body:has(#view-dashboard.active) {
 #cabinet-dashboard .donut-row {
     margin-bottom: 24px;
 }
+
+/* Unification titres : neutraliser les anciens !important divergents */
+#view-flux .md-headline-sub {
+    font-size: 0.8125rem !important;
+}
+#view-flux .md-section-head .md-headline {
+    font-size: var(--text-3xl) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.03em !important;
+}
