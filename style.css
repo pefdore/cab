@@ -11001,7 +11001,7 @@ html.no-anim *::after {
     font-weight: 600;
 }
 
-/* ============================================================
+/* =====================================================
    ESPACE ADMINISTRATEUR
    ============================================================ */
 .admin-panel { background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 12px; padding: 20px; }
@@ -17315,3 +17315,138 @@ body:has(#view-dashboard.active) {
 .urgence-import-mode input { margin-top: 3px; }
 .urgence-import-mode span { color: var(--color-text-secondary); }
 .urgence-import-mode strong { color: var(--color-text); }
+=======
+/* ============================================================
+   DONUTS HIERARCHIQUES ESPACÉS + CHIPS EN GRILLE + ⓘ TOGGLE
+   ============================================================ */
+
+/* Donuts : gauche (catégories) nettement plus grand que droite (sous-cat),
+   avec un vrai espacement — hiérarchie visuelle du drill-down */
+#cabinet-dashboard .donut-row {
+    gap: 36px;
+    justify-content: center;
+    align-items: center;
+    margin: 12px 0 20px;
+}
+#cabinet-dashboard .donut-hero {
+    width: 200px;
+    height: 200px;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    width: 200px;
+    height: 200px;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart::after {
+    width: 126px;
+    height: 126px;
+}
+#cabinet-dashboard .donut-sub-hero {
+    width: 150px;
+    height: 150px;
+}
+#cabinet-dashboard .donut-sub-hero .donut-chart {
+    width: 150px;
+    height: 150px;
+}
+#cabinet-dashboard .donut-sub-hero .donut-chart::after {
+    width: 92px;
+    height: 92px;
+}
+#cabinet-dashboard .donut-center-value {
+    font-size: 1rem;
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .donut-row {
+        gap: 20px;
+    }
+    #cabinet-dashboard .donut-hero,
+    #cabinet-dashboard .cab-donut-card .donut-chart {
+        width: 160px;
+        height: 160px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart::after {
+        width: 100px;
+        height: 100px;
+    }
+    #cabinet-dashboard .donut-sub-hero,
+    #cabinet-dashboard .donut-sub-hero .donut-chart {
+        width: 125px;
+        height: 125px;
+    }
+    #cabinet-dashboard .donut-sub-hero .donut-chart::after {
+        width: 76px;
+        height: 76px;
+    }
+    #cabinet-dashboard .donut-center-value {
+        font-size: 0.85rem;
+    }
+    #cabinet-dashboard .donut-sub-hero .donut-center-value {
+        font-size: 0.7rem;
+    }
+}
+@media (max-width: 380px) {
+    #cabinet-dashboard .donut-row {
+        gap: 12px;
+    }
+    #cabinet-dashboard .donut-hero,
+    #cabinet-dashboard .cab-donut-card .donut-chart {
+        width: 145px;
+        height: 145px;
+    }
+    #cabinet-dashboard .cab-donut-card .donut-chart::after {
+        width: 90px;
+        height: 90px;
+    }
+    #cabinet-dashboard .donut-sub-hero,
+    #cabinet-dashboard .donut-sub-hero .donut-chart {
+        width: 112px;
+        height: 112px;
+    }
+    #cabinet-dashboard .donut-sub-hero .donut-chart::after {
+        width: 68px;
+        height: 68px;
+    }
+}
+
+/* Chips de synthèse : grille 4 colonnes égales (2×2 sur mobile) */
+#cabinet-dashboard .evol-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+}
+#cabinet-dashboard .evol-summary .evol-chip {
+    flex: none;
+    padding: 10px 12px;
+}
+#cabinet-dashboard .evol-chip-value small {
+    font-size: 0.62rem;
+    color: var(--color-text-tertiary);
+    margin-right: 1px;
+}
+@media (max-width: 1024px) {
+    #cabinet-dashboard .evol-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .evol-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    #cabinet-dashboard .evol-summary .evol-chip {
+        padding: 8px 10px;
+    }
+    #cabinet-dashboard .evol-chip-value {
+        font-size: 0.78rem;
+    }
+}
+
+/* ⓘ : bulle via classe .show-tip (toggle JS) */
+#cabinet-dashboard .evol-chip.show-tip .info-i-tip {
+    display: block;
+}
+#cabinet-dashboard .info-i {
+    cursor: pointer;
+}
+>>>>>>> 95e50d7 (feat(dashboard): donuts hierarchiques espaces (gauche 200px > droite 150px, gap 36px) avec montants complets dans les trous ; chips de synthese en grille 4 colonnes egales avec moyenne compacte (R/D) ; info-i fonctionnel au clic/tap (toggle JS, le selecteur CSS frere ne matchait pas))
