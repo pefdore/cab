@@ -491,13 +491,27 @@ function urgenceCsvCategory(raw) {
     return byLabel ? byLabel.id : 'divers';
 }
 
+function urgenceCleanCsvText(text) {
+    let t = String(text);
+    // BOM et caracteres invisibles (Zero Width, marque d'ordre, separateurs exotiques)
+    t = t.replace(/\uFEFF/g, '').replace(/[\u200B-\u200D\u2060\u00AD]/g, '');
+    // Bloc de code markdown eventuel (```csv ... ```)
+    t = t.replace(/^\s*```[a-zA-Z]*\s*\r?\n?/, '').replace(/\r?\n?```\s*$/, '');
+    // Guillemets typographiques -> droits
+    t = t.replace(/[\u201C\u201D\u201E]/g, '"').replace(/[\u2018\u2019]/g, "'");
+    return t;
+}
+
 function urgenceParseCsv(text) {
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const lines = urgenceCleanCsvText(text).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     if (lines.length < 2) return { products: [], errors: ['Fichier vide ou sans ligne de données.'] };
 
     const header = lines[0];
     const sep = [';', '\t', ','].sort((a, b) => header.split(b).length - header.split(a).length)[0];
-    const cols = header.split(sep).map(c => c.trim().toLowerCase().replace(/^["']|["']$/g, ''));
+    const cols = header.split(sep).map(c => c.trim().toLowerCase()
+        .replace(/^["'`]+|["'`]+$/g, '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z_]/g, ''));
     const idx = (names) => cols.findIndex(c => names.includes(c));
     const map = {
         name: idx(['nom', 'name', 'produit']),
@@ -573,6 +587,9 @@ function urgenceImportAiPrompt() {
         '',
         'Mets-le au format CSV attendu par mon application de gestion de stock, avec :',
         '- ligne 1 d\u2019en-tête exactement : nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur',
+        '- IMPORTANT : les noms de colonnes en minuscules, sans accent et sans aucun caractère ajouté devant (pas de BOM, pas de guillemet ou backtick au début de « nom »)',
+        '- réponds UNIQUEMENT avec le CSV brut : pas de bloc de code markdown (pas de triple backticks ```, ni « csv » sur la première ligne), pas de texte avant/après, pas de caractère invisible',
+        '- les accents et caractères spéciaux normaux (é, è, ê, î, ç) sont conservés tels quels dans les valeurs — ne les transforme pas en codes ni en entités',
         '- séparateur point-virgule ;',
         '- une ligne par lot : si un produit a plusieurs dates de péremption, répète la ligne en changeant quantite et peremption',
         '- categorie : Désinfection / Suture / Injections / Médicaments / Divers',
