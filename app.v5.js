@@ -101,6 +101,33 @@ async function checkExistingSession() {
     }
 }
 
+// Porte d'acces abonnement : verify que le cabinet de l'utilisateur a
+// toujours le droit d'utiler la plateforme (essai 30 j en cours, abonnement
+// actif ou acces offert). Fail-open : en cas d'erreur reseau/SQL, l'acces
+// est laisse ouvert pour ne jamais bloquer un cabinet legitime.
+async function cabixBillingGate() {
+    try {
+        if (!supabaseClient || !currentUser?.id) return;
+        const { data: profile } = await supabaseClient
+            .from('profiles').select('cabinet_id').eq('id', currentUser.id).single();
+        const cabinetId = profile?.cabinet_id;
+        if (!cabinetId) return; // remplacant / utilisateur sans cabinet : non concerne
+        const { data: access, error } = await supabaseClient
+            .rpc('cabix_cabinet_access', { p_cabinet_id: cabinetId });
+        if (error) { console.error('[BILLING] access check error:', error); return; }
+        if (access && access.access === false) {
+            console.log('[BILLING] Acces refuse (status:', access.status, ') -> paiement.html');
+            window.cabixBillingLocked = true;
+            location.replace('paiement.html');
+        } else if (access && access.status === 'trial' && typeof access.trial_days_left === 'number') {
+            console.log('[BILLING] Essai:', access.trial_days_left, 'jours restants');
+        }
+    } catch (e) {
+        console.error('[BILLING] gate error (fail-open):', e);
+    }
+}
+window.cabixBillingGate = cabixBillingGate;
+
 async function onAuthSuccess() {
     console.log('[AUTH] Connexion réussie, user:', currentUser?.email, 'id:', currentUser?.id);
     
@@ -137,6 +164,10 @@ async function onAuthSuccess() {
     // Load user data (async) - sans basculer sur dashboard encore
     loadUserProfile();
     loadUserSettings();
+
+    // Porte abonnement : non bloquante, redirige vers paiement.html si l'essai
+    // du cabinet est expire et qu'aucun abonnement n'est actif.
+    cabixBillingGate();
     
 // Chargement parallel : cotation (entries), patients et cabinet etaient
     // sequentiels et rendaient le dashboard long a apparaitre.
