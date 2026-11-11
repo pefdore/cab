@@ -17469,3 +17469,14 @@ body:has(#view-dashboard.active) {
     resize: vertical;
     margin-top: 8px;
 }
+
+.urgence-import-paste {
+    width: 100%;
+    min-height: 110px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    white-space: pre;
+    resize: vertical;
+    margin-top: 8px;
+}

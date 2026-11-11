@@ -625,7 +625,12 @@ function urgenceShowImportHelpModal() {
                     <button class="action-btn primary" onclick="urgencePickImportFile()">⬆️ Choisir mon fichier…</button>
                     <button class="action-btn" onclick="urgenceDownloadCsvTemplate()">📄 Télécharger le modèle CSV</button>
                 </div>
-                <p class="form-hint" style="margin-top:14px;"><strong>Vos données sont en vrac ?</strong> Copiez le format ci-dessous et collez-le dans une IA (ChatGPT, etc.) avec vos données brutes : elle vous rendra un CSV prêt à importer.</p>
+                <p class="form-hint" style="margin-top:14px;"><strong>Ou collez directement vos lignes CSV</strong> (réponse d'une IA, copier-coller d'un tableur) :</p>
+                <textarea class="form-input urgence-import-paste" id="urgenceImportPasteArea" placeholder="Collez ici vos lignes CSV&#10;nom;categorie;reference;conditionnement;unite;quantite;seuil;peremption;prix;fournisseur;email_fournisseur&#10;Adrénaline 1 mg/mL;Médicaments;C-001;boîte de 5;ampoule;3;3;2026-05-01;4,50;Cooper;commandes@cooper.fr"></textarea>
+                <div class="urgence-import-help-actions">
+                    <button class="action-btn primary" onclick="urgenceAnalyzePastedCsv()">⠫ Analyser le collage</button>
+                </div>
+                <p class="form-hint" style="margin-top:14px;"><strong>Vos données sont en vrac ?</strong> Copiez le format ci-dessous et collez-le dans une IA (ChatGPT, etc.) avec vos données brutes : elle vous rendra un CSV prêt à importer — puis collez sa réponse ci-dessus.</p>
                 <textarea class="form-input urgence-import-prompt" readonly onclick="this.select()">${urgenceEscapeHtml(urgenceImportAiPrompt())}</textarea>
                 <div class="urgence-import-help-actions">
                     <button class="action-btn stock-btn-tonal" onclick="urgenceCopyAiPrompt()">⠫ Copier le format pour l'IA</button>
@@ -648,6 +653,18 @@ function urgenceCloseImportHelpModal() {
 function urgencePickImportFile() {
     urgenceCloseImportHelpModal();
     document.getElementById('urgenceImportCsvInput')?.click();
+}
+
+function urgenceAnalyzePastedCsv() {
+    const ta = document.getElementById('urgenceImportPasteArea');
+    const text = (ta?.value || '').trim();
+    if (!text) {
+        if (typeof showToast === 'function') showToast('Collez d\u2019abord vos lignes CSV dans la zone de texte', 'error');
+        ta?.focus();
+        return;
+    }
+    urgenceCloseImportHelpModal();
+    urgenceShowImportPreview(text, 'Collage');
 }
 
 function urgenceCopyAiPrompt() {
@@ -2581,6 +2598,7 @@ window.urgenceGoSubTab = urgenceGoSubTab;
 window.urgenceImportCsvClick = urgenceImportCsvClick;
 window.urgenceCloseImportHelpModal = urgenceCloseImportHelpModal;
 window.urgencePickImportFile = urgencePickImportFile;
+window.urgenceAnalyzePastedCsv = urgenceAnalyzePastedCsv;
 window.urgenceCopyAiPrompt = urgenceCopyAiPrompt;
 window.urgenceDownloadCsvTemplate = urgenceDownloadCsvTemplate;
 window.urgenceHandleCsvFile = urgenceHandleCsvFile;
