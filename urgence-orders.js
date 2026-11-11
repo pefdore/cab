@@ -746,7 +746,10 @@ function urgenceBindOrderEditEvents(container) {
         priceInput.addEventListener('input', update);
     });
 
-    container.querySelectorAll('.urgence-order-meta-input[data-field="supplier"]').forEach(urgenceAttachSupplierAuto);
+    container.querySelectorAll('.urgence-order-meta-input[data-field="supplier"]').forEach(inp => {
+        const emailInp = inp.closest('.urgence-order-meta')?.querySelector('.urgence-order-meta-input[data-field="supplierEmail"]');
+        urgenceAttachSupplierAuto(inp, emailInp);
+    });
 
     container.querySelectorAll('.urgence-order-meta-input').forEach(input => {
         const orderId = input.dataset.order;

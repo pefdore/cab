@@ -277,7 +277,8 @@ function urgenceSupplierEmail(name) {
 }
 
 // Autocompletion fournisseur : suggestions filtres + creation a la volee
-function urgenceAttachSupplierAuto(input) {
+// emailInput (facultatif) : champ email a remplir automatiquement avec celui du fournisseur choisi
+function urgenceAttachSupplierAuto(input, emailInput) {
     if (!input) return;
     const host = input.parentElement;
     if (!host) return;
@@ -308,6 +309,15 @@ function urgenceAttachSupplierAuto(input) {
         dd.classList.add('open');
     };
 
+    const syncEmail = () => {
+        if (!emailInput) return;
+        const known = urgenceKnownSuppliers().find(s => s.name.toLowerCase() === input.value.trim().toLowerCase());
+        if (known) {
+            emailInput.value = known.email || '';
+            emailInput.dispatchEvent(new Event('input', { bubbles: false }));
+        }
+    };
+
     input.addEventListener('input', render);
     input.addEventListener('focus', render);
     dd.addEventListener('mousedown', (e) => {
@@ -319,10 +329,17 @@ function urgenceAttachSupplierAuto(input) {
             urgenceRememberSupplier(input.value.trim(), '');
             saveUrgenceData();
             if (typeof showToast === 'function') showToast(`Fournisseur « ${input.value.trim()} » créé — complétez son email dans l'onglet Coûts & fournisseurs`);
+        } else {
+            syncEmail();
         }
         dd.classList.remove('open');
         input.dispatchEvent(new Event('input', { bubbles: false }));
         input.focus();
+    });
+    // Si l'utilisateur tape un nom connu sans passer par le menu, on remplit aussi l'email
+    input.addEventListener('change', () => {
+        const known = urgenceKnownSuppliers().find(s => s.name.toLowerCase() === input.value.trim().toLowerCase());
+        if (known && emailInput && !emailInput.value.trim()) syncEmail();
     });
     const close = (e) => { if (!host.contains(e.target)) dd.classList.remove('open'); };
     document.addEventListener('click', close);
@@ -1056,7 +1073,7 @@ function urgenceShowProductModal(product) {
         ? product.lots
         : [{ id: null, expiry: null, qty: product ? product.quantity : 0 }];
     lotRows.forEach(l => urgenceAddLotRow(l.id, l.expiry, l.qty));
-    urgenceAttachSupplierAuto(document.getElementById('urgenceProductSupplier'));
+    urgenceAttachSupplierAuto(document.getElementById('urgenceProductSupplier'), document.getElementById('urgenceProductSupplierEmail'));
     setTimeout(() => document.getElementById('urgenceProductName')?.focus(), 50);
 }
 
