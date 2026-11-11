@@ -13370,7 +13370,11 @@ async function loadAdminData() {
             supabaseClient.from('cabinets').select('id, name, address, created_at').order('created_at', { ascending: false }),
             supabaseClient.from('profiles').select('id, first_name, last_name, email, role, cabinet_id, cabinet_address, created_at').order('created_at', { ascending: false }),
             supabaseClient.from('cabinet_join_requests').select('*, cabinets(address, name)').order('created_at', { ascending: false }),
-            supabaseClient.from('cabinet_subscriptions').select('*').catch(() => ({ data: [], error: null }))
+            // Les builders supabase-js n'exposent pas .catch (seulement then) :
+            // envelopper dans Promise.resolve() sinon TypeError synchrone.
+            // Table optionnelle (avant migration supabase-abonnement.sql).
+            Promise.resolve(supabaseClient.from('cabinet_subscriptions').select('*'))
+                .catch(() => ({ data: [], error: null }))
         ]);
         if (cabinetsRes.error) throw cabinetsRes.error;
         if (profilesRes.error) throw profilesRes.error;
