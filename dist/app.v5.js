@@ -13312,7 +13312,7 @@ window.setTransactionRejected = setTransactionRejected;
 // ============================================================
 // ESPACE ADMINISTRATEUR (vue 360 de la plateforme)
 // ============================================================
-let adminCache = { cabinets: [], users: [], requests: [] };
+let adminCache = { cabinets: [], users: [], requests: [], subscriptions: [] };
 let adminSortState = { cabinets: { key: null, dir: 1 }, users: { key: null, dir: 1 } };
 const ADMIN_ROLE_COLORS = {
     medecin_installe: '#10b981',
@@ -13366,10 +13366,11 @@ async function loadAdminData() {
     if (cabBody) cabBody.innerHTML = '<tr><td colspan="6" class="admin-empty">Chargement...</td></tr>';
     if (userBody) userBody.innerHTML = '<tr><td colspan="6" class="admin-empty">Chargement...</td></tr>';
     try {
-        const [cabinetsRes, profilesRes, requestsRes] = await Promise.all([
+        const [cabinetsRes, profilesRes, requestsRes, subsRes] = await Promise.all([
             supabaseClient.from('cabinets').select('id, name, address, created_at').order('created_at', { ascending: false }),
             supabaseClient.from('profiles').select('id, first_name, last_name, email, role, cabinet_id, cabinet_address, created_at').order('created_at', { ascending: false }),
-            supabaseClient.from('cabinet_join_requests').select('*, cabinets(address, name)').order('created_at', { ascending: false })
+            supabaseClient.from('cabinet_join_requests').select('*, cabinets(address, name)').order('created_at', { ascending: false }),
+            supabaseClient.from('cabinet_subscriptions').select('*').catch(() => ({ data: [], error: null }))
         ]);
         if (cabinetsRes.error) throw cabinetsRes.error;
         if (profilesRes.error) throw profilesRes.error;
@@ -13377,6 +13378,9 @@ async function loadAdminData() {
         adminCache.cabinets = cabinetsRes.data || [];
         adminCache.users = profilesRes.data || [];
         adminCache.requests = requestsRes.data || [];
+        // Table optionnelle (avant migration supabase-abonnement.sql) : fail-soft
+        adminCache.subscriptions = (subsRes && !subsRes.error && subsRes.data) ? subsRes.data : [];
+        if (subsRes && subsRes.error) console.warn('[ADMIN] cabinet_subscriptions illisible:', subsRes.error.message);
         adminCache.cabinets.forEach(c => {
             const members = adminCache.users.filter(u => u.cabinet_id === c.id);
             c._designation = cabinetDesignation(members, c.name || c.address) || (c.name || c.address || 'Sans nom');
@@ -13396,6 +13400,7 @@ function renderAdminAll() {
     renderAdminCharts();
     renderAdminTopCabinets();
     renderAdminAlerts();
+    renderAdminProfit();
     fillAdminCabinetFilter();
     renderAdminCabinets();
     renderAdminUsers();
@@ -13403,8 +13408,92 @@ function renderAdminAll() {
     updateAdminReqBadge();
 }
 
+// ===== Onglet Rentabilite =====
+// Prix des paliers (doit rester synchronise avec api/create-checkout.js)
+const ADMIN_PLAN_PRICES = {
+    monthly: { solo: 4.90, cabinet: 14.90, groupe: 29.90, structure: 59.90 },
+    yearly:  { solo: 39, cabinet: 119, groupe: 239, structure: 479 }
+};
+const ADMIN_DEFAULT_COSTS = { supabase: 25, vercel: 20, email: 10, domain: 3.33, other: 0 };
+
+function adminGetCosts() {
+    let costs = { ...ADMIN_DEFAULT_COSTS };
+    try {
+        const saved = JSON.parse(localStorage.getItem('cab_admin_costs') || 'null');
+        if (saved) costs = { ...costs, ...saved };
+    } catch (e) {}
+    const ids = { supabase: 'adminCostSupabase', vercel: 'adminCostVercel', email: 'adminCostEmail', domain: 'adminCostDomain', other: 'adminCostOther' };
+    Object.keys(ids).forEach(k => {
+        const input = document.getElementById(ids[k]);
+        if (input && document.activeElement !== input) input.value = costs[k];
+        else if (input && document.activeElement === input) costs[k] = parseFloat(input.value) || 0;
+    });
+    return costs;
+}
+
+function adminPlanMrr(sub) {
+    const price = (ADMIN_PLAN_PRICES[sub.billing_interval] || ADMIN_PLAN_PRICES.yearly)[sub.plan] || 0;
+    return sub.billing_interval === 'monthly' ? price : price / 12;
+}
+
+function adminStripeFeeMrr(sub) {
+    const price = (ADMIN_PLAN_PRICES[sub.billing_interval] || ADMIN_PLAN_PRICES.yearly)[sub.plan] || 0;
+    const feePerPayment = price * 0.015 + 0.25;
+    return sub.billing_interval === 'monthly' ? feePerPayment : feePerPayment / 12;
+}
+
+function renderAdminProfit() {
+    const costs = adminGetCosts();
+    try { localStorage.setItem('cab_admin_costs', JSON.stringify(costs)); } catch (e) {}
+
+    const subs = adminCache.subscriptions || [];
+    const active = subs.filter(s => s.status === 'active');
+    const trial = subs.filter(s => s.status === 'trial');
+    const expired = subs.filter(s => s.status === 'trial_expired' || s.status === 'past_due' || s.status === 'canceled');
+    const free = subs.filter(s => s.status === 'free');
+
+    const mrr = active.reduce((sum, s) => sum + adminPlanMrr(s), 0);
+    const fees = active.reduce((sum, s) => sum + adminStripeFeeMrr(s), 0);
+    const fixed = costs.supabase + costs.vercel + costs.email + costs.domain + costs.other;
+    const net = mrr - fees - fixed;
+
+    const fmt = v => v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+    const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+
+    set('adminProfitMrr', fmt(mrr));
+    set('adminProfitPaying', active.length + ' cabinet' + (active.length > 1 ? 's' : '') + ' payant' + (active.length > 1 ? 's' : ''));
+    set('adminProfitCosts', fmt(fees + fixed));
+    set('adminProfitCostsDetail', 'dont ' + fmt(fees) + ' de frais Stripe');
+    set('adminProfitNet', fmt(net));
+    set('adminProfitAnnual', '≈ ' + fmt(net * 12) + ' / an');
+    set('adminProfitFunnel', active.length + ' / ' + subs.length);
+    set('adminProfitFunnelDetail', trial.length + ' en essai · ' + expired.length + ' à relancer · ' + free.length + ' offert' + (free.length > 1 ? 's' : ''));
+
+    const body = document.getElementById('adminProfitBody');
+    if (!body) return;
+    if (!active.length) {
+        body.innerHTML = '<tr><td colspan="6" class="admin-empty">Aucun cabinet payant pour le moment — les abonnements actifs apparaîtront ici.</td></tr>';
+        return;
+    }
+    body.innerHTML = active.map(s => {
+        const cab = adminCache.cabinets.find(c => c.id === s.cabinet_id);
+        const members = cab ? (adminCache.users.filter(u => u.cabinet_id === cab.id)) : [];
+        const designation = cab ? (cabinetDesignation(members, cab.name || cab.address) || cab.name || cab.address || 'Cabinet') : 'Cabinet';
+        const due = s.current_period_end ? new Date(s.current_period_end).toLocaleDateString('fr-FR') : '—';
+        return '<tr>' +
+            '<td>' + adminEsc(designation) + '</td>' +
+            '<td>' + adminEsc((s.plan || 'cabinet').charAt(0).toUpperCase() + (s.plan || 'cabinet').slice(1)) + '</td>' +
+            '<td>' + (s.billing_interval === 'monthly' ? 'Mensuel' : 'Annuel') + '</td>' +
+            '<td>' + fmt(adminPlanMrr(s)) + '</td>' +
+            '<td>' + fmt(adminStripeFeeMrr(s)) + '</td>' +
+            '<td>' + due + '</td>' +
+        '</tr>';
+    }).join('');
+}
+window.renderAdminProfit = renderAdminProfit;
+
 function adminSwitchTab(tab) {
-    ['overview', 'cabinets', 'users', 'requests'].forEach(t => {
+    ['overview', 'cabinets', 'users', 'requests', 'profit'].forEach(t => {
         const panel = document.getElementById('adminTab' + t.charAt(0).toUpperCase() + t.slice(1));
         if (panel) panel.style.display = (t === tab) ? '' : 'none';
     });

@@ -2481,6 +2481,7 @@ window.attemptLogin = function() {
                     <button type="button" class="admin-tab" data-admin-tab="cabinets" onclick="adminSwitchTab('cabinets')">Cabinets</button>
                     <button type="button" class="admin-tab" data-admin-tab="users" onclick="adminSwitchTab('users')">Inscrits</button>
                     <button type="button" class="admin-tab" data-admin-tab="requests" onclick="adminSwitchTab('requests')">Demandes <span class="admin-tab-badge" id="adminTabReqBadge" style="display:none;">0</span></button>
+                    <button type="button" class="admin-tab" data-admin-tab="profit" onclick="adminSwitchTab('profit')">Rentabilité</button>
                 </div>
 
                 <!-- ============ ONGLET VUE D'ENSEMBLE ============ -->
@@ -2681,6 +2682,111 @@ window.attemptLogin = function() {
                                     <tr><td colspan="5" class="admin-empty">Chargement...</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ ONGLET RENTABILITÉ ============ -->
+                <div id="adminTabProfit" style="display:none;">
+                    <div class="cabinet-stats-row">
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon green">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Revenu mensuel (MRR brut)</span>
+                                <span class="cabinet-stat-value" id="adminProfitMrr">-</span>
+                                <span class="cabinet-stat-sub" id="adminProfitPaying">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Frais Stripe + coûts fixes</span>
+                                <span class="cabinet-stat-value" id="adminProfitCosts">-</span>
+                                <span class="cabinet-stat-sub" id="adminProfitCostsDetail">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon green">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Bénéfice net mensuel</span>
+                                <span class="cabinet-stat-value" id="adminProfitNet">-</span>
+                                <span class="cabinet-stat-sub" id="adminProfitAnnual">-</span>
+                            </div>
+                        </div>
+                        <div class="cabinet-stat-card">
+                            <div class="cabinet-stat-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="cabinet-stat-content">
+                                <span class="cabinet-stat-label">Entonnoir abonnements</span>
+                                <span class="cabinet-stat-value" id="adminProfitFunnel">-</span>
+                                <span class="cabinet-stat-sub" id="adminProfitFunnelDetail">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-panel" style="margin-top:24px;">
+                        <div class="admin-panel-header"><h3>Mes coûts de revient (éditables, sauvegardés sur cet appareil)</h3></div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:16px;">
+                            <div><label style="font-size:.75rem;color:var(--ink-3,#6A817B);">Supabase (€/mois)</label><input type="number" step="0.01" min="0" id="adminCostSupabase" class="admin-search" oninput="renderAdminProfit()"></div>
+                            <div><label style="font-size:.75rem;color:var(--ink-3,#6A817B);">Vercel (€/mois)</label><input type="number" step="0.01" min="0" id="adminCostVercel" class="admin-search" oninput="renderAdminProfit()"></div>
+                            <div><label style="font-size:.75rem;color:var(--ink-3,#6A817B);">Emails (€/mois)</label><input type="number" step="0.01" min="0" id="adminCostEmail" class="admin-search" oninput="renderAdminProfit()"></div>
+                            <div><label style="font-size:.75rem;color:var(--ink-3,#6A817B);">Domaine (€/mois)</label><input type="number" step="0.01" min="0" id="adminCostDomain" class="admin-search" oninput="renderAdminProfit()"></div>
+                            <div><label style="font-size:.75rem;color:var(--ink-3,#6A817B);">Autres (€/mois)</label><input type="number" step="0.01" min="0" id="adminCostOther" class="admin-search" oninput="renderAdminProfit()"></div>
+                        </div>
+                        <p style="padding:0 16px 14px;font-size:.8rem;color:var(--ink-3,#6A817B);">Les frais Stripe (1,5 % + 0,25 € par paiement) sont calculés automatiquement à partir des abonnements actifs. Vos heures de développement ne sont pas comptées : le bénéfice affiché est la marge sur coûts d'exploitation.</p>
+                    </div>
+
+                    <div class="admin-panel" style="margin-top:24px;">
+                        <div class="admin-panel-header"><h3>Cabinets qui paient</h3></div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cabinet</th>
+                                        <th>Formule</th>
+                                        <th>Facturation</th>
+                                        <th>Revenu mensuel équiv.</th>
+                                        <th>Frais Stripe /mois</th>
+                                        <th>Prochaine échéance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminProfitBody">
+                                    <tr><td colspan="6" class="admin-empty">Chargement...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="admin-panel" style="margin-top:24px;">
+                        <div class="admin-panel-header"><h3>Comprendre mes coûts de revient et mes objectifs</h3></div>
+                        <div style="padding:16px;font-size:.92rem;line-height:1.7;color:var(--ink-2,#3D524C);">
+                            <p style="margin-bottom:12px;"><strong>Coûts de revient.</strong> L'infrastructure est quasi entièrement fixe : Supabase (base, auth, stockage), Vercel (hébergement), envoi d'emails et le nom de domaine. Le coût marginal d'un cabinet supplémentaire est proche de zéro (quelques centimes de stockage). Chaque paiement encaisse cède ~1,5 % + 0,25 € à Stripe — c'est pourquoi l'annuel est privilégié : sur 119 €/an, la commission représente ~1,7 % du revenu, contre ~14 % sur un mensuel de 1,99 €.</p>
+                            <p style="margin-bottom:12px;"><strong>Objectif.</strong> Faire entrer des cabinets <em>entiers</em> (associés + salariés + secrétaires) grâce à la formule « le cabinet paie, tous les membres inclus ». L'essai gratuit de 30 jours sert de période d'adoption ; l'objectif de conversion est d'atteindre 20 à 30 % des cabinets en essai. La rétention est la vraie boussole : un cabinet qui historise ses flux, stocks et réunions ne quitte plus la plateforme.</p>
+                            <p style="margin-bottom:12px;"><strong>Marché.</strong> ~25 000 à 35 000 cabinets de groupe et maisons de santé sont adressables en France ; à 3–5 % de pénétration, cela représente 200–400 k€ de revenu annuel.</p>
+                            <p><strong>Projections (panier moyen ~120 €/an, soit ~10 €/mois de MRR par cabinet payant).</strong></p>
+                            <div class="admin-table-wrap" style="margin-top:8px;">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr><th>Cabinets payants</th><th>MRR brut</th><th>Coûts + frais (≈)</th><th>Bénéfice mensuel</th><th>Bénéfice annuel</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>10</td><td>100 €</td><td>~85 €</td><td>~15 €</td><td>~180 €</td></tr>
+                                        <tr><td>50</td><td>500 €</td><td>~90 €</td><td>~410 €</td><td>~4 900 €</td></tr>
+                                        <tr><td>100</td><td>1 000 €</td><td>~95 €</td><td>~905 €</td><td>~10 900 €</td></tr>
+                                        <tr><td>500</td><td>5 000 €</td><td>~115 €</td><td>~4 885 €</td><td>~58 600 €</td></tr>
+                                        <tr><td>1 000</td><td>10 000 €</td><td>~140 €</td><td>~9 860 €</td><td>~118 300 €</td></tr>
+                                        <tr><td>3 000</td><td>30 000 €</td><td>~250 €</td><td>~29 750 €</td><td>~357 000 €</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p style="margin-top:12px;font-size:.82rem;color:var(--ink-3,#6A817B);">Estimations hors charges sociales et fiscales sur vos revenus ; les coûts fixes (≈ 75 €/mois) sont ceux de l'infrastructure actuelle et peuvent être ajustés ci-dessus.</p>
                         </div>
                     </div>
                 </div>

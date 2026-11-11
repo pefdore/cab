@@ -189,6 +189,13 @@ CREATE POLICY "Members can view cabinet subscription" ON cabinet_subscriptions
         EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.cabinet_id = cabinet_id)
     );
 
+-- L'admin de la plateforme lit tous les abonnements (onglet Rentabilite)
+DROP POLICY IF EXISTS "Platform admin can view all subscriptions" ON cabinet_subscriptions;
+CREATE POLICY "Platform admin can view all subscriptions" ON cabinet_subscriptions
+    FOR SELECT TO authenticated USING (
+        EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+    );
+
 -- Codes promo : tous les utilisateurs connectés peuvent les consulter
 -- (la validité est vérifiée par la fonction cabix_redeem_promo / l'API)
 DROP POLICY IF EXISTS "Authenticated can view promo codes" ON promo_codes;
@@ -215,7 +222,12 @@ CREATE POLICY "Members can view own redemptions" ON promo_redemptions
         EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.cabinet_id = cabinet_id)
     );
 
--- Journal des paiements : lecture réservée au service (webhook), aucun accès client
+-- Journal des paiements : lecture réservée au service (webhook) et à l'admin
+DROP POLICY IF EXISTS "Platform admin can view payment events" ON payment_events;
+CREATE POLICY "Platform admin can view payment events" ON payment_events
+    FOR SELECT TO authenticated USING (
+        EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+    );
 -- (écriture uniquement via service_role, qui ignore la RLS)
 
 -- ------------------------------------------------------------
