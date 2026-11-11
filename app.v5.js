@@ -5615,7 +5615,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     const topCatContainer = document.getElementById('topCategories');
     if (topCatContainer && totalDepenses > 0) {
         const topCats = sortedCats;
-        const mdPalette = ['#6366f1', '#7d5260', '#3a6f6b', '#8a6d4b', '#5b6b8c', '#8c5a7a', '#3b7a5e', '#6d5e80'];
+        const mdPalette = ['#6366f1', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6', '#10b981', '#f43f5e', '#84cc16'];
         topCatContainer.innerHTML = topCats.map(([cat, amount], i) => {
             const pct = ((amount / totalDepenses) * 100).toFixed(1);
             return `
@@ -5712,7 +5712,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     const donutCenterTotal = document.getElementById('donutCenterTotal');
     if (donutCenterTotal) donutCenterTotal.textContent = totalDepenses.toFixed(2) + '\u20ac';
     if (donutContainer && totalDepenses > 0) {
-        const colors = ['#6366f1', '#7d5260', '#3a6f6b', '#8a6d4b', '#5b6b8c', '#8c5a7a', '#3b7a5e', '#6d5e80'];
+        const colors = ['#6366f1', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6', '#10b981', '#f43f5e', '#84cc16'];
         let gradient = '';
         let cumulative = 0;
         const legendItems = [];
