@@ -5806,7 +5806,7 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
             const recHeight = (m.recettes / maxValue) * 100;
             const labelCls = idx === currentMonthIdx ? 'bar-label current-month' : 'bar-label';
             return `
-                <div class="bar-group${idx === currentMonthIdx ? ' is-current' : ''}" data-month-idx="${idx}" style="cursor:pointer">
+                <div class="bar-group${idx === currentMonthIdx ? ' is-current' : ''}" data-month-idx="${idx}" style="--i:${idx}; cursor:pointer">
                     <div class="bar-wrapper">
                         <div class="bar expense" style="height: ${depHeight}%"></div>
                         <div class="bar income" style="height: ${recHeight}%"></div>
@@ -5892,7 +5892,33 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
     }
     
     if (typeof renderConsommablesChart === 'function') renderConsommablesChart();
+    if (typeof observeChartAnimations === 'function') observeChartAnimations();
 }
+
+// ===== Animations des charts au scroll (IntersectionObserver) =====
+// Les graphiques s'animent seulement quand ils entrent dans le viewport :
+// barres qui poussent en cascade, courbe qui apparait, donut qui monte.
+let _chartObserver = null;
+function observeChartAnimations() {
+    const cards = document.querySelectorAll('#cabinet-dashboard .chart-card:not([data-chart-observed])');
+    if (!cards.length) return;
+    if (!('IntersectionObserver' in window)) {
+        cards.forEach(c => { c.dataset.chartObserved = '1'; c.classList.add('chart-in-view'); });
+        return;
+    }
+    if (!_chartObserver) {
+        _chartObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(en) {
+                if (en.isIntersecting) {
+                    en.target.classList.add('chart-in-view');
+                    _chartObserver.unobserve(en.target);
+                }
+            });
+        }, { threshold: 0.25 });
+    }
+    cards.forEach(function(c) { c.dataset.chartObserved = '1'; _chartObserver.observe(c); });
+}
+window.observeChartAnimations = observeChartAnimations;
 
 // ===== CONSOMMABLES : depenses des bons de commande (module urgence) =====
 function renderConsommablesChart() {
@@ -5943,7 +5969,7 @@ function renderConsommablesChart() {
         const h = (m.total / maxVal) * 100;
         const labelCls = idx === currentMonthIdx ? 'bar-label current-month' : 'bar-label';
         return `
-            <div class="bar-group conso-group" style="cursor:default">
+            <div class="bar-group conso-group" style="--i:${idx}; cursor:default">
                 <div class="bar-wrapper">
                     <div class="bar conso" style="height: ${h}%" title="${m.total.toFixed(2)}\u20ac (${m.orders} commande${m.orders > 1 ? 's' : ''})"></div>
                 </div>
