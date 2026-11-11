@@ -172,7 +172,7 @@ BEGIN
     -- trial_expired / past_due / canceled : paiement requis
     RETURN jsonb_build_object('access', false, 'reason', 'payment_required', 'status', sub.status);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ------------------------------------------------------------
 -- 7) RLS
