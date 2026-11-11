@@ -17315,7 +17315,6 @@ body:has(#view-dashboard.active) {
 .urgence-import-mode input { margin-top: 3px; }
 .urgence-import-mode span { color: var(--color-text-secondary); }
 .urgence-import-mode strong { color: var(--color-text); }
-=======
 /* ============================================================
    DONUTS HIERARCHIQUES ESPACÉS + CHIPS EN GRILLE + ⓘ TOGGLE
    ============================================================ */
@@ -17449,7 +17448,6 @@ body:has(#view-dashboard.active) {
 #cabinet-dashboard .info-i {
     cursor: pointer;
 }
->>>>>>> 95e50d7 (feat(dashboard): donuts hierarchiques espaces (gauche 200px > droite 150px, gap 36px) avec montants complets dans les trous ; chips de synthese en grille 4 colonnes egales avec moyenne compacte (R/D) ; info-i fonctionnel au clic/tap (toggle JS, le selecteur CSS frere ne matchait pas))
 
 /* --- Import : modale d'accueil --- */
 .urgence-import-help-actions {
@@ -17479,6 +17477,34 @@ body:has(#view-dashboard.active) {
     white-space: pre;
     resize: vertical;
     margin-top: 8px;
+/* Donuts : la tranche basse ne doit plus être coupée par le premier onglet.
+   Le scale au survol (1.045) fait déborder l'anneau de ~5px de sa boîte :
+   padding vertical suffisant pour l'absorber. */
+#cabinet-dashboard .donut-row {
+    padding: 12px 0 16px;
+    overflow: visible;
+}
+#cabinet-dashboard .donut-hero {
+    padding: 6px;
+    box-sizing: content-box;
+}
+#cabinet-dashboard .cab-donut-card .donut-chart {
+    box-sizing: border-box;
+}
+#cabinet-dashboard .top-cat-wrap:first-child {
+    position: relative;
+}
+
+/* ---- Donuts : remontés légèrement, marge basse qui absorbe le survol ---- */
+#cabinet-dashboard .donut-row {
+    padding: 2px 0 18px;
+    margin-top: 0;
+}
+#cabinet-dashboard .cab-donut-card:hover .donut-chart {
+    transform: none;
+}
+#cabinet-dashboard .donut-chart {
+    transition: none;
 }
 
 /* --- Modales sur telephone : carte centree, CORPS scrollable, pied toujours visible --- */
