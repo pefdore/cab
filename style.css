@@ -17046,3 +17046,100 @@ body:has(#view-dashboard.active) {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* ============================================================
+   COURBE : révélateur clip-path (remplace le dash-draw fragile)
+   ============================================================ */
+#cabinet-dashboard .chart-card .treso-curve {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    clip-path: inset(-20% 100% -20% 0);
+    transition: clip-path 1.2s var(--md-ease-standard) 350ms;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-curve {
+    clip-path: inset(-20% 0 -20% 0);
+}
+#cabinet-dashboard .chart-card .treso-area {
+    clip-path: inset(-20% 100% -20% 0);
+    transition: clip-path 900ms var(--md-ease-standard) 800ms, opacity 700ms var(--md-ease-standard) 1.3s;
+    opacity: 0;
+}
+#cabinet-dashboard .chart-card.chart-in-view .treso-area {
+    clip-path: inset(-20% 0 -20% 0);
+    opacity: 1;
+}
+
+/* ============================================================
+   REPASSE RESPONSIVE — dashboard cabinet
+   ============================================================ */
+@media (max-width: 1200px) {
+    #cabinet-dashboard .evol-summary .evol-chip {
+        flex: 1 1 calc(50% - 8px);
+    }
+}
+@media (max-width: 1024px) {
+    #dashboardSwitcher .switch-btn {
+        padding: 8px 16px;
+    }
+    #cabinet-dashboard .cab-health-title {
+        font-size: 20px;
+        line-height: 28px;
+    }
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    #cabinet-dashboard .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 640px) {
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    #cabinet-dashboard .stat-card {
+        padding: 12px 12px 14px;
+    }
+    #cabinet-dashboard .stat-value {
+        font-size: 22px;
+        line-height: 28px;
+    }
+    #cabinet-dashboard .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 100px;
+    }
+    #cabinet-dashboard .stat-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+    #cabinet-dashboard .cab-health-wrap {
+        padding: 12px 14px;
+    }
+    #cabinet-dashboard .cab-health-title {
+        font-size: 18px;
+        line-height: 24px;
+    }
+    #cabinet-dashboard .chart-card {
+        padding: 14px;
+    }
+    #cabinet-dashboard .evol-summary .evol-chip {
+        flex: 1 1 100%;
+    }
+    #cabinet-dashboard .top-cat-name {
+        max-width: 110px;
+    }
+    #dashboardSwitcher .switch-btn {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+}
+@media (max-width: 400px) {
+    #cabinet-dashboard .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    #cabinet-dashboard .donut-row {
+        flex-direction: column;
+        align-items: center;
+    }
+}

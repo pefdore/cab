@@ -1382,6 +1382,11 @@ function switchDashboardMode(mode) {
             if (typeof mdArmAnimations === 'function') mdArmAnimations();
             if (!window._cabDataLoaded) loadCabinetData();
             renderCabinetLifeDashboard();
+            // Rejouer les animations des charts : c'est en basculant sur le
+            // mode cabinet qu'on "arrive" dessus dans la plupart des cas.
+            if (typeof resetChartAnimations === 'function') {
+                resetChartAnimations();
+            }
         }
     }
 }
@@ -5909,18 +5914,10 @@ const elDepensesThisMonth = document.getElementById('depensesThisMonth');
 // barres qui poussent en cascade, courbe qui apparait, donut qui monte.
 let _chartObserver = null;
 function animateChartCurves(card) {
-    // La longueur reelle du chemin depasse 100 (variations verticales) :
-    // dasharray calcule via getTotalLength, sinon la ligne a une coupure.
-    (card.querySelectorAll('.treso-curve') || []).forEach(function(path) {
-        try {
-            const len = path.getTotalLength();
-            path.style.transition = 'none';
-            path.style.strokeDasharray = String(len);
-            path.style.strokeDashoffset = String(len);
-            path.getBoundingClientRect(); // forcer le reflow
-            path.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.2, 0, 0, 1) 350ms';
-            path.style.strokeDashoffset = '0';
-        } catch (e) { path.style.strokeDasharray = 'none'; }
+    // Le trace est pilote en CSS (clip-path inset : revele gauche -> droite).
+    // On force un reflow pour que la transition joue depuis l'etat cache.
+    card.querySelectorAll('.treso-curve').forEach(function(path) {
+        try { path.getBoundingClientRect(); } catch (e) {}
     });
 }
 function observeChartAnimations() {
