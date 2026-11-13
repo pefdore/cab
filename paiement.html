@@ -247,6 +247,10 @@ function wireEvents(client, session) {
         const data = await r.json();
         if (data.url) location.href = data.url;
         else if (data.redirect) location.href = data.redirect;
+        else if (data.error === 'stripe_non_configure' || data.error === 'config_manquante') {
+          alert("Le paiement en ligne n'est pas encore activé (configuration Stripe en cours). Utilisez un code d'accès offert, ou réessayez plus tard.");
+          btn.disabled = false; btn.textContent = 'Choisir';
+        }
         else { alert(data.error === 'code_invalide' ? 'Code invalide.' : 'Erreur : ' + (data.details || data.error)); btn.disabled = false; btn.textContent = 'Choisir'; }
       } catch (e) {
         alert('Erreur de connexion au paiement. Réessayez.');
@@ -259,32 +263,38 @@ function wireEvents(client, session) {
     const code = document.getElementById('promo-input').value.trim();
     const msg = document.getElementById('promo-msg');
     if (!code) return;
-    const { data: { session: fresh } } = await client.auth.getSession();
+    if (!cabinetId) {
+      msg.className = 'msg err';
+      msg.textContent = "Aucun cabinet rattaché à votre compte — l'abonnement concerne les cabinets.";
+      return;
+    }
+    // Activation directe côté Supabase (gratuité, mois offerts) : aucun
+    // besoin de Stripe ni de variables serveur.
     try {
-      const r = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plan: 'cabinet', interval: currentInterval, promo_code: code,
-          email: session.user.email, cabinet_id: cabinetId,
-          supabase_access_token: fresh.access_token
-        })
-      });
-      const data = await r.json();
-      if (data.redirect) { location.href = data.redirect; return; }
-      if (data.error === 'code_invalide') {
-        msg.className = 'msg err'; msg.textContent = 'Code invalide, expiré ou déjà utilisé.';
-      } else if (data.error === 'code_deja_utilise') {
-        msg.className = 'msg err'; msg.textContent = 'Ce code a déjà été utilisé par ce cabinet.';
-      } else if (data.url) {
+      const { data, error } = await client.rpc('cabix_member_activate_promo',
+        { p_cabinet_id: cabinetId, p_code: code });
+      if (error) throw error;
+      if (data && data.ok && (data.type === 'full_access' || data.type === 'months_free')) {
+        location.href = 'paiement.html?promo=active';
+        return;
+      }
+      if (data && data.ok && data.type === 'percent_off') {
         appliedPromo = code;
         msg.className = 'msg ok';
         msg.textContent = 'Code de réduction appliqué — il sera pris en compte au paiement.';
-      } else {
-        msg.className = 'msg err'; msg.textContent = 'Erreur : ' + (data.error || 'inconnue');
+        return;
       }
+      const errs = {
+        code_invalide: 'Code invalide, expiré ou déjà utilisé.',
+        code_deja_utilise: 'Ce code a déjà été utilisé par ce cabinet.',
+        pas_membre_du_cabinet: "Vous n'êtes pas membre de ce cabinet.",
+        non_authentifie: 'Session expirée — reconnectez-vous puis réessayez.'
+      };
+      msg.className = 'msg err';
+      msg.textContent = errs[(data && data.error)] || 'Code invalide.';
     } catch (e) {
-      msg.className = 'msg err'; msg.textContent = 'Erreur de connexion. Réessayez.';
+      msg.className = 'msg err';
+      msg.textContent = 'Erreur de connexion. Réessayez.';
     }
   });
 
