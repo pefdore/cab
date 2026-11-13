@@ -18681,36 +18681,26 @@ body:has(#view-dashboard.active) {
 }
 
 /* ============================================================
-   GRAPH COTATION — montants visibles sur mobile
-   Les montants étaient masqués (display:none) sous 480px. On les
-   affiche en vertical au-dessus des barres : lisibles sans
-   chevaucher les colonnes voisines (12 mois sur petit écran).
+   GRAPH COTATION — montants visibles sur mobile (version compacte)
+   Deux rendus par montant : complet (« 1234€ », desktop) et compact
+   (« 1,2k », mobile). Le compact tient horizontalement au-dessus
+   d'une barre étroite, sans rotation ni chevauchement.
    ============================================================ */
+.bar-value-compact { display: none; }
+
 @media (max-width: 480px) {
     .chart-bars {
-        /* marge de sécurité pour les étiquettes verticales au-dessus
-           des barres les plus hautes */
-        padding-top: 26px;
+        padding-top: 16px;
     }
 
     .chart-bar .bar-value {
         display: block;
-        font-size: 8.5px;
+        font-size: 7.5px;
         font-weight: 700;
         letter-spacing: -0.02em;
-        top: auto;
-        bottom: 100%;
-        left: 50%;
-        margin-bottom: 3px;
-        transform: translate(-50%, 0) rotate(-90deg);
-        transform-origin: center bottom;
-        white-space: nowrap;
+        top: -14px;
     }
-}
 
-/* Très petits écrans : la rotation reste, taille légèrement réduite */
-@media (max-width: 360px) {
-    .chart-bar .bar-value {
-        font-size: 7.5px;
-    }
+    .bar-value-full { display: none; }
+    .bar-value-compact { display: inline; }
 }
