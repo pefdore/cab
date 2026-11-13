@@ -17866,3 +17866,50 @@ body:has(#view-dashboard.active) {
     .login-brand { padding: 30px 22px 20px; }
     .login-form { padding: 22px 20px 26px; }
 }
+
+/* ============================================================
+   PASSE PRÉSENTATION « PLUS » (Paramètres) — cohérence des titres
+   ============================================================ */
+.settings-title-block h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.settings-subtitle {
+    font-size: 0.85rem;
+}
+
+.settings-card {
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.settings-card:hover {
+    border-color: var(--color-text-tertiary);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px -12px rgba(11, 31, 26, 0.18);
+}
+
+.settings-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 2px;
+}
+
+.settings-card p {
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.settings-card-value {
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-subtle);
+    padding: 3px 10px;
+    border-radius: 999px;
+    display: inline-block;
+    margin-top: 6px;
+}

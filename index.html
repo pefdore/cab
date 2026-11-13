@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
     <link rel="apple-touch-icon" href="icon-192.svg">
     <title>Cabix.io — Connexion</title>
-    <link rel="stylesheet" href="style.css?v=202612061000">
+    <link rel="stylesheet" href="style.css?v=202612071000">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -495,7 +495,7 @@ window.attemptLogin = function() {
                         <rect x="8" y="2" width="8" height="4" rx="1"/>
                         <path d="M9 14l2 2 4-4"/>
                     </svg>
-                    Affaires
+                    À faire
                     <span id="affairesNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#ef4444; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
                 </a>
                 <a href="#" class="nav-item" data-view="urgence">
@@ -1008,8 +1008,10 @@ window.attemptLogin = function() {
 
   <!-- Salle d'urgence View -->
             <section id="view-urgence" class="view">
-                <h2>Salle d'urgence</h2>
-                <p class="urgence-page-desc">En cas d'urgence : protocoles pas à pas et état des stocks disponibles. La gestion et le pointage des stocks restent dans la section Cabinet.</p>
+                <div class="md-section-head">
+                    <h2 class="md-headline">Salle d'urgence</h2>
+                    <p class="md-headline-sub">En cas d'urgence : protocoles pas à pas et état des stocks disponibles. La gestion et le pointage des stocks restent dans la section Cabinet.</p>
+                </div>
 
                 <div class="urgence-alert danger urgence-call-banner">
                     <span class="urgence-call-number">Appel d'urgence : 15 (SAMU) · 112</span>
@@ -1070,7 +1072,10 @@ window.attemptLogin = function() {
 
             <!-- History View -->
             <section id="view-history" class="view">
-                <h2>Documents</h2>
+                <div class="md-section-head">
+                    <h2 class="md-headline">Documents</h2>
+                    <p class="md-headline-sub">Feuilles de comptabilité, PDF et exports générés — filtrables et triables.</p>
+                </div>
                 
                 <!-- Filter and Sort -->
                 <div class="documents-filter-section" style="margin: 16px 0; padding: 16px; background: var(--color-bg-subtle); border-radius: 12px;">
@@ -1103,11 +1108,11 @@ window.attemptLogin = function() {
                 <div id="documentsList" class="documents-list"></div>
             </section>
 
-            <!-- Affaires View -->
+            <!-- À faire (Affaires) View -->
             <section id="view-affaires" class="view">
-                <div class="page-header-card module-card" style="padding:18px; margin-bottom:16px;">
-                    <h2>Affaires</h2>
-                    <p class="page-subtitle">Les tâches à faire de temps en temps : solde d'ouverture, relevés à intégrer, rapprochement des dépenses, pointage des stocks.</p>
+                <div class="md-section-head">
+                    <h2 class="md-headline">À faire</h2>
+                    <p class="md-headline-sub">Les tâches ponctuelles du cabinet : solde d'ouverture, relevés à intégrer, rapprochement des dépenses, pointage des stocks.</p>
                 </div>
 
                 <!-- Reprise d'import en cours -->
@@ -1714,14 +1719,9 @@ window.attemptLogin = function() {
             <!-- Cabinet View -->
             <section id="view-cabinet" class="view">
                 <div class="cabinet-page-header">
-                    <div class="cabinet-page-title">
-                        <span class="cabinet-page-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
-                        </span>
-                        <div>
-                            <h2 id="cabinetPageTitle">Gestion Cabinet</h2>
-                            <p id="cabinetPageSubtitle">Ressources humaines, réunions, stocks et remplacements du cabinet</p>
-                        </div>
+                    <div class="md-section-head">
+                        <h2 class="md-headline" id="cabinetPageTitle">Cabinet</h2>
+                        <p class="md-headline-sub" id="cabinetPageSubtitle">Ressources humaines, réunions, stocks et remplacements du cabinet</p>
                     </div>
                 </div>
 
@@ -2536,14 +2536,9 @@ window.attemptLogin = function() {
             </section>
             <section id="view-admin" class="view">
                 <div class="cabinet-page-header">
-                    <div class="cabinet-page-title">
-                        <span class="cabinet-page-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-                        </span>
-                        <div>
-                            <h2>Administration</h2>
-                            <p>Vue 360 de la plateforme : cabinets, inscrits, demandes et activité</p>
-                        </div>
+                    <div class="md-section-head">
+                        <h2 class="md-headline">Administration</h2>
+                        <p class="md-headline-sub">Vue 360 de la plateforme : cabinets, inscrits, demandes et activité</p>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <button class="action-btn" onclick="adminExportCSV('cabinets')">
@@ -3670,7 +3665,7 @@ window.attemptLogin = function() {
                     <rect x="8" y="2" width="8" height="4" rx="1"/>
                     <path d="M9 14l2 2 4-4"/>
                 </svg>
-                <span style="position:relative;">Affaires<span id="affairesNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#ef4444; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
+                <span style="position:relative;">À faire<span id="affairesNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#ef4444; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
             <a href="#" class="mobile-nav-item" data-view="urgence">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3728,7 +3723,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202612061600" defer></script>
+    <script src="app.v5.js?v=202612071000" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=202612011000" defer></script>
     <script src="urgence.js?v=202611291000" defer></script>

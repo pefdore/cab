@@ -5133,7 +5133,7 @@ function switchView(viewName) {
         'flux': 'Flux',
         'urgence': 'Salle d’urgence',
         'history': 'Documents',
-        'affaires': 'Affaires',
+        'affaires': 'À faire',
         'cabinet': 'Cabinet',
         'admin': 'Administration',
         'settings': 'Plus'
