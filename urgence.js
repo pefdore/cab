@@ -1994,6 +1994,21 @@ function urgenceDaeShowManual() {
 }
 
 window.urgenceFindDae = urgenceFindDae;
+
+// Ouverture des modals DAE / doses (page Urgence compacte)
+window.urgenceOpenDaeModal = function() {
+    const m = document.getElementById('urgence-dae-modal');
+    if (!m) return;
+    m.style.display = 'flex';
+    urgenceFindDae();
+};
+
+window.urgenceOpenDoseModal = function() {
+    const m = document.getElementById('urgence-dose-modal');
+    if (!m) return;
+    m.style.display = 'flex';
+    urgenceComputeDoses();
+};
 window.urgenceFindDaeByAddress = urgenceFindDaeByAddress;
 window.urgenceFindDaeCabinet = urgenceFindDaeCabinet;
 window.urgenceDaeShowManual = urgenceDaeShowManual;

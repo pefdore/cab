@@ -139,16 +139,7 @@ function renderReminders() {
             </div>
             <div id="releve-checklist-body" class="af-months" style="display:${open ? 'block' : 'none'};" data-open="${open ? '1' : ''}">
             <div class="af-months-grid">
-                ${all.map(m => m.imported ? `
-                    <div class="af-month af-month--done">
-                        <span class="af-month-name">
-                            <svg class="af-month-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>${m.short}
-                        </span>
-                        <span class="af-month-side">
-                            <span class="af-month-meta">${m.movements} mvt</span>
-                            <button class="af-btn" onclick="viewRelevePdf('${m.key}')" title="Voir le PDF importé de ${m.short}">PDF</button>
-                        </span>
-                    </div>` : m.started ? `
+                ${all.filter(m => !m.imported).map(m => m.started ? `
                     <div class="af-month af-month--started">
                         <span class="af-month-name">
                             <svg class="af-month-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>${m.short}
@@ -167,7 +158,26 @@ function renderReminders() {
                         </span>
                     </div>`).join('')}
             </div>
-            <p class="af-hint">Vert = mois validé · Bleu = relevé importé, mois à valider · Ambre = relevé à importer (le relevé du mois courant sort le mois suivant).</p>
+            ${(() => {
+                const done = all.filter(m => m.imported);
+                if (!done.length) return '';
+                const showDone = window._releveShowDone === true;
+                return `
+            <button class="af-showall" onclick="toggleReleveDoneMonths()">${showDone ? 'Masquer' : 'Afficher'} les ${done.length} mois déjà validés ✓</button>
+            <div class="af-months-grid af-months-done" style="display:${showDone ? 'grid' : 'none'};">
+                ${done.map(m => `
+                    <div class="af-month af-month--done">
+                        <span class="af-month-name">
+                            <svg class="af-month-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>${m.short}
+                        </span>
+                        <span class="af-month-side">
+                            <span class="af-month-meta">${m.movements} mvt</span>
+                            <button class="af-btn" onclick="viewRelevePdf('${m.key}')" title="Voir le PDF importé de ${m.short}">PDF</button>
+                        </span>
+                    </div>`).join('')}
+            </div>`;
+            })()}
+            <p class="af-hint">Bleu = relevé importé, mois à valider · Ambre = relevé à importer (le relevé du mois courant sort le mois suivant). Les mois validés sont repliés ci-dessus.</p>
             </div>
         </div>`;
     // DIFF : ne pas reecrire le DOM si le contenu est identique -> zero clignotement
@@ -189,6 +199,13 @@ window.remindersMissingMonths = remindersMissingMonths;
         timer = setTimeout(() => { realRenderReminders(); }, 150);
     };
 })();
+
+// Afficher / masquer les mois déjà validés (repliés par défaut : l'œil
+// va d'abord à ce qui reste à faire)
+window.toggleReleveDoneMonths = function() {
+    window._releveShowDone = !(window._releveShowDone === true);
+    renderReminders();
+};
 
 window.toggleReleveChecklist = function() {
     window._releveListOpen = !window._releveListOpen;
