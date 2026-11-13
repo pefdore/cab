@@ -18680,54 +18680,7 @@ body:has(#view-dashboard.active) {
     min-width: 0;
 }
 
-/* ============================================================
-   GRAPH COTATION — montants visibles sur mobile (graph défilant)
-   Sur mobile, le graph garde ses proportions desktop (colonnes
-   larges, montants complets horizontaux) et se parcourt d'un geste
-   horizontal. Les lignes de tendance vivent dans la boîte défilante
-   et suivent le défilement.
-   ============================================================ */
-.chart-scroll {
-    position: relative;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-@media (max-width: 480px) {
-    #monthlyChart {
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-    }
-
-    .chart-scroll {
-        min-width: 560px;
-    }
-
-    /* Colonnes et montants aux proportions desktop : la largeur vient
-       du défilement, plus du tassement. */
-    .chart-bar-column {
-        min-width: 20px;
-        max-width: 60px;
-    }
-
-    .chart-bar .bar-value {
-        display: block;
-        font-size: 9px;
-        top: -16px;
-    }
-
-    .chart-bar-column .chart-bar-label {
-        font-size: 9px;
-    }
-
-    .chart-bars {
-        padding-top: 18px;
-    }
-}
+/* (graph cotation : retour à l\u2019état d\u2019origine — modifications mobiles annulées) */
 
 /* ============================================================
    PAGE « FLUX » — passe Material 3 Expressive

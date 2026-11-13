@@ -7438,9 +7438,7 @@ function renderCharts() {
         `;
     }
     
-    // Conteneur de tracé : la boîte défilante interne si présente (mobile :
-    // graph scrollable horizontalement), sinon la carte elle-même.
-    const monthlyChartContainer = document.getElementById('monthlyChartScroll') || document.getElementById('monthlyChart');
+    const monthlyChartContainer = document.getElementById('monthlyChart');
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
     
@@ -7458,17 +7456,12 @@ function renderCharts() {
             const medecinPct = (medecinVal / maxVal) * 100;
             const m = parseInt(key.split('-')[1]) - 1;
             const monthName = monthNames[m];
-            // Version compacte pour mobile : « 1,2k » tient au-dessus d'une
-            // barre étroite là où « 1234€ » chevaucherait les mois voisins.
-            const compact = val >= 1000
-                ? (val / 1000).toFixed(val >= 10000 ? 0 : 1).replace('.', ',') + 'k'
-                : val.toFixed(0);
             
             return `
                 <div class="chart-bar-column" data-month="${monthName}" data-total="${val.toFixed(2)}" data-ehpad="${ehpadVal.toFixed(2)}" data-medecin="${medecinVal.toFixed(2)}">
                     <div class="chart-bar" style="height: ${height}%;">
                         ${val > 0 ? `
-                            <span class="bar-value"><span class="bar-value-full">${val.toFixed(0)}€</span><span class="bar-value-compact">${compact}</span></span>
+                            <span class="bar-value">${val.toFixed(0)}€</span>
                         ` : ''}
                     </div>
                     <span class="chart-bar-label">${monthName}</span>
