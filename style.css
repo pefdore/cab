@@ -18643,3 +18643,39 @@ body:has(#view-dashboard.active) {
         gap: 10px;
     }
 }
+
+/* Rapprochement : l'action principale toujours visible, la ligne
+   s'enroule plutôt que de pousser le bouton hors du cadre. */
+.af-recon-row {
+    flex-wrap: wrap;
+}
+
+.af-recon-item .af-btn--filled {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    padding: 5px 13px;
+}
+
+/* Mois validés (repliés) : légèrement atténués une fois dépliés */
+.af-months-done {
+    margin-top: 8px;
+}
+
+.af-months-done .af-month {
+    opacity: 0.8;
+}
+
+/* Modals DAE / doses : contenu aéré */
+#urgence-dose-modal .urgence-weight-row {
+    display: flex;
+    background: var(--color-bg-subtle, #f1f5f9);
+    border: 1px solid var(--color-border, #E2ECE8);
+    border-radius: 999px;
+    padding: 6px 8px 6px 16px;
+    max-width: 320px;
+}
+
+#urgence-dose-modal .urgence-weight-row .form-input {
+    flex: 1;
+    min-width: 0;
+}

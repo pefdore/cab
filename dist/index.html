@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/assets/main-DRC_V3zN.css">
+  <link rel="stylesheet" crossorigin href="/assets/main-BF_zRYdp.css">
 </head>
 <body>
     <!-- Login Screen -->
@@ -1024,15 +1024,10 @@ window.attemptLogin = function() {
                     </div>
                     <div class="urgence-quick-body">
                     <div class="urgence-quick-actions">
-                        <button class="action-btn primary" id="urgenceDaeBtn" onclick="urgenceFindDae()">📍 DAE le plus proche</button>
-                        <div class="urgence-weight-row">
-                            <label for="urgenceWeightInput">Poids</label>
-                            <input type="number" id="urgenceWeightInput" class="form-input" min="1" max="250" step="0.5" placeholder="kg">
-                            <span class="urgence-weight-unit">kg</span>
-                        </div>
+                        <button class="action-btn primary" onclick="urgenceOpenDaeModal()">📍 DAE à proximité</button>
+                        <button class="action-btn primary" onclick="urgenceOpenDoseModal()">💊 Doses d'urgence</button>
                     </div>
-                    <div id="urgenceDaeResults"></div>
-                    <div id="urgenceDoseResults"></div>
+                    <p class="af-hint">Le poids et les résultats s'affichent dans la fenêtre ouverte — la page reste dégagée.</p>
                     </div>
                 </div>
 
@@ -1069,6 +1064,40 @@ window.attemptLogin = function() {
                     </div>
                 </div>
             </section>
+
+            <!-- Modals DAE & doses (page Urgence) -->
+            <div id="urgence-dae-modal" class="modal-overlay" style="display: none; z-index: 10001;">
+                <div class="modal-card" style="max-width: 640px; max-height: 88vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h3>📍 Défibrillateurs à proximité</h3>
+                        <button class="modal-close" onclick="closeModal('urgence-dae-modal')">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="urgenceDaeResults"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="urgence-dose-modal" class="modal-overlay" style="display: none; z-index: 10001;">
+                <div class="modal-card" style="max-width: 720px; max-height: 88vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h3>💊 Doses d'urgence</h3>
+                        <button class="modal-close" onclick="closeModal('urgence-dose-modal')">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="urgence-weight-row" style="margin-bottom: 14px;">
+                            <label for="urgenceWeightInput">Poids du patient</label>
+                            <input type="number" id="urgenceWeightInput" class="form-input" min="1" max="250" step="0.5" placeholder="kg">
+                            <span class="urgence-weight-unit">kg</span>
+                        </div>
+                        <div id="urgenceDoseResults"></div>
+                    </div>
+                </div>
+            </div>
 
             <!-- History View -->
             <section id="view-history" class="view">
@@ -3721,10 +3750,10 @@ window.attemptLogin = function() {
     <script src="app.v5.js?v=202612071200" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=202612011000" defer></script>
-    <script src="urgence.js?v=202611291000" defer></script>
+    <script src="urgence.js?v=202612071800" defer></script>
     <script src="flux.js?v=202612011000" defer></script>
-    <script src="reconciliation.js?v=202612071500" defer></script>
-    <script src="reminders.js?v=202612071400" defer></script>
+    <script src="reconciliation.js?v=202612071800" defer></script>
+    <script src="reminders.js?v=202612071800" defer></script>
     <script src="affaires.js?v=202612071700" defer></script>
     <script src="attachments.js?v=2026110115000" defer></script>
     <script src="releve-review.js?v=202611062200" defer></script>

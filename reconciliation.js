@@ -233,7 +233,7 @@ window.renderReconPending = function() {
                             <span class="af-recon-desc">${reconEscapeHtml(d.description || '-')}${d.date ? ' · ' + new Date(d.date).toLocaleDateString('fr-FR') : ''}</span>
                         </div>
                         <span class="af-recon-amount">-${Number(d.amount).toFixed(2)} €</span>
-                        <button class="af-btn" onclick="openReconModal(${d.id})" title="Choisir la commande à rattacher">Rattacher</button>
+                        <button class="af-btn af-btn--filled" onclick="openReconModal(${d.id})" title="Choisir la commande à rattacher">Rattacher</button>
                     </div>
                     ${best ? `
                     <div class="af-recon-sug">
