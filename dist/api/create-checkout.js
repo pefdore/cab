@@ -79,10 +79,6 @@ async function handleCheckout(req, res) {
         SUPABASE_URL = 'https://wlpbnxnvctlmhndqvvim.supabase.co';
     }
     const SITE_URL = process.env.SITE_URL || 'https://cabix.io';
-    // Origine envoyee par la page (location.origin) : prioritaire sur SITE_URL,
-    // garantit que Stripe ramene l'utilisateur sur le bon domaine meme si la
-    // variable n'est pas configuree.
-    const returnUrl = (origin && /^https:\/\//.test(origin)) ? origin.replace(/\/+$/, '') : SITE_URL;
 
     if (!SERVICE_KEY) {
         return json(res, 500, { error: 'config_manquante', details: 'SUPABASE_SERVICE_ROLE_KEY requis' });
@@ -90,7 +86,13 @@ async function handleCheckout(req, res) {
 
     let payload = {};
     try { payload = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch (e) {}
-    const { plan, interval = 'yearly', promo_code, email, cabinet_id, billing_mode, billing_name, origin, supabase_access_token } = payload;
+    const { plan, interval = 'yearly', promo_code, email, cabinet_id, billing_mode, billing_name, supabase_access_token } = payload;
+
+    // Origine envoyee par la page (location.origin) : prioritaire sur SITE_URL,
+    // garantit que Stripe ramene l'utilisateur sur le bon domaine meme si la
+    // variable n'est pas configuree.
+    const payloadOrigin = String(payload.origin || '').trim().replace(/\/+$/, '');
+    const returnUrl = /^https:\/\//.test(payloadOrigin) ? payloadOrigin : SITE_URL;
 
     if (!PLANS[plan]) return json(res, 400, { error: 'plan_invalide' });
     if (!['monthly', 'yearly'].includes(interval)) return json(res, 400, { error: 'intervalle_invalide' });
