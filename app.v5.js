@@ -1766,6 +1766,7 @@ window.openPassageModal = async function() {
     const modal = document.getElementById('passage-add-modal');
     if (modal) {
         modal.style.display = 'flex';
+        window._passageChainCount = 0;
         populateModalCotationSelect();
         const form = document.getElementById('entryFormModal');
         if (form) form.reset();
@@ -2434,6 +2435,8 @@ document.getElementById('cotationModal')?.addEventListener('change', function() 
 
 document.getElementById('entryFormModal')?.addEventListener('submit', async function(e) {
     e.preventDefault();
+    // « Enregistrer + suivant » : enchaîner les passages sans rouvrir le FAB
+    const chainNext = e.submitter && e.submitter.id === 'passage-submit-continue';
     const patientName = document.getElementById('patientNameModal').value;
     const visitDate = document.getElementById('visitDateModal').value;
     const visitLocation = document.getElementById('visitLocationModal').value;
@@ -2449,12 +2452,14 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
     const amount = parts[1] || '0';
     
     try {
-        let patientId = patients.find(p => p.name.toLowerCase() === patientName.toLowerCase())?.id;
+        const uid = (window.currentUser && window.currentUser.id) || (typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null);
+        if (!uid) { alert('Session expirée — reconnectez-vous.'); return; }
+        let patientId = (patients || []).find(p => p.name.toLowerCase() === patientName.toLowerCase())?.id;
         
         if (!patientId) {
             const { data: newPatient, error: patientError } = await supabaseClient
                 .from('patients')
-                .insert([{ user_id: currentUser.id, name: patientName }])
+                .insert([{ user_id: uid, name: patientName }])
                 .select()
                 .single();
             
@@ -2472,7 +2477,7 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
         const { data: insertedData, error } = await supabaseClient
             .from('passages')
             .insert([{
-                user_id: currentUser.id,
+                user_id: uid,
                 patient_id: patientId,
                 date: visitDate,
                 location: visitLocation,
@@ -2507,14 +2512,42 @@ document.getElementById('entryFormModal')?.addEventListener('submit', async func
             amount: parseFloat(amount)
         });
         
-        closePassageModal();
-        renderEntriesForDashboard();
-        renderEntriesForModal();
-        updateStats();
-        renderCharts();
-        loadData();
-        loadData();
-        alert('Passage ajouté avec succès');
+        if (chainNext) {
+            // Enchaînement : garder le modal ouvert, vider le patient, garder
+            // date et lieu (les passages successifs sont souvent le même jour,
+            // même lieu), focus direct sur le champ patient.
+            window._passageChainCount = (window._passageChainCount || 0) + 1;
+            const pInput = document.getElementById('patientNameModal');
+            if (pInput) {
+                pInput.value = '';
+                pInput.focus();
+                pInput.select();
+            }
+            const dd = document.getElementById('autocomplete-dropdown-modal');
+            if (dd) dd.style.display = 'none';
+            renderEntriesForDashboard();
+            renderEntriesForModal();
+            updateStats();
+            renderCharts();
+            loadData();
+            if (typeof showToast === 'function') {
+                showToast('✅ Passage ajouté (' + window._passageChainCount + ') — enregistrez le suivant', 'success');
+            }
+        } else {
+            window._passageChainCount = 0;
+            closePassageModal();
+            renderEntriesForDashboard();
+            renderEntriesForModal();
+            updateStats();
+            renderCharts();
+            loadData();
+            loadData();
+            if (typeof showToast === 'function') {
+                showToast('✅ Passage ajouté avec succès', 'success');
+            } else {
+                alert('Passage ajouté avec succès');
+            }
+        }
     } catch (err) {
         console.error('Erreur:', err);
         alert('Erreur lors de l\'ajout: ' + err.message);
