@@ -133,12 +133,29 @@ function affairesTaskDefs() {
 }
 
 // ---------- Rendu : liste unifiée, fait en bas ----------
+// Les checklists internes (reminders.js / reconciliation.js) gerent leur
+// propre etat plie (_releveListOpen / _reconListOpen) : on le synchronise
+// sur l'etat de la carte, sinon le detail deplie reste vide.
+function affairesSyncInner(id, open) {
+    try {
+        if (id === 'releve') {
+            window._releveListOpen = open;
+            if (typeof window.renderReminders === 'function') window.renderReminders();
+        } else if (id === 'recon') {
+            window._reconListOpen = open;
+            if (typeof window.renderReconPending === 'function') window.renderReconPending();
+        }
+    } catch (e) {}
+}
+
 window.affairesToggleTask = function(id) {
     try {
         window._todoOpen = window._todoOpen || {};
         window._todoOpen[id] = !window._todoOpen[id];
         const card = document.getElementById('todo-card-' + id);
-        if (card) card.classList.toggle('open', !!window._todoOpen[id]);
+        const open = !!window._todoOpen[id];
+        if (card) card.classList.toggle('open', open);
+        affairesSyncInner(id, open);
     } catch (e) {}
 };
 
@@ -176,6 +193,17 @@ function affairesRenderTasks() {
     const tasks = affairesTaskDefs();
     const pending = tasks.filter(t => t.pending);
     const done = tasks.filter(t => !t.pending);
+
+    // Par defaut, une tache a faire avec checklist est depliee : prevoir
+    // l'etat des listes internes AVANT que reminders/reconciliation ne rendent.
+    window._todoOpen = window._todoOpen || {};
+    pending.forEach(t => {
+        if (t.hasDetail && window._todoOpen[t.id] === undefined) {
+            window._todoOpen[t.id] = true;
+        }
+    });
+    if (window._todoOpen['releve'] !== undefined) window._releveListOpen = !!window._todoOpen['releve'];
+    if (window._todoOpen['recon'] !== undefined) window._reconListOpen = !!window._todoOpen['recon'];
 
     pendingWrap.innerHTML = pending.map(affairesRenderCard).join('');
     doneList.innerHTML = done.map(affairesRenderCard).join('');
