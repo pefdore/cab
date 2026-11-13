@@ -2547,6 +2547,7 @@ window.attemptLogin = function() {
                     <button type="button" class="admin-tab" data-admin-tab="users" onclick="adminSwitchTab('users')">Inscrits</button>
                     <button type="button" class="admin-tab" data-admin-tab="requests" onclick="adminSwitchTab('requests')">Demandes <span class="admin-tab-badge" id="adminTabReqBadge" style="display:none;">0</span></button>
                     <button type="button" class="admin-tab" data-admin-tab="profit" onclick="adminSwitchTab('profit')">Rentabilité</button>
+                    <button type="button" class="admin-tab" data-admin-tab="promo" onclick="adminSwitchTab('promo')">Codes promo</button>
                 </div>
 
                 <!-- ============ ONGLET VUE D'ENSEMBLE ============ -->
@@ -2745,6 +2746,86 @@ window.attemptLogin = function() {
                                 </thead>
                                 <tbody id="adminRequestsHistory">
                                     <tr><td colspan="5" class="admin-empty">Chargement...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ ONGLET CODES PROMO ============ -->
+                <div id="adminTabPromo" style="display:none;">
+                    <div class="admin-panel">
+                        <div class="admin-panel-header"><h3>Créer un code</h3></div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:16px;">
+                            <div>
+                                <label style="font-size:.75rem;color:var(--color-text-secondary);">Code *</label>
+                                <div style="display:flex;gap:6px;">
+                                    <input type="text" id="promoNewCode" class="admin-search" placeholder="CABIX-XXXXXX" style="text-transform:uppercase;">
+                                    <button class="action-btn" type="button" onclick="adminSuggestPromoCode()" title="Générer un code aléatoire">🎲</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label style="font-size:.75rem;color:var(--color-text-secondary);">Libellé</label>
+                                <input type="text" id="promoNewLabel" class="admin-search" placeholder="Ex. Cabinet pilote Rennes">
+                            </div>
+                            <div>
+                                <label style="font-size:.75rem;color:var(--color-text-secondary);">Type d'accès *</label>
+                                <select id="promoNewType" class="admin-search" onchange="adminPromoTypeChanged()">
+                                    <option value="full_access_unlimited">Gratuité illimitée</option>
+                                    <option value="full_access_months">Gratuité de N mois</option>
+                                    <option value="percent_off">Réduction sur le paiement (%)</option>
+                                </select>
+                            </div>
+                            <div id="promoNewValueGroup" style="display:none;">
+                                <label style="font-size:.75rem;color:var(--color-text-secondary);" id="promoNewValueLabel">Nombre de mois</label>
+                                <input type="number" id="promoNewValue" class="admin-search" min="1" step="1" placeholder="3">
+                            </div>
+                            <div>
+                                <label style="font-size:.75rem;color:var(--color-text-secondary);">Nb max de cabinets</label>
+                                <input type="number" id="promoNewMaxUses" class="admin-search" min="1" step="1" placeholder="Vide = illimité">
+                            </div>
+                            <div style="display:flex;align-items:flex-end;">
+                                <button class="action-btn primary" type="button" onclick="adminCreatePromo()">Créer le code</button>
+                            </div>
+                        </div>
+                        <p style="padding:0 16px 14px;font-size:.8rem;color:var(--color-text-secondary);">Un code ne peut être utilisé <strong>qu'une seule fois par cabinet</strong> (non réutilisable par le même cabinet), même s'il reste actif pour d'autres.</p>
+                    </div>
+
+                    <div class="admin-panel" style="margin-top:24px;">
+                        <div class="admin-panel-header"><h3>Codes existants</h3></div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Type</th>
+                                        <th>Libellé</th>
+                                        <th>Utilisation</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminPromoBody">
+                                    <tr><td colspan="6" class="admin-empty">Chargement...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="admin-panel" style="margin-top:24px;">
+                        <div class="admin-panel-header"><h3>Dernières utilisations</h3></div>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Cabinet</th>
+                                        <th>Utilisé par</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminPromoRedemptions">
+                                    <tr><td colspan="4" class="admin-empty">Chargement...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -3627,7 +3708,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202612061500" defer></script>
+    <script src="app.v5.js?v=202612061600" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=202612011000" defer></script>
     <script src="urgence.js?v=202611291000" defer></script>

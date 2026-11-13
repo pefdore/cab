@@ -202,6 +202,21 @@ DROP POLICY IF EXISTS "Authenticated can view promo codes" ON promo_codes;
 CREATE POLICY "Authenticated can view promo codes" ON promo_codes
     FOR SELECT TO authenticated USING (true);
 
+-- L'admin de la plateforme édite les codes (module admin "Codes promo")
+DROP POLICY IF EXISTS "Platform admin can manage promo codes" ON promo_codes;
+CREATE POLICY "Platform admin can manage promo codes" ON promo_codes
+    FOR ALL TO authenticated USING (
+        EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+    ) WITH CHECK (
+        EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+    );
+
+DROP POLICY IF EXISTS "Platform admin can view all redemptions" ON promo_redemptions;
+CREATE POLICY "Platform admin can view all redemptions" ON promo_redemptions
+    FOR SELECT TO authenticated USING (
+        EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+    );
+
 -- Utilisation d'un code : uniquement par un membre, pour son propre cabinet,
 -- code actif, non expiré et pas épuisé
 DROP POLICY IF EXISTS "Members can redeem promo for own cabinet" ON promo_redemptions;
