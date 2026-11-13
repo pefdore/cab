@@ -34,8 +34,10 @@ Deno.serve(async (req) => {
         secure: true,
         auth: { user: gmailUser, pass: gmailPass }
       })
-      fromAddress = gmailUser  // l'adresse Gmail du cabinet devient l'expediteur
-      console.log('Envoi via SMTP Gmail:', gmailUser)
+      // Nom d'affichage : le destinataire voit "Cabix" plutot que l'adresse
+      // brute du compte Gmail (meme confort qu'avec Resend).
+      fromAddress = `"Cabix" <${gmailUser}>`
+      console.log('Envoi via SMTP Gmail:', gmailUser, '(expediteur affiche : Cabix)')
     } else {
       if (!resendApiKey) {
         throw new Error('Ni GMAIL_USER/GMAIL_APP_PASSWORD ni RESEND_API_KEY configures')
