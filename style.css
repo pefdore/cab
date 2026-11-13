@@ -17569,23 +17569,59 @@ body:has(#view-dashboard.active) {
 }
 
 /* ============================================================
-   TITRES DE PAGES UNIFIÉS — modèle : page « Plus » (paramètres)
-   Titre : 2rem / 600 / tracking -0.03em (base h2)
-   Sous-titre : 0.8125rem, texte secondaire
+   TITRES DE PAGES UNIFIÉS — toutes les vues, même gabarit
+   Titre : ~1.8rem / 700 / tracking serré + filet accent sous le titre
+   Sous-titre : 0.85rem, texte secondaire
    ============================================================ */
 
-/* Flux : remplace le md-headline clampé (2.1rem/800) par le titre unifié */
-#view-flux .md-section-head .md-headline {
-    font-size: var(--text-3xl);
-    font-weight: 600;
+.md-section-head .md-headline {
+    font-size: clamp(1.55rem, 3.2vw, 1.9rem);
+    font-weight: 700;
     letter-spacing: -0.03em;
-    line-height: 1.2;
-    margin: 0 0 6px;
+    line-height: 1.15;
+    margin: 0 0 10px;
     color: var(--color-text);
+    position: relative;
+    padding-bottom: 10px;
 }
-#view-flux .md-headline-sub {
-    font-size: 0.8125rem;
+
+/* Filet accent sous le titre — la petite touche qui structure la page */
+.md-section-head .md-headline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 38px;
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 55%, white));
+}
+
+.md-section-head .md-headline-sub {
+    font-size: 0.85rem;
     margin: 0;
+}
+
+/* Page « Plus » : même gabarit, même filet */
+.settings-title-block h2 {
+    font-size: clamp(1.55rem, 3.2vw, 1.9rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin: 0 0 10px;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.settings-title-block h2::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 38px;
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 55%, white));
 }
 
 /* Affaires : titre + sous-titre unifiés */
@@ -17870,13 +17906,7 @@ body:has(#view-dashboard.active) {
 /* ============================================================
    PASSE PRÉSENTATION « PLUS » (Paramètres) — cohérence des titres
    ============================================================ */
-.settings-title-block h2 {
-    font-size: clamp(1.5rem, 3.5vw, 2.1rem);
-    font-weight: 800;
-    letter-spacing: -0.035em;
-    line-height: 1.1;
-    margin: 0;
-}
+/* (titre .settings-title-block h2 géré par le gabarit unifié plus haut) */
 
 .settings-subtitle {
     font-size: 0.85rem;

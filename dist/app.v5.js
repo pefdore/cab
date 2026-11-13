@@ -4303,7 +4303,10 @@ function updateSettingsHeader(pageName, inOverlay) {
     const root = inOverlay ? document.querySelector('.settings-page-overlay') : document;
     if (!root) return;
     const backBtn = root.querySelector('#settingsBackBtn');
-    const title = root.querySelector('#settingsTitle, h2');
+    // IMPORTANT : ne jamais utiliser le selecteur '#settingsTitle, h2' —
+    // querySelector('#a, h2') renvoie le PREMIER h2 du document (celui de la
+    // page Flux !) et ecrasait son titre par 'Plus' a chaque passage ici.
+    const title = root.querySelector('#settingsTitle') || root.querySelector('.settings-title-block h2');
     const subtitle = root.querySelector('#settingsSubtitle');
     if (pageName) {
         const meta = SETTINGS_PAGES[pageName] || { title: pageName, subtitle: '' };
