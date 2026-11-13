@@ -206,11 +206,15 @@ function affairesSyncInner(id, open) {
 
 window.affairesToggleTask = function(id) {
     try {
-        window._todoOpen = window._todoOpen || {};
-        window._todoOpen[id] = !window._todoOpen[id];
         const card = document.getElementById('todo-card-' + id);
-        const open = !!window._todoOpen[id];
-        if (card) card.classList.toggle('open', open);
+        if (!card) return;
+        // Source de vérité = l'état VISIBLE de la carte : le clic inverse
+        // toujours ce que voit l'utilisateur, même si l'état interne était
+        // désynchronisé par un rendu concurrent.
+        const open = !card.classList.contains('open');
+        card.classList.toggle('open', open);
+        window._todoOpen = window._todoOpen || {};
+        window._todoOpen[id] = open;
         affairesSyncInner(id, open);
     } catch (e) {}
 };
@@ -261,8 +265,20 @@ function affairesRenderTasks() {
     if (window._todoOpen['releve'] !== undefined) window._releveListOpen = !!window._todoOpen['releve'];
     if (window._todoOpen['recon'] !== undefined) window._reconListOpen = !!window._todoOpen['recon'];
 
-    pendingWrap.innerHTML = pending.map(affairesRenderCard).join('');
-    doneList.innerHTML = done.map(affairesRenderCard).join('');
+    // Rendu DIFF : ne reconstruire le DOM que si le contenu change vraiment.
+    // Reconstruire à chaque événement de données remplaçait les cartes sous
+    // le curseur de l'utilisateur et avalait son premier clic (bug « il faut
+    // cliquer deux fois pour déplier »).
+    const pendingHtml = pending.map(affairesRenderCard).join('');
+    if (pendingWrap.dataset.html !== pendingHtml) {
+        pendingWrap.dataset.html = pendingHtml;
+        pendingWrap.innerHTML = pendingHtml;
+    }
+    const doneHtml = done.map(affairesRenderCard).join('');
+    if (doneList.dataset.html !== doneHtml) {
+        doneList.dataset.html = doneHtml;
+        doneList.innerHTML = doneHtml;
+    }
     if (doneWrap) {
         doneWrap.style.display = done.length ? '' : 'none';
         const cnt = document.getElementById('affaires-todo-done-count');

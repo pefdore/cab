@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cabix-v202612071600';
+const CACHE_NAME = 'cabix-v202612071700';
 const ASSETS = [
   '/',
   '/index.html',
