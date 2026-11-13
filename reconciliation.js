@@ -217,9 +217,9 @@ window.renderReconPending = function() {
                 <h3 style="margin:0; color:#b45309; font-size:0.82rem;">📦 ${pending.length} dépense${pending.length > 1 ? 's' : ''} à rapprocher</h3>
                 <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼'}</span>
             </div>
-            <div id="recon-pending-body" style="display:${open ? 'block' : 'none'}; margin-top:8px;">
-            <p class="module-desc" style="font-size:0.72rem; margin:0 0 8px;">Paiements fournisseurs du relevé probablement liés à des commandes passées dans la gestion des stocks (matériel, consommables). Rapprocher chaque dépense de sa commande pour suivre le coût réel du stock dans le dashboard.</p>
-            ${pending.slice(0, 8).map(d => {
+            <div id="recon-pending-body" class="af-recon" style="display:${open ? 'block' : 'none'};">
+            <p class="af-hint">Paiements fournisseurs probablement liés à des commandes passées dans les stocks. Rapprochez chaque dépense de sa commande pour suivre le coût réel du stock.</p>
+            ${(window._reconShowAll ? pending : pending.slice(0, 8)).map(d => {
                 const best = reconBestMatch(d);
                 return `
                 <div class="depense-item flux-row">
@@ -243,7 +243,7 @@ window.renderReconPending = function() {
                     </div>` : ''}
                 </div>`;
             }).join('')}
-            ${pending.length > 8 ? `<div style="font-size:0.75rem; color:var(--color-text-secondary); padding:4px 2px;">+ ${pending.length - 8} autre(s)…</div>` : ''}
+            ${pending.length > 8 ? `<button class="af-showall" onclick="reconToggleShowAll()">${window._reconShowAll ? 'Réduire la liste' : 'Afficher les ' + (pending.length - 8) + ' autre' + (pending.length - 8 > 1 ? 's' : '') + ' (' + pending.length + ' au total)'}</button>` : ''}
             </div>
         </div>`;
     // DIFF : ne pas reecrire le DOM si identique -> zero clignotement
@@ -264,6 +264,12 @@ window.renderReconPending = function() {
 
 window.toggleReconPending = function() {
     window._reconListOpen = !window._reconListOpen;
+    if (typeof renderReconPending === 'function') renderReconPending();
+};
+
+// Afficher / réduire la liste complète des dépenses à rapprocher
+window.reconToggleShowAll = function() {
+    window._reconShowAll = !window._reconShowAll;
     if (typeof renderReconPending === 'function') renderReconPending();
 };
 

@@ -137,29 +137,37 @@ function renderReminders() {
                 <h3 style="margin:0; color:${headerColor}; font-size:0.82rem;">📅 ${headerTxt}</h3>
                 <span style="font-size:0.75rem; color:var(--color-text-secondary);">${open ? '▲' : '▼ ' + okCount + '/' + all.length}</span>
             </div>
-            <div id="releve-checklist-body" style="display:${open ? 'block' : 'none'}; margin-top:12px;" data-open="${open ? '1' : ''}">
-            <p class="module-desc">Relevés de compte de l'année en cours. Les mois en vert sont validés par vos soins, pas besoin de les refaire. « En cours » : un relevé est enregistré mais le mois n'est pas encore validé (2ᵉ quinzaine possible).</p>
-            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;">
+            <div id="releve-checklist-body" class="af-months" style="display:${open ? 'block' : 'none'};" data-open="${open ? '1' : ''}">
+            <div class="af-months-grid">
                 ${all.map(m => m.imported ? `
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4);">
-                        <span style="font-size:0.82rem; font-weight:500; color:#10b981;">✅ ${m.short}</span>
-                        <span style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:0.68rem; color:#059669;">${m.movements} mvt</span>
-                            <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="viewRelevePdf('${m.key}')" title="Voir le PDF importé de ${m.short}">📄 PDF</button>
+                    <div class="af-month af-month--done">
+                        <span class="af-month-name">
+                            <svg class="af-month-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>${m.short}
+                        </span>
+                        <span class="af-month-side">
+                            <span class="af-month-meta">${m.movements} mvt</span>
+                            <button class="af-btn" onclick="viewRelevePdf('${m.key}')" title="Voir le PDF importé de ${m.short}">PDF</button>
                         </span>
                     </div>` : m.started ? `
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(59,130,246,0.10); border:1px solid rgba(59,130,246,0.4);">
-                        <span style="font-size:0.82rem; font-weight:500; color:#2563eb;" title="Relevé importé mais mois non validé (2ᵉ quinzaine possible)">🔄 ${m.short}</span>
-                        <span style="display:flex; align-items:center; gap:4px;">
-                            <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="validateReleveMonth('${m.key}')" title="Tout le relevé de ${m.short} est fait : valider ce mois">✓ Valider</button>
-                            <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="openReleveUploadFlowForMonth('${m.key}')" title="Ajouter un 2ᵉ relevé pour ${m.short} (quinzaine)">＋</button>
+                    <div class="af-month af-month--started">
+                        <span class="af-month-name">
+                            <svg class="af-month-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>${m.short}
+                        </span>
+                        <span class="af-month-side">
+                            <button class="af-btn" onclick="validateReleveMonth('${m.key}')" title="Tout le relevé de ${m.short} est fait : valider ce mois">Valider</button>
+                            <button class="af-btn" onclick="openReleveUploadFlowForMonth('${m.key}')" title="Ajouter un 2ᵉ relevé pour ${m.short} (quinzaine)">＋</button>
                         </span>
                     </div>` : `
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding:8px 10px; border-radius:8px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4);">
-                        <span style="font-size:0.82rem; font-weight:500; color:#b45309;">⏳ ${m.short}</span>
-                        <button class="action-btn" style="padding:1px 8px; font-size:0.68rem;" onclick="openReleveUploadFlowForMonth('${m.key}')" title="Importer le relevé de ${m.short}">Importer</button>
+                    <div class="af-month af-month--todo">
+                        <span class="af-month-name">
+                            <svg class="af-month-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${m.short}
+                        </span>
+                        <span class="af-month-side">
+                            <button class="af-btn af-btn--filled" onclick="openReleveUploadFlowForMonth('${m.key}')" title="Importer le relevé de ${m.short}">Importer</button>
+                        </span>
                     </div>`).join('')}
             </div>
+            <p class="af-hint">Vert = mois validé · Bleu = relevé importé, mois à valider · Ambre = relevé à importer (le relevé du mois courant sort le mois suivant).</p>
             </div>
         </div>`;
     // DIFF : ne pas reecrire le DOM si le contenu est identique -> zero clignotement
