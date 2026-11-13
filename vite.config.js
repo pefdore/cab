@@ -17,7 +17,7 @@ export default defineConfig({
     {
       name: 'copy-files',
       closeBundle() {
-        const files = ['landing.html', 'reset.html', 'paiement.html', 'app.v4.js', 'app.v5.js', 'secretariat.js', 'secretaire-space.js', 'urgence.js', 'urgence-orders.js', 'flux.js', 'reconciliation.js', 'reminders.js', 'affaires.js', 'attachments.js', 'releve-review.js', 'style.css', 'manifest.json', 'icon-192.svg', 'sw.js', 'supabase/functions/generate-monthly-pdf/template.html', 'dist-package.json', 'dist-vercel.json', 'api/dae.js', 'api/create-checkout.js', 'api/stripe-webhook.js'];
+        const files = ['landing.html', 'reset.html', 'paiement.html', 'app.v4.js', 'app.v5.js', 'secretariat.js', 'secretaire-space.js', 'urgence.js', 'urgence-orders.js', 'flux.js', 'reconciliation.js', 'reminders.js', 'affaires.js', 'attachments.js', 'releve-review.js', 'style.css', 'manifest.json', 'icon-192.svg', 'sw.js', 'supabase/functions/generate-monthly-pdf/template.html', 'dist-package.json', 'dist-vercel.json', 'api/dae.js', 'api/create-checkout.js', 'api/stripe-webhook.js', 'api/verify-session.js'];
         files.forEach(file => {
           if (existsSync(file)) {
             const parts = file.split('/');

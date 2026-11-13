@@ -215,7 +215,7 @@ function renderPrices() {
   });
 }
 
-function wireEvents(client, session) {
+async function wireEvents(client, session) {
   document.getElementById('interval').addEventListener('click', e => {
     const btn = e.target.closest('button[data-i]');
     if (!btn) return;
@@ -241,6 +241,7 @@ function wireEvents(client, session) {
             billing_mode: (document.getElementById('billing-mode')||{}).value || 'cabinet',
             billing_name: ((document.getElementById('billing-mode')||{}).value === 'personnel'
               ? '' : (document.getElementById('billing-name')||{}).value || '').trim(),
+            origin: location.origin,
             supabase_access_token: fresh.access_token
           })
         });
@@ -322,7 +323,29 @@ function wireEvents(client, session) {
   if (q.get('success')) {
     const msg = document.getElementById('promo-msg');
     msg.className = 'msg ok';
-    msg.textContent = 'Paiement confirmé ! Votre cabinet est abonné. (La mise à jour peut prendre quelques secondes.)';
+    msg.textContent = 'Paiement confirmé ! Activation de votre cabinet…';
+    // Filet de sécurité : confirmer la session Stripe et activer l'abonnement
+    // même si le webhook n'est pas encore configuré.
+    const sessionId = q.get('session_id');
+    if (sessionId) {
+      try {
+        const { data: { session: fresh } } = await client.auth.getSession();
+        const r = await fetch('/api/verify-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId, supabase_access_token: fresh.access_token })
+        });
+        const d = await r.json();
+        if (d.activated) {
+          msg.textContent = 'Paiement confirmé ! Votre cabinet est abonné — compte débloqué.';
+          setTimeout(() => location.replace('paiement.html'), 1500);
+        } else if (d.error) {
+          msg.textContent = 'Paiement reçu, activation en cours… (' + d.error + ')';
+        }
+      } catch (e) {
+        msg.textContent = 'Paiement confirmé ! L\u2019activation peut prendre quelques instants — rechargez la page.';
+      }
+    }
   }
   if (q.get('promo')) {
     const msg = document.getElementById('promo-msg');
