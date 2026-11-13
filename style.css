@@ -18864,3 +18864,28 @@ body:has(#view-dashboard.active) {
         padding: 8px 10px;
     }
 }
+
+/* ============================================================
+   GRAPH COTATION — montants compacts sur mobile (v2)
+   Deux rendus par montant : complet (« 1234€ », desktop) et compact
+   (« 1,2k », mobile ≤480px). Le compact tient horizontalement
+   au-dessus de la barre étroite, sans chevaucher les mois voisins.
+   ============================================================ */
+.bar-value-compact { display: none; }
+
+@media (max-width: 480px) {
+    .chart-bars {
+        padding-top: 16px;
+    }
+
+    .chart-bar .bar-value {
+        display: block;
+        font-size: 7.5px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        top: -14px;
+    }
+
+    .bar-value-full { display: none; }
+    .bar-value-compact { display: inline; }
+}
