@@ -18319,10 +18319,12 @@ body:has(#view-dashboard.active) {
    de relevés : surface tonale ambre (à faire), grille 2 colonnes
    sur grand écran pour condenser, suggestion intégrée à la carte.
    ============================================================ */
+/* Liste en colonne unique : chaque carte prend toute la largeur du
+   detail, plus de grille 2 colonnes aux hauteurs decalees. */
 .af-recon-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 7px;
 }
 
 .af-recon-item {
@@ -18338,8 +18340,12 @@ body:has(#view-dashboard.active) {
     box-shadow: 0 4px 12px -6px rgba(11, 31, 26, 0.18);
 }
 
+/* Rangee en grille a pistes fixes : icone / texte / montant / bouton
+   s'alignent exactement au meme endroit sur toutes les cartes,
+   impossible que le bouton deborde ou passe sous le texte. */
 .af-recon-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 9px;
 }
@@ -18392,9 +18398,11 @@ body:has(#view-dashboard.active) {
     font-variant-numeric: tabular-nums;
 }
 
-/* Suggestion : ligne compacte intégrée à la carte, pas un gros bloc */
+/* Suggestion : meme grille a pistes fixes, boutons alignes a droite
+   quelle que soit la longueur du libelle. */
 .af-recon-sug {
-    display: flex;
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr) auto;
     align-items: center;
     gap: 7px;
     margin-top: 7px;
@@ -18432,11 +18440,19 @@ body:has(#view-dashboard.active) {
 }
 
 @media (max-width: 640px) {
-    .af-recon-list {
-        grid-template-columns: 1fr;
+    .af-recon-row {
+        grid-template-columns: 30px minmax(0, 1fr) auto;
     }
     .af-recon-amount {
         display: none;
+    }
+    .af-recon-sug {
+        grid-template-columns: 14px minmax(0, 1fr);
+    }
+    .af-recon-sug-actions {
+        grid-column: 2 / -1;
+        justify-self: start;
+        margin-top: 4px;
     }
 }
 
@@ -18643,13 +18659,7 @@ body:has(#view-dashboard.active) {
         gap: 10px;
     }
 }
-
-/* Rapprochement : l'action principale toujours visible, la ligne
-   s'enroule plutôt que de pousser le bouton hors du cadre. */
-.af-recon-row {
-    flex-wrap: wrap;
-}
-
+/* Rapprochement : bouton d'action principal toujours entier, jamais coupe */
 .af-recon-item .af-btn--filled {
     flex-shrink: 0;
     font-size: 0.72rem;
