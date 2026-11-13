@@ -1,9 +1,12 @@
-// ===== Onglet Affaires : taches a faire de temps en temps =====
-// 1. Solde bancaire au 31/12 de l'annee precedente
-// 2. Releves a integrer (checklist annuelle, rendue par reminders.js)
-// 3. Rapprochement des depenses avec les commandes de stock (reconciliation.js)
+// ===== Page « À faire » — tâches ponctuelles du cabinet =====
+// Modèle unifié (Material 3 Expressive) : une carte par tâche.
+//  - Tâches À FAIRE en haut, avec bouton d'action
+//  - Tâches Faites en bas, réduites (titre + badge Fait), dépliables au clic
+//  - Relevés et rapprochement : la checklist vit DANS la carte (plus de doublon)
+// 1. Solde bancaire au 31/12 de l'année précédente
+// 2. Relevés à intégrer (checklist annuelle, rendue par reminders.js)
+// 3. Rapprochement des dépenses avec les commandes de stock (reconciliation.js)
 // 4. Pointage des stocks (rappel hebdomadaire)
-// Badge global sur l'onglet : nombre de choses non completes.
 
 const AFFAIRES_STOCK_POINTAGE_DAYS = 7;
 const AFFAIRES_MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -14,9 +17,13 @@ function affairesEsc(str) {
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function affairesEur(n) {
-    return (Number(n) || 0).toFixed(2).replace('.', ',') + ' €';
-}
+// ---------- Icônes (trait 2, 24px, comme le reste de l'app) ----------
+const AFFAIRES_ICONS = {
+    bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v3M12 14v3M16 14v3"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    match: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+    clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 13l2 2 4-4"/></svg>'
+};
 
 // ---------- 1. Solde bancaire au 31/12 ----------
 function affairesOpeningPending() {
@@ -27,63 +34,19 @@ function affairesOpeningPending() {
     } catch (e) { return false; }
 }
 
-function affairesRenderOpeningBalance() {
-    const el = document.getElementById('affaires-opening-balance');
-    if (!el) return;
-    const year = new Date().getFullYear();
-    const pending = affairesOpeningPending();
-    const html = `
-        <div class="module-card flux-chip-card" style="border-left: 3px solid ${pending ? '#f59e0b' : '#10b981'}; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                <div>
-                    <h3 style="margin:0; font-size:0.85rem; color:${pending ? '#b45309' : '#059669'};">🏦 Solde bancaire au 31/12/${year - 1}</h3>
-                    <p style="margin:4px 0 0; font-size:0.75rem; color:var(--color-text-secondary);">${pending
-                        ? 'À saisir en début d\u2019année : c\u2019est le point de départ du solde bancaire affiché dans Flux.'
-                        : 'Solde enregistré — le solde bancaire de Flux part de la bonne base.'}</p>
-                </div>
-                <button class="action-btn ${pending ? 'primary' : ''}" style="padding:6px 14px; font-size:0.78rem;" onclick="affairesEditOpeningBalance()">${pending ? 'Saisir le solde' : '✓ Fait — modifier'}</button>
-            </div>
-        </div>`;
-    if (el.dataset.html === html) return;
-    el.dataset.html = html;
-    el.innerHTML = html;
-}
-
 window.affairesEditOpeningBalance = async function() {
     if (typeof window.fluxEditOpeningBalance !== 'function') return;
     await window.fluxEditOpeningBalance();
-    affairesRenderOpeningBalance();
+    renderAffairesView();
     updateAffairesBadge();
 };
 
-// ---------- 2. Releves a integrer : carte de tete (checklist rendue par reminders.js) ----------
+// ---------- 2. Relevés à intégrer ----------
 function affairesRelevePendingCount() {
     try {
         if (typeof window.remindersMissingMonths === 'function') return window.remindersMissingMonths().length;
     } catch (e) {}
     return 0;
-}
-
-function affairesRenderReleveTask() {
-    const el = document.getElementById('affaires-releve-task');
-    if (!el) return;
-    const pending = affairesRelevePendingCount();
-    const year = new Date().getFullYear();
-    const html = `
-        <div class="module-card flux-chip-card" style="border-left: 3px solid ${pending ? '#f59e0b' : '#10b981'}; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                <div>
-                    <h3 style="margin:0; font-size:0.85rem; color:${pending ? '#b45309' : '#059669'};">📅 Relevés de compte à intégrer</h3>
-                    <p style="margin:4px 0 0; font-size:0.75rem; color:var(--color-text-secondary);">${pending
-                        ? pending + ' mois de relevé' + (pending > 1 ? 's' : '') + ' de ' + year + ' encore à importer (le relevé du mois courant sort le mois suivant).'
-                        : 'Tous les relevés de ' + year + ' sont validés.'}</p>
-                </div>
-                ${pending ? '<button class="action-btn primary" style="padding:6px 14px; font-size:0.78rem;" onclick="affairesGoImport()">Importer un relevé</button>' : ''}
-            </div>
-        </div>`;
-    if (el.dataset.html === html) return;
-    el.dataset.html = html;
-    el.innerHTML = html;
 }
 
 window.affairesGoImport = function() {
@@ -93,33 +56,12 @@ window.affairesGoImport = function() {
     }
 };
 
-// ---------- 3. Rapprochement des depenses : carte de tete (liste rendue par reconciliation.js) ----------
+// ---------- 3. Rapprochement des dépenses ----------
 function affairesReconPendingCount() {
     try {
         if (typeof reconUnmatchedDepenses === 'function') return reconUnmatchedDepenses().length;
     } catch (e) {}
     return 0;
-}
-
-function affairesRenderReconTask() {
-    const el = document.getElementById('affaires-recon-task');
-    if (!el) return;
-    const pending = affairesReconPendingCount();
-    const html = `
-        <div class="module-card flux-chip-card" style="border-left: 3px solid ${pending ? '#f59e0b' : '#10b981'}; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                <div>
-                    <h3 style="margin:0; font-size:0.85rem; color:${pending ? '#b45309' : '#059669'};">📦 Rapprochement des dépenses</h3>
-                    <p style="margin:4px 0 0; font-size:0.75rem; color:var(--color-text-secondary);">${pending
-                        ? pending + ' dépense' + (pending > 1 ? 's' : '') + ' à rapprocher de commandes fournisseurs passées dans les stocks.'
-                        : 'Toutes les dépenses sont rapprochées de leurs commandes.'}</p>
-                </div>
-                ${pending ? '<button class="action-btn primary" style="padding:6px 14px; font-size:0.78rem;" onclick="toggleReconPending()">Rapprocher</button>' : ''}
-            </div>
-        </div>`;
-    if (el.dataset.html === html) return;
-    el.dataset.html = html;
-    el.innerHTML = html;
 }
 
 // ---------- 4. Pointage des stocks ----------
@@ -131,31 +73,6 @@ function affairesStockPointagePending() {
     } catch (e) { return false; }
 }
 
-function affairesRenderStockPointage() {
-    const el = document.getElementById('affaires-stock-pointage');
-    if (!el) return;
-    const days = (typeof window.urgenceDaysSinceLastPointage === 'function') ? window.urgenceDaysSinceLastPointage() : null;
-    const pending = affairesStockPointagePending();
-    const desc = days === null
-        ? 'Aucun pointage enregistré — cochez ce qui reste réellement dans la salle d\u2019urgence.'
-        : (pending
-            ? 'Dernier pointage il y a ' + days + ' jour' + (days > 1 ? 's' : '') + ' — un pointage hebdomadaire est conseillé.'
-            : 'Dernier pointage il y a ' + days + ' jour' + (days > 1 ? 's' : '') + ' — à jour.');
-    const html = `
-        <div class="module-card flux-chip-card" style="border-left: 3px solid ${pending ? '#f59e0b' : '#10b981'}; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                <div>
-                    <h3 style="margin:0; font-size:0.85rem; color:${pending ? '#b45309' : '#059669'};">📋 Pointage des stocks</h3>
-                    <p style="margin:4px 0 0; font-size:0.75rem; color:var(--color-text-secondary);">${desc}</p>
-                </div>
-                <button class="action-btn ${pending ? 'primary' : ''}" style="padding:6px 14px; font-size:0.78rem;" onclick="affairesGoStockPointage()">${pending ? 'Pointer les stocks' : '✓ Fait — voir'}</button>
-            </div>
-        </div>`;
-    if (el.dataset.html === html) return;
-    el.dataset.html = html;
-    el.innerHTML = html;
-}
-
 window.affairesGoStockPointage = function() {
     if (typeof switchView === 'function') switchView('cabinet');
     setTimeout(function() {
@@ -163,6 +80,111 @@ window.affairesGoStockPointage = function() {
         document.querySelector('.sub-tab[data-subtab=\'urgence-pointage\']')?.click();
     }, 150);
 };
+
+// ---------- Définition des 4 tâches ----------
+function affairesTaskDefs() {
+    const year = new Date().getFullYear();
+    const releveN = affairesRelevePendingCount();
+    const reconN = affairesReconPendingCount();
+    const days = (typeof window.urgenceDaysSinceLastPointage === 'function') ? window.urgenceDaysSinceLastPointage() : null;
+    const stockPending = affairesStockPointagePending();
+    const openingPending = affairesOpeningPending();
+
+    return [
+        {
+            id: 'releve', icon: AFFAIRES_ICONS.calendar,
+            title: 'Relevés de compte ' + year,
+            sub: releveN > 0
+                ? releveN + ' mois à importer' + (releveN > 1 ? 's' : '')
+                : 'Tous les relevés de ' + year + ' sont validés',
+            pending: releveN > 0, hasDetail: true,
+            containerId: 'affaires-releve-checklist',
+            actionLabel: 'Importer', actionFn: 'affairesGoImport()'
+        },
+        {
+            id: 'recon', icon: AFFAIRES_ICONS.match,
+            title: 'Rapprochement des dépenses',
+            sub: reconN > 0
+                ? reconN + ' dépense' + (reconN > 1 ? 's' : '') + ' à rattacher à une commande'
+                : 'Toutes les dépenses sont rattachées à leurs commandes',
+            pending: reconN > 0, hasDetail: true,
+            containerId: 'affaires-recon-pending',
+            actionLabel: 'Rapprocher', actionFn: 'toggleReconPending()'
+        },
+        {
+            id: 'opening', icon: AFFAIRES_ICONS.bank,
+            title: 'Solde bancaire au 31/12/' + (year - 1),
+            sub: openingPending
+                ? 'À saisir — point de départ du solde bancaire de Flux'
+                : 'Solde enregistré — le solde de Flux part de la bonne base',
+            pending: openingPending, hasDetail: false,
+            actionLabel: 'Saisir', actionFn: 'affairesEditOpeningBalance()'
+        },
+        {
+            id: 'stock', icon: AFFAIRES_ICONS.clipboard,
+            title: 'Pointage des stocks',
+            sub: days === null
+                ? 'Aucun pointage enregistré — vérifiez la salle d\u2019urgence'
+                : 'Dernier pointage il y a ' + days + ' jour' + (days > 1 ? 's' : ''),
+            pending: stockPending, hasDetail: false,
+            actionLabel: 'Pointer', actionFn: 'affairesGoStockPointage()'
+        }
+    ];
+}
+
+// ---------- Rendu : liste unifiée, fait en bas ----------
+window.affairesToggleTask = function(id) {
+    try {
+        window._todoOpen = window._todoOpen || {};
+        window._todoOpen[id] = !window._todoOpen[id];
+        const card = document.getElementById('todo-card-' + id);
+        if (card) card.classList.toggle('open', !!window._todoOpen[id]);
+    } catch (e) {}
+};
+
+function affairesRenderCard(t) {
+    const open = (window._todoOpen && window._todoOpen[t.id]) !== undefined
+        ? !!window._todoOpen[t.id]
+        : (t.pending && t.hasDetail); // par défaut : les tâches à faire avec checklist sont dépliées
+    const chevron = t.hasDetail
+        ? '<svg class="todo-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
+        : '';
+    return '<div class="todo-card' + (t.pending ? '' : ' todo-card-done') + (open ? ' open' : '') + '" id="todo-card-' + t.id + '">' +
+        '<div class="todo-card-header" onclick="affairesToggleTask(\'' + t.id + '\')">' +
+            '<span class="todo-icon">' + t.icon + '</span>' +
+            '<div class="todo-card-text">' +
+                '<div class="todo-title">' + affairesEsc(t.title) + '</div>' +
+                '<div class="todo-sub">' + affairesEsc(t.sub) + '</div>' +
+            '</div>' +
+            (t.pending
+                ? '<button class="todo-action" onclick="event.stopPropagation();' + t.actionFn + '">' + affairesEsc(t.actionLabel) + '</button>'
+                : '<span class="todo-chip-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Fait</span>') +
+            chevron +
+        '</div>' +
+        (t.hasDetail
+            ? '<div class="todo-detail"><div id="' + t.containerId + '"></div></div>'
+            : '') +
+    '</div>';
+}
+
+function affairesRenderTasks() {
+    const pendingWrap = document.getElementById('affaires-todo-pending');
+    const doneWrap = document.getElementById('affaires-todo-done-wrap');
+    const doneList = document.getElementById('affaires-todo-done');
+    if (!pendingWrap || !doneList) return;
+
+    const tasks = affairesTaskDefs();
+    const pending = tasks.filter(t => t.pending);
+    const done = tasks.filter(t => !t.pending);
+
+    pendingWrap.innerHTML = pending.map(affairesRenderCard).join('');
+    doneList.innerHTML = done.map(affairesRenderCard).join('');
+    if (doneWrap) {
+        doneWrap.style.display = done.length ? '' : 'none';
+        const cnt = document.getElementById('affaires-todo-done-count');
+        if (cnt) cnt.textContent = done.length;
+    }
+}
 
 // ---------- Badge global ----------
 function affairesPendingCount() {
@@ -189,7 +211,7 @@ function updateAffairesBadge() {
 }
 window.updateAffairesBadge = updateAffairesBadge;
 
-// ---------- Notification debut de mois : importer le releve N-1 ----------
+// ---------- Notification début de mois : importer le relevé N-1 ----------
 function affairesMonthlyNotify() {
     try {
         const now = new Date();
@@ -210,10 +232,7 @@ window.affairesMonthlyNotify = affairesMonthlyNotify;
 
 // ---------- Rendu global ----------
 function renderAffairesView() {
-    affairesRenderOpeningBalance();
-    affairesRenderReleveTask();
-    affairesRenderReconTask();
-    affairesRenderStockPointage();
+    affairesRenderTasks();
     if (typeof window.renderReminders === 'function') window.renderReminders();
     if (typeof window.renderReconPending === 'function') window.renderReconPending();
     updateAffairesBadge();
@@ -221,7 +240,7 @@ function renderAffairesView() {
 }
 window.renderAffairesView = renderAffairesView;
 
-// Rafraichissement quand les donnees cabinet arrivent (meme si on est sur une autre vue)
+// Rafraîchissement quand les données cabinet arrivent (même si on est sur une autre vue)
 (function() {
     const real = window.renderAffairesView;
     let timer = null;

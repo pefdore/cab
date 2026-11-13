@@ -1,13 +1,13 @@
-const CACHE_NAME = 'cabix-v202612071100';
+const CACHE_NAME = 'cabix-v202612071200';
 const ASSETS = [
   '/',
   '/index.html',
-  '/app.v5.js?v=202612071100',
+  '/app.v5.js?v=202612071200',
   '/secretariat.js?v=2026103024000',
   '/secretaire-space.js?v=2026103024000',
   '/urgence.js?v=202611201000',
   '/urgence-orders.js?v=202611161000',
-  '/style.css?v=202612071100',
+  '/style.css?v=202612071200',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
