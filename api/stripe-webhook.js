@@ -10,7 +10,10 @@
 
 import crypto from 'crypto';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wlpbnxnvctlmhndqvvim.supabase.co';
+let SUPABASE_URL = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '').replace(/^"|"$/g, '');
+if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL)) {
+    SUPABASE_URL = 'https://wlpbnxnvctlmhndqvvim.supabase.co';
+}
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 

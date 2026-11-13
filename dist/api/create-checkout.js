@@ -72,7 +72,12 @@ async function handleCheckout(req, res) {
 
     const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
     const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wlpbnxnvctlmhndqvvim.supabase.co';
+    // Nettoyage defensif : coquille dans SUPABASE_URL (espace, guillemet,
+    // slash final, http) -> retour au projet par defaut plutot que fetch failed.
+    let SUPABASE_URL = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '').replace(/^"|"$/g, '');
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL)) {
+        SUPABASE_URL = 'https://wlpbnxnvctlmhndqvvim.supabase.co';
+    }
     const SITE_URL = process.env.SITE_URL || 'https://cabix.io';
 
     if (!SERVICE_KEY) {
