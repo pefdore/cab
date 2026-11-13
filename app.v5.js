@@ -4419,7 +4419,7 @@ async function loadBillingStatus() {
             badge.textContent = 'Pro'; green();
             const planLabels = { solo: 'Solo', cabinet: 'Cabinet', groupe: 'Groupe', structure: 'Structure' };
             stateText.textContent = 'Formule ' + (planLabels[access.plan] || access.plan) + ' active — tous les membres du cabinet sont couverts.';
-            if (renewalText) renewalText.textContent = access.current_period_end ? 'Prochain renouvellement : ' + fmtDate(access.current_period_end) : '';
+            if (renewalText) renewalText.textContent = access.current_period_end ? 'Abonnement en cours jusqu\u2019au ' + fmtDate(access.current_period_end) : '';
             if (menuValue) menuValue.textContent = 'Pro · ' + (planLabels[access.plan] || access.plan);
         } else if (access.reason === 'free') {
             badge.textContent = 'Accès offert'; gold();
@@ -4437,6 +4437,41 @@ async function loadBillingStatus() {
         badge.textContent = 'Erreur';
         badge.style.background = '#F1F5F4'; badge.style.color = '#6A817B';
         stateText.textContent = "Impossible de charger l'état de l'abonnement pour le moment.";
+    }
+
+    // Factures du cabinet (table optionnelle avant migration)
+    try {
+        const profile = window.currentProfile || null;
+        let cabinetId = profile?.cabinet_id || null;
+        if (!cabinetId && currentUser?.id && supabaseClient) {
+            const { data: p } = await supabaseClient.from('profiles')
+                .select('cabinet_id').eq('id', currentUser.id).single();
+            cabinetId = p?.cabinet_id || null;
+        }
+        const body = document.getElementById('subInvoicesBody');
+        if (!body || !cabinetId) return;
+        const { data: invoices, error } = await supabaseClient.from('subscription_invoices')
+            .select('*').eq('cabinet_id', cabinetId).order('paid_at', { ascending: false });
+        if (error) {
+            body.innerHTML = '<tr><td colspan="4" class="admin-empty">Factures indisponibles pour le moment.</td></tr>';
+            return;
+        }
+        if (!invoices || !invoices.length) {
+            body.innerHTML = '<tr><td colspan="4" class="admin-empty">Aucun paiement enregistré pour le moment.</td></tr>';
+            return;
+        }
+        const planLabels = { solo: 'Solo', cabinet: 'Cabinet', groupe: 'Groupe', structure: 'Structure' };
+        body.innerHTML = invoices.map(inv => {
+            const date = new Date(inv.paid_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const amount = ((inv.amount_cents || 0) / 100).toLocaleString('fr-FR', { style: 'currency', currency: (inv.currency || 'eur').toUpperCase() });
+            const plan = (planLabels[inv.plan] || inv.plan || '—') + (inv.billing_interval === 'monthly' ? ' (mensuel)' : inv.billing_interval === 'yearly' ? ' (annuel)' : '');
+            const link = inv.pdf_url
+                ? '<a href="' + adminEsc(inv.pdf_url) + '" target="_blank" rel="noopener" style="color:#087457;font-weight:600;">Télécharger le PDF</a>'
+                : (inv.hosted_url ? '<a href="' + adminEsc(inv.hosted_url) + '" target="_blank" rel="noopener" style="color:#087457;font-weight:600;">Voir sur Stripe</a>' : '—');
+            return '<tr><td>' + date + '</td><td>' + amount + '</td><td>' + adminEsc(plan) + '</td><td>' + link + '</td></tr>';
+        }).join('');
+    } catch (e) {
+        console.error('[BILLING] invoices error:', e);
     }
 }
 window.loadBillingStatus = loadBillingStatus;

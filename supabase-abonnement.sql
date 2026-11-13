@@ -330,3 +330,37 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Exemple : créer un code d'accès gratuit illimité pour un partenaire
 -- INSERT INTO promo_codes (code, label, type, value, max_uses)
 -- VALUES ('CABIX-PARTENAIRE', 'Accès offert réseau', 'full_access', NULL, 100);
+
+-- ------------------------------------------------------------
+-- 9) Factures d'abonnement (PDF hébergés par Stripe)
+--    Remplies par le webhook (invoice.paid) et par l'API
+--    verify-session au retour du paiement.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS subscription_invoices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cabinet_id UUID NOT NULL REFERENCES cabinets(id) ON DELETE CASCADE,
+    stripe_invoice_id TEXT UNIQUE,
+    stripe_session_id TEXT,
+    amount_cents INTEGER,
+    currency TEXT DEFAULT 'eur',
+    plan TEXT,
+    billing_interval TEXT,
+    pdf_url TEXT,
+    hosted_url TEXT,
+    paid_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE subscription_invoices ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Members can view cabinet invoices" ON subscription_invoices;
+CREATE POLICY "Members can view cabinet invoices" ON subscription_invoices
+    FOR SELECT TO authenticated USING (
+        EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.cabinet_id = cabinet_id)
+    );
+
+DROP POLICY IF EXISTS "Platform admin can view all invoices" ON subscription_invoices;
+CREATE POLICY "Platform admin can view all invoices" ON subscription_invoices
+    FOR SELECT TO authenticated USING (
+        EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+    );
