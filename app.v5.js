@@ -7438,7 +7438,9 @@ function renderCharts() {
         `;
     }
     
-    const monthlyChartContainer = document.getElementById('monthlyChart');
+    // Conteneur de tracé : la boîte défilante interne si présente (mobile :
+    // graph scrollable horizontalement), sinon la carte elle-même.
+    const monthlyChartContainer = document.getElementById('monthlyChartScroll') || document.getElementById('monthlyChart');
     const barsContainer = document.getElementById('monthlyChartBars');
     const labelsContainer = document.getElementById('monthlyChartLabels');
     

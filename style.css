@@ -18681,26 +18681,233 @@ body:has(#view-dashboard.active) {
 }
 
 /* ============================================================
-   GRAPH COTATION — montants visibles sur mobile (version compacte)
-   Deux rendus par montant : complet (« 1234€ », desktop) et compact
-   (« 1,2k », mobile). Le compact tient horizontalement au-dessus
-   d'une barre étroite, sans rotation ni chevauchement.
+   GRAPH COTATION — montants visibles sur mobile (graph défilant)
+   Sur mobile, le graph garde ses proportions desktop (colonnes
+   larges, montants complets horizontaux) et se parcourt d'un geste
+   horizontal. Les lignes de tendance vivent dans la boîte défilante
+   et suivent le défilement.
    ============================================================ */
-.bar-value-compact { display: none; }
+.chart-scroll {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
 
 @media (max-width: 480px) {
-    .chart-bars {
-        padding-top: 16px;
+    #monthlyChart {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .chart-scroll {
+        min-width: 560px;
+    }
+
+    /* Colonnes et montants aux proportions desktop : la largeur vient
+       du défilement, plus du tassement. */
+    .chart-bar-column {
+        min-width: 20px;
+        max-width: 60px;
     }
 
     .chart-bar .bar-value {
         display: block;
-        font-size: 7.5px;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        top: -14px;
+        font-size: 9px;
+        top: -16px;
     }
 
-    .bar-value-full { display: none; }
-    .bar-value-compact { display: inline; }
+    .chart-bar-column .chart-bar-label {
+        font-size: 9px;
+    }
+
+    .chart-bars {
+        padding-top: 18px;
+    }
+}
+
+/* ============================================================
+   PAGE « FLUX » — passe Material 3 Expressive
+   Harmonisée avec les pages À faire et Urgence : grands rayons,
+   tonal surfaces, overlines, state layers, chiffres tabulaires.
+   ============================================================ */
+
+/* ---- Hero : le point focal du mois ---- */
+#view-flux .flux-hero {
+    border-radius: 28px;
+    padding: 24px 26px;
+}
+
+#view-flux .fhero-arrow {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 1.3rem;
+    line-height: 1;
+    transition: background 0.15s ease, transform 0.12s ease;
+}
+
+#view-flux .fhero-arrow:active {
+    transform: scale(0.92);
+}
+
+#view-flux .fhero-balance-value {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
+#view-flux .fhero-kpi {
+    border-radius: 20px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#view-flux .fhero-kpi:hover {
+    transform: translateY(-2px);
+}
+
+#view-flux .fhero-kpi-value {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+/* ---- Cartes de section : même gabarit que le reste de l'app ---- */
+#view-flux .module-card.md-card {
+    border-radius: 24px;
+    border: 1px solid var(--color-border, #E2ECE8);
+    transition: box-shadow 0.18s ease;
+}
+
+#view-flux .module-card.md-card:hover {
+    box-shadow: 0 6px 18px -10px rgba(11, 31, 26, 0.14);
+}
+
+#view-flux .md-card-head h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0;
+}
+
+/* Overline M3 pour les sous-sections */
+#view-flux .md-subsection-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-tertiary, #94a3b8);
+    margin: 14px 0 8px;
+}
+
+/* ---- Jour par jour ---- */
+#view-flux .flux-day-header {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary, #94a3b8);
+    background: var(--color-bg-subtle, #f1f5f9);
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 999px;
+}
+
+#view-flux .flux-row {
+    border-radius: 14px;
+    padding: 9px 12px;
+    margin: 4px 0;
+    border: 1px solid transparent;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+#view-flux .flux-row:hover {
+    border-color: var(--color-border, #E2ECE8);
+    background: color-mix(in srgb, var(--color-primary, #6366f1) 3%, transparent);
+}
+
+#view-flux .flux-row .amount {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* Boutons d'action : cercles tonaux avec state layer */
+#view-flux .icon-btn-28 {
+    border-radius: 999px;
+    transition: background 0.15s ease, transform 0.12s ease;
+}
+
+#view-flux .icon-btn-28:hover {
+    background: color-mix(in srgb, var(--color-primary, #6366f1) 12%, transparent);
+}
+
+#view-flux .icon-btn-28:active {
+    transform: scale(0.9);
+}
+
+/* ---- Par catégorie & six derniers mois ---- */
+#view-flux .flux-cat-row,
+#view-flux .flux-month-row {
+    border-radius: 14px;
+    padding: 9px 12px;
+    margin: 3px 0;
+    border-bottom: none;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+#view-flux .flux-month-row:hover {
+    background: color-mix(in srgb, var(--color-primary, #6366f1) 8%, transparent);
+    transform: translateX(2px);
+}
+
+#view-flux .flux-month-row.current {
+    background: color-mix(in srgb, var(--color-primary, #6366f1) 12%, transparent);
+    box-shadow: inset 3px 0 0 var(--color-primary, #6366f1);
+    font-weight: 600;
+}
+
+#view-flux .flux-cat-amounts span,
+#view-flux .flux-month-row .flux-cat-amounts span {
+    font-variant-numeric: tabular-nums;
+}
+
+#view-flux .flux-month-bank {
+    background: var(--color-bg-subtle, #f1f5f9);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.72rem;
+}
+
+/* ---- Rangée solde d'ouverture ---- */
+#view-flux .flux-opening-row {
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--color-primary, #6366f1) 8%, transparent);
+    padding: 10px 14px;
+}
+
+#view-flux .flux-opening-edit {
+    border-radius: 999px;
+    font-weight: 600;
+    transition: background 0.15s ease;
+}
+
+@media (max-width: 640px) {
+    #view-flux .flux-hero {
+        border-radius: 20px;
+        padding: 18px 16px;
+    }
+    #view-flux .fhero-arrow {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+    #view-flux .flux-row,
+    #view-flux .flux-cat-row,
+    #view-flux .flux-month-row {
+        padding: 8px 10px;
+    }
 }
