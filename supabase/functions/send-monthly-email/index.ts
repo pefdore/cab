@@ -68,9 +68,12 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Get accounting email
-    const accountingEmail = Deno.env.get('ACCOUNTING_EMAIL') || 'comptabilite@hopital.fr'
-    console.log('ACCOUNTING_EMAIL:', accountingEmail)
+    // Confidentialite : plus de fallback global. La copie comptable n'est
+    // envoyee QUE si le medecin a lui-meme renseigne une adresse comptable
+    // dans ses Parametres (user_settings.accounting_email). On ne lit jamais
+    // une adresse globale : elle appartiendrait a un autre medecin.
+    const accountingEmail = ''
+    console.log('Copie comptable : uniquement si adresse renseignee par le medecin lui-meme')
 
     // Get previous month - use France timezone (UTC+2)
     const now = new Date()
@@ -141,8 +144,11 @@ Deno.serve(async (req) => {
       
       if (!userEmail) continue
 
-      // Email comptabilite du medecin : depuis ses Parametres (user_settings), sinon la variable globale
-      let medecinAccEmail = accountingEmail
+      // Email comptabilite du medecin : UNIQUEMENT depuis ses Parametres
+      // personnels (user_settings.accounting_email). Pas de fallback : si le
+      // medecin n'a rien renseigne, aucune copie n'est envoyee (ses donnees
+      // ne doivent jamais atterrir chez un autre medecin).
+      let medecinAccEmail = ''
       try {
         const { data: settingRow } = await supabase
           .from('user_settings')
@@ -151,7 +157,8 @@ Deno.serve(async (req) => {
           .eq('key', 'accounting_email')
           .maybeSingle()
         if (settingRow && settingRow.value) medecinAccEmail = settingRow.value
-      } catch (_e) { /* fallback vers global */ }
+      } catch (_e) { /* pas de copie comptable */ }
+      if (!medecinAccEmail) console.log(`Pas d'adresse comptable personnelle pour ${userEmail} : aucune copie envoyee`)
 
       // Recalcul des sous-totaux depuis les passages du mois (meme regle EHPAD que le PDF)
       // pdf.month_key = 'AAAA-MM' du mois concerne
@@ -221,7 +228,7 @@ Deno.serve(async (req) => {
       // Send to accounting (email fixe defini dans les Parametres du medecin)
       // Sauf si c'est la meme adresse que le medecin : inutile d'envoyer deux fois le meme mail
       const memeAdresse = (a: string, b: string) => (a || '').toLowerCase().trim() === (b || '').toLowerCase().trim()
-      if (medecinAccEmail && medecinAccEmail !== 'comptabilite@hopital.fr' && !memeAdresse(medecinAccEmail, userEmail)) {
+      if (medecinAccEmail && !memeAdresse(medecinAccEmail, userEmail)) {
         const accountingResult = await sendMail({
           to: [medecinAccEmail],
           subject: `Honoraires ${pdf.month_name} - Dr ${userLastName} ${userName}`,
