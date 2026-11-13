@@ -13420,7 +13420,7 @@ window.setTransactionRejected = setTransactionRejected;
 // ============================================================
 // ESPACE ADMINISTRATEUR (vue 360 de la plateforme)
 // ============================================================
-let adminCache = { cabinets: [], users: [], requests: [], subscriptions: [] };
+let adminCache = { cabinets: [], users: [], requests: [], subscriptions: [], promos: [], redemptions: [] };
 let adminSortState = { cabinets: { key: null, dir: 1 }, users: { key: null, dir: 1 } };
 const ADMIN_ROLE_COLORS = {
     medecin_installe: '#10b981',
@@ -13493,6 +13493,16 @@ async function loadAdminData() {
         // Table optionnelle (avant migration supabase-abonnement.sql) : fail-soft
         adminCache.subscriptions = (subsRes && !subsRes.error && subsRes.data) ? subsRes.data : [];
         if (subsRes && subsRes.error) console.warn('[ADMIN] cabinet_subscriptions illisible:', subsRes.error.message);
+
+        // Codes promo + utilisations (tables optionnelles avant migration)
+        const [promosRes, redemptionsRes] = await Promise.all([
+            Promise.resolve(supabaseClient.from('promo_codes').select('*').order('created_at', { ascending: false })),
+            Promise.resolve(supabaseClient.from('promo_redemptions').select('*, promo_codes(code)').order('redeemed_at', { ascending: false }))
+        ]);
+        adminCache.promos = (promosRes && !promosRes.error && promosRes.data) ? promosRes.data : [];
+        adminCache.redemptions = (redemptionsRes && !redemptionsRes.error && redemptionsRes.data) ? redemptionsRes.data : [];
+        if (promosRes && promosRes.error) console.warn('[ADMIN] promo_codes illisible:', promosRes.error.message);
+        if (redemptionsRes && redemptionsRes.error) console.warn('[ADMIN] promo_redemptions illisible:', redemptionsRes.error.message);
         adminCache.cabinets.forEach(c => {
             const members = adminCache.users.filter(u => u.cabinet_id === c.id);
             c._designation = cabinetDesignation(members, c.name || c.address) || (c.name || c.address || 'Sans nom');
@@ -13513,6 +13523,7 @@ function renderAdminAll() {
     renderAdminTopCabinets();
     renderAdminAlerts();
     renderAdminProfit();
+    renderAdminPromo();
     fillAdminCabinetFilter();
     renderAdminCabinets();
     renderAdminUsers();
@@ -13604,8 +13615,144 @@ function renderAdminProfit() {
 }
 window.renderAdminProfit = renderAdminProfit;
 
+// ===== Onglet Codes promo =====
+function adminSuggestPromoCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s = '';
+    for (let i = 0; i < 6; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    document.getElementById('promoNewCode').value = 'CABIX-' + s;
+}
+window.adminSuggestPromoCode = adminSuggestPromoCode;
+
+function adminPromoTypeChanged() {
+    const t = document.getElementById('promoNewType').value;
+    const group = document.getElementById('promoNewValueGroup');
+    const label = document.getElementById('promoNewValueLabel');
+    group.style.display = t === 'full_access_unlimited' ? 'none' : '';
+    label.textContent = t === 'percent_off' ? 'Réduction (%)' : 'Nombre de mois';
+}
+window.adminPromoTypeChanged = adminPromoTypeChanged;
+
+function adminPromoTypeLabel(pc) {
+    if (pc.type === 'full_access') return pc.value === null ? 'Gratuité illimitée' : 'Gratuité ' + pc.value + ' mois';
+    if (pc.type === 'percent_off') return 'Réduction ' + pc.value + ' %';
+    if (pc.type === 'months_free') return pc.value + ' mois offerts (essai étendu)';
+    return pc.type;
+}
+
+async function adminCreatePromo() {
+    const codeEl = document.getElementById('promoNewCode');
+    const code = (codeEl.value || '').trim().toUpperCase();
+    if (!code) { alert('Indiquez un code (ou générez-en un).'); return; }
+    const typeSel = document.getElementById('promoNewType').value;
+    const valueRaw = document.getElementById('promoNewValue').value;
+    const maxUsesRaw = document.getElementById('promoNewMaxUses').value;
+    const label = document.getElementById('promoNewLabel').value.trim();
+
+    let type, value;
+    if (typeSel === 'full_access_unlimited') { type = 'full_access'; value = null; }
+    else if (typeSel === 'full_access_months') {
+        type = 'full_access';
+        value = parseInt(valueRaw, 10);
+        if (!value || value < 1) { alert('Indiquez le nombre de mois.'); return; }
+    } else {
+        type = 'percent_off';
+        value = parseFloat(valueRaw);
+        if (!value || value <= 0 || value > 100) { alert('Indiquez une réduction entre 1 et 100 %.'); return; }
+    }
+    const max_uses = maxUsesRaw ? parseInt(maxUsesRaw, 10) : null;
+
+    const { error } = await supabaseClient.from('promo_codes')
+        .insert({ code, label: label || null, type, value, max_uses });
+    if (error) {
+        alert(error.code === '23505' ? 'Ce code existe déjà.' : 'Erreur : ' + error.message);
+        return;
+    }
+    codeEl.value = '';
+    document.getElementById('promoNewLabel').value = '';
+    document.getElementById('promoNewValue').value = '';
+    document.getElementById('promoNewMaxUses').value = '';
+    await loadAdminData();
+}
+window.adminCreatePromo = adminCreatePromo;
+
+async function adminUpdatePromo(id, patch) {
+    const { error } = await supabaseClient.from('promo_codes').update(patch).eq('id', id);
+    if (error) { alert('Erreur : ' + error.message); return; }
+    await loadAdminData();
+}
+window.adminUpdatePromo = adminUpdatePromo;
+
+async function adminTogglePromo(id, active) {
+    await adminUpdatePromo(id, { active });
+}
+window.adminTogglePromo = adminTogglePromo;
+
+async function adminDeletePromo(id, code) {
+    if (!confirm('Supprimer le code ' + code + ' ?\nLes cabinets qui l\u2019ont déjà activé conservent leur accès.')) return;
+    const { error } = await supabaseClient.from('promo_codes').delete().eq('id', id);
+    if (error) { alert('Erreur : ' + error.message); return; }
+    await loadAdminData();
+}
+window.adminDeletePromo = adminDeletePromo;
+
+function renderAdminPromo() {
+    const promos = adminCache.promos || [];
+    const redemptions = adminCache.redemptions || [];
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' }) : '';
+
+    const body = document.getElementById('adminPromoBody');
+    if (body) {
+        if (!promos.length) {
+            body.innerHTML = '<tr><td colspan="6" class="admin-empty">Aucun code pour le moment — créez-en un ci-dessus.</td></tr>';
+        } else {
+            body.innerHTML = promos.map(pc => {
+                const uses = pc.times_used || 0;
+                const usage = uses === 0
+                    ? '<span style="color:#6A817B;">Jamais utilisé</span>'
+                    : uses + ' cabinet' + (uses > 1 ? 's' : '') + (pc.max_uses ? ' / ' + pc.max_uses : '');
+                const status = pc.active
+                    ? '<span style="color:#087457;font-weight:600;">Actif</span>'
+                    : '<span style="color:#8A2E2E;font-weight:600;">Désactivé</span>';
+                return '<tr>' +
+                    '<td style="font-family:monospace;font-weight:700;">' + adminEsc(pc.code) + '</td>' +
+                    '<td>' + adminEsc(adminPromoTypeLabel(pc)) + '</td>' +
+                    '<td><input class="admin-search" style="min-width:120px;" value="' + adminEsc(pc.label || '') + '" onchange="adminUpdatePromo(\'' + pc.id + '\', { label: this.value.trim() || null })"></td>' +
+                    '<td>' + usage + '</td>' +
+                    '<td>' + status + '</td>' +
+                    '<td style="white-space:nowrap;">' +
+                        '<button class="action-btn" onclick="adminTogglePromo(\'' + pc.id + '\', ' + (!pc.active) + ')">' + (pc.active ? 'Désactiver' : 'Réactiver') + '</button> ' +
+                        '<button class="action-btn" onclick="adminDeletePromo(\'' + pc.id + '\', \'' + adminEsc(pc.code) + '\')">Supprimer</button>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+        }
+    }
+
+    const rbody = document.getElementById('adminPromoRedemptions');
+    if (rbody) {
+        if (!redemptions.length) {
+            rbody.innerHTML = '<tr><td colspan="4" class="admin-empty">Aucune utilisation pour le moment.</td></tr>';
+        } else {
+            rbody.innerHTML = redemptions.slice(0, 30).map(r => {
+                const cab = adminCache.cabinets.find(c => c.id === r.cabinet_id);
+                const members = cab ? adminCache.users.filter(u => u.cabinet_id === cab.id) : [];
+                const designation = cab ? (cabinetDesignation(members, cab.name || cab.address) || cab.name || cab.address || 'Cabinet') : 'Cabinet supprimé';
+                const user = adminCache.users.find(u => u.id === r.redeemed_by);
+                const userName = user ? (user.first_name + ' ' + user.last_name) : '—';
+                return '<tr>' +
+                    '<td style="font-family:monospace;font-weight:700;">' + adminEsc((r.promo_codes && r.promo_codes.code) || '—') + '</td>' +
+                    '<td>' + adminEsc(designation) + '</td>' +
+                    '<td>' + adminEsc(userName) + '</td>' +
+                    '<td>' + fmtDate(r.redeemed_at) + '</td>' +
+                '</tr>';
+            }).join('');
+        }
+    }
+}
+
 function adminSwitchTab(tab) {
-    ['overview', 'cabinets', 'users', 'requests', 'profit'].forEach(t => {
+    ['overview', 'cabinets', 'users', 'requests', 'profit', 'promo'].forEach(t => {
         const panel = document.getElementById('adminTab' + t.charAt(0).toUpperCase() + t.slice(1));
         if (panel) panel.style.display = (t === tab) ? '' : 'none';
     });
@@ -14174,6 +14321,6 @@ window.adminExportCSV = adminExportCSV;
 (function restoreAdminTab() {
     try {
         const t = sessionStorage.getItem('cab_admin_tab');
-        if (t && ['overview', 'cabinets', 'users', 'requests'].includes(t)) adminSwitchTab(t);
+        if (t && ['overview', 'cabinets', 'users', 'requests', 'profit', 'promo'].includes(t)) adminSwitchTab(t);
     } catch (e) {}
 })();
