@@ -18145,3 +18145,19 @@ body:has(#view-dashboard.active) {
         padding: 0 12px 12px 12px;
     }
 }
+
+/* Page À faire : les en-têtes internes des checklists (doublon du titre
+   de la carte) sont masqués ; seul le corps importe dans la carte. */
+.todo-detail .flux-chip-card > div:first-child {
+    display: none;
+}
+
+.todo-detail #releve-checklist-body,
+.todo-detail #recon-pending-body {
+    margin-top: 0 !important;
+}
+
+/* Première carte : respirer sous le titre de page */
+#view-affaires .md-section-head {
+    margin-bottom: 16px;
+}
