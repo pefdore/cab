@@ -64,8 +64,8 @@ export default async function handler(req, res) {
     const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wlpbnxnvctlmhndqvvim.supabase.co';
     const SITE_URL = process.env.SITE_URL || 'https://cabix.io';
 
-    if (!STRIPE_KEY || !SERVICE_KEY) {
-        return json(res, 500, { error: 'config_manquante', details: 'STRIPE_SECRET_KEY et SUPABASE_SERVICE_ROLE_KEY requis' });
+    if (!SERVICE_KEY) {
+        return json(res, 500, { error: 'config_manquante', details: 'SUPABASE_SERVICE_ROLE_KEY requis' });
     }
 
     let payload = {};
@@ -124,6 +124,11 @@ export default async function handler(req, res) {
     // Montant : palier cabinet, réduction éventuelle du code percent_off
     const unit = interval === 'monthly' ? PLANS[plan].monthly : PLANS[plan].yearly;
     const unitAmount = Math.round(unit * (100 - percentOff) / 100);
+
+    // A partir d'ici, un paiement Stripe est necessaire
+    if (!STRIPE_KEY) {
+        return json(res, 500, { error: 'stripe_non_configure', details: 'STRIPE_SECRET_KEY non définie sur le serveur' });
+    }
 
     // Facturation : cree un client Stripe au nom du cabinet/SCM si demande,
     // sinon la facture est adressee au membre qui regle (email perso).

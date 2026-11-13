@@ -307,6 +307,26 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Activation par un membre connecté (sans dépendre de l'API paiement /
+-- Stripe) : vérifie l'appartenance au cabinet puis délègue à
+-- cabix_activate_promo. C'est ce que la page paiement.html appelle.
+CREATE OR REPLACE FUNCTION cabix_member_activate_promo(p_cabinet_id UUID, p_code TEXT)
+RETURNS JSONB AS $$
+DECLARE
+    uid UUID := auth.uid();
+BEGIN
+    IF uid IS NULL THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'non_authentifie');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM profiles WHERE id = uid AND cabinet_id = p_cabinet_id) THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'pas_membre_du_cabinet');
+    END IF;
+
+    RETURN cabix_activate_promo(p_cabinet_id, p_code, uid);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Exemple : créer un code d'accès gratuit illimité pour un partenaire
 -- INSERT INTO promo_codes (code, label, type, value, max_uses)
 -- VALUES ('CABIX-PARTENAIRE', 'Accès offert réseau', 'full_access', NULL, 100);
