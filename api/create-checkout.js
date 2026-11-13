@@ -181,7 +181,8 @@ async function handleCheckout(req, res) {
             'metadata[plan]': plan,
             'metadata[interval]': interval,
             'metadata[promo_code]': promo_code || '',
-            'payment_method_types[0]': 'card',
+            // payment_method_types est deprecie : les moyens de paiement se
+            // gerent desormais dans le Dashboard Stripe (Settings > Payment methods).
             success_url: SITE_URL + '/paiement.html?success=1&session_id={CHECKOUT_SESSION_ID}',
             cancel_url: SITE_URL + '/paiement.html?canceled=1'
         }, STRIPE_KEY);
