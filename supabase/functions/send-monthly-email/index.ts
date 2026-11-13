@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
     let smtpTransport: any = null
     let resend: any = null
-    let fromAddress = 'Cotation Médecin <onboarding@resend.dev>'
+    let fromAddress = 'Cabix.io <onboarding@resend.dev>'
 
     if (gmailUser && gmailPass) {
       smtpTransport = nodemailer.createTransport({
@@ -34,10 +34,10 @@ Deno.serve(async (req) => {
         secure: true,
         auth: { user: gmailUser, pass: gmailPass }
       })
-      // Nom d'affichage : le destinataire voit "Cabix" plutot que l'adresse
+      // Nom d'affichage : le destinataire voit "Cabix.io" plutot que l'adresse
       // brute du compte Gmail (meme confort qu'avec Resend).
-      fromAddress = `"Cabix" <${gmailUser}>`
-      console.log('Envoi via SMTP Gmail:', gmailUser, '(expediteur affiche : Cabix)')
+      fromAddress = `"Cabix.io" <${gmailUser}>`
+      console.log('Envoi via SMTP Gmail:', gmailUser, '(expediteur affiche : Cabix.io)')
     } else {
       if (!resendApiKey) {
         throw new Error('Ni GMAIL_USER/GMAIL_APP_PASSWORD ni RESEND_API_KEY configures')
@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
             </div>
             <p>Vous trouverez ci-joint le PDF détaillé de la feuille d'honoraires.</p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-            <p style="color: #6b7280; font-size: 12px;">Cet email a été envoyé automatiquement par l'application Cotation Médecin.</p>
+            <p style="color: #6b7280; font-size: 12px;">Cet email a été envoyé grâce à <strong>Cabix.io</strong>.</p>
           </div>
         `
 
