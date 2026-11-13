@@ -90,6 +90,38 @@ export default async function handler(req, res) {
             return json(res, 500, { error: 'activation_echouee', details: err.slice(0, 300) });
         }
 
+        // Récupérer la facture Stripe (PDF hébergé) et l'enregistrer pour le cabinet
+        try {
+            let inv = null;
+            if (session.invoice) {
+                const invRes = await fetch('https://api.stripe.com/v1/invoices/' + encodeURIComponent(session.invoice), {
+                    headers: { 'Authorization': 'Bearer ' + STRIPE_KEY }
+                });
+                if (invRes.ok) inv = await invRes.json();
+            }
+            await fetch(SUPABASE_URL + '/rest/v1/subscription_invoices', {
+                method: 'POST',
+                headers: {
+                    'apikey': SERVICE_KEY,
+                    'Authorization': 'Bearer ' + SERVICE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal, resolution=ignore-duplicates'
+                },
+                body: JSON.stringify({
+                    cabinet_id: cabinetId,
+                    stripe_invoice_id: inv ? inv.id : null,
+                    stripe_session_id: session.id,
+                    amount_cents: inv ? (inv.amount_paid || inv.amount_due) : (session.amount_total || null),
+                    currency: (inv && inv.currency) || session.currency || 'eur',
+                    plan,
+                    billing_interval: interval,
+                    pdf_url: inv ? inv.invoice_pdf : null,
+                    hosted_url: inv ? inv.hosted_invoice_url : null,
+                    paid_at: new Date().toISOString()
+                })
+            });
+        } catch (e) { /* la facture restera disponible via le webhook */ }
+
         return json(res, 200, { activated: true, plan, interval });
     } catch (e) {
         return json(res, 500, { error: 'serveur', details: e && e.message ? e.message : String(e) });

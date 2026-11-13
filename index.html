@@ -1675,6 +1675,26 @@ window.attemptLogin = function() {
                     </div>
 
                     <div class="settings-section">
+                        <h3>Factures & paiements</h3>
+                        <p class="settings-desc">Historique des paiements du cabinet et factures PDF (hébergées par Stripe).</p>
+                        <div class="admin-table-wrap" style="border:1px solid var(--color-border, #E2ECE8);border-radius:12px;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Payé le</th>
+                                        <th>Montant</th>
+                                        <th>Formule</th>
+                                        <th>Facture</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subInvoicesBody">
+                                    <tr><td colspan="4" class="admin-empty">Chargement…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
                         <h3>Comment ça marche</h3>
                         <p class="settings-desc" style="margin-bottom:8px;">• <strong>Un seul abonnement par cabinet</strong> : tous les associés, salariés et secrétaires sont inclus, aucun paiement individuel requis.</p>
                         <p class="settings-desc" style="margin-bottom:8px;">• <strong>Essai gratuit de 30 jours</strong> au moment de la création du cabinet, pour toute l'équipe.</p>

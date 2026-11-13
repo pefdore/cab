@@ -122,8 +122,28 @@ export default async function handler(req, res) {
         const lines = inv.lines?.data || [];
         const meta = lines[0]?.metadata || {};
         const cabinetId = meta.cabinet_id;
+        const plan = meta.plan || null;
         const interval = meta.interval || inv.lines?.data?.[0]?.price?.recurring?.interval === 'month'
             ? 'monthly' : 'yearly';
+
+        // Enregistrer la facture (PDF Stripe) pour le cabinet — idempotent
+        if (cabinetId && inv.id) {
+            try {
+                await supabaseInsert('subscription_invoices', {
+                    cabinet_id: cabinetId,
+                    stripe_invoice_id: inv.id,
+                    amount_cents: inv.amount_paid || inv.amount_due,
+                    currency: inv.currency || 'eur',
+                    plan,
+                    billing_interval: interval,
+                    pdf_url: inv.invoice_pdf || null,
+                    hosted_url: inv.hosted_invoice_url || null,
+                    paid_at: inv.status_transitions && inv.status_transitions.paid_at
+                        ? new Date(inv.status_transitions.paid_at * 1000).toISOString()
+                        : new Date().toISOString()
+                });
+            } catch (e) { /* ignoré : idempotence par stripe_invoice_id */ }
+        }
         if (cabinetId) {
             await supabaseUpdate('cabinet_subscriptions',
                 'cabinet_id=eq.' + encodeURIComponent(cabinetId), {
