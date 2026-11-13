@@ -18679,3 +18679,38 @@ body:has(#view-dashboard.active) {
     flex: 1;
     min-width: 0;
 }
+
+/* ============================================================
+   GRAPH COTATION — montants visibles sur mobile
+   Les montants étaient masqués (display:none) sous 480px. On les
+   affiche en vertical au-dessus des barres : lisibles sans
+   chevaucher les colonnes voisines (12 mois sur petit écran).
+   ============================================================ */
+@media (max-width: 480px) {
+    .chart-bars {
+        /* marge de sécurité pour les étiquettes verticales au-dessus
+           des barres les plus hautes */
+        padding-top: 26px;
+    }
+
+    .chart-bar .bar-value {
+        display: block;
+        font-size: 8.5px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        top: auto;
+        bottom: 100%;
+        left: 50%;
+        margin-bottom: 3px;
+        transform: translate(-50%, 0) rotate(-90deg);
+        transform-origin: center bottom;
+        white-space: nowrap;
+    }
+}
+
+/* Très petits écrans : la rotation reste, taille légèrement réduite */
+@media (max-width: 360px) {
+    .chart-bar .bar-value {
+        font-size: 7.5px;
+    }
+}
