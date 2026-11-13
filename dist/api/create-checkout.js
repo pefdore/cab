@@ -174,6 +174,10 @@ async function handleCheckout(req, res) {
             'line_items[0][price_data][unit_amount]': unitAmount,
             'line_items[0][price_data][product_data][name]': PLANS[plan].label + ' — ' + PLANS[plan].members,
             'line_items[0][price_data][recurring][interval]': interval === 'monthly' ? 'month' : 'year',
+            // Managed Payments (activé par défaut sur les nouveaux comptes Stripe)
+            // exige un tax_code produit ; nos prix sont TTC sans gestion de taxe
+            // par Stripe -> désactivé sur la session (option indiquée par Stripe).
+            'managed_payments[enabled]': 'false',
             'subscription_data[metadata][cabinet_id]': cabinet_id,
             'subscription_data[metadata][plan]': plan,
             'subscription_data[metadata][interval]': interval,
