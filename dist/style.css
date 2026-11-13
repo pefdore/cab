@@ -18439,3 +18439,207 @@ body:has(#view-dashboard.active) {
         display: none;
     }
 }
+
+/* ============================================================
+   PAGE « SALLE D'URGENCE » — passe Material 3 Expressive
+   Même langage que la page À faire : grands rayons, tonal
+   surfaces, pills, en-têtes cohérents, états au survol.
+   ============================================================ */
+
+/* Bannière appel d'urgence : le point focal de la page */
+#view-urgence .urgence-call-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-radius: 20px;
+    background: color-mix(in srgb, #ef4444 14%, transparent);
+    border: 1px solid color-mix(in srgb, #ef4444 38%, transparent);
+    margin: 4px 0 18px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+#view-urgence .urgence-call-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #dc2626;
+}
+
+#view-urgence .urgence-call-number::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: urgencePulse 2s ease-in-out infinite;
+}
+
+@keyframes urgencePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.8); }
+}
+
+/* Cartes de la page : même gabarit que les cartes À faire */
+#view-urgence .module-card {
+    border-radius: 24px;
+    border: 1px solid var(--color-border, #E2ECE8);
+    transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+#view-urgence .module-card:hover {
+    box-shadow: 0 6px 18px -10px rgba(11, 31, 26, 0.16);
+}
+
+#view-urgence .module-card h3 {
+    font-size: 0.98rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 4px;
+}
+
+#view-urgence .module-desc {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary, #64748b);
+}
+
+/* Carte DAE dépliable : en-tête cliquable explicite */
+#view-urgence .urgence-quick-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 20px;
+    transition: background 0.12s ease;
+}
+
+#view-urgence .urgence-quick-header:active {
+    background: color-mix(in srgb, var(--color-primary, #6366f1) 8%, transparent);
+}
+
+#view-urgence .urgence-collapse-arrow {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary, #94a3b8);
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Actions rapides : pills M3 */
+#view-urgence .urgence-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+#view-urgence .urgence-quick-actions .action-btn {
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+#view-urgence .urgence-weight-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-bg-subtle, #f1f5f9);
+    border: 1px solid var(--color-border, #E2ECE8);
+    border-radius: 999px;
+    padding: 4px 6px 4px 14px;
+}
+
+#view-urgence .urgence-weight-row label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary, #64748b);
+}
+
+#view-urgence .urgence-weight-row .form-input {
+    width: 76px;
+    text-align: center;
+    border: none;
+    background: var(--color-bg-elevated, #fff);
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 0.9rem;
+}
+
+#view-urgence .urgence-weight-unit {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #64748b);
+    padding-right: 8px;
+}
+
+/* Protocoles : cartes plus expressives */
+#view-urgence .urgence-protocol-card {
+    border-radius: 20px;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+#view-urgence .urgence-protocol-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -12px rgba(11, 31, 26, 0.22);
+}
+
+#view-urgence .urgence-protocol-header {
+    padding: 16px 18px;
+    border-radius: 20px 20px 0 0;
+}
+
+#view-urgence .urgence-protocol-header h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+#view-urgence .urgence-protocol-intro {
+    border-radius: 14px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+#view-urgence .urgence-protocol-body {
+    padding: 16px 18px 18px;
+}
+
+/* Table des stocks : conteneur arrondi, en-têtes discrets */
+#view-urgence .urgence-stock-table {
+    border: 1px solid var(--color-border, #E2ECE8);
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+#view-urgence .urgence-stock-table thead th {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary, #94a3b8);
+    background: var(--color-bg-subtle, #f1f5f9);
+    padding: 10px 14px;
+}
+
+#view-urgence .urgence-stock-table tbody td {
+    padding: 11px 14px;
+    font-size: 0.85rem;
+}
+
+/* Alertes de stock : pills tonales */
+#view-urgence .urgence-alert {
+    border-radius: 14px;
+    font-size: 0.82rem;
+}
+
+@media (max-width: 640px) {
+    #view-urgence .urgence-call-banner {
+        font-size: 0.9rem;
+        padding: 13px 14px;
+        border-radius: 16px;
+    }
+    #view-urgence .urgence-protocols-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}

@@ -22,7 +22,8 @@ const AFFAIRES_ICONS = {
     bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v3M12 14v3M16 14v3"/></svg>',
     calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
     match: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
-    clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 13l2 2 4-4"/></svg>'
+    clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 13l2 2 4-4"/></svg>',
+    calendarCheck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 15.5l2 2 4-4"/></svg>'
 };
 
 // ---------- 1. Solde bancaire au 31/12 ----------
@@ -64,7 +65,46 @@ function affairesReconPendingCount() {
     return 0;
 }
 
-// ---------- 4. Pointage des stocks ----------
+// ---------- 4. Dates de réunion à répondre (sondage) ----------
+// Une réunion "date à définir" avec des dates proposées sur lesquelles
+// l'utilisateur n'a pas encore voté -> tâche à faire.
+async function affairesLoadReunionPending() {
+    try {
+        if (typeof reunionGetCabinetId !== 'function' || typeof reunionLoadProposals !== 'function') return 0;
+        const sc = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+        const uid = (window.currentUser && window.currentUser.id) ||
+                    (typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null);
+        if (!uid || !sc) return 0;
+        const cabinetId = await reunionGetCabinetId();
+        if (!cabinetId) return 0;
+        const { data: reunions } = await sc.from('reunions')
+            .select('id').eq('cabinet_id', cabinetId).is('date_reunion', null);
+        if (!reunions || !reunions.length) return 0;
+        let count = 0;
+        for (const r of reunions.slice(0, 10)) {
+            const proposals = await reunionLoadProposals(cabinetId, r.id);
+            if (!proposals.length) continue;
+            const { data: myVotes } = await sc.from('reunion_date_votes')
+                .select('proposal_id').eq('user_id', uid)
+                .in('proposal_id', proposals.map(p => p.id));
+            const voted = new Set((myVotes || []).map(v => v.proposal_id));
+            if (proposals.some(p => !voted.has(p.id))) count++;
+        }
+        return count;
+    } catch (e) {
+        console.error('[AFFAIRES] reunion pending error:', e);
+        return 0;
+    }
+}
+
+window.affairesGoReunionVote = function() {
+    if (typeof switchView === 'function') switchView('cabinet');
+    setTimeout(function() {
+        document.querySelector('.cabinet-tab[data-tab=\'reunions\']')?.click();
+    }, 150);
+};
+
+// ---------- 5. Pointage des stocks ----------
 function affairesStockPointagePending() {
     try {
         if (typeof window.urgenceDaysSinceLastPointage !== 'function') return false;
@@ -90,7 +130,9 @@ function affairesTaskDefs() {
     const stockPending = affairesStockPointagePending();
     const openingPending = affairesOpeningPending();
 
-    return [
+    const reunionN = window._affairesReunionPending || 0;
+
+    const tasks = [
         {
             id: 'releve', icon: AFFAIRES_ICONS.calendar,
             title: 'Relevés de compte ' + year,
@@ -130,6 +172,20 @@ function affairesTaskDefs() {
             actionLabel: 'Pointer', actionFn: 'affairesGoStockPointage()'
         }
     ];
+
+    // Dates de réunion à répondre : la carte n'apparaît QUE s'il y a
+    // quelque chose à faire (pas de carte "faite" inutile sinon).
+    if (reunionN > 0) {
+        tasks.unshift({
+            id: 'reunion', icon: AFFAIRES_ICONS.calendarCheck,
+            title: 'Dates de réunion à confirmer',
+            sub: reunionN + ' réunion' + (reunionN > 1 ? 's' : '') + ' avec des dates proposées en attente de votre réponse',
+            pending: true, hasDetail: false,
+            actionLabel: 'Répondre', actionFn: 'affairesGoReunionVote()'
+        });
+    }
+
+    return tasks;
 }
 
 // ---------- Rendu : liste unifiée, fait en bas ----------
@@ -221,6 +277,7 @@ function affairesPendingCount() {
     n += affairesRelevePendingCount();
     n += affairesReconPendingCount();
     if (affairesStockPointagePending()) n++;
+    n += (window._affairesReunionPending || 0);
     return n;
 }
 
@@ -261,6 +318,15 @@ window.affairesMonthlyNotify = affairesMonthlyNotify;
 // ---------- Rendu global ----------
 function renderAffairesView() {
     affairesRenderTasks();
+    // Les votes de réunion sont asynchrones : charger puis re-rendre si
+    // le compte change (sans boucle : on ne relance pas si identique).
+    affairesLoadReunionPending().then(n => {
+        if ((window._affairesReunionPending || 0) !== n) {
+            window._affairesReunionPending = n;
+            affairesRenderTasks();
+            updateAffairesBadge();
+        }
+    }).catch(() => {});
     if (typeof window.renderReminders === 'function') window.renderReminders();
     if (typeof window.renderReconPending === 'function') window.renderReconPending();
     updateAffairesBadge();
