@@ -253,7 +253,7 @@ function wireEvents(client, session) {
         }
         else { alert(data.error === 'code_invalide' ? 'Code invalide.' : 'Erreur : ' + (data.details || data.error)); btn.disabled = false; btn.textContent = 'Choisir'; }
       } catch (e) {
-        alert('Erreur de connexion au paiement. Réessayez.');
+        alert('Erreur de connexion au paiement : ' + (e && e.message ? e.message : 'réessayez, et vérifiez que le déploiement est à jour.'));
         btn.disabled = false; btn.textContent = 'Choisir';
       }
     });
