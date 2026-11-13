@@ -57,6 +57,17 @@ async function supabaseGet(table, query, serviceKey, url) {
 }
 
 export default async function handler(req, res) {
+  try {
+    return await handleCheckout(req, res);
+  } catch (e) {
+    // Toujours renvoyer du JSON : une erreur brute ferait echouer le
+    // r.json() cote client ("Erreur de connexion au paiement") sans
+    // donner la vraie cause.
+    return json(res, 500, { error: 'serveur', details: e && e.message ? e.message : String(e) });
+  }
+}
+
+async function handleCheckout(req, res) {
     if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
     const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
