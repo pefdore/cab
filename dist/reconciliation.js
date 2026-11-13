@@ -219,30 +219,36 @@ window.renderReconPending = function() {
             </div>
             <div id="recon-pending-body" class="af-recon" style="display:${open ? 'block' : 'none'};">
             <p class="af-hint">Paiements fournisseurs probablement liés à des commandes passées dans les stocks. Rapprochez chaque dépense de sa commande pour suivre le coût réel du stock.</p>
+            <div class="af-recon-list">
             ${(window._reconShowAll ? pending : pending.slice(0, 8)).map(d => {
                 const best = reconBestMatch(d);
                 return `
-                <div class="depense-item flux-row">
-                    <div class="flux-row-main">
-                        <span class="category">${reconEscapeHtml(d.category || '')}</span>
-                        <span class="description">${reconEscapeHtml(d.description || '-')}</span>
-                        <span class="date-small">${d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '-'}</span>
-                    </div>
-                    <div class="flux-row-side">
-                        <span class="amount">-${Number(d.amount).toFixed(2)}€</span>
-                        <button class="action-btn" onclick="openReconModal(${d.id})">Rapprocher</button>
+                <div class="af-recon-item">
+                    <div class="af-recon-row">
+                        <span class="af-recon-ic">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                        </span>
+                        <div class="af-recon-main">
+                            <span class="af-recon-cat">${reconEscapeHtml(d.category || '')}</span>
+                            <span class="af-recon-desc">${reconEscapeHtml(d.description || '-')}${d.date ? ' · ' + new Date(d.date).toLocaleDateString('fr-FR') : ''}</span>
+                        </div>
+                        <span class="af-recon-amount">-${Number(d.amount).toFixed(2)} €</span>
+                        <button class="af-btn" onclick="openReconModal(${d.id})" title="Choisir la commande à rattacher">Rattacher</button>
                     </div>
                     ${best ? `
-                    <div class="recon-suggest">
-                        <span class="recon-suggest-icon">✨</span>
-                        <span class="recon-suggest-label">${reconEscapeHtml(reconOrderLabel(best.order))}</span>
-                        <span class="recon-suggest-actions">
-                            <button class="action-btn primary" onclick="reconQuickLink(${d.id}, '${best.order.id}')">Rapprocher</button>
-                            <button class="action-btn" onclick="openReconModal(${d.id})">Voir le détail</button>
+                    <div class="af-recon-sug">
+                        <span class="af-recon-sug-ic">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>
+                        </span>
+                        <span class="af-recon-sug-label">${reconEscapeHtml(reconOrderLabel(best.order))}</span>
+                        <span class="af-recon-sug-actions">
+                            <button class="af-btn af-btn--filled" onclick="reconQuickLink(${d.id}, '${best.order.id}')">Rapprocher</button>
+                            <button class="af-btn" onclick="openReconModal(${d.id})">Détail</button>
                         </span>
                     </div>` : ''}
                 </div>`;
             }).join('')}
+            </div>
             ${pending.length > 8 ? `<button class="af-showall" onclick="reconToggleShowAll()">${window._reconShowAll ? 'Réduire la liste' : 'Afficher les ' + (pending.length - 8) + ' autre' + (pending.length - 8 > 1 ? 's' : '') + ' (' + pending.length + ' au total)'}</button>` : ''}
             </div>
         </div>`;
