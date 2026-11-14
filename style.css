@@ -18925,3 +18925,154 @@ body:has(#view-dashboard.active) {
     width: 12px;
     height: 12px;
 }
+
+/* ============================================================
+   FAB — MATERIAL 3 EXPRESSIVE
+   Forme carree arrondie (squircle) avec morphing de rayon :
+   repos 18px -> survol 24px -> presse 12px -> ouvert (cercle).
+   State layers au survol/pressé, ressort elastique, items en
+   pills tonales avec entree en cascade.
+   ============================================================ */
+.fab-main {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px !important;
+    background: var(--md-primary, var(--color-primary)) !important;
+    color: #fff !important;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 20px -6px rgba(79, 70, 229, 0.5), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    transition:
+        border-radius 0.4s var(--md-spring),
+        transform 0.4s var(--md-spring),
+        box-shadow 0.25s ease !important;
+}
+
+/* State layer M3 : voile de la couleur du contenu au survol/pressé */
+.fab-main::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.fab-main:hover::after { opacity: 0.1; }
+.fab-main:active::after { opacity: 0.16; }
+
+.fab-main:hover {
+    border-radius: 24px !important;
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 10px 26px -8px rgba(79, 70, 229, 0.55), 0 3px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.fab-main:active {
+    border-radius: 12px !important;
+    transform: scale(0.9) !important;
+}
+
+/* Ouvert : le FAB se morphe en cercle, l'icone devient une croix */
+.fab-container.open .fab-main {
+    border-radius: 50% !important;
+}
+
+/* ---- Items du menu : pills tonales M3 ---- */
+.fab-menu {
+    gap: 10px;
+}
+
+.fab-menu-item {
+    border-radius: 999px !important;
+    padding: 8px 20px 8px 9px !important;
+    background: var(--md-surface-high, var(--color-bg-elevated)) !important;
+    box-shadow: 0 5px 16px -6px rgba(11, 31, 26, 0.2), 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+    transition:
+        transform 0.3s var(--md-spring),
+        background 0.15s ease,
+        box-shadow 0.2s ease !important;
+}
+
+.fab-menu-item:hover {
+    background: var(--md-primary-container, #e8e6ff) !important;
+    transform: translateX(-4px) !important;
+    box-shadow: 0 8px 22px -8px rgba(11, 31, 26, 0.24), 0 2px 6px rgba(0, 0, 0, 0.07) !important;
+}
+
+.fab-menu-item:active {
+    transform: scale(0.96) !important;
+}
+
+/* Icone : cercle tonal (primary container / on-primary container) */
+.fab-menu-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px !important;
+    background: var(--md-primary-container, #e8e6ff) !important;
+    font-size: 15px;
+    transition: transform 0.3s var(--md-spring);
+}
+
+.fab-menu-item:hover .fab-menu-icon {
+    transform: scale(1.08);
+}
+
+.fab-menu-label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--color-text);
+}
+
+/* Entree en cascade : chaque item rebondit avec un léger decalage */
+.fab-container.open .fab-menu-item {
+    animation: fabItemIn 0.4s var(--md-spring) backwards;
+}
+
+.fab-container.open .fab-menu-item:nth-child(1) { animation-delay: 0.03s; }
+.fab-container.open .fab-menu-item:nth-child(2) { animation-delay: 0.07s; }
+.fab-container.open .fab-menu-item:nth-child(3) { animation-delay: 0.11s; }
+.fab-container.open .fab-menu-item:nth-child(4) { animation-delay: 0.15s; }
+.fab-container.open .fab-menu-item:nth-child(5) { animation-delay: 0.19s; }
+
+@keyframes fabItemIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.88);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Mobile : FAB legerement plus compact, morphing conserve */
+@media (max-width: 768px) {
+    .fab-main {
+        width: 54px;
+        height: 54px;
+        border-radius: 17px !important;
+    }
+    .fab-main:hover {
+        border-radius: 22px !important;
+    }
+    .fab-main:active {
+        border-radius: 11px !important;
+    }
+    .fab-container.open .fab-main {
+        border-radius: 50% !important;
+    }
+    .fab-menu-item {
+        padding: 7px 16px 7px 8px !important;
+    }
+    .fab-menu-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+    .fab-menu-label {
+        font-size: 12.5px;
+    }
+}
