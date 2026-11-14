@@ -18899,3 +18899,29 @@ body:has(#view-dashboard.active) {
     .bar-value-full { display: none; }
     .bar-value-compact { display: inline; }
 }
+
+/* ============================================================
+   LIEN RETOUR « Plus » dans les titres de section (ex: Documents)
+   Meme style que le back-link des sous-sections de Plus.
+   ============================================================ */
+.md-section-head .back-link {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+    transition: color 0.15s ease;
+}
+
+.md-section-head .back-link:hover {
+    color: var(--color-text);
+}
+
+.md-section-head .back-link svg {
+    width: 12px;
+    height: 12px;
+}
