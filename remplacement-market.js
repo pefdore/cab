@@ -99,7 +99,7 @@
     }
 
     function updateNavBadge() {
-        ['remplNavBadge', 'remplNavBadgeMobile'].forEach(function(id) {
+        ['remplNavBadge'].forEach(function(id) {
             var el = document.getElementById(id);
             if (!el) return;
             el.style.display = RM.unreadCount > 0 ? 'flex' : 'none';
@@ -253,10 +253,14 @@
        RENDU
        ============================================================ */
     function render() {
-        var view = document.getElementById('view-remplacement');
+        var view = document.getElementById('rm-root');
         if (!view) return;
         if (!RM.role) RM.role = myRole();
         if (!RM.role) return;
+        if (RM.role !== 'medecin_installe' && RM.role !== 'medecin_remplacant' && RM.role !== 'docteur_junior' && RM.role !== 'admin') {
+            view.innerHTML = '<div class="rm-empty">Le marché des remplacements est réservé aux médecins.</div>';
+            return;
+        }
 
         var html = '';
         html += '<div class="rm-header">';
@@ -308,8 +312,8 @@
 
     window.rmSwitchTab = function(tab) {
         RM.currentTab = tab;
-        document.querySelectorAll('#view-remplacement .rm-tab').forEach(function(b) { b.classList.remove('active'); });
-        var btns = document.querySelectorAll('#view-remplacement .rm-tab');
+        document.querySelectorAll('#rm-root .rm-tab').forEach(function(b) { b.classList.remove('active'); });
+        var btns = document.querySelectorAll('#rm-root .rm-tab');
         var order = isRemplacantSide() ? ['marche', 'madispo', 'mesCand', 'invits'] : ['marche', 'mesoffres', 'cand', 'mesSollicitations'];
         var idx = order.indexOf(tab);
         if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
@@ -913,14 +917,6 @@
     /* ============================================================
        INIT / POLLING
        ============================================================ */
-    function applyRoleVisibility() {
-        var role = myRole();
-        var show = (role === 'medecin_installe' || role === 'medecin_remplacant' || role === 'docteur_junior' || role === 'admin');
-        document.querySelectorAll('[data-view="remplacement"]').forEach(function(el) {
-            el.style.display = show ? '' : 'none';
-        });
-    }
-
     window.onRemplacementViewShown = function() {
         if (!RM.ready) return;
         RM.role = myRole();
@@ -933,7 +929,6 @@
         RM.ready = true;
         RM.role = myRole();
         injectStyles();
-        applyRoleVisibility();
         if (RM.pollTimer) clearInterval(RM.pollTimer);
         RM.pollTimer = setInterval(function() {
             if (!window.currentUser) return;
