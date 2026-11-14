@@ -100,6 +100,7 @@ window.attemptLogin = function() {
                         <option value="">Sélectionner...</option>
                         <option value="medecin_installe">Médecin installé</option>
                         <option value="medecin_remplacant">Médecin remplaçant</option>
+                        <option value="docteur_junior">Docteur junior</option>
                         <option value="secretaire">Secrétaire</option>
                     </select>
                 </div>
@@ -503,6 +504,13 @@ window.attemptLogin = function() {
                         <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                     </svg>
                     Urgence
+                </a>
+                <a href="#" class="nav-item" data-view="remplacement" style="position:relative;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    Remplacement
+                    <span id="remplNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#ef4444; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
                 </a>
                 <a href="#" class="nav-item" data-view="cabinet" style="position:relative;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1333,6 +1341,7 @@ window.attemptLogin = function() {
                                 <select id="profileRole" disabled>
                                     <option value="medecin_installe">Médecin installé</option>
                                     <option value="medecin_remplacant">Médecin remplaçant</option>
+                                    <option value="docteur_junior">Docteur junior</option>
                                     <option value="secretaire">Secrétaire</option>
                                 </select>
                             </div>
@@ -1741,6 +1750,10 @@ window.attemptLogin = function() {
             </section>
 
             <!-- Cabinet View -->
+            <section id="view-remplacement" class="view">
+                <div class="rm-empty">Chargement du marché des remplacements…</div>
+            </section>
+
             <section id="view-cabinet" class="view">
                 <div class="cabinet-page-header">
                     <div class="md-section-head">
@@ -2731,6 +2744,7 @@ window.attemptLogin = function() {
                                     <option value="">Tous les rôles</option>
                                     <option value="medecin_installe">Médecins installés</option>
                                     <option value="medecin_remplacant">Remplaçants</option>
+                                    <option value="docteur_junior">Docteurs juniors</option>
                                     <option value="secretaire">Secrétaires</option>
                                     <option value="admin">Administrateurs</option>
                                 </select>
@@ -3705,6 +3719,12 @@ window.attemptLogin = function() {
                 </svg>
                 <span>Urgence</span>
             </a>
+            <a href="#" class="mobile-nav-item" data-view="remplacement" style="position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span style="position:relative;">Rempl.<span id="remplNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#ef4444; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
+            </a>
             <a href="#" class="mobile-nav-item" data-view="cabinet">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -3756,6 +3776,7 @@ window.attemptLogin = function() {
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
     <script src="app.v5.js?v=202612080600" defer></script>
+    <script src="remplacement-market.js?v=202612090100" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=202612011000" defer></script>
     <script src="urgence.js?v=202612071800" defer></script>
