@@ -3755,7 +3755,7 @@ window.attemptLogin = function() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     
-    <script src="app.v5.js?v=202612080100" defer></script>
+    <script src="app.v5.js?v=202612080300" defer></script>
     <script src="secretariat.js?v=2026110115000" defer></script>
     <script src="secretaire-space.js?v=202612011000" defer></script>
     <script src="urgence.js?v=202612071800" defer></script>
@@ -4735,17 +4735,11 @@ window.attemptLogin = function() {
         const historyContainer = document.getElementById('historyList');
         const noHistoryEl = document.getElementById('noHistory');
         
-        // Show/hide accounting sheets based on filter
-        if (currentDocFilter === 'comptabilite' || currentDocFilter === 'all') {
-          if (historyContainer) historyContainer.style.display = 'block';
-          // Render accounting sheets if history data is loaded
-          if (typeof renderHistory === 'function' && typeof history !== 'undefined' && history.length > 0) {
-            renderHistory();
-          }
-        } else {
-          if (historyContainer) historyContainer.style.display = 'none';
-          if (noHistoryEl) noHistoryEl.style.display = 'none';
-        }
+        // Presentation unifiee : plus de liste compacte separée en haut de la
+        // section. Les feuilles de comptabilite s'affichent comme des cartes
+        // document standard (fusionnees dans la liste ci-dessous).
+        if (historyContainer) historyContainer.style.display = 'none';
+        if (noHistoryEl) noHistoryEl.style.display = 'none';
         
         if (!container) return;
         
@@ -4755,6 +4749,30 @@ window.attemptLogin = function() {
         } else if (currentDocFilter === 'comptabilite') {
           // Feuille de comptabilite hopital EHPAD : les feuilles generees de cette categorie
           filteredDocs = allDocuments.filter(doc => doc.category && doc.category.startsWith('comptabilite-hopital-ehpad'));
+        }
+
+        // Fusion : les feuilles presentes dans la table comptabilite (source
+        // des envois mail) mais sans carte document correspondante sont
+        // affichees comme des cartes standard — meme presentation que tous
+        // les autres documents, sans doublon quand la carte existe deja.
+        if ((currentDocFilter === 'all' || currentDocFilter === 'comptabilite') && typeof history !== 'undefined' && Array.isArray(history)) {
+          const coveredMonths = new Set(
+            allDocuments
+              .filter(d => (d.category || '').startsWith('comptabilite-hopital-ehpad'))
+              .map(d => { const m = (d.file_name || '').match(/(\d{4}-\d{2})\.pdf$/); return m ? m[1] : null; })
+              .filter(Boolean)
+          );
+          history.forEach(h => {
+            if (!h.monthKey || coveredMonths.has(h.monthKey)) return;
+            filteredDocs.push({
+              id: 'cpt-' + h.id,
+              _comptaId: h.id,
+              file_name: 'feuille-comptabilite-hopital-ehpad-' + h.monthKey + '.pdf',
+              description: 'Feuille de comptabilité hôpital EHPAD - ' + (h.monthName || h.monthKey),
+              category: 'comptabilite-hopital-ehpad - Feuille de comptabilité hôpital EHPAD',
+              doc_date: h.generatedAt ? String(h.generatedAt).split('T')[0] : ''
+            });
+          });
         }
         
         const sortSelect = document.getElementById('docSortSelect');
@@ -4787,6 +4805,36 @@ window.attemptLogin = function() {
           const date = doc.doc_date ? new Date(doc.doc_date).toLocaleDateString('fr-FR') : (doc.created_at ? new Date(doc.created_at).toLocaleDateString('fr-FR') : '');
           const catClass = doc.category ? 'cat-' + doc.category.split('-')[0].trim() : '';
           const categoryLabel = doc.category ? doc.category.replace(/^\d+\.\d+\s*-\s*/, '').trim() : '';
+          // Carte fusionnee issue de la table comptabilite : le PDF est en
+          // base64 (pas d'URL de stockage) -> boutons Telecharger/Supprimer,
+          // la suppression passe par le popup de confirmation habituel.
+          const isComptaCard = String(doc.id).indexOf('cpt-') === 0;
+          const actionsHtml = isComptaCard
+            ? `<button class="btn-icon" onclick="downloadPDF('${doc._comptaId}')" title="Télécharger">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+               </button>
+               <button class="btn-icon btn-delete" onclick="deletePDF('${doc._comptaId}')" title="Supprimer">
+                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+               </button>`
+            : `<button class="btn-icon" onclick="editDocument('${doc.id}')" title="Modifier">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-icon" onclick="window.open('${doc.file_url}', '_blank')" title="Voir">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+              </button>
+              <button class="btn-icon btn-delete" onclick="deleteDocument('${doc.id}')" title="Supprimer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>`;
           return `
             <div class="document-item" data-doc-id="${doc.id}">
               <div class="document-icon">
@@ -4800,27 +4848,7 @@ window.attemptLogin = function() {
                 ${doc.annotation ? `<div class="document-meta" style="font-style: italic; color: var(--color-text-secondary); font-size: 0.7rem;">${doc.annotation}</div>` : ''}
               </div>
               <span class="document-category-badge ${catClass}">${categoryLabel}</span>
-              <div class="document-actions">
-                <button class="btn-icon" onclick="editDocument('${doc.id}')" title="Modifier">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-                <button class="btn-icon" onclick="window.open('${doc.file_url}', '_blank')" title="Voir">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15 3 21 3 21 9"/>
-                    <line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                </button>
-                <button class="btn-icon btn-delete" onclick="deleteDocument('${doc.id}')" title="Supprimer">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </button>
-              </div>
+              <div class="document-actions">${actionsHtml}</div>
             </div>
           `;
         }).join('');
@@ -4930,6 +4958,18 @@ window.attemptLogin = function() {
             .eq('id', docId);
           
           if (error) throw error;
+
+          // Feuille de comptabilite : supprimer aussi l'entree correspondante
+          // dans la table comptabilite (source des envois mail mensuels),
+          // sinon elle reapparaitrait comme carte fusionnee.
+          if (doc && (doc.category || '').startsWith('comptabilite-hopital-ehpad')) {
+            const m = (doc.file_name || '').match(/(\d{4}-\d{2})\.pdf$/);
+            if (m) {
+              try {
+                await window.supabaseClient.from('comptabilite').delete().eq('month_key', m[1]);
+              } catch (_e) { /* la carte principale est deja supprimee */ }
+            }
+          }
           
           alert('Document supprimé!');
           loadDocuments();
