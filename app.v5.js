@@ -199,7 +199,7 @@ async function onAuthSuccess() {
     // NOW switch to the view the user was on before reload (dashboard by default) - data is ready
     let lastView = 'dashboard';
     try { lastView = sessionStorage.getItem('cab_current_view') || 'dashboard'; } catch (e) {}
-    if (['dashboard', 'flux', 'urgence', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
+    if (['dashboard', 'flux', 'urgence', 'history', 'cabinet', 'settings', 'remplacement'].indexOf(lastView) === -1) lastView = 'dashboard';
     // Membre en attente de validation (secretaire OU medecin ayant rejoint un
     // cabinet) : force la vue cabinet, la seule qui affiche le bandeau d'attente
     if (typeof secIsMemberLocked === 'function' && secIsMemberLocked()) {
@@ -232,6 +232,11 @@ async function onAuthSuccess() {
     // Initialize replacements module
     if (typeof initRemplacements === 'function') {
         initRemplacements();
+    }
+    
+    // Initialize marketplace remplacements (mise en relation installes / remplacants / juniors)
+    if (typeof initRemplacementMarket === 'function') {
+        initRemplacementMarket();
     }
     
     // Apply cotation visibility on load
@@ -4842,6 +4847,7 @@ async function loadProfileData() {
 const PROFILE_ROLE_LABELS = {
     medecin_installe: 'Médecin installé',
     medecin_remplacant: 'Médecin remplaçant',
+    docteur_junior: 'Docteur junior',
     secretaire: 'Secrétaire'
 };
 
@@ -5186,7 +5192,8 @@ function switchView(viewName) {
         'affaires': 'À faire',
         'cabinet': 'Cabinet',
         'admin': 'Administration',
-        'settings': 'Plus'
+        'settings': 'Plus',
+        'remplacement': 'Remplacement'
     };
     
     const mobileTitle = document.getElementById('mobilePageTitle');
@@ -5205,6 +5212,8 @@ function switchView(viewName) {
         renderCharts();
     } else if (viewName === 'admin') {
         if (isAdminUser()) loadAdminData();
+    } else if (viewName === 'remplacement') {
+        if (typeof onRemplacementViewShown === 'function') onRemplacementViewShown();
     } else if (viewName === 'history') {
         renderHistory();
         if (typeof loadDocuments === 'function') {
