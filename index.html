@@ -505,13 +505,6 @@ window.attemptLogin = function() {
                     </svg>
                     Urgence
                 </a>
-                <a href="#" class="nav-item" data-view="remplacement" style="position:relative;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    Remplacement
-                    <span id="remplNavBadge" style="display:none; position:absolute; top:6px; right:10px; background:#ef4444; color:white; font-size:0.62rem; font-weight:700; min-width:16px; height:16px; border-radius:8px; align-items:center; justify-content:center; padding:0 4px;">0</span>
-                </a>
                 <a href="#" class="nav-item" data-view="cabinet" style="position:relative;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -1750,10 +1743,6 @@ window.attemptLogin = function() {
             </section>
 
             <!-- Cabinet View -->
-            <section id="view-remplacement" class="view">
-                <div class="rm-empty">Chargement du marché des remplacements…</div>
-            </section>
-
             <section id="view-cabinet" class="view">
                 <div class="cabinet-page-header">
                     <div class="md-section-head">
@@ -1777,7 +1766,7 @@ window.attemptLogin = function() {
                     </button>
                     <button class="cabinet-tab" data-tab="remplacants">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        <span>Remplaçant</span>
+                        <span style="position:relative;">Remplaçant<span id="remplNavBadge" style="display:none; position:absolute; top:-8px; right:-14px; background:#ef4444; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
                     </button>
                 </div>
                 
@@ -2366,107 +2355,8 @@ window.attemptLogin = function() {
                     </div>
                 </div>
                 <div id="cabinet-remplacants" class="cabinet-tab-content">
-                    <!-- Sub-tabs for replacement module -->
-                    <div class="sub-tabs replacement-sub-tabs">
-                        <button class="sub-tab active" data-subtab="offres" onclick="switchReplacementTab('offres')">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                            Offres
-                        </button>
-                        <button class="sub-tab" data-subtab="candidatures" onclick="switchReplacementTab('candidatures')">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Candidatures
-                            <span id="candidatures-badge" class="badge" style="display:none;">0</span>
-                        </button>
-                        <button class="sub-tab" data-subtab="remplacants" onclick="switchReplacementTab('remplacants')">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Remplaçons
-                        </button>
-                        <button class="sub-tab" data-subtab="historique" onclick="switchReplacementTab('historique')">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            Historique
-                        </button>
-                    </div>
-                    
-                    <!-- OFFRES SECTION -->
-                    <div id="remplacants-offres" class="replacement-sub-content active">
-                        <div class="section-header">
-                            <h3>Mes offres de remplacement</h3>
-                            <button class="action-btn primary" onclick="openOffreModal()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Nouvelle offre
-                            </button>
-                        </div>
-                        <div id="offresList" class="offres-grid"></div>
-                        <div id="noOffres" class="no-entries" style="display:none;">
-                            <p>Aucune offre de remplacement publiée</p>
-                            <button class="action-btn" onclick="openOffreModal()">Créer une offre</button>
-                        </div>
-                    </div>
-                    
-                    <!-- CANDIDATURES SECTION -->
-                    <div id="remplacants-candidatures" class="replacement-sub-content">
-                        <div class="section-header">
-                            <h3>Candidatures reçues</h3>
-                            <div class="filter-group">
-                                <select id="candidature-filter" onchange="filterCandidatures(this.value)">
-                                    <option value="">Tous les statuts</option>
-                                    <option value="en_attente">En attente</option>
-                                    <option value="acceptee">Acceptée</option>
-                                    <option value="refusee">Refusée</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div id="candidaturesList" class="candidatures-list"></div>
-                        <div id="noCandidatures" class="no-entries" style="display:none;">
-                            <p>Aucune candidature reçue</p>
-                        </div>
-                    </div>
-                    
-                    <!-- REMPLAÇONS SECTION (Contacts) -->
-                    <div id="remplacants-remplacants" class="replacement-sub-content">
-                        <div class="section-header">
-                            <div class="remplacants-search">
-                                <input type="text" id="remplacant-search-input" placeholder="Rechercher un remplaçant..." oninput="searchRemplacants(this.value)">
-                                <button class="btn-icon" onclick="searchRemplacants('')">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                                </button>
-                            </div>
-                            <button class="action-btn primary" onclick="openCreateRemplacantModal()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Nouveau remplaçant
-                            </button>
-                        </div>
-                        <div id="remplacantsList" class="remplacants-grid"></div>
-                        <div id="noRemplacants" class="no-entries" style="display:none;">
-                            <p>Aucun remplaçant trouvé</p>
-                            <button class="action-btn" onclick="openCreateRemplacantModal()">Ajouter un remplaçant</button>
-                        </div>
-                    </div>
-                    
-                    <!-- HISTORIQUE SECTION -->
-                    <div id="remplacants-historique" class="replacement-sub-content">
-                        <div class="section-header">
-                            <h3>Historique des remplacements</h3>
-                            <div class="stats-summary" id="historique-stats">
-                                <div class="stat-item">
-                                    <span class="stat-value" id="total-remplacements">0</span>
-                                    <span class="stat-label">Remplacements</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-value" id="total-jours">0</span>
-                                    <span class="stat-label">Jours</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-value" id="total-montant">0€</span>
-                                    <span class="stat-label">Total</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="historiqueList" class="historique-list"></div>
-                        <div id="noHistorique" class="no-entries" style="display:none;">
-                            <p>Aucun historique de remplacement</p>
-                        </div>
-                    </div>
+                    <div id="rm-root"></div>
+                
                 </div>
 
                 <!-- ============================================================
@@ -3718,12 +3608,6 @@ window.attemptLogin = function() {
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
                 <span>Urgence</span>
-            </a>
-            <a href="#" class="mobile-nav-item" data-view="remplacement" style="position:relative;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                </svg>
-                <span style="position:relative;">Rempl.<span id="remplNavBadgeMobile" style="display:none; position:absolute; top:-8px; right:-14px; background:#ef4444; color:white; font-size:0.6rem; font-weight:700; min-width:14px; height:14px; border-radius:7px; align-items:center; justify-content:center; padding:0 3px;">0</span></span>
             </a>
             <a href="#" class="mobile-nav-item" data-view="cabinet">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

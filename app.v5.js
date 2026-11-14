@@ -199,7 +199,7 @@ async function onAuthSuccess() {
     // NOW switch to the view the user was on before reload (dashboard by default) - data is ready
     let lastView = 'dashboard';
     try { lastView = sessionStorage.getItem('cab_current_view') || 'dashboard'; } catch (e) {}
-    if (['dashboard', 'flux', 'urgence', 'history', 'cabinet', 'settings', 'remplacement'].indexOf(lastView) === -1) lastView = 'dashboard';
+    if (['dashboard', 'flux', 'urgence', 'history', 'cabinet', 'settings'].indexOf(lastView) === -1) lastView = 'dashboard';
     // Membre en attente de validation (secretaire OU medecin ayant rejoint un
     // cabinet) : force la vue cabinet, la seule qui affiche le bandeau d'attente
     if (typeof secIsMemberLocked === 'function' && secIsMemberLocked()) {
@@ -3893,6 +3893,9 @@ function setupEventListeners() {
             document.querySelectorAll('.cabinet-tab-content').forEach(c => c.classList.remove('active'));
             this.classList.add('active');
             document.getElementById('cabinet-' + tabName)?.classList.add('active');
+            if (tabName === 'remplacants' && typeof onRemplacementViewShown === 'function') {
+                onRemplacementViewShown();
+            }
         });
     });
 }
@@ -5192,8 +5195,7 @@ function switchView(viewName) {
         'affaires': 'À faire',
         'cabinet': 'Cabinet',
         'admin': 'Administration',
-        'settings': 'Plus',
-        'remplacement': 'Remplacement'
+        'settings': 'Plus'
     };
     
     const mobileTitle = document.getElementById('mobilePageTitle');
@@ -5212,8 +5214,6 @@ function switchView(viewName) {
         renderCharts();
     } else if (viewName === 'admin') {
         if (isAdminUser()) loadAdminData();
-    } else if (viewName === 'remplacement') {
-        if (typeof onRemplacementViewShown === 'function') onRemplacementViewShown();
     } else if (viewName === 'history') {
         renderHistory();
         if (typeof loadDocuments === 'function') {
@@ -11224,6 +11224,7 @@ function renderHistorique() {
 // ============================================
 
 async function initRemplacements() {
+    if (!document.getElementById('remplacantsList')) return;
     await loadRemplacants();
     await loadContrats();
     await loadOffres();
