@@ -3486,6 +3486,17 @@ function doDelete(id) {
             }
             
             console.log('[DELETE] Success, removing from history');
+            // Carte document correspondante : la supprimer aussi pour ne pas
+            // laisser de doublon dans la section Documents (presentation unifiee).
+            const deleted = history.find(h => String(h.id) === String(id));
+            if (deleted && deleted.monthKey) {
+                supabaseClient
+                    .from('documents')
+                    .delete()
+                    .ilike('file_name', '%-' + deleted.monthKey + '.pdf')
+                    .then(() => { if (typeof loadDocuments === 'function') loadDocuments(); })
+                    .catch(() => {});
+            }
             history = history.filter(h => String(h.id) !== String(id));
             renderHistory();
             
