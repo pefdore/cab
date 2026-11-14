@@ -4223,13 +4223,11 @@ function showOverlaySettingsPage(overlay, pageName) {
     const backBtn = overlay.querySelector('#settingsBackBtn');
     if (backBtn) backBtn.style.display = 'flex';
 
+    // Le bouton "Retour" du header suffit : pas de second lien de retour
+    // dans le titre (doublon d'affichage signale dans les sous-sections).
     const h2 = overlay.querySelector('h2');
     if (h2) {
-        h2.innerHTML = `<span class="back-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Plus</span> <span class="page-title">${meta.title}</span>`;
-        const backLink = h2.querySelector('.back-link');
-        if (backLink) {
-            backLink.addEventListener('click', () => resetOverlaySettings(overlay));
-        }
+        h2.textContent = meta.title;
     }
     const subtitleEl = overlay.querySelector('#settingsSubtitle');
     if (subtitleEl) subtitleEl.textContent = meta.subtitle;
