@@ -161,9 +161,15 @@ async function factureExtractFiles(files) {
             }
         } else if (file.type && file.type.startsWith('image/')) {
             factureSetLoading(`Photo ${thumbs.length + 1}/${files.length}\u2026`);
-            const thumb = await factureThumbDataUrl(file);
-            thumbs.push(thumb);
-            text += '\n<<<PAGE ' + (thumbs.length) + '>>>\n' + (await factureOcr(file)) + '\n';
+            if (typeof prepareRelevePhoto === 'function') {
+                const prepared = await prepareRelevePhoto(file);
+                thumbs.push(prepared.thumbDataUrl);
+                text += '\n<<<PAGE ' + thumbs.length + '>>>\n' + (await factureOcr(prepared.ocrBlob)) + '\n';
+            } else {
+                const thumb = await factureThumbDataUrl(file);
+                thumbs.push(thumb);
+                text += '\n<<<PAGE ' + thumbs.length + '>>>\n' + (await factureOcr(file)) + '\n';
+            }
         }
     }
     if (!text.trim()) throw new Error('aucun texte reconnu');
@@ -313,33 +319,37 @@ function factureParseLocalement(text) {
 function factureDetectMeta(text) {
     const rawLines = String(text || '').split(/\r?\n/).map(l => l.trim())
         .filter(l => l && !/^<<<PAGE/.test(l));
-    const head = rawLines.slice(0, 12);
+    const head = rawLines.slice(0, 20);
     let date = '';
     let supplier = '';
     let invoiceNumber = '';
 
-    for (const line of head) {
+    const dateRe = /(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/g;
+    const isoDateRe = /(\d{4})-(\d{2})-(\d{2})/;
+    for (const line of rawLines) {
         if (!date) {
-            let m = /(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/.exec(line);
-            if (m) {
+            let m;
+            while ((m = dateRe.exec(line))) {
                 let [, d, mo, y] = m;
                 if (y.length === 2) y = (parseInt(y, 10) > 50 ? '19' : '20') + y;
                 if (+mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31) {
-                    date = `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                    date = `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    break;
                 }
             }
             if (!date) {
-                m = /(\d{4})-(\d{2})-(\d{2})/.exec(line);
-                if (m) date = m[0];
+                const iso = isoDateRe.exec(line);
+                if (iso) date = iso[0];
             }
         }
         if (!invoiceNumber) {
             const m = /(?:facture|invoice)[^0-9A-Za-z]{0,4}(?:n[°ºo]?\s*)?([A-Z0-9][A-Z0-9-]{2,})/i.exec(line);
             if (m) invoiceNumber = m[1].replace(/[-\s]+$/, '');
         }
-        if (!supplier && /(\b|\s)(SAS|SARL|SASU|EURL|SCI|SNC|S\.A\.|S\.A\.S|SA|EI|SARL\b)/i.test(line) && /[a-z]{3,}/i.test(line)) {
+        if (!supplier && /(\b|\s)(SAS|SARL|SASU|EURL|SCI|SNC|S\.A\.|S\.A\.S|SA|EI|SARL\b)/i.test(line) && /[a-z\u00e0-\u00ff]{3,}/i.test(line)) {
             supplier = line.replace(/\s{2,}/g, ' ').slice(0, 80);
         }
+        if (date && invoiceNumber && supplier) break;
     }
     if (!supplier) {
         const noise = /facture|invoice|date|tva|siret|siren|iban|rip|total|adresse|tel|fax|www|http|@|page\b/i;
@@ -416,6 +426,7 @@ function factureShowReview() {
             <div class="urgence-receive-name">
                 <input type="text" class="form-input facture-line-label" data-idx="${idx}" value="${factureEscapeHtml(l.label)}" style="width:100%;">
                 <span class="urgence-pointage-sub">ligne ${idx + 1} de la facture</span>
+                <button type="button" class="stock-icon-btn" onclick="factureDeleteLine(${idx})" title="Retirer cette ligne">🗑️</button>
             </div>
             <div class="urgence-receive-line">
                 <input type="number" min="0" step="0.01" class="form-input facture-line-qty" data-idx="${idx}" value="${l.qty || 1}" style="width:70px;" title="Quantit\u00e9">
@@ -467,8 +478,10 @@ function factureShowReview() {
             <div class="form-group"><label>Total TTC (\u20ac)</label>
                 <input type="number" min="0" step="0.01" id="factureTotal" class="form-input" value="${inv.total_ttc || ''}"></div>
         </div>
-        <p class="form-hint">V\u00e9rifiez et corrigez chaque ligne lue par la reconnaissance. ${order ? 'Chaque ligne peut \u00eatre associ\u00e9e \u00e0 une r\u00e9f\u00e9rence du bon de commande.' : ''}</p>
+        <p class="form-hint"><strong>${order ? 'V\u00e9rifiez la facture ligne par ligne' : '\u00c9tape 1/2 \u2014 V\u00e9rifiez la facture ligne par ligne'}.</strong> ${order ? 'Chaque ligne peut \u00eatre associ\u00e9e \u00e0 une r\u00e9f\u00e9rence du bon de commande.' : 'Corrigez les lignes \u2014 l\u2019enregistrement et le rapprochement se font \u00e0 l\u2019\u00e9tape suivante.'}</p>
         ${rows}
+        ${inv.lines.length === 0 ? '<p class="urgence-empty">Aucune ligne n\u2019a \u00e9t\u00e9 reconnue \u2014 ajoutez les lignes de la facture \u00e0 la main ci-dessous.</p>' : ''}
+        <button type="button" class="action-btn stock-btn-tonal" style="margin-top:8px;" onclick="factureAddLine()">\uFF0B Ajouter une ligne</button>
         ${ecartHtml}`;
     body.querySelectorAll('.facture-line-qty, .facture-line-price').forEach(input => {
         input.addEventListener('input', () => {
@@ -488,7 +501,7 @@ function factureShowReview() {
         <button class="action-btn" onclick="factureCloseImport()">Annuler</button>
         ${order
             ? `<button class="action-btn primary" onclick="factureApplyToReception()">Appliquer \u00e0 la r\u00e9ception</button>`
-            : `<button class="action-btn primary" onclick="factureStandaloneNext()">Enregistrer la facture</button>`}`;
+            : `<button class="action-btn primary" onclick="factureStandaloneNext()">Continuer \u2192 rapprochement</button>`}`;
 }
 
 function factureReadReview() {
@@ -512,6 +525,22 @@ function factureReadReview() {
     });
     return inv;
 }
+
+// ---------- Ajout / suppression de lignes en revue ----------
+
+window.factureAddLine = function() {
+    const inv = factureReadReview();
+    if (!inv) return;
+    inv.lines.push({ label: '', qty: 1, unit_price: 0, total: 0 });
+    factureShowReview();
+};
+
+window.factureDeleteLine = function(idx) {
+    const inv = factureReadReview();
+    if (!inv) return;
+    inv.lines.splice(idx, 1);
+    factureShowReview();
+};
 
 // ---------- Mode commande : préremplissage de la réception ----------
 
@@ -612,7 +641,8 @@ window.factureStandaloneNext = function() {
         ['autres_depenses', 'Autres d\u00e9penses']
     ].map(([v, lbl]) => `<option value="${v}" ${v === defaultCat ? 'selected' : ''}>${lbl}</option>`).join('');
 
-    const candHtml = candidates.length ? `
+    const stepBanner = `<p class="form-hint" style="margin-bottom:10px;"><strong>\u00c9tape 2/2 \u2014 Rapprochement.</strong> Enregistrement de la facture et liaison avec une ligne du relev\u00e9 bancaire, ou cr\u00e9ation de la d\u00e9pense.</p>`;
+    const candHtml = stepBanner + (candidates.length ? `
         <p class="form-hint">Rapprochement : une d\u00e9pense d\u00e9j\u00e0 import\u00e9e du relev\u00e9 bancaire correspond au montant de la facture. Liez la facture \u00e0 cette ligne du relev\u00e9, ou cr\u00e9ez une nouvelle d\u00e9pense.</p>
         ${candidates.map((d, i) => `
         <label class="urgence-import-mode" style="display:flex; gap:10px; align-items:flex-start; margin:8px 0; cursor:pointer;">
@@ -625,7 +655,7 @@ window.factureStandaloneNext = function() {
             <span><strong>Cr\u00e9er une nouvelle d\u00e9pense</strong> (facture absente du relev\u00e9)</span>
         </label>` : `
         <p class="form-hint">Aucune ligne du relev\u00e9 bancaire ne correspond au montant de la facture. Elle sera enregistr\u00e9e comme d\u00e9pense${inv.date ? ' (vous pourrez la rapprocher plus tard si elle appara\u00eet sur un relev\u00e9 \u00e0 venir)' : ''}.</p>
-        <input type="hidden" name="factureRappro" value="__new__">`;
+        <input type="hidden" name="factureRappro" value="__new__">`);
 
     const body = document.getElementById('factureImportBody');
     if (!body) return;
@@ -653,8 +683,8 @@ window.factureStandaloneNext = function() {
 
     const footer = document.querySelector('#factureImportModal .modal-footer');
     if (footer) footer.innerHTML = `
-        <button class="action-btn" onclick="factureCloseImport()">Annuler</button>
-        <button class="action-btn primary" onclick="factureStandaloneSave()">Valider le rapprochement</button>`;
+        <button class="action-btn" onclick="factureShowReview()">\u2190 Retour aux lignes</button>
+        <button class="action-btn primary" onclick="factureStandaloneSave()">Enregistrer la facture</button>`;
 };
 
 window.factureStandaloneSave = async function() {
