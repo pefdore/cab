@@ -282,6 +282,7 @@ function urgenceReceiveOrder(orderId) {
                 <button type="button" class="modal-close" onclick="urgenceCloseReceiveModal()" aria-label="Fermer">✕</button>
             </div>
             <div class="modal-body">
+                <button type="button" class="action-btn stock-btn-tonal" style="margin-bottom:12px;" onclick="factureOpenImport('${orderId}')">📄 Importer la facture (PDF / photo) — lecture ligne par ligne</button>
                 <p class="form-hint">Avec la facture sous les yeux : cochez « Arrivé », ajustez la quantité reçue et le <strong>prix unitaire facturé</strong> de chaque référence. Les références non cochées resteront « en attente de livraison ».</p>
                 ${rows}
                 <div class="urgence-receive-totals">
@@ -387,13 +388,29 @@ function urgenceConfirmReceive(orderId) {
         return;
     }
 
+    // Facture importée : vérification de l'écart facture / montant réceptionné
+    if (order._facture && order._facture.totalTtc > 0 && Math.abs(order._facture.totalTtc - realCost) > 0.005) {
+        const diff = order._facture.totalTtc - realCost;
+        if (!confirm(`⚠️ Écart entre la facture importée (${urgenceFmtEur(order._facture.totalTtc)}) et le montant réceptionné (${urgenceFmtEur(realCost)}) : ${diff > 0 ? '+' : ''}${urgenceFmtEur(diff)}.
+
+Valider la réception quand même ?`)) return;
+    }
+
     if (!order.receptions) order.receptions = [];
     order.receptions.push({
         date: new Date().toISOString(),
         items: receivedItems,
         cost: realCost,
-        by: (typeof currentUser !== 'undefined' && currentUser?.email) ? currentUser.email : 'secrétariat'
+        by: (typeof currentUser !== 'undefined' && currentUser?.email) ? currentUser.email : 'secrétariat',
+        invoice: order._facture ? {
+            supplier: order._facture.supplier || '',
+            number: order._facture.number || '',
+            date: order._facture.date || '',
+            totalTtc: order._facture.totalTtc || 0,
+            lines: order._facture.lines || []
+        } : null
     });
+    delete order._facture;
 
     let updatedQty = 0;
     receivedItems.forEach(r => {
@@ -642,6 +659,8 @@ function urgenceRenderOrders() {
         document.body.appendChild(datalist);
     }
     datalist.innerHTML = (typeof urgenceSupplierOptionsHtml === 'function' ? urgenceSupplierOptionsHtml() : '');
+
+    if (typeof factureRenderList === 'function') factureRenderList();
 }
 
 function urgenceOrderHeaderHtml(o, chipLabel, chipClass) {
@@ -901,7 +920,7 @@ function urgenceOrderOrderedCardHtml(o) {
         </div>`;
     }).join('');
     const receptionsHtml = (o.receptions || []).map(r =>
-        `<div class="urgence-reception-note">📦 Réception du ${new Date(r.date).toLocaleDateString('fr-FR')} : ${r.items.map(x => `${urgenceEscapeHtml(x.name)} ×${x.qty}`).join(', ')}${r.cost ? ` — ${urgenceFmtEur(r.cost)}` : ''}</div>`
+        `<div class="urgence-reception-note">📦 Réception du ${new Date(r.date).toLocaleDateString('fr-FR')} : ${r.items.map(x => `${urgenceEscapeHtml(x.name)} ×${x.qty}`).join(', ')}${r.cost ? ` — ${urgenceFmtEur(r.cost)}` : ''}${r.invoice && r.invoice.number ? ` · facture ${urgenceEscapeHtml(r.invoice.number)}` : ''}</div>`
     ).join('');
     const receivedTotal = (o.receptions || []).reduce((s, r) => s + (r.cost || 0), 0);
     const total = receivedTotal > 0 ? urgenceFmtEur(receivedTotal) : `≈ ${urgenceFmtEur(urgenceOrderTotal(o))}`;
@@ -934,7 +953,7 @@ function urgenceOrderCardHtml(o) {
     }).join('');
     const total = o.status === 'received' && o.realCost ? urgenceFmtEur(o.realCost) : `≈ ${urgenceFmtEur(urgenceOrderEstimatedTotal(o))}`;
     const receptionsHtml = (o.receptions || []).map(r =>
-        `<div class="urgence-reception-note">📦 Réception du ${new Date(r.date).toLocaleDateString('fr-FR')} : ${r.items.map(x => `${urgenceEscapeHtml(x.name)} ×${x.qty}`).join(', ')}${r.cost ? ` — ${urgenceFmtEur(r.cost)}` : ''}</div>`
+        `<div class="urgence-reception-note">📦 Réception du ${new Date(r.date).toLocaleDateString('fr-FR')} : ${r.items.map(x => `${urgenceEscapeHtml(x.name)} ×${x.qty}`).join(', ')}${r.cost ? ` — ${urgenceFmtEur(r.cost)}` : ''}${r.invoice && r.invoice.number ? ` · facture ${urgenceEscapeHtml(r.invoice.number)}` : ''}</div>`
     ).join('');
     return `
         <div class="urgence-order-card">

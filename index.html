@@ -2326,6 +2326,7 @@ window.attemptLogin = function() {
                                 <div class="stock-md3-head-actions">
                                     <button class="action-btn primary" id="urgenceCreateOrderBtnOrders">+ Commander le manquant</button>
                                     <button class="action-btn" id="urgenceBlankOrderBtn" title="Créer une commande libre, hors pointage">Commande vierge</button>
+                                    <button class="action-btn" id="urgenceImportFactureBtn" title="Importer une facture fournisseur (PDF ou photos) sans bon de commande">📄 Importer une facture</button>
                                 </div>
                             </div>
                             <h4 class="stock-section-title">Commandes en préparation (à passer)</h4>
@@ -2334,6 +2335,8 @@ window.attemptLogin = function() {
                             <div id="urgenceOrdersOrdered"></div>
                             <h4 class="stock-section-title">Historique</h4>
                             <div id="urgenceOrdersHistory"></div>
+                            <h4 class="stock-section-title">Factures importées (sans bon de commande)</h4>
+                            <div id="urgenceFacturesPanel"></div>
                         </div>
                     </div>
 
@@ -3671,6 +3674,7 @@ window.attemptLogin = function() {
     <script src="attachments.js?v=2026110115000" defer></script>
     <script src="releve-review.js?v=202611062200" defer></script>
     <script src="urgence-orders.js?v=202611161000" defer></script>
+        <script src="factures.js?v=202612100100" defer></script>
     <script>
       // Toggle form function for mobile
       window.toggleForm = function(formName) {
