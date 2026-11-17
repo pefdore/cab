@@ -300,6 +300,8 @@ async function factureAnalyzeWithAI(text, apiKey) {
   - qty: la quantité (nombre, 1 si absente)
   - unit_price: le prix unitaire (nombre, 0 si absent)
   - total: le total de la ligne (nombre)
+  - category: la catégorie de dépense parmi: consommables, fournitures, materiel, logiciel, services, charges, reception, autres_depenses
+  - subcategory: la sous-catégorie précise en quelques mots (ex: "Consommables médicaux", "Nettoyage / produits d'entretien", "Fournitures bureau")
 
 Ne pas inclure les lignes de sous-total, TVA, remise globale, frais de port ou total général dans "lines".
 Retourne UNIQUEMENT l'objet JSON valide sans texte supplémentaire.`;
@@ -339,12 +341,20 @@ Retourne UNIQUEMENT l'objet JSON valide sans texte supplémentaire.`;
         invoice_number: String(inv.invoice_number || '').trim(),
         date: String(inv.date || '').trim(),
         total_ttc: Number(inv.total_ttc) || 0,
-        lines: (inv.lines || []).map(l => ({
-            label: String(l.label || '').trim(),
-            qty: Number(l.qty) || 1,
-            unit_price: Number(l.unit_price) || 0,
-            total: Number(l.total) || 0
-        })).filter(l => l.label)
+        lines: (inv.lines || []).map(l => {
+            const sug = factureSuggestCategory(l.label);
+            const cat = (typeof normalizeFluxCategory === 'function')
+                ? normalizeFluxCategory(String(l.category || sug.category), true)
+                : (l.category || sug.category);
+            return {
+                label: String(l.label || '').trim(),
+                qty: Number(l.qty) || 1,
+                unit_price: Number(l.unit_price) || 0,
+                total: Number(l.total) || 0,
+                category: cat,
+                subcategory: String(l.subcategory || sug.subcategory || '').trim()
+            };
+        }).filter(l => l.label)
     };
 }
 
@@ -379,7 +389,8 @@ function factureParseLocalement(text) {
             qty = parseInt(qtyMatch[1], 10) || 1;
             cleanLabel = (label.slice(0, qtyMatch.index) + label.slice(qtyMatch.index + qtyMatch[0].length)).trim();
         }
-        lines.push({ label: cleanLabel || label, qty, unit_price: Math.round((amount / qty) * 100) / 100, total: amount });
+        const sug = factureSuggestCategory(cleanLabel || label);
+        lines.push({ label: cleanLabel || label, qty, unit_price: Math.round((amount / qty) * 100) / 100, total: amount, category: sug.category, subcategory: sug.subcategory });
     }
     if (!total && lines.length) total = lines.reduce((s, l) => s + l.total, 0);
     const meta = factureDetectMeta(text);
@@ -435,6 +446,62 @@ function factureDetectMeta(text) {
         }
     }
     return { supplier, invoice_number: invoiceNumber, date };
+}
+
+// ---------- Pré-catégorisation des lignes (détail comptable) ----------
+
+// Mots-clés -> { category, subcategory } pour pré-remplir la catégorie de
+// chaque ligne de facture. Les sous-catégories reprennent celles du module
+// comptable (CABINET_CATEGORIES) pour alimenter le détail du dashboard.
+const FACTURE_LINE_KEYWORDS = [
+    [/gant|masque|compresse|seringue|aiguille|pansement|sparadrap|suture|trod|test rapid|vaccin|serum|physio|azote|coton|tuberculine|bistouri|sonde|sac urine|curette|speculum|compress|stetoscope bip/i, 'consommables', 'Consommables m\u00e9dicaux'],
+    [/anios|surfanios|d\u00e9sinfect|gel hydro|hydroalcool|javel|bactéricid|nettoy|entretien|essuie|sopalin|sac poubelle|dasri|collecteur/i, 'consommables', 'Nettoyage / produits d\u2019entretien'],
+    [/blouse|charlotte|surblouse|uniforme/i, 'consommables', 'Uniformes / blouses'],
+    [/drap|al\u00e8se|linge|oreiller|coussin|taie/i, 'consommables', 'Literie / linge cabinet'],
+    [/papiers? patient|feuille soin|m\u00e9mo|carnet|ordonnancier/i, 'consommables', 'Consommables m\u00e9dicaux'],
+    [/papier|ramette|stylo|cartouche|encre|enveloppe|classeur|chemise|agrafe|bureautique/i, 'fournitures', 'Fournitures bureau'],
+    [/caf\u00e9|th\u00e9|gobelet|sucre|biscotte|accuei/i, 'fournitures', 'Caf\u00e9 / accueil patients'],
+    [/imprimante|ordinateur|ecran|clavier|souris|cable|toner|usb|informatique/i, 'logiciel', 'Mat\u00e9riel informatique'],
+    [/logiciel|licence|abonnement|hebergement|h\u00e9bergement|sauvegarde|t\u00e9l\u00e9transmission|signature|maintenance info/i, 'logiciel', 'Logiciel de gestion'],
+    [/lecteur carte vitale|electrocardio|\u00e9lectrocardio|tensiom|otoscope|materiel medical|mobilier medical|lampes? examen|table examen/i, 'materiel', 'Mat\u00e9riel m\u00e9dical (investissement)'],
+    [/tel|telephone|mobile|internet|abonnement tel/i, 'services', 'T\u00e9l\u00e9phone fixe'],
+    [/blouse.*nettoyage|lingerie|blouses? .*linge|pressing/i, 'services', 'Nettoyage blouses / linge'],
+    [/destruction|dasri|collecte/i, 'services', 'Destruction DASRI'],
+    [/timbre|affranch|la poste/i, 'services', 'Affranchissement / La Poste']
+];
+
+function factureSuggestCategory(label) {
+    const low = String(label || '').toLowerCase();
+    for (const [re, cat, sous] of FACTURE_LINE_KEYWORDS) {
+        if (re.test(low)) return { category: cat, subcategory: sous };
+    }
+    return { category: 'consommables', subcategory: '' };
+}
+
+function factureCatOptions(selected) {
+    const cats = [
+        ['consommables', 'Consommables & fournitures m\u00e9dicales'],
+        ['fournitures', 'Fournitures bureau & petit mat\u00e9riel'],
+        ['materiel', 'Mat\u00e9riel & \u00e9quipement'],
+        ['logiciel', 'Informatique : logiciels, maintenance'],
+        ['services', 'Abonnements : t\u00e9l, internet, divers'],
+        ['charges', 'Local : loyer & charges'],
+        ['reception', 'R\u00e9ception & divers'],
+        ['autres_depenses', 'Autres d\u00e9penses']
+    ];
+    return cats.map(([v, lbl]) => `<option value="${v}" ${v === selected ? 'selected' : ''}>${lbl}</option>`).join('');
+}
+
+function factureSousOptions(cat, selected) {
+    let sous = [];
+    try {
+        if (typeof CABINET_CATEGORIES !== 'undefined' && CABINET_CATEGORIES[cat] && Array.isArray(CABINET_CATEGORIES[cat].sous)) {
+            sous = CABINET_CATEGORIES[cat].sous.slice();
+        }
+    } catch (e) {}
+    if (selected && !sous.includes(selected)) sous.push(selected);
+    return `<option value="">\u2014</option>` + sous.map(v =>
+        `<option value="${factureEscapeHtml(v)}" ${v === selected ? 'selected' : ''}>${factureEscapeHtml(v)}</option>`).join('');
 }
 
 // ---------- Association ligne facture <-> référence du bon de commande ----------
@@ -513,6 +580,16 @@ function factureShowReview() {
                 <input type="number" min="0" step="0.01" class="form-input facture-line-price" data-idx="${idx}" value="${l.unit_price || (l.qty ? (l.total / l.qty).toFixed(2) : '')}" style="width:90px;" title="Prix unitaire">
                 <span class="urgence-receive-line-total" data-flinetotal="${idx}">${factureFmtEur((l.unit_price || (l.qty ? l.total / l.qty : 0)) * (l.qty || 1))}</span>
             </div>
+            <div class="urgence-receive-expiry-row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                <div style="flex:1; min-width:150px;">
+                    <label>Cat\u00e9gorie de d\u00e9pense</label>
+                    <select class="form-input facture-line-cat" data-idx="${idx}">${factureCatOptions(l.category)}</select>
+                </div>
+                <div style="flex:1; min-width:150px;">
+                    <label>Sous-cat\u00e9gorie</label>
+                    <select class="form-input facture-line-sous" data-idx="${idx}">${factureSousOptions(l.category, l.subcategory)}</select>
+                </div>
+            </div>
             ${order ? `
             <div class="urgence-receive-expiry-row">
                 <label>R\u00e9f\u00e9rence du bon de commande</label>
@@ -562,6 +639,13 @@ function factureShowReview() {
         ${inv.lines.length === 0 ? '<p class="urgence-empty">Aucune ligne n\u2019a \u00e9t\u00e9 reconnue \u2014 ajoutez les lignes de la facture \u00e0 la main ci-dessous.</p>' : ''}
         <button type="button" class="action-btn stock-btn-tonal" style="margin-top:8px;" onclick="factureAddLine()">\uFF0B Ajouter une ligne</button>
         ${ecartHtml}`;
+    body.querySelectorAll('.facture-line-cat').forEach(sel => {
+        sel.addEventListener('change', () => {
+            const idx = sel.dataset.idx;
+            const sousSel = body.querySelector(`.facture-line-sous[data-idx="${idx}"]`);
+            if (sousSel) sousSel.innerHTML = factureSousOptions(sel.value, '');
+        });
+    });
     body.querySelectorAll('.facture-line-qty, .facture-line-price').forEach(input => {
         input.addEventListener('input', () => {
             const idx = input.dataset.idx;
@@ -599,7 +683,9 @@ function factureReadReview() {
             label: body.querySelector(`.facture-line-label[data-idx="${idx}"]`)?.value?.trim() || l.label,
             qty: !isNaN(qty) && qty > 0 ? qty : (l.qty || 1),
             unit_price: !isNaN(price) && price > 0 ? price : (l.unit_price || 0),
-            total: (!isNaN(price) && price > 0 ? price : (l.unit_price || 0)) * (!isNaN(qty) && qty > 0 ? qty : (l.qty || 1))
+            total: (!isNaN(price) && price > 0 ? price : (l.unit_price || 0)) * (!isNaN(qty) && qty > 0 ? qty : (l.qty || 1)),
+            category: body.querySelector(`.facture-line-cat[data-idx="${idx}"]`)?.value || l.category || 'consommables',
+            subcategory: body.querySelector(`.facture-line-sous[data-idx="${idx}"]`)?.value || ''
         };
     });
     return inv;
@@ -610,7 +696,7 @@ function factureReadReview() {
 window.factureAddLine = function() {
     const inv = factureReadReview();
     if (!inv) return;
-    inv.lines.push({ label: '', qty: 1, unit_price: 0, total: 0 });
+    inv.lines.push({ label: '', qty: 1, unit_price: 0, total: 0, category: 'consommables', subcategory: '' });
     factureShowReview();
 };
 
@@ -864,13 +950,77 @@ window.factureRenderList = function() {
                 </div>
                 <span class="urgence-state success">Facture</span>
             </div>
-            <ul class="urgence-order-items">${(f.lines || []).map(l => `<li>${factureEscapeHtml(l.label)} \u2014 ${l.qty} \u00d7 ${factureFmtEur(l.unit_price)}</li>`).join('')}</ul>
+            <ul class="urgence-order-items">${(f.lines || []).map(l => `<li>${factureEscapeHtml(l.label)} \u2014 ${l.qty} \u00d7 ${factureFmtEur(l.unit_price)}${l.subcategory ? ` <span class="stock-chip neutral">${factureEscapeHtml(l.subcategory)}</span>` : ''}</li>`).join('')}</ul>
             <div class="urgence-order-foot">
                 <span>Total TTC : <strong>${factureFmtEur(f.totalTtc)}</strong> ${f.number ? `\u00b7 n\u00b0 ${factureEscapeHtml(f.number)}` : ''}</span>
                 <span class="urgence-order-actions">${rappro}</span>
             </div>
         </div>`;
     }).join('');
+};
+
+// ---------- D\u00e9tail comptable des lignes de factures (dashboard) ----------
+
+// Agr\u00e8ge toutes les lignes de factures import\u00e9es (r\u00e9ceptions de commandes et
+// factures autonomes) par cat\u00e9gorie puis sous-cat\u00e9gorie : le d\u00e9tail fin des
+// d\u00e9penses (ex: dans \u00ab consommables \u00bb, combien de gants, de produits
+// d'entretien, de literie...).
+window.factureCostsDetailHtml = function() {
+    const agg = new Map();
+    const add = (line) => {
+        if (!line || !line.label) return;
+        const amount = Number(line.total) > 0 ? Number(line.total)
+            : (Number(line.unit_price) || 0) * (Number(line.qty) || 1);
+        if (!amount) return;
+        const cat = line.category || 'consommables';
+        const sous = line.subcategory || 'Non pr\u00e9cis\u00e9';
+        if (!agg.has(cat)) agg.set(cat, new Map());
+        const m = agg.get(cat);
+        m.set(sous, (m.get(sous) || 0) + amount);
+    };
+    try {
+        (typeof urgenceData !== 'undefined' && Array.isArray(urgenceData.orders) ? urgenceData.orders : []).forEach(o => {
+            (o.receptions || []).forEach(r => (r.invoice && Array.isArray(r.invoice.lines) ? r.invoice.lines : []).forEach(add));
+        });
+        (typeof urgenceData !== 'undefined' && Array.isArray(urgenceData.factures) ? urgenceData.factures : []).forEach(f => {
+            (f.lines || []).forEach(add);
+        });
+    } catch (e) { return ''; }
+
+    const catLabels = {
+        consommables: 'Consommables & fournitures m\u00e9dicales',
+        fournitures: 'Fournitures bureau & petit mat\u00e9riel',
+        materiel: 'Mat\u00e9riel & \u00e9quipement',
+        logiciel: 'Informatique : logiciels, maintenance',
+        services: 'Abonnements : t\u00e9l, internet, divers',
+        charges: 'Local : loyer & charges',
+        reception: 'R\u00e9ception & divers',
+        autres_depenses: 'Autres d\u00e9penses'
+    };
+    const sections = Array.from(agg.entries()).map(([cat, sousMap]) => {
+        const rows = Array.from(sousMap.entries()).sort((a, b) => b[1] - a[1]);
+        const catTotal = rows.reduce((t, [v]) => t + v, 0);
+        const max = rows.length ? rows[0][1] : 1;
+        return `
+        <div class="facture-detail-cat">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin:14px 0 6px;">
+                <strong>${factureEscapeHtml(catLabels[cat] || cat)}</strong>
+                <span style="font-size:0.85rem; color:var(--color-text-secondary);">${factureFmtEur(catTotal)}</span>
+            </div>
+            ${rows.map(([sous, tot]) => `
+            <div class="urgence-cost-cat">
+                <span class="urgence-cost-cat-label">${factureEscapeHtml(sous)}</span>
+                <div class="urgence-cost-cat-track"><div class="urgence-cost-bar primary" style="width:${Math.max((tot / max) * 100, 4)}%"></div></div>
+                <span class="urgence-cost-cat-val">${factureFmtEur(tot)}</span>
+            </div>`).join('')}
+        </div>`;
+    }).join('');
+
+    if (!sections) return '';
+    return `
+        <h4 class="stock-section-title">D\u00e9tail des lignes de factures (par sous-cat\u00e9gorie)</h4>
+        <p class="stock-cost-note">\ud83d\udcca Pr\u00e9-cat\u00e9gorisation de chaque ligne des factures import\u00e9es : le d\u00e9tail fin de vos d\u00e9penses, aliment\u00e9 automatiquement \u00e0 chaque import de facture.</p>
+        ${sections}`;
 };
 
 // ---------- Visionneuse plein \u00e9cran (zoom pincement / roulette / glisser) ----------
