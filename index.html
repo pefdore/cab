@@ -3253,6 +3253,10 @@ window.attemptLogin = function() {
                     <span class="fab-menu-icon">🏦</span>
                     <span class="fab-menu-label">Ajouter un relevé bancaire</span>
                 </div>
+                <div class="fab-menu-item" onclick="fabAction('facture')">
+                    <span class="fab-menu-icon">🧾</span>
+                    <span class="fab-menu-label">Ajouter une facture</span>
+                </div>
                 <div class="fab-menu-item" onclick="fabAction('manual-movement')">
                     <span class="fab-menu-icon">✍️</span>
                     <span class="fab-menu-label">Dépense / entrée manuelle</span>
@@ -4056,6 +4060,14 @@ window.attemptLogin = function() {
               switchView('cabinet');
               setTimeout(() => {
                 if (typeof openReleveUploadFlow === 'function') openReleveUploadFlow(); else { document.getElementById('releve-upload-modal').style.display = 'flex'; if (typeof refreshReviewResumeBanner === 'function') refreshReviewResumeBanner(); }
+              }, 300);
+              break;
+            case 'facture':
+              switchView('cabinet');
+              setTimeout(() => {
+                document.querySelector('.cabinet-tab[data-tab="stocks"]')?.click();
+                if (typeof urgenceGoSubTab === 'function') urgenceGoSubTab('urgence-orders');
+                if (typeof factureOpenImport === 'function') factureOpenImport(null);
               }, 300);
               break;
             case 'contrat':

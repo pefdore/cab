@@ -302,7 +302,55 @@ function factureParseLocalement(text) {
         lines.push({ label: cleanLabel || label, qty, unit_price: Math.round((amount / qty) * 100) / 100, total: amount });
     }
     if (!total && lines.length) total = lines.reduce((s, l) => s + l.total, 0);
-    return { supplier: '', invoice_number: '', date: '', total_ttc: total, lines };
+    const meta = factureDetectMeta(text);
+    return Object.assign({ supplier: '', invoice_number: '', date: '', total_ttc: total, lines }, meta);
+}
+
+// Detection heuristique de la date et de la societe emettrice (repli sans IA) :
+// - date : premiere date plausible de l'en-tete (jj/mm/aaaa, jj-mm-aa, aaaa-mm-jj)
+// - fournisseur : ligne d'en-tete contenant une forme sociale (SAS, SARL...),
+//   sinon la premiere ligne significative du document
+function factureDetectMeta(text) {
+    const rawLines = String(text || '').split(/\r?\n/).map(l => l.trim())
+        .filter(l => l && !/^<<<PAGE/.test(l));
+    const head = rawLines.slice(0, 12);
+    let date = '';
+    let supplier = '';
+    let invoiceNumber = '';
+
+    for (const line of head) {
+        if (!date) {
+            let m = /(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/.exec(line);
+            if (m) {
+                let [, d, mo, y] = m;
+                if (y.length === 2) y = (parseInt(y, 10) > 50 ? '19' : '20') + y;
+                if (+mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31) {
+                    date = `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                }
+            }
+            if (!date) {
+                m = /(\d{4})-(\d{2})-(\d{2})/.exec(line);
+                if (m) date = m[0];
+            }
+        }
+        if (!invoiceNumber) {
+            const m = /(?:facture|invoice)[^0-9A-Za-z]{0,4}(?:n[°ºo]?\s*)?([A-Z0-9][A-Z0-9-]{2,})/i.exec(line);
+            if (m) invoiceNumber = m[1].replace(/[-\s]+$/, '');
+        }
+        if (!supplier && /(\b|\s)(SAS|SARL|SASU|EURL|SCI|SNC|S\.A\.|S\.A\.S|SA|EI|SARL\b)/i.test(line) && /[a-z]{3,}/i.test(line)) {
+            supplier = line.replace(/\s{2,}/g, ' ').slice(0, 80);
+        }
+    }
+    if (!supplier) {
+        const noise = /facture|invoice|date|tva|siret|siren|iban|rip|total|adresse|tel|fax|www|http|@|page\b/i;
+        for (const line of head) {
+            if (line.length >= 3 && line.length <= 60 && /[a-z\u00e0-\u00ff]{3,}/i.test(line) && !noise.test(line) && !/^\d+$/.test(line)) {
+                supplier = line.slice(0, 80);
+                break;
+            }
+        }
+    }
+    return { supplier, invoice_number: invoiceNumber, date };
 }
 
 // ---------- Association ligne facture <-> référence du bon de commande ----------
