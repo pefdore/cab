@@ -1093,7 +1093,8 @@ function urgenceRenderCosts() {
         </div>
         <p class="stock-cost-note">💡 Les prix se mettent à jour automatiquement à chaque réception (coût réel payé, fournisseur par fournisseur) : c'est votre benchmark interne. Ajustez aussi le prix sur le bon de commande quand le fournisseur annonce un nouveau tarif.</p>`;
 
-    wrap.innerHTML = statsHtml + tableHtml + supHtml + catHtml + priceHtml;
+    const factureDetailHtml = (typeof factureCostsDetailHtml === 'function') ? factureCostsDetailHtml() : '';
+    wrap.innerHTML = statsHtml + tableHtml + supHtml + catHtml + priceHtml + factureDetailHtml;
 }
 
 // ---------- Init ----------
