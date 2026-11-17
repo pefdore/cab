@@ -31,7 +31,7 @@ function factureOrder() {
 // ---------- Ouverture du flux d'import ----------
 
 window.factureOpenImport = function(orderId) {
-    window._factureFlow = { orderId: orderId || null, files: [], thumbs: [], text: '', invoice: null };
+    window._factureFlow = { orderId: orderId || null, files: [], pages: [], rotations: {}, text: '', invoice: null };
     const existing = document.getElementById('factureImportModal');
     if (existing) existing.remove();
 
@@ -84,6 +84,7 @@ window.factureOpenImport = function(orderId) {
 
 window.factureCloseImport = function() {
     document.getElementById('factureImportModal')?.remove();
+    document.getElementById('factureZoomModal')?.remove();
     window._factureFlow = null;
 };
 
@@ -107,7 +108,7 @@ window.factureHandleFiles = async function(event) {
         factureSetLoading('Reconnaissance du texte\u2026');
         const extracted = await factureExtractFiles(files);
         window._factureFlow.text = extracted.text;
-        window._factureFlow.thumbs = extracted.thumbs;
+        window._factureFlow.pages = extracted.pages;
         factureSetLoading('Analyse des lignes de la facture\u2026');
         const invoice = await factureAnalyzeText(extracted.text);
         window._factureFlow.invoice = invoice;
@@ -121,12 +122,13 @@ window.factureHandleFiles = async function(event) {
 };
 
 async function factureExtractFiles(files) {
+    const flow = window._factureFlow;
     let text = '';
-    const thumbs = [];
+    const pages = [];
     for (const file of files) {
         if (file.type === 'application/pdf') {
             const pdfjsLib = window.pdfjsLib;
-            if (!pdfjsLib) throw new Error('pdf.js n\u2019est pas charg\u00e9. Rafra\u00echissez la page.');
+            if (!pdfjsLib) throw new Error('pdf.js n\u2019est pas charg\u00e9. Rafra\u00eechissez la page.');
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({
                 data: arrayBuffer,
@@ -134,14 +136,22 @@ async function factureExtractFiles(files) {
                 cMapPacked: true
             }).promise;
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                factureSetLoading(`PDF — page ${pageNum}/${pdf.numPages}\u2026`);
+                factureSetLoading(`PDF \u2014 page ${pageNum}/${pdf.numPages}\u2026`);
                 const page = await pdf.getPage(pageNum);
+
+                const hiresViewport = page.getViewport({ scale: 2.0 });
+                const hiresCanvas = document.createElement('canvas');
+                hiresCanvas.height = hiresViewport.height;
+                hiresCanvas.width = hiresViewport.width;
+                await page.render({ canvasContext: hiresCanvas.getContext('2d'), viewport: hiresViewport }).promise;
+                const hires = hiresCanvas.toDataURL('image/jpeg', 0.85);
+
                 const thumbViewport = page.getViewport({ scale: 0.5 });
                 const thumbCanvas = document.createElement('canvas');
                 thumbCanvas.height = thumbViewport.height;
                 thumbCanvas.width = thumbViewport.width;
                 await page.render({ canvasContext: thumbCanvas.getContext('2d'), viewport: thumbViewport }).promise;
-                thumbs.push(thumbCanvas.toDataURL('image/jpeg', 0.7));
+                const thumb = thumbCanvas.toDataURL('image/jpeg', 0.7);
 
                 const textContent = await page.getTextContent();
                 let pageText = textContent.items
@@ -149,56 +159,120 @@ async function factureExtractFiles(files) {
                     .join('').replace(/[ \t]+/g, ' ').trim();
 
                 if (pageText.length < 20) {
-                    const viewport = page.getViewport({ scale: 2.0 });
-                    const canvas = document.createElement('canvas');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                    pageText = await factureOcr(blob);
+                    const blob = await new Promise(resolve => hiresCanvas.toBlob(resolve, 'image/png'));
+                    pageText = (await factureOcr(blob)).text;
                 }
-                text += '\n<<<PAGE ' + pageNum + '>>>\n' + pageText + '\n';
+                text += '\n<<<PAGE ' + (pages.length + 1) + '>>>\n' + pageText + '\n';
+                pages.push({ thumb, hires });
             }
         } else if (file.type && file.type.startsWith('image/')) {
-            factureSetLoading(`Photo ${thumbs.length + 1}/${files.length}\u2026`);
-            if (typeof prepareRelevePhoto === 'function') {
-                const prepared = await prepareRelevePhoto(file);
-                thumbs.push(prepared.thumbDataUrl);
-                text += '\n<<<PAGE ' + thumbs.length + '>>>\n' + (await factureOcr(prepared.ocrBlob)) + '\n';
-            } else {
-                const thumb = await factureThumbDataUrl(file);
-                thumbs.push(thumb);
-                text += '\n<<<PAGE ' + thumbs.length + '>>>\n' + (await factureOcr(file)) + '\n';
+            const pageIdx = pages.length;
+            const deg = (flow && flow.rotations && flow.rotations[pageIdx]) || 0;
+            factureSetLoading(`Photo ${pages.length + 1} \u2014 reconnaissance du texte\u2026`);
+            let prepared = await facturePrepareImage(file, deg);
+            let ocr = await factureOcr(prepared.ocrBlob);
+
+            // Photo retournee (haut en bas) : l'OCR echoue ou sort du charabia.
+            // Si la lecture est mauvaise, on retente apres rotation de 180\u00b0
+            // et on garde la meilleure des deux orientations.
+            if (deg === 0 && (ocr.confidence < 45 || ocr.text.trim().length < 20)) {
+                factureSetLoading(`Photo ${pages.length + 1} \u2014 photo \u00e0 l\u2019envers ? nouvelle lecture apr\u00e8s rotation\u2026`);
+                const flipped = await facturePrepareImage(file, 180);
+                const ocr2 = await factureOcr(flipped.ocrBlob);
+                const score1 = ocr.confidence * Math.min(1, ocr.text.trim().length / 40);
+                const score2 = ocr2.confidence * Math.min(1, ocr2.text.trim().length / 40);
+                if (score2 > score1) {
+                    prepared = flipped;
+                    ocr = ocr2;
+                    if (flow && flow.rotations) flow.rotations[pageIdx] = 180;
+                    if (typeof showToast === 'function') showToast('Photo d\u00e9tect\u00e9e \u00e0 l\u2019envers \u2014 relue apr\u00e8s rotation \u21bb');
+                }
             }
+            text += '\n<<<PAGE ' + (pages.length + 1) + '>>>\n' + ocr.text + '\n';
+            pages.push({ thumb: prepared.thumbDataUrl, hires: prepared.hiresDataUrl });
         }
     }
     if (!text.trim()) throw new Error('aucun texte reconnu');
-    return { text, thumbs };
+    return { text, pages };
+}
+
+// Charge une image, la fait pivoter de deg degres et produit les bitmaps
+// OCR (haute resolution) et vignette, comme prepareRelevePhoto.
+async function facturePrepareImage(file, deg) {
+    const url = URL.createObjectURL(file);
+    const img = await new Promise((resolve, reject) => {
+        const im = new Image();
+        im.onload = () => { URL.revokeObjectURL(url); resolve(im); };
+        im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Photo illisible')); };
+        im.src = url;
+    });
+    const maxSide = 1800;
+    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+    const swap = ((deg % 360) + 360) % 360 % 180 !== 0;
+    const canvas = document.createElement('canvas');
+    canvas.width = swap ? h : w;
+    canvas.height = swap ? w : h;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(deg * Math.PI / 180);
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+    const hiresDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const ocrBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+
+    const thumbScale = Math.min(1, 350 / Math.max(w, h));
+    const tw = Math.max(1, Math.round(w * thumbScale));
+    const th = Math.max(1, Math.round(h * thumbScale));
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = swap ? th : tw;
+    thumbCanvas.height = swap ? tw : th;
+    const thumbCtx = thumbCanvas.getContext('2d');
+    thumbCtx.imageSmoothingQuality = 'high';
+    thumbCtx.translate(thumbCanvas.width / 2, thumbCanvas.height / 2);
+    thumbCtx.rotate(deg * Math.PI / 180);
+    thumbCtx.drawImage(img, -tw / 2, -th / 2, tw, th);
+    const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.7);
+    return { ocrBlob, hiresDataUrl, thumbDataUrl };
 }
 
 async function factureOcr(blob) {
     const result = await Tesseract.recognize(blob, 'fra+eng', {
         logger: m => console.log('[FACTURE][TESSERACT]', m.status, m.progress)
     });
-    return result.data.text || '';
+    return { text: result.data.text || '', confidence: Number(result.data.confidence) || 0 };
 }
 
-async function factureThumbDataUrl(file) {
-    const img = await new Promise((resolve, reject) => {
-        const url = URL.createObjectURL(file);
-        const im = new Image();
-        im.onload = () => { URL.revokeObjectURL(url); resolve(im); };
-        im.onerror = reject;
-        im.src = url;
-    });
-    const maxW = 420;
-    const scale = Math.min(1, maxW / (img.width || maxW));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round((img.width || maxW) * scale));
-    canvas.height = Math.max(1, Math.round((img.height || maxW) * scale));
-    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.7);
-}
+// Rotation manuelle d'une page (par pas de 90\u00b0) puis relance OCR + analyse.
+// Les corrections d\u2019en-t\u00eate deja saisies sont conservees si la relecture
+// ne retrouve pas la valeur.
+window.factureRotate = async function(pageIdx, delta) {
+    const flow = window._factureFlow;
+    if (!flow || !flow.files || !flow.files.length) return;
+    const keep = factureReadReview() || flow.invoice;
+    if (!confirm('Tourner la page puis relire la facture ?\n\nLes corrections en cours (lignes) seront remplac\u00e9es par la nouvelle lecture.')) return;
+    if (!flow.rotations) flow.rotations = {};
+    flow.rotations[pageIdx] = (((flow.rotations[pageIdx] || 0) + delta) % 360 + 360) % 360;
+    try {
+        factureSetLoading('Relecture de la facture apr\u00e8s rotation\u2026');
+        const extracted = await factureExtractFiles(flow.files);
+        flow.pages = extracted.pages;
+        const inv = await factureAnalyzeText(extracted.text);
+        if (keep) {
+            if (!inv.supplier && keep.supplier) inv.supplier = keep.supplier;
+            if (!inv.invoice_number && keep.invoice_number) inv.invoice_number = keep.invoice_number;
+            if (!inv.date && keep.date) inv.date = keep.date;
+            if (!inv.total_ttc && keep.total_ttc) inv.total_ttc = keep.total_ttc;
+        }
+        flow.invoice = inv;
+        factureShowReview();
+        if (typeof showToast === 'function') showToast('Page tourn\u00e9e \u2014 facture relue');
+    } catch (e) {
+        factureSetLoading(null);
+        if (typeof showToast === 'function') showToast('Erreur relecture : ' + (e.message || e), 'error');
+    }
+};
 
 // ---------- Analyse IA (mêmes clés / modèles que les relevés) ----------
 
@@ -409,9 +483,14 @@ function factureShowReview() {
 
     if (order && !inv.supplier && order.supplier) inv.supplier = order.supplier;
 
-    const thumbsHtml = (flow.thumbs || []).map(t =>
-        `<img src="${t}" alt="page facture" style="max-height:120px; border-radius:8px; border:1px solid var(--color-border);">`
-    ).join('');
+    const thumbsHtml = (flow.pages || []).map((pg, i) => `
+        <div style="text-align:center;">
+            <img src="${pg.thumb}" alt="page ${i + 1}" onclick="factureZoom(${i})" style="max-height:120px; border-radius:8px; border:1px solid var(--color-border); cursor:zoom-in;" title="Agrandir pour v\u00e9rifier les lignes">
+            <div style="display:flex; gap:4px; justify-content:center; margin-top:4px;">
+                <button type="button" class="stock-icon-btn" onclick="factureRotate(${i}, -90)" title="Tourner \u00e0 gauche puis relire">\u21ba</button>
+                <button type="button" class="stock-icon-btn" onclick="factureRotate(${i}, 90)" title="Tourner \u00e0 droite puis relire">\u21bb</button>
+            </div>
+        </div>`).join('');
 
     const itemOptions = (sel) => {
         if (!order) return '';
@@ -792,6 +871,88 @@ window.factureRenderList = function() {
             </div>
         </div>`;
     }).join('');
+};
+
+// ---------- Visionneuse plein \u00e9cran (zoom pincement / roulette / glisser) ----------
+
+window.factureZoom = function(pageIdx) {
+    const flow = window._factureFlow;
+    const pg = flow && flow.pages && flow.pages[pageIdx];
+    if (!pg) return;
+    document.getElementById('factureZoomModal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'factureZoomModal';
+    modal.style.cssText = 'position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.92); display:flex; flex-direction:column;';
+    modal.innerHTML = `
+        <div style="display:flex; justify-content:flex-end; gap:8px; padding:10px 12px; color:#fff;">
+            <button type="button" class="stock-icon-btn" onclick="factureZoomStep(-0.5)" title="Zoom arri\u00e8re">\u2212</button>
+            <button type="button" class="stock-icon-btn" onclick="factureZoomStep(0.5)" title="Zoom avant">\uFF0B</button>
+            <button type="button" class="stock-icon-btn" onclick="factureZoomReset()" title="Taille initiale">\u29A1</button>
+            <button type="button" class="stock-icon-btn" onclick="factureZoomClose()" title="Fermer">\u2715</button>
+        </div>
+        <div id="factureZoomZone" style="flex:1; overflow:hidden; touch-action:none; display:flex; align-items:center; justify-content:center;">
+            <img id="factureZoomImg" src="${pg.hires || pg.thumb}" alt="page ${pageIdx + 1}" draggable="false"
+                 style="max-width:96%; max-height:96%; user-select:none; -webkit-user-drag:none; transform-origin:center center;">
+        </div>
+        <p style="margin:0; padding:8px 12px 12px; color:#cbd5e1; font-size:0.75rem; text-align:center;">
+            Pincez ou molette pour zoomer \u00b7 glissez pour d\u00e9placer \u00b7 \u00c9chap pour fermer
+        </p>`;
+    document.body.appendChild(modal);
+
+    const img = modal.querySelector('#factureZoomImg');
+    const zone = modal.querySelector('#factureZoomZone');
+    const st = { s: 1, x: 0, y: 0 };
+    window._factureZoomState = st;
+    const apply = () => { img.style.transform = `translate(${st.x}px, ${st.y}px) scale(${st.s})`; };
+    window.factureZoomApply = apply;
+
+    window.factureZoomStep = (d) => { st.s = Math.min(8, Math.max(0.3, st.s * (1 + d))); apply(); };
+    window.factureZoomReset = () => { st.s = 1; st.x = 0; st.y = 0; apply(); };
+    window.factureZoomClose = () => { modal.remove(); document.removeEventListener('keydown', onKey); };
+
+    const onKey = (e) => { if (e.key === 'Escape') window.factureZoomClose(); };
+    document.addEventListener('keydown', onKey);
+    modal.addEventListener('click', (e) => { if (e.target === modal || e.target === zone) window.factureZoomClose(); });
+
+    zone.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        st.s = Math.min(8, Math.max(0.3, st.s * (e.deltaY < 0 ? 1.12 : 0.89)));
+        apply();
+    }, { passive: false });
+
+    const pointers = new Map();
+    let lastDist = 0;
+    zone.addEventListener('pointerdown', (e) => {
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.size === 2) {
+            const [a, b] = [...pointers.values()];
+            lastDist = Math.hypot(a.x - b.x, a.y - b.y);
+        }
+        zone.setPointerCapture(e.pointerId);
+    });
+    zone.addEventListener('pointermove', (e) => {
+        if (!pointers.has(e.pointerId)) return;
+        const prev = pointers.get(e.pointerId);
+        if (pointers.size === 1) {
+            st.x += e.clientX - prev.x;
+            st.y += e.clientY - prev.y;
+        } else if (pointers.size === 2) {
+            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            const [a, b] = [...pointers.values()];
+            const dist = Math.hypot(a.x - b.x, a.y - b.y);
+            if (lastDist > 0) st.s = Math.min(8, Math.max(0.3, st.s * (dist / lastDist)));
+            lastDist = dist;
+            pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            apply();
+            return;
+        }
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        apply();
+    });
+    const drop = (e) => { pointers.delete(e.pointerId); lastDist = 0; };
+    zone.addEventListener('pointerup', drop);
+    zone.addEventListener('pointercancel', drop);
 };
 
 // ---------- Branchement ----------
