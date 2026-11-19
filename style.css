@@ -19089,3 +19089,115 @@ body:has(#view-dashboard.active) {
         font-size: 12.5px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   POLISH MD3 EXPRESSIVE — Flux & carte Solde bancaire (Affaires)
+   Tonalités plus affirmées + typo display, en gardant la grammaire MD3.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Carte « Solde bancaire » dans À faire : montant + édition inline */
+.affaires-opening-detail {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 2px 2px;
+}
+.affaires-opening-info { display: flex; flex-direction: column; gap: 2px; }
+.affaires-opening-info-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+}
+.affaires-opening-amount {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--md-primary);
+}
+.affaires-opening-amount.neg { color: #d93036; }
+.affaires-opening-hint { font-size: 0.72rem; color: var(--color-text-tertiary); }
+.affaires-opening-edit-row { display: flex; gap: 8px; align-items: center; }
+.affaires-opening-edit-row .form-input { width: 160px; }
+@media (max-width: 640px) {
+    .affaires-opening-edit-row { width: 100%; }
+    .affaires-opening-edit-row .form-input { flex: 1; width: auto; }
+}
+
+/* Flux : la ligne solde d'ouverture devient une mention discrète */
+.flux-opening-row {
+    background: transparent;
+    padding: 4px 6px 0;
+    border-radius: 0;
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+}
+.flux-opening-row strong { color: var(--color-text-secondary); }
+.flux-opening-hint {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    opacity: 0.9;
+}
+
+/* Flux : tuile Balance en tonique MD3 (primary container) — plus de présence */
+.flux-hero-balance {
+    background: var(--md-primary-container) !important;
+    border-radius: var(--md-radius-2xl) !important;
+    padding: 14px 20px 14px !important;
+    box-shadow: none;
+}
+.fhero-balance-label { color: var(--md-on-primary-container) !important; letter-spacing: 1.1px; }
+.fhero-balance-value {
+    color: var(--md-on-primary-container) !important;
+    font-size: clamp(1.9rem, 5vw, 2.5rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em;
+}
+.fhero-balance-value.neg { color: #b3261e !important; }
+.fhero-trend { color: var(--md-on-primary-container) !important; opacity: 0.85; }
+.fhero-trend.up { color: #0d8a5f !important; }
+.fhero-trend.down { color: #b3261e !important; }
+.fhero-meta .fhero-bank { color: var(--md-on-primary-container); opacity: 0.9; }
+.fhero-bank strong.pos { color: #0d8a5f; }
+.fhero-bank strong.neg { color: #b3261e; }
+
+/* KPI : surfaces toniques par nature (entrées / dépenses / année) */
+.fhero-kpi.income { background: #eafaf2 !important; border-color: transparent !important; }
+.fhero-kpi.expense { background: #fdeeee !important; border-color: transparent !important; }
+.fhero-kpi.year { background: var(--md-tertiary-container) !important; border-color: transparent !important; }
+.fhero-kpi-label { color: var(--color-text-secondary) !important; font-size: 0.66rem; letter-spacing: 0.7px; }
+.fhero-kpi.income .fhero-kpi-value { color: #0c6b4a !important; }
+.fhero-kpi.expense .fhero-kpi-value { color: #b3261e !important; }
+.fhero-kpi.year .fhero-kpi-value { color: #8d1c4a !important; }
+.fhero-kpi-value { font-size: 1.12rem !important; letter-spacing: -0.02em; }
+
+/* Barres du mini-graphe : toniques plus vives */
+.fchart-bar.pos { background: #10b981 !important; }
+.fchart-bar.neg { background: #f43f5e !important; }
+
+/* Sélecteur de mois : pilule tonique */
+.flux-hero-month {
+    background: var(--md-surface-high) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+    padding: 6px !important;
+}
+
+/* Dark mode : déclinaisons tonales */
+[data-theme="dark"] .flux-hero-balance { background: rgba(79,70,229,0.22) !important; }
+[data-theme="dark"] .fhero-balance-value,
+[data-theme="dark"] .fhero-balance-label,
+[data-theme="dark"] .fhero-trend { color: #e0ddff !important; }
+[data-theme="dark"] .fhero-balance-value.neg { color: #fca5a5 !important; }
+[data-theme="dark"] .fhero-kpi.income { background: rgba(16,185,129,0.10) !important; }
+[data-theme="dark"] .fhero-kpi.expense { background: rgba(244,63,94,0.10) !important; }
+[data-theme="dark"] .fhero-kpi.year { background: rgba(236,72,153,0.12) !important; }
+[data-theme="dark"] .fhero-kpi.income .fhero-kpi-value { color: #6ee7b7 !important; }
+[data-theme="dark"] .fhero-kpi.expense .fhero-kpi-value { color: #fda4af !important; }
+[data-theme="dark"] .fhero-kpi.year .fhero-kpi-value { color: #f9a8d4 !important; }
+[data-theme="dark"] .fhero-bank strong.pos { color: #6ee7b7; }
+[data-theme="dark"] .fhero-bank strong.neg { color: #fca5a5; }

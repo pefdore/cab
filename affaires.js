@@ -158,8 +158,9 @@ function affairesTaskDefs() {
             title: 'Solde bancaire au 31/12/' + (year - 1),
             sub: openingPending
                 ? 'À saisir — point de départ du solde bancaire de Flux'
-                : 'Solde enregistré — le solde de Flux part de la bonne base',
-            pending: openingPending, hasDetail: false,
+                : 'Solde enregistré : ' + (typeof window.fluxGetOpeningBalance === 'function' ? window.fluxGetOpeningBalance(year).toFixed(2).replace('.', ',') + ' €' : 'saisi') + ' — cliquez pour voir ou modifier',
+            pending: openingPending, hasDetail: true,
+            containerId: 'affaires-opening-detail',
             actionLabel: 'Saisir', actionFn: 'affairesEditOpeningBalance()'
         },
         {
@@ -244,6 +245,43 @@ function affairesRenderCard(t) {
     '</div>';
 }
 
+// Detail de la carte « Solde bancaire » : solde enregistre + edition inline
+function affairesFillOpeningDetail() {
+    const el = document.getElementById('affaires-opening-detail');
+    if (!el) return;
+    const year = new Date().getFullYear();
+    const has = typeof window.fluxHasOpeningBalance === 'function' && window.fluxHasOpeningBalance(year);
+    const cur = has && typeof window.fluxGetOpeningBalance === 'function' ? window.fluxGetOpeningBalance(year) : null;
+    el.innerHTML =
+        '<div class="affaires-opening-detail">' +
+            '<div class="affaires-opening-info">' +
+                '<span class="affaires-opening-info-label">Solde du compte bancaire au 31/12/' + (year - 1) + '</span>' +
+                '<strong class="affaires-opening-amount' + (cur !== null && cur < 0 ? ' neg' : '') + '">' + (cur !== null ? cur.toFixed(2).replace('.', ',') + ' €' : 'Non renseigné') + '</strong>' +
+                '<span class="affaires-opening-hint">Point de départ du solde bancaire affiché dans le Flux.</span>' +
+            '</div>' +
+            '<div class="affaires-opening-edit-row">' +
+                '<input type="number" step="0.01" id="affairesOpeningInput" class="form-input" value="' + (cur !== null ? cur.toFixed(2) : '') + '" placeholder="Ex : 15230.50">' +
+                '<button class="action-btn primary" onclick="affairesSaveOpeningBalance()">Enregistrer</button>' +
+            '</div>' +
+        '</div>';
+}
+
+window.affairesSaveOpeningBalance = async function() {
+    const input = document.getElementById('affairesOpeningInput');
+    const val = (input ? input.value : '').trim().replace(',', '.');
+    const montant = val === '' ? NaN : parseFloat(val);
+    if (isNaN(montant)) {
+        if (typeof showToast === 'function') showToast('Montant invalide', 'error');
+        return;
+    }
+    if (typeof window.fluxSaveOpeningBalance !== 'function') return;
+    const ok = await window.fluxSaveOpeningBalance(montant, new Date().getFullYear());
+    if (ok) {
+        renderAffairesView();
+        updateAffairesBadge();
+    }
+};
+
 function affairesRenderTasks() {
     const pendingWrap = document.getElementById('affaires-todo-pending');
     const doneWrap = document.getElementById('affaires-todo-done-wrap');
@@ -284,6 +322,7 @@ function affairesRenderTasks() {
         const cnt = document.getElementById('affaires-todo-done-count');
         if (cnt) cnt.textContent = done.length;
     }
+    affairesFillOpeningDetail();
 }
 
 // ---------- Badge global ----------
