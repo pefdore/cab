@@ -804,6 +804,13 @@ function showError(message) {
 }
 
 function showToast(message, type) {
+    // Anti-doublon : le meme toast (type + message) affiche deux fois en moins
+    // de 800 ms vient presque toujours d'un double declenchement (blur + debounce,
+    // deux listeners...) : on l'ignore silencieusement.
+    const key = (type || 'success') + '|' + String(message);
+    const now = Date.now();
+    if (showToast._last && showToast._last.key === key && now - showToast._last.at < 800) return;
+    showToast._last = { key, at: now };
     let container = document.querySelector('.toast-container');
     if (!container) {
         container = document.createElement('div');
