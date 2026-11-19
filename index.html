@@ -4976,6 +4976,7 @@ window.attemptLogin = function() {
       async function __accEmailFill() {
         try {
           const txt = await window.__accEmailGet();
+          if (txt && !window.__accEmailLastSaved) window.__accEmailLastSaved = txt;
           document.querySelectorAll('#accountingEmailInput').forEach(champ => {
             if (txt && !champ.value && document.activeElement !== champ) champ.value = txt;
           });
@@ -5020,11 +5021,14 @@ window.attemptLogin = function() {
       })();
 
       // Sauvegarde automatique silencieuse avec toast (blur + debounce de saisie)
+      window.__accEmailLastSaved = null;
       window.__accEmailAutoSave = async function(f) {
         const v = f ? f.value.trim() : '';
         if (!v) return;  // champ vide: rien a sauvegarder
+        if (v === window.__accEmailLastSaved) return;  // deja sauvegarde: pas de 2e toast
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { return; }  // invalide: on attend une saisie complete
         const ok = await window.__accEmailSet(v);
+        if (ok) window.__accEmailLastSaved = v;
         if (typeof showToast === 'function') {
           showToast(ok ? 'Email comptabilité enregistré' : 'ERREUR : email non enregistré', ok ? 'success' : 'error');
         } else if (ok !== null) {
