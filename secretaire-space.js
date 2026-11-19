@@ -156,8 +156,11 @@ async function secRenderJoinRequestsBanner() {
     const cardValues = document.querySelectorAll('#menuIntegrationsValue');
     const setBadge = b => {
         if (requests.length > 0) {
-            b.textContent = requests.length;
+            const txt = String(requests.length);
+            const changed = b.textContent !== txt;
+            b.textContent = txt;
             b.style.display = 'flex';
+            if (changed && typeof badgePop === 'function') badgePop(b);
         } else {
             b.style.display = 'none';
         }

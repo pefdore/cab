@@ -303,8 +303,11 @@ function updateAffairesBadge() {
         const badge = document.getElementById(id);
         if (!badge) return;
         if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : count;
+            const txt = count > 99 ? '99+' : String(count);
+            const changed = badge.textContent !== txt;
+            badge.textContent = txt;
             badge.style.display = 'flex';
+            if (changed && typeof badgePop === 'function') badgePop(badge);
         } else {
             badge.style.display = 'none';
         }
