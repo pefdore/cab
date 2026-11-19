@@ -287,13 +287,16 @@ function affairesRenderTasks() {
 }
 
 // ---------- Badge global ----------
+// Le badge compte les ACTIONS a faire (cette rubrique comporte du pret),
+// pas la somme des sous-taches : 22 rapprochements en attente = 1 action
+// \u00ab Rapprochement des d\u00e9penses \u00bb. Le detail reste visible sur chaque carte.
 function affairesPendingCount() {
     let n = 0;
     if (affairesOpeningPending()) n++;
-    n += affairesRelevePendingCount();
-    n += affairesReconPendingCount();
+    if (affairesRelevePendingCount() > 0) n++;
+    if (affairesReconPendingCount() > 0) n++;
     if (affairesStockPointagePending()) n++;
-    n += (window._affairesReunionPending || 0);
+    if ((window._affairesReunionPending || 0) > 0) n++;
     return n;
 }
 
