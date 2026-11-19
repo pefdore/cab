@@ -14455,6 +14455,16 @@ body.md-armed #cabinet-dashboard .cab-alertes-section { animation: md-pop 0.55s 
 
 /* Nav mobile (colonne) : pastille compacte en haut à droite de l'entrée */
 .mobile-nav-item[data-view="cabinet"] { position: relative; }
+/* Le badge garde son texte blanc quand la section est active/s\u00e9lectionn\u00e9e :
+   la couleur de selection (bleu) ne doit pas traverser le fond rouge du badge. */
+.nav-item.active .nav-badge,
+.mobile-nav-item.active .nav-badge,
+.cabinet-tab.active .nav-badge,
+.nav-item.active span.nav-badge,
+.mobile-nav-item.active span.nav-badge {
+    color: #fff;
+}
+
 .mobile-nav-item .nav-badge {
     position: absolute;
     top: -6px;
