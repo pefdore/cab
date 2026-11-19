@@ -121,9 +121,16 @@ async function fluxEditOpeningBalance() {
     const val = input.trim().replace(',', '.');
     const montant = val === '' ? 0 : parseFloat(val);
     if (isNaN(montant)) { alert('Montant invalide'); return; }
+    await window.fluxSaveOpeningBalance(montant, year);
+}
+// Sauvegarde du solde d'ouverture (annee donnee, montant en euros).
+// Utilisee par la carte « Solde bancaire » de la section Affaires
+// (edition inline, sans prompt) et par l'ancien flux prompt().
+window.fluxSaveOpeningBalance = async function(montant, yearOpt) {
+    const year = yearOpt || fluxCurrentMonth.getFullYear();
     try {
         const cabinetId = await getCabinetId();
-        if (!cabinetId) { alert('Aucun cabinet associé'); return; }
+        if (!cabinetId) { alert('Aucun cabinet associé'); return false; }
         const { error } = await supabaseClient
             .from('cabinet_opening_balances')
             .upsert({ cabinet_id: cabinetId, user_id: currentUser.id, annee: year, montant: montant }, { onConflict: 'cabinet_id,annee' });
@@ -131,10 +138,13 @@ async function fluxEditOpeningBalance() {
         fluxOpeningBalances.set(year, montant);
         if (typeof showToast === 'function') showToast('Solde au 31/12/' + (year - 1) + ' enregistré');
         if (typeof window.renderFluxView === 'function') window.renderFluxView();
+        return true;
     } catch (err) {
         alert('Erreur : ' + err.message);
+        return false;
     }
-}
+};
+window.fluxGetOpeningBalance = function(year) { return fluxOpeningBalances.get(year) || 0; };
 window.fluxEditOpeningBalance = fluxEditOpeningBalance;
 window.fluxHasOpeningBalance = fluxHasOpeningBalance;
 window.fluxLoadOpeningBalances = fluxLoadOpeningBalances;
