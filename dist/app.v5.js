@@ -4203,6 +4203,10 @@ function setupSettingsDelegation() {
             showToast(t.checked ? 'Animations activées' : 'Animations désactivées');
         } else if (t.id === 'prefConfirmDelete') {
             saveSetting('pref_confirm_delete', t.checked ? 'true' : 'false');
+        } else if (t.id === 'prefFluxPreviousMonth') {
+            saveSetting('flux_default_month_prev', t.checked ? 'true' : 'false');
+            if (typeof fluxApplyDefaultMonthPref === 'function') fluxApplyDefaultMonthPref();
+            showToast(t.checked ? 'Le Flux s\u2019ouvrira sur le mois pr\u00e9c\u00e9dent' : 'Le Flux s\u2019ouvrira sur le mois en cours');
         }
     });
 
@@ -8406,6 +8410,7 @@ function loadUiPrefs() {
     document.querySelectorAll('#prefDecimalSeparator').forEach(el => { el.value = decSep || 'comma'; });
     document.querySelectorAll('#prefDefaultAddView').forEach(el => { el.value = addView || 'passages'; });
     document.querySelectorAll('#prefConfirmDelete').forEach(el => { el.checked = confirmDel !== 'false'; });
+    document.querySelectorAll('#prefFluxPreviousMonth').forEach(el => { el.checked = getSetting('flux_default_month_prev') !== 'false'; });
     applyAnimationsPref();
 }
 
