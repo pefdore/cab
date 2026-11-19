@@ -3,8 +3,29 @@
 // Les données sont celles du cabinet (cabinet_depenses / cabinet_recettes),
 // partagées avec le dashboard (renderComptaSummary s'alimente des mêmes tableaux).
 
+// Le relev\u00e9 du mois en cours n'est import\u00e9 qu'en fin de mois : par d\u00e9faut le
+// Flux s'ouvre donc sur le mois pr\u00e9c\u00e9dent (N-1). Pr\u00e9f\u00e9rence changeable dans
+// Plus > Pr\u00e9f\u00e9rences (cl\u00e9 settings flux_default_month_prev).
+function fluxPrefDefaultPrevious() {
+    try {
+        const s = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        return s.flux_default_month_prev !== 'false';
+    } catch (e) { return true; }
+}
 let fluxCurrentMonth = new Date();
 fluxCurrentMonth.setDate(1);
+window.fluxInitDefaultMonth = function() {
+    if (fluxPrefDefaultPrevious()) {
+        fluxCurrentMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+    } else {
+        fluxCurrentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    }
+};
+window.fluxApplyDefaultMonthPref = function() {
+    window.fluxInitDefaultMonth();
+    renderFluxView();
+};
+window.fluxInitDefaultMonth();
 
 const FLUX_MONTH_NAMES = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
