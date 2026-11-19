@@ -11913,6 +11913,15 @@ window.renderProfileCabinetBox = renderProfileCabinetBox;
 
 // ---------- Vue liste des réunions ----------
 
+// Relance l'animation d'apparition d'un badge (slide bas -> haut + ressort)
+// a chaque fois que son compteur change ou qu'il apparait.
+window.badgePop = function(el) {
+    if (!el) return;
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+};
+
 function reunionSetBadge(el, count) {
     if (!el) return;
     let b = el.querySelector('.nav-badge');
@@ -11922,7 +11931,11 @@ function reunionSetBadge(el, count) {
             b.className = 'nav-badge';
             el.appendChild(b);
         }
-        b.textContent = count > 9 ? '9+' : String(count);
+        const txt = count > 9 ? '9+' : String(count);
+        if (b.textContent !== txt) {
+            b.textContent = txt;
+            if (typeof badgePop === 'function') badgePop(b);
+        }
     } else if (b) {
         b.remove();
     }
@@ -13866,8 +13879,10 @@ function updateAdminReqBadge() {
     const n = adminCache.requests.filter(r => r.status === 'pending').length;
     const badge = document.getElementById('adminTabReqBadge');
     if (badge) {
+        const changed = badge.textContent !== String(n);
         badge.textContent = n;
         badge.style.display = n > 0 ? 'inline-flex' : 'none';
+        if (n > 0 && changed && typeof badgePop === 'function') badgePop(badge);
     }
 }
 
